@@ -515,7 +515,6 @@ export async function workerOffer(
     type: input.type,
     status: "pending",
     offered_price: customerOffer > 0 ? customerOffer : 0,
-    expires_at: job.matching?.acceptance_deadline ?? null,
     ...(input.type === "counter_offer"
       ? { counter_price: input.counter_price, message: input.message ?? null }
       : {}),
@@ -535,8 +534,6 @@ export async function workerOffer(
  * (ACCEPTED -> EN_ROUTE -> ARRIVED -> IN_PROGRESS ->
  * AWAITING_CUSTOMER_CONFIRMATION). The worker must be the selected worker
  * and the transition must be legal for the actor or a FlowError is raised.
- * Finalizing work requires the after photo (all jobs) and the before photo
- * (normal jobs; emergency jobs may skip it).
  */
 export async function workerUpdateJobStatus(
   jobId: string,
@@ -550,25 +547,6 @@ export async function workerUpdateJobStatus(
   });
   guardJourney(job, job.status, status, "worker");
 
-  if (status === "AWAITING_CUSTOMER_CONFIRMATION") {
-    const completion = job.completion ?? {};
-    if (!completion.after_photo_id) {
-      throw new FlowError(
-        "after_photo_required",
-        "Upload an after photo before completing the job",
-        400
-      );
-    }
-    const urgency: UrgencyLevel = job.understanding?.urgency ?? "normal";
-    if (urgency !== "emergency" && !completion.before_photo_id) {
-      throw new FlowError(
-        "before_photo_required",
-        "Upload a before photo before completing the job",
-        400
-      );
-    }
-  }
-
   const updated = await Job.findOneAndUpdate(
     { _id: jobId, status: job.status },
     { $set: { status } },
@@ -579,55 +557,6 @@ export async function workerUpdateJobStatus(
   }
 
   await recordEvent(jobId, job.status, status, workerId, "worker", note ? { note } : {});
-  return updated;
-}
-
-export interface WorkerMediaInput {
-  type: "before" | "after";
-  photo_id: string;
-  note?: string;
-}
-
-/**
- * Attaches a before/after work photo (and an optional note) to an assigned
- * job. Only allowed while the worker is actively working the job
- * (ACCEPTED .. IN_PROGRESS).
- */
-export async function workerUploadJobMedia(
-  jobId: string,
-  workerId: string,
-  input: WorkerMediaInput
-): Promise<JobDoc> {
-  const job = await requireJob({
-    _id: jobId,
-    "matching.selected_worker_id": workerId,
-  });
-
-  const ACTIVE_STATUSES: JobStatus[] = ["ACCEPTED", "EN_ROUTE", "ARRIVED", "IN_PROGRESS"];
-  if (!ACTIVE_STATUSES.includes(job.status)) {
-    throw new FlowError(
-      "invalid_status",
-      `Photos can only be attached while working the job (current: ${job.status})`,
-      409
-    );
-  }
-
-  const set: Record<string, unknown> =
-    input.type === "before"
-      ? { "completion.before_photo_id": input.photo_id }
-      : { "completion.after_photo_id": input.photo_id };
-  if (input.note && input.note.trim().length > 0) {
-    set["completion.notes"] = input.note.trim();
-  }
-
-  const updated = await Job.findOneAndUpdate(
-    { _id: jobId, status: job.status },
-    { $set: set },
-    { new: true }
-  );
-  if (!updated) {
-    throw new FlowError("invalid_status", "Job status changed concurrently", 409);
-  }
   return updated;
 }
 

@@ -44,7 +44,6 @@ import {
   markExpired,
   workerOffer,
   workerUpdateJobStatus,
-  workerUploadJobMedia,
 } from "@/lib/job/flow";
 import type { JobDoc, JobStatus } from "@/models/Job";
 
@@ -570,140 +569,6 @@ describe("workerUpdateJobStatus", () => {
       expect(job.status).toBe(to);
     }
   });
-
-  describe("completion photo gate", () => {
-    function inProgress(overrides: Partial<Record<string, unknown>> = {}): JobDoc {
-      return {
-        ...accepted,
-        status: "IN_PROGRESS",
-        completion: {
-          before_photo_id: null,
-          after_photo_id: null,
-          ...(overrides.completion as Record<string, unknown> | undefined),
-        },
-        ...overrides,
-      } as unknown as JobDoc;
-    }
-
-    it("requires the after photo to complete work", async () => {
-      vi.mocked(Job.findOne).mockResolvedValue(inProgress() as never);
-      await expect(
-        workerUpdateJobStatus("job1", "w1", "AWAITING_CUSTOMER_CONFIRMATION")
-      ).rejects.toMatchObject({ code: "after_photo_required", statusCode: 400 });
-      expect(Job.findOneAndUpdate).not.toHaveBeenCalled();
-    });
-
-    it("requires the before photo for normal jobs", async () => {
-      vi.mocked(Job.findOne).mockResolvedValue(
-        inProgress({ completion: { after_photo_id: "after-1" } }) as never
-      );
-      await expect(
-        workerUpdateJobStatus("job1", "w1", "AWAITING_CUSTOMER_CONFIRMATION")
-      ).rejects.toMatchObject({ code: "before_photo_required", statusCode: 400 });
-    });
-
-    it("skips the before photo requirement for emergency jobs", async () => {
-      const emergency = inProgress({
-        understanding: { ...accepted.understanding, urgency: "emergency" } as JobDoc["understanding"],
-        completion: { after_photo_id: "after-1" },
-      });
-      vi.mocked(Job.findOne).mockResolvedValue(emergency as never);
-      mockFindOneAndUpdate(emergency);
-
-      const job = await workerUpdateJobStatus(
-        "job1",
-        "w1",
-        "AWAITING_CUSTOMER_CONFIRMATION"
-      );
-      expect(job.status).toBe("AWAITING_CUSTOMER_CONFIRMATION");
-    });
-
-    it("allows completion with both photos on a normal job", async () => {
-      const both = inProgress({
-        completion: { before_photo_id: "before-1", after_photo_id: "after-1" },
-      });
-      vi.mocked(Job.findOne).mockResolvedValue(both as never);
-      mockFindOneAndUpdate(both);
-
-      const job = await workerUpdateJobStatus(
-        "job1",
-        "w1",
-        "AWAITING_CUSTOMER_CONFIRMATION"
-      );
-      expect(job.status).toBe("AWAITING_CUSTOMER_CONFIRMATION");
-    });
-  });
-});
-
-describe("workerUploadJobMedia", () => {
-  const accepted = withStatus(
-    jobDoc({
-      matching: {
-        ...jobDoc().matching,
-        selected_worker_id: "w1",
-      } as unknown as JobDoc["matching"],
-    }),
-    "ACCEPTED"
-  );
-
-  it("attaches a before photo with an optional note", async () => {
-    vi.mocked(Job.findOne).mockResolvedValue(accepted as never);
-    mockFindOneAndUpdate(accepted);
-
-    await workerUploadJobMedia("job1", "w1", {
-      type: "before",
-      photo_id: "photo-before",
-      note: "Replaced faucet washer",
-    });
-
-    expect(Job.findOne).toHaveBeenCalledWith({
-      _id: "job1",
-      "matching.selected_worker_id": "w1",
-    });
-    expect(Job.findOneAndUpdate).toHaveBeenCalledWith(
-      expect.objectContaining({ _id: "job1" }),
-      {
-        $set: {
-          "completion.before_photo_id": "photo-before",
-          "completion.notes": "Replaced faucet washer",
-        },
-      },
-      expect.anything()
-    );
-  });
-
-  it("attaches an after photo without a note", async () => {
-    vi.mocked(Job.findOne).mockResolvedValue(accepted as never);
-    mockFindOneAndUpdate(accepted);
-
-    await workerUploadJobMedia("job1", "w1", {
-      type: "after",
-      photo_id: "photo-after",
-    });
-
-    expect(Job.findOneAndUpdate).toHaveBeenCalledWith(
-      expect.anything(),
-      { $set: { "completion.after_photo_id": "photo-after" } },
-      expect.anything()
-    );
-  });
-
-  it("refuses a worker who is not assigned to the job", async () => {
-    vi.mocked(Job.findOne).mockResolvedValue(null);
-    await expect(
-      workerUploadJobMedia("job1", "w2", { type: "before", photo_id: "p" })
-    ).rejects.toMatchObject({ code: "job_not_found", statusCode: 404 });
-  });
-
-  it("refuses photos once the job is awaiting confirmation", async () => {
-    vi.mocked(Job.findOne).mockResolvedValue({
-      ...accepted,
-      status: "AWAITING_CUSTOMER_CONFIRMATION",
-    } as never);
-    await expect(
-      workerUploadJobMedia("job1", "w1", { type: "after", photo_id: "p" })
-    ).rejects.toMatchObject({ code: "invalid_status" });
-  });
 });
 
 describe("workerOffer", () => {
@@ -745,33 +610,7 @@ describe("workerOffer", () => {
         type: "accept",
         offered_price: 2000,
         status: "pending",
-        expires_at: new Date(NOW.getTime() + 5 * 60_000),
       })
-    );
-  });
-
-  it("expires pending offers with the job acceptance deadline", async () => {
-    vi.mocked(Job.findOne).mockResolvedValue(broadcasting as never);
-    mockFindOneAndUpdate(broadcasting);
-    vi.mocked(Worker.updateOne).mockResolvedValue({
-      matchedCount: 1,
-      modifiedCount: 1,
-    } as never);
-    vi.mocked(Offer.create).mockImplementation((doc) =>
-      Promise.resolve(doc as never)
-    );
-
-    await workerOffer(
-      "job1",
-      "w1",
-      { type: "counter_offer", counter_price: 2500 },
-      NOW
-    );
-
-    const created = vi.mocked(Offer.create).mock.calls[0][0] as Record<string, unknown>;
-    expect(created.expires_at).toBeInstanceOf(Date);
-    expect((created.expires_at as Date).getTime()).toBe(
-      NOW.getTime() + 5 * 60_000
     );
   });
 

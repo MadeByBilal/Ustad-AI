@@ -106,7 +106,6 @@ const jobSchema = new Schema(
     completion: {
       before_photo_id: { type: String, default: null },
       after_photo_id: { type: String, default: null },
-      notes: { type: String, default: null },
       ai_work_confirmation: { type: String, default: null },
       customer_confirmed: { type: Boolean, default: false },
     },
