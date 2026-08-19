@@ -55,7 +55,7 @@ describe("POST /api/jobs/photos", () => {
     expect(body.data.photo_id).toBe("photo-1");
     expect(Upload.create).toHaveBeenCalledWith(
       expect.objectContaining({
-        customer_id: "cust1",
+        owner_id: "cust1",
         mime: "image/jpeg",
         size: JPEG_PNG.length,
       })

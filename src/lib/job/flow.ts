@@ -1,5 +1,14 @@
 import { randomUUID } from "node:crypto";
-import { Job, JobEvent, Offer, Worker, type JobDoc, type JobStatus } from "@/models";
+import {
+  Job,
+  JobEvent,
+  Message,
+  Offer,
+  Worker,
+  SYSTEM_SENDER_ID,
+  type JobDoc,
+  type JobStatus,
+} from "@/models";
 import { analyzeJobInput } from "./analyze";
 import { validateCustomerOffer, validateWorkerCounter } from "./offers";
 import {
@@ -60,6 +69,23 @@ async function recordEvent(
     actor_type,
     metadata,
   });
+}
+
+/**
+ * System message appended to the job chat whenever the lifecycle moves
+ * ("Job accepted", "On the way", ...). Both parties see these.
+ */
+async function recordSystemMessage(jobId: unknown, content: string): Promise<void> {
+  await Message.create({
+    job_id: jobId,
+    sender_id: SYSTEM_SENDER_ID,
+    sender_type: "system",
+    content,
+  });
+}
+
+function formatPrice(rs: number): string {
+  return `Rs ${Math.round(rs).toLocaleString("en-PK")}`;
 }
 
 async function requireJob(
@@ -402,6 +428,12 @@ export async function workerAcceptJob(
     urgency,
     broadcast_id: job.matching?.broadcast_id ?? null,
   });
+  await recordSystemMessage(
+    jobId,
+    urgency === "emergency"
+      ? "Emergency job accepted — worker is on the way"
+      : "Job accepted"
+  );
   return claimed;
 }
 
@@ -479,6 +511,8 @@ export async function workerOffer(
     throw new FlowError("invalid_status", "Emergency jobs only accept a direct claim", 409);
   }
 
+  const offerExpiry = resolveSelectionDeadline(now);
+
   const claimSet: Record<string, unknown> = {
     status: "WORKER_RESPONSES",
     "matching.selection_deadline": resolveSelectionDeadline(now),
@@ -515,6 +549,7 @@ export async function workerOffer(
     type: input.type,
     status: "pending",
     offered_price: customerOffer > 0 ? customerOffer : 0,
+    expires_at: offerExpiry,
     ...(input.type === "counter_offer"
       ? { counter_price: input.counter_price, message: input.message ?? null }
       : {}),
@@ -525,6 +560,12 @@ export async function workerOffer(
     urgency,
     broadcast_id: job.matching?.broadcast_id ?? null,
   });
+  await recordSystemMessage(
+    jobId,
+    input.type === "counter_offer"
+      ? `Counter-offer submitted: ${formatPrice(input.counter_price ?? 0)} — waiting for the customer`
+      : `Offer submitted: ${formatPrice(customerOffer)} — waiting for the customer`
+  );
 
   return { job: claimed, offer };
 }
@@ -534,7 +575,18 @@ export async function workerOffer(
  * (ACCEPTED -> EN_ROUTE -> ARRIVED -> IN_PROGRESS ->
  * AWAITING_CUSTOMER_CONFIRMATION). The worker must be the selected worker
  * and the transition must be legal for the actor or a FlowError is raised.
+ *
+ * Photo gates: normal jobs require a before photo to start work, and every
+ * job requires an after photo to be marked complete. Reaching
+ * AWAITING_CUSTOMER_CONFIRMATION releases the worker's availability lock.
  */
+const STATUS_SYSTEM_MESSAGES: Partial<Record<JobStatus, string>> = {
+  EN_ROUTE: "On the way",
+  ARRIVED: "Worker has arrived",
+  IN_PROGRESS: "Work has started",
+  AWAITING_CUSTOMER_CONFIRMATION: "Work complete — please confirm",
+};
+
 export async function workerUpdateJobStatus(
   jobId: string,
   workerId: string,
@@ -547,6 +599,26 @@ export async function workerUpdateJobStatus(
   });
   guardJourney(job, job.status, status, "worker");
 
+  const urgency: UrgencyLevel = job.understanding?.urgency ?? "normal";
+  if (
+    status === "IN_PROGRESS" &&
+    urgency !== "emergency" &&
+    !job.completion?.before_photo_id
+  ) {
+    throw new FlowError(
+      "before_photo_required",
+      "Upload a before photo before starting work",
+      400
+    );
+  }
+  if (status === "AWAITING_CUSTOMER_CONFIRMATION" && !job.completion?.after_photo_id) {
+    throw new FlowError(
+      "after_photo_required",
+      "Upload an after photo before completing the job",
+      400
+    );
+  }
+
   const updated = await Job.findOneAndUpdate(
     { _id: jobId, status: job.status },
     { $set: { status } },
@@ -557,6 +629,68 @@ export async function workerUpdateJobStatus(
   }
 
   await recordEvent(jobId, job.status, status, workerId, "worker", note ? { note } : {});
+  const systemMessage = STATUS_SYSTEM_MESSAGES[status];
+  if (systemMessage) {
+    await recordSystemMessage(jobId, systemMessage);
+  }
+
+  if (status === "AWAITING_CUSTOMER_CONFIRMATION") {
+    await Worker.updateOne(
+      { _id: workerId, active_job_id: jobId },
+      { $set: { active_job_id: null, is_available: true } }
+    );
+  }
+  return updated;
+}
+
+export interface AttachPhotoInput {
+  type: "before" | "after";
+  photo_id: string;
+  note?: string;
+}
+
+/**
+ * Attaches a before/after photo (plus an optional work note) to the job
+ * completion record. Only the assigned worker can attach photos, and only
+ * while the job is active.
+ */
+export async function workerAttachPhoto(
+  jobId: string,
+  workerId: string,
+  input: AttachPhotoInput
+): Promise<JobDoc> {
+  const job = await requireJob({
+    _id: jobId,
+    "matching.selected_worker_id": workerId,
+  });
+  const activeStatuses: JobStatus[] = ["ACCEPTED", "EN_ROUTE", "ARRIVED", "IN_PROGRESS"];
+  if (!activeStatuses.includes(job.status)) {
+    throw new FlowError("invalid_status", "Photos can only be attached to an active job", 409);
+  }
+
+  const field =
+    input.type === "before"
+      ? "completion.before_photo_id"
+      : "completion.after_photo_id";
+  const updated = await Job.findOneAndUpdate(
+    { _id: jobId, status: job.status, "matching.selected_worker_id": workerId },
+    {
+      $set: {
+        [field]: input.photo_id,
+        ...(input.note ? { "completion.note": input.note } : {}),
+      },
+    },
+    { new: true }
+  );
+  if (!updated) {
+    throw new FlowError("invalid_status", "Job changed concurrently", 409);
+  }
+
+  await recordEvent(jobId, job.status, job.status, workerId, "worker", {
+    photo: input.type,
+    photo_id: input.photo_id,
+    note: input.note ?? null,
+  });
   return updated;
 }
 
@@ -662,6 +796,10 @@ export async function customerSelectWorker(
     worker_id: workerId,
     final_price: agreedPrice,
   });
+  await recordSystemMessage(
+    jobId,
+    `Worker selected — job confirmed at ${formatPrice(agreedPrice)}`
+  );
   return selected;
 }
 

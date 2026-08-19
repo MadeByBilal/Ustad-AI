@@ -20,5 +20,11 @@ export { Offer, OFFER_TYPES, OFFER_STATUSES, type OfferDoc } from "./Offer";
 export { Upload, type UploadDoc } from "./Upload";
 export { Review, type ReviewDoc } from "./Review";
 export { JobEvent, ACTOR_TYPES, type JobEventDoc } from "./JobEvent";
-export { Message, SENDER_TYPES, type MessageDoc } from "./Message";
+export {
+  Message,
+  SENDER_TYPES,
+  SYSTEM_SENDER_ID,
+  type MessageDoc,
+  type MessageSenderType,
+} from "./Message";
 export { Session, type SessionDoc } from "./Session";

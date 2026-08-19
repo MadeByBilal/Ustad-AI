@@ -10,8 +10,10 @@ interface AvailabilityState {
 
 export default function WorkerAvailability({
   initial,
+  onChanged,
 }: {
   initial: AvailabilityState;
+  onChanged?: () => void;
 }) {
   const [state, setState] = useState<AvailabilityState>(initial);
   const [saving, setSaving] = useState(false);
@@ -32,6 +34,7 @@ export default function WorkerAvailability({
         throw new Error(body.error ?? "Update failed");
       }
       setState((s) => ({ ...s, ...body.data }));
+      onChanged?.();
     } catch (e) {
       setError(e instanceof Error ? e.message : "Update failed");
     } finally {
@@ -62,6 +65,7 @@ export default function WorkerAvailability({
               onClick={() => toggle(r.key)}
               disabled={saving}
               aria-pressed={state[r.key]}
+              aria-label={r.label}
               className={`relative h-6 w-11 shrink-0 rounded-full transition-colors disabled:opacity-60 ${
                 state[r.key] ? "bg-[#0e5f44]" : "bg-stone-300"
               }`}

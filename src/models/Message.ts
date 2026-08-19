@@ -1,6 +1,10 @@
 import mongoose, { Schema, type InferSchemaType } from "mongoose";
 
-export const SENDER_TYPES = ["customer", "worker"] as const;
+export const SENDER_TYPES = ["customer", "worker", "system"] as const;
+export type MessageSenderType = (typeof SENDER_TYPES)[number];
+
+/** Reserved sender id for lifecycle/system messages (never a real user). */
+export const SYSTEM_SENDER_ID = "system";
 
 const messageSchema = new Schema(
   {
@@ -11,7 +15,7 @@ const messageSchema = new Schema(
       index: true,
     },
     sender_id: {
-      type: Schema.Types.ObjectId,
+      type: Schema.Types.Mixed,
       required: true,
     },
     sender_type: {
@@ -21,6 +25,10 @@ const messageSchema = new Schema(
     },
     content: { type: String, default: "" },
     media_ids: { type: [String], default: [] },
+    location: {
+      lat: { type: Number },
+      lng: { type: Number },
+    },
   },
   {
     timestamps: { createdAt: "created_at", updatedAt: false },

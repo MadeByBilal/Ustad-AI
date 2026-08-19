@@ -8,14 +8,13 @@ import { photoUploadSchema } from "@/lib/photos";
 export const dynamic = "force-dynamic";
 
 /**
- * Customer photo upload for job descriptions. The browser downscales the
- * capture to a JPEG/PNG <= 2MB and sends it as base64; we store it in
- * MongoDB and hand back a photo_id the job references in input.photo_ids.
+ * Worker photo upload (before/after shots and chat media). Mirrors the
+ * customer upload: base64 JPEG/PNG <= 2MB, stored in MongoDB.
  */
 export async function POST(req: NextRequest) {
   let sessionUser;
   try {
-    sessionUser = await requireRole(["customer"]);
+    sessionUser = await requireRole(["worker"]);
   } catch (e) {
     return authError(e);
   }
@@ -37,7 +36,7 @@ export async function POST(req: NextRequest) {
     });
     return ok({ photo_id: String(upload._id) }, 201);
   } catch (e) {
-    console.error("photo upload failed:", e);
+    console.error("worker photo upload failed:", e);
     return fail("Internal error", 500);
   }
 }

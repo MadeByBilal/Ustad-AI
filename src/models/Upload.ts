@@ -2,7 +2,7 @@ import mongoose, { Schema, type InferSchemaType } from "mongoose";
 
 const uploadSchema = new Schema(
   {
-    customer_id: {
+    owner_id: {
       type: Schema.Types.ObjectId,
       ref: "User",
       required: true,

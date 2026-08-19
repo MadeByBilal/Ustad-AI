@@ -23,6 +23,10 @@ vi.mock("@/models", () => {
       updateOne: vi.fn(),
       updateMany: vi.fn(),
     },
+    Message: {
+      create: vi.fn(),
+    },
+    SYSTEM_SENDER_ID: "system",
     User: { findOne: vi.fn() },
   };
 });
@@ -31,7 +35,7 @@ vi.mock("@/lib/matching", () => ({
   searchEligibleWorkers: vi.fn(),
 }));
 
-import { Job, JobEvent, Offer, Worker } from "@/models";
+import { Job, JobEvent, Message, Offer, Worker } from "@/models";
 import { searchEligibleWorkers } from "@/lib/matching";
 import {
   FlowError,
@@ -358,6 +362,9 @@ describe("workerAcceptJob", () => {
       { _id: "w1", active_job_id: null },
       expect.objectContaining({ $set: { active_job_id: "job1", is_available: false } })
     );
+    expect(Message.create).toHaveBeenCalledWith(
+      expect.objectContaining({ sender_type: "system", content: "Job accepted" })
+    );
   });
 
   it("rejects acceptance after the deadline has passed", async () => {
@@ -556,18 +563,112 @@ describe("workerUpdateJobStatus", () => {
     ).rejects.toMatchObject({ code: "invalid_status" });
   });
 
-  it("walks the full journey EN_ROUTE -> ARRIVED -> IN_PROGRESS", async () => {
+  it("walks the full journey EN_ROUTE -> ARRIVED -> IN_PROGRESS -> AWAITING_CUSTOMER_CONFIRMATION", async () => {
+    const withPhotos = {
+      ...accepted,
+      completion: {
+        ...accepted.completion,
+        before_photo_id: "photo-before",
+        after_photo_id: "photo-after",
+      },
+    } as unknown as JobDoc;
     const steps: Array<[JobDoc, JobStatus]> = [
       [accepted, "EN_ROUTE"],
       [{ ...accepted, status: "EN_ROUTE" } as unknown as JobDoc, "ARRIVED"],
-      [{ ...accepted, status: "ARRIVED" } as unknown as JobDoc, "IN_PROGRESS"],
+      [{ ...withPhotos, status: "ARRIVED" } as unknown as JobDoc, "IN_PROGRESS"],
+      [{ ...withPhotos, status: "IN_PROGRESS" } as unknown as JobDoc, "AWAITING_CUSTOMER_CONFIRMATION"],
     ];
+    vi.mocked(Worker.updateOne).mockResolvedValue({ matchedCount: 1, modifiedCount: 1 } as never);
     for (const [base, to] of steps) {
       vi.mocked(Job.findOne).mockResolvedValue(base as never);
       mockFindOneAndUpdate(base);
       const job = await workerUpdateJobStatus("job1", "w1", to);
       expect(job.status).toBe(to);
     }
+  });
+
+  it("requires a before photo to start work on normal jobs", async () => {
+    vi.mocked(Job.findOne).mockResolvedValue(
+      { ...accepted, status: "ARRIVED" } as never
+    );
+    await expect(
+      workerUpdateJobStatus("job1", "w1", "IN_PROGRESS")
+    ).rejects.toMatchObject({ code: "before_photo_required", statusCode: 400 });
+  });
+
+  it("waives the before photo requirement for emergency jobs", async () => {
+    const emergency = withStatus(
+      jobDoc({
+        understanding: {
+          ...jobDoc().understanding,
+          urgency: "emergency",
+        } as JobDoc["understanding"],
+        matching: {
+          ...jobDoc().matching,
+          selected_worker_id: "w1",
+        } as unknown as JobDoc["matching"],
+      }),
+      "ARRIVED"
+    );
+    vi.mocked(Job.findOne).mockResolvedValue(emergency as never);
+    mockFindOneAndUpdate(emergency);
+
+    const job = await workerUpdateJobStatus("job1", "w1", "IN_PROGRESS");
+
+    expect(job.status).toBe("IN_PROGRESS");
+  });
+
+  it("requires an after photo to mark the job complete", async () => {
+    vi.mocked(Job.findOne).mockResolvedValue(
+      {
+        ...accepted,
+        status: "IN_PROGRESS",
+        completion: { ...accepted.completion, before_photo_id: "photo-before" },
+      } as never
+    );
+    await expect(
+      workerUpdateJobStatus("job1", "w1", "AWAITING_CUSTOMER_CONFIRMATION")
+    ).rejects.toMatchObject({ code: "after_photo_required", statusCode: 400 });
+  });
+
+  it("records a system chat message for each status change", async () => {
+    vi.mocked(Job.findOne).mockResolvedValue(accepted as never);
+    mockFindOneAndUpdate(accepted);
+
+    await workerUpdateJobStatus("job1", "w1", "EN_ROUTE");
+
+    expect(Message.create).toHaveBeenCalledWith({
+      job_id: "job1",
+      sender_id: "system",
+      sender_type: "system",
+      content: "On the way",
+    });
+  });
+
+  it("releases the worker lock when the job is marked complete", async () => {
+    vi.mocked(Job.findOne).mockResolvedValue({
+      ...accepted,
+      status: "IN_PROGRESS",
+      completion: {
+        ...accepted.completion,
+        before_photo_id: "photo-before",
+        after_photo_id: "photo-after",
+      },
+    } as never);
+    mockFindOneAndUpdate(accepted);
+    vi.mocked(Worker.updateOne).mockResolvedValue({ matchedCount: 1, modifiedCount: 1 } as never);
+
+    const job = await workerUpdateJobStatus(
+      "job1",
+      "w1",
+      "AWAITING_CUSTOMER_CONFIRMATION"
+    );
+
+    expect(job.status).toBe("AWAITING_CUSTOMER_CONFIRMATION");
+    expect(Worker.updateOne).toHaveBeenCalledWith(
+      { _id: "w1", active_job_id: "job1" },
+      { $set: { active_job_id: null, is_available: true } }
+    );
   });
 });
 
@@ -610,6 +711,7 @@ describe("workerOffer", () => {
         type: "accept",
         offered_price: 2000,
         status: "pending",
+        expires_at: new Date(NOW.getTime() + 5 * 60_000),
       })
     );
   });

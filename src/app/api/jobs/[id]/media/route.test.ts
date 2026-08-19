@@ -14,15 +14,12 @@ vi.mock("@/lib/job/flow", () => {
       this.name = "FlowError";
     }
   }
-  return {
-    FlowError,
-    workerUpdateJobStatus: vi.fn(),
-  };
+  return { FlowError, workerAttachPhoto: vi.fn() };
 });
 vi.mock("@/models", () => ({ Worker: { findOne: vi.fn() } }));
 
 import { requireRole } from "@/lib/auth";
-import { FlowError, workerUpdateJobStatus } from "@/lib/job/flow";
+import { FlowError, workerAttachPhoto } from "@/lib/job/flow";
 import { Worker } from "@/models";
 import { POST } from "./route";
 
@@ -32,7 +29,7 @@ const WORKER_SESSION = {
 };
 
 function request(body: unknown): NextRequest {
-  return new NextRequest("http://localhost/api/jobs/job-1/status", {
+  return new NextRequest("http://localhost/api/jobs/job-1/media", {
     method: "POST",
     body: JSON.stringify(body),
   });
@@ -42,58 +39,58 @@ beforeEach(() => {
   vi.clearAllMocks();
   vi.mocked(requireRole).mockResolvedValue(WORKER_SESSION as never);
   vi.mocked(Worker.findOne).mockReturnValue({
-    lean: vi.fn().mockResolvedValue({ _id: "worker-profile-1" }),
+    lean: vi.fn().mockResolvedValue({ _id: "worker-1" }),
   } as never);
-  vi.mocked(workerUpdateJobStatus).mockResolvedValue({
+  vi.mocked(workerAttachPhoto).mockResolvedValue({
     _id: "job-1",
-    status: "EN_ROUTE",
+    completion: { before_photo_id: "photo-9", after_photo_id: null },
   } as never);
 });
 
-describe("POST /api/jobs/[id]/status", () => {
+describe("POST /api/jobs/:id/media", () => {
   it("requires the worker role", async () => {
     vi.mocked(requireRole).mockRejectedValue(new Error("AUTH_REQUIRED"));
-    const res = await POST(request({ status: "EN_ROUTE" }), {
+    const res = await POST(request({ type: "before", photo_id: "photo-9" }), {
       params: { id: "job-1" },
     });
     expect(res.status).toBe(401);
   });
 
-  it("forbids a customer session", async () => {
-    vi.mocked(requireRole).mockRejectedValue(new Error("ROLE_FORBIDDEN"));
-    const res = await POST(request({ status: "EN_ROUTE" }), {
-      params: { id: "job-1" },
+  it("rejects a job id that is missing", async () => {
+    const res = await POST(request({ type: "before", photo_id: "photo-9" }), {
+      params: { id: "  " },
     });
-    expect(res.status).toBe(403);
+    expect(res.status).toBe(400);
   });
 
-  it("rejects an unknown status", async () => {
-    const res = await POST(request({ status: "TELEPORTING" }), {
+  it("rejects an unknown media type", async () => {
+    const res = await POST(request({ type: "during", photo_id: "photo-9" }), {
+      params: { id: "job-1" },
+    });
+    expect(res.status).toBe(400);
+    expect(workerAttachPhoto).not.toHaveBeenCalled();
+  });
+
+  it("requires a photo id", async () => {
+    const res = await POST(request({ type: "before" }), {
       params: { id: "job-1" },
     });
     expect(res.status).toBe(400);
   });
 
-  it("rejects a status outside the worker journey", async () => {
-    const res = await POST(request({ status: "DRAFT" }), {
-      params: { id: "job-1" },
-    });
-    expect(res.status).toBe(400);
-  });
-
-  it("resolves the worker profile and advances the job", async () => {
-    const res = await POST(request({ status: "EN_ROUTE", note: "On my way" }), {
-      params: { id: "job-1" },
-    });
-    expect(res.status).toBe(200);
+  it("attaches a before photo with a work note", async () => {
+    const res = await POST(
+      request({ type: "before", photo_id: "photo-9", note: "Replaced faucet washer" }),
+      { params: { id: "job-1" } }
+    );
+    expect(res.status).toBe(201);
     const body = await res.json();
-    expect(body.data.status).toBe("EN_ROUTE");
+    expect(body.data.completion.before_photo_id).toBe("photo-9");
     expect(Worker.findOne).toHaveBeenCalledWith({ user_id: "user-1" });
-    expect(workerUpdateJobStatus).toHaveBeenCalledWith(
+    expect(workerAttachPhoto).toHaveBeenCalledWith(
       "job-1",
-      "worker-profile-1",
-      "EN_ROUTE",
-      "On my way"
+      "worker-1",
+      { type: "before", photo_id: "photo-9", note: "Replaced faucet washer" }
     );
   });
 
@@ -101,26 +98,25 @@ describe("POST /api/jobs/[id]/status", () => {
     vi.mocked(Worker.findOne).mockReturnValue({
       lean: vi.fn().mockResolvedValue(null),
     } as never);
-    const res = await POST(request({ status: "EN_ROUTE" }), {
+    const res = await POST(request({ type: "before", photo_id: "photo-9" }), {
       params: { id: "job-1" },
     });
     expect(res.status).toBe(404);
-    expect(workerUpdateJobStatus).not.toHaveBeenCalled();
   });
 
   it("maps a FlowError to its HTTP status", async () => {
-    vi.mocked(workerUpdateJobStatus).mockRejectedValue(
-      new FlowError("invalid_status", "Job cannot move", 409)
+    vi.mocked(workerAttachPhoto).mockRejectedValue(
+      new FlowError("invalid_status", "Photos can only be attached to an active job", 409)
     );
-    const res = await POST(request({ status: "EN_ROUTE" }), {
+    const res = await POST(request({ type: "after", photo_id: "photo-9" }), {
       params: { id: "job-1" },
     });
     expect(res.status).toBe(409);
   });
 
   it("returns 500 for unexpected errors", async () => {
-    vi.mocked(workerUpdateJobStatus).mockRejectedValue(new Error("boom"));
-    const res = await POST(request({ status: "EN_ROUTE" }), {
+    vi.mocked(workerAttachPhoto).mockRejectedValue(new Error("boom"));
+    const res = await POST(request({ type: "after", photo_id: "photo-9" }), {
       params: { id: "job-1" },
     });
     expect(res.status).toBe(500);

@@ -9,6 +9,7 @@ import {
   Offer,
   Review,
   Session,
+  Upload,
   User,
   Worker,
   type WorkerCategory,
@@ -151,6 +152,7 @@ async function main() {
     Review.deleteMany({}),
     Offer.deleteMany({}),
     Job.deleteMany({}),
+    Upload.deleteMany({}),
     Worker.deleteMany({}),
     User.deleteMany({}),
   ]);
@@ -495,7 +497,76 @@ async function main() {
     },
   ]);
 
-  console.log("Created 3 demo jobs, 3 offers, 1 review, 14 job events, 5 messages.");
+  // Job D: BROADCASTING plumbing job (Ahmed Raza) — shows on the worker
+  // dashboard feed with a photo thumbnail and a live acceptance countdown
+  const demoPhoto = await Upload.create({
+    owner_id: ahmed._id,
+    mime: "image/png",
+    size: 68,
+    data: Buffer.from(
+      "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==",
+      "base64"
+    ),
+  });
+
+  const jobD = await Job.create({
+    customer_id: ahmed._id,
+    status: "BROADCASTING",
+    input: {
+      type: "text",
+      original_text: "Kitchen sink ka paani drain nahi ho raha, ruk gaya hai",
+      transcript: "Kitchen sink ka paani drain nahi ho raha, ruk gaya hai",
+      photo_ids: [String(demoPhoto._id)],
+    },
+    understanding: {
+      category: "plumber",
+      subcategory: "drain_cleaning",
+      description: "Kitchen sink drain blocked, water not draining",
+      required_skills: ["drain cleaning", "pipe fitting"],
+      urgency: "normal",
+      safety_flags: [],
+      confidence: 0.9,
+      clarification_required: false,
+    },
+    location: {
+      type: "Point",
+      coordinates: jitter(karachiArea.center, 0.02),
+      address_label: "House 21, Block 6, Gulshan-e-Iqbal, Karachi",
+    },
+    pricing: {
+      estimate_min: 1000,
+      estimate_max: 2500,
+      customer_offer: 1500,
+      worker_counter_offer: null,
+      final_price: null,
+      currency: "PKR",
+      status: "pending",
+    },
+    matching: {
+      search_radius_km: 5,
+      broadcast_round: 1,
+      acceptance_deadline: new Date(Date.now() + 8 * 60000),
+      selection_deadline: new Date(Date.now() + 16 * 60000),
+      selected_worker_id: null,
+    },
+    completion: {
+      before_photo_id: null,
+      after_photo_id: null,
+      ai_work_confirmation: null,
+      customer_confirmed: false,
+    },
+  });
+
+  await JobEvent.create({
+    job_id: jobD._id,
+    from_state: "DRAFT",
+    to_state: "BROADCASTING",
+    actor_type: "system",
+    actor_id: "matcher",
+    metadata: { radius_km: 5 },
+  });
+
+  console.log("Created 4 demo jobs, 3 offers, 1 review, 15 job events, 5 messages, 1 photo.");
 
   const counts = {
     users: await User.countDocuments(),
