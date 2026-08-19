@@ -610,7 +610,33 @@ describe("workerOffer", () => {
         type: "accept",
         offered_price: 2000,
         status: "pending",
+        expires_at: new Date(NOW.getTime() + 5 * 60_000),
       })
+    );
+  });
+
+  it("expires pending offers with the job acceptance deadline", async () => {
+    vi.mocked(Job.findOne).mockResolvedValue(broadcasting as never);
+    mockFindOneAndUpdate(broadcasting);
+    vi.mocked(Worker.updateOne).mockResolvedValue({
+      matchedCount: 1,
+      modifiedCount: 1,
+    } as never);
+    vi.mocked(Offer.create).mockImplementation((doc) =>
+      Promise.resolve(doc as never)
+    );
+
+    await workerOffer(
+      "job1",
+      "w1",
+      { type: "counter_offer", counter_price: 2500 },
+      NOW
+    );
+
+    const created = vi.mocked(Offer.create).mock.calls[0][0] as Record<string, unknown>;
+    expect(created.expires_at).toBeInstanceOf(Date);
+    expect((created.expires_at as Date).getTime()).toBe(
+      NOW.getTime() + 5 * 60_000
     );
   });
 

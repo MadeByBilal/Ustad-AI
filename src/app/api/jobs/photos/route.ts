@@ -7,7 +7,7 @@ import { Upload } from "@/models";
 
 export const dynamic = "force-dynamic";
 
-export const MAX_PHOTO_BYTES = 2 * 1024 * 1024;
+const MAX_PHOTO_BYTES = 2 * 1024 * 1024;
 
 const photoSchema = z.object({
   mime: z.enum(["image/jpeg", "image/png"]),

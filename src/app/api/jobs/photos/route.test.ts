@@ -16,11 +16,6 @@ const CUSTOMER_SESSION = {
   token: "token-1",
 };
 
-const WORKER_SESSION = {
-  user: { _id: "work1", role: "worker" as const },
-  token: "token-2",
-};
-
 const JPEG_PNG = Buffer.from(
   "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==",
   "base64"

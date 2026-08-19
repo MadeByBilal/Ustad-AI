@@ -515,6 +515,7 @@ export async function workerOffer(
     type: input.type,
     status: "pending",
     offered_price: customerOffer > 0 ? customerOffer : 0,
+    expires_at: job.matching?.acceptance_deadline ?? null,
     ...(input.type === "counter_offer"
       ? { counter_price: input.counter_price, message: input.message ?? null }
       : {}),
