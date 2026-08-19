@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useState } from "react";
 import type { WorkerDashboardData } from "@/lib/worker/dashboard";
+import { useJobStream } from "@/lib/useJobStream";
 import WorkerAvailability from "@/components/WorkerAvailability";
 import LocationUpdater from "./LocationUpdater";
 import IncomingJobCard from "./IncomingJobCard";
@@ -43,6 +44,8 @@ export default function WorkerDashboard({ workerId }: { workerId: string }) {
       clearInterval(clock);
     };
   }, [refresh]);
+
+  useJobStream(data?.active_job?._id ?? null, () => void refresh());
 
   if (!data) {
     return (

@@ -804,6 +804,127 @@ export async function customerSelectWorker(
 }
 
 /**
+ * Customer rejects one worker's offer (counter-offer or accept). The
+ * rejected worker is released back to availability and the job either
+ * returns to READY_TO_MATCH for a new broadcast or is closed.
+ */
+export async function customerRejectWorker(
+  jobId: string,
+  customerId: string,
+  workerId: string,
+  action: "close" | "rebroadcast" = "close",
+  now: Date = new Date()
+): Promise<JobDoc> {
+  const job = await requireJob({ _id: jobId, customer_id: customerId });
+  if (job.status !== "WORKER_RESPONSES" && job.status !== "CUSTOMER_SELECTING") {
+    throw new FlowError("invalid_status", "Job is not awaiting selection", 409);
+  }
+  if (expireIfDeadlinePassed(job.status, job.matching, now) === "EXPIRED") {
+    throw new FlowError("selection_window_closed", "Selection window has closed", 410);
+  }
+
+  const responders = (job.matching?.accepted_worker_ids ?? []).map(String);
+  if (!responders.includes(workerId)) {
+    throw new FlowError("worker_not_responding", "Worker did not respond to this job", 403);
+  }
+
+  const target: JobStatus = action === "rebroadcast" ? "READY_TO_MATCH" : "CANCELLED";
+  guardJourney(job, job.status, target, "customer");
+
+  const update: Record<string, unknown> =
+    action === "rebroadcast"
+      ? {
+          status: "READY_TO_MATCH",
+          "matching.accepted_worker_ids": [],
+          "matching.selected_worker_id": null,
+          "matching.selection_deadline": null,
+          "matching.acceptance_deadline": null,
+        }
+      : { status: "CANCELLED" };
+
+  const updated = await Job.findOneAndUpdate(
+    { _id: jobId, customer_id: customerId, status: job.status },
+    { $set: update },
+    { new: true }
+  );
+  if (!updated) {
+    throw new FlowError("invalid_status", "Job changed concurrently", 409);
+  }
+
+  await Offer.updateOne(
+    { job_id: jobId, worker_id: workerId, status: "pending" },
+    { $set: { status: "declined", expires_at: null } }
+  );
+  await Worker.updateOne(
+    { _id: workerId, active_job_id: jobId },
+    { $set: { active_job_id: null, is_available: true } }
+  );
+
+  await recordEvent(jobId, job.status, target, customerId, "customer", {
+    worker_id: workerId,
+    reason: action === "rebroadcast" ? "offer-rejected-rebroadcast" : "offer-rejected-close",
+  });
+  await recordSystemMessage(
+    jobId,
+    action === "rebroadcast"
+      ? "Counter-offer rejected — re-broadcasting to more ustads"
+      : "Counter-offer rejected — job closed"
+  );
+  return updated;
+}
+
+/**
+ * Worker cancels an assigned job they can no longer complete. The job is
+ * closed, the worker's availability is restored and their cancellation
+ * rate is raised (capped at 100).
+ */
+export async function workerCancelJob(
+  jobId: string,
+  workerId: string,
+  note?: string
+): Promise<JobDoc> {
+  const job = await requireJob({ _id: jobId, "matching.selected_worker_id": workerId });
+  const cancellable: JobStatus[] = ["ACCEPTED", "EN_ROUTE", "ARRIVED", "IN_PROGRESS"];
+  if (!cancellable.includes(job.status)) {
+    throw new FlowError(
+      "invalid_status",
+      `Job cannot be cancelled from ${job.status}`,
+      409
+    );
+  }
+  guardJourney(job, job.status, "CANCELLED", "worker");
+
+  const updated = await Job.findOneAndUpdate(
+    { _id: jobId, status: job.status, "matching.selected_worker_id": workerId },
+    { $set: { status: "CANCELLED" } },
+    { new: true }
+  );
+  if (!updated) {
+    throw new FlowError("invalid_status", "Job changed concurrently", 409);
+  }
+
+  await Worker.updateOne(
+    { _id: workerId, active_job_id: jobId },
+    {
+      $set: { active_job_id: null, is_available: true },
+      $inc: { cancellation_rate: 1 },
+      $min: { cancellation_rate: 100 },
+    }
+  );
+  await Offer.updateMany(
+    { job_id: jobId, worker_id: workerId, status: "pending" },
+    { $set: { status: "declined", expires_at: null } }
+  );
+
+  await recordEvent(jobId, job.status, "CANCELLED", workerId, "worker", {
+    reason: "worker-cancelled",
+    ...(note ? { note } : {}),
+  });
+  await recordSystemMessage(jobId, "Job cancelled by the worker");
+  return updated;
+}
+
+/**
  * Lazy deadline enforcement: marks a job EXPIRED when its acceptance or
  * selection window has passed and releases any locked workers.
  */

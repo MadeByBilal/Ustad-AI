@@ -45,6 +45,8 @@ import {
   submitOfferAndBroadcast,
   workerAcceptJob,
   customerSelectWorker,
+  customerRejectWorker,
+  workerCancelJob,
   markExpired,
   workerOffer,
   workerUpdateJobStatus,
@@ -471,6 +473,152 @@ describe("customerSelectWorker", () => {
     ) as unknown as JobDoc;
     vi.mocked(Job.findOne).mockResolvedValue(stale as never);
     await expect(customerSelectWorker("job1", "cust1", "w1", NOW)).rejects.toMatchObject({ code: "selection_window_closed" });
+  });
+});
+
+describe("customerRejectWorker", () => {
+  const responding = withStatus(
+    jobDoc({
+      matching: {
+        ...jobDoc().matching,
+        broadcast_id: "b-1",
+        accepted_worker_ids: ["w1", "w2"],
+        selection_deadline: new Date(NOW.getTime() + 60_000),
+      } as unknown as JobDoc["matching"],
+    }),
+    "WORKER_RESPONSES"
+  );
+
+  it("closes the job and releases the rejected worker", async () => {
+    vi.mocked(Job.findOne).mockResolvedValue(responding as never);
+    mockFindOneAndUpdate(responding);
+    vi.mocked(Worker.updateOne).mockResolvedValue({ matchedCount: 1 } as never);
+
+    const job = await customerRejectWorker("job1", "cust1", "w1", "close", NOW);
+
+    expect(job.status).toBe("CANCELLED");
+    expect(Offer.updateOne).toHaveBeenCalledWith(
+      { job_id: "job1", worker_id: "w1", status: "pending" },
+      expect.objectContaining({ $set: { status: "declined", expires_at: null } })
+    );
+    expect(Worker.updateOne).toHaveBeenCalledWith(
+      { _id: "w1", active_job_id: "job1" },
+      expect.objectContaining({ $set: { active_job_id: null, is_available: true } })
+    );
+    expect(JobEvent.create).toHaveBeenCalledWith(
+      expect.objectContaining({
+        from_state: "WORKER_RESPONSES",
+        to_state: "CANCELLED",
+        actor_id: "cust1",
+        actor_type: "customer",
+        metadata: { worker_id: "w1", reason: "offer-rejected-close" },
+      })
+    );
+    expect(Message.create).toHaveBeenCalledWith(
+      expect.objectContaining({ sender_type: "system", content: "Counter-offer rejected — job closed" })
+    );
+  });
+
+  it("returns the job to READY_TO_MATCH and clears responders when re-broadcasting", async () => {
+    vi.mocked(Job.findOne).mockResolvedValue(responding as never);
+    mockFindOneAndUpdate(responding);
+    vi.mocked(Worker.updateOne).mockResolvedValue({ matchedCount: 1 } as never);
+
+    const job = await customerRejectWorker("job1", "cust1", "w1", "rebroadcast", NOW);
+
+    expect(job.status).toBe("READY_TO_MATCH");
+    expect(job.matching!.accepted_worker_ids).toEqual([]);
+    expect(job.matching!.selection_deadline).toBeNull();
+    expect(job.matching!.acceptance_deadline).toBeNull();
+    expect(job.matching!.selected_worker_id).toBeNull();
+    expect(JobEvent.create).toHaveBeenCalledWith(
+      expect.objectContaining({
+        from_state: "WORKER_RESPONSES",
+        to_state: "READY_TO_MATCH",
+        metadata: { worker_id: "w1", reason: "offer-rejected-rebroadcast" },
+      })
+    );
+    expect(Message.create).toHaveBeenCalledWith(
+      expect.objectContaining({ content: "Counter-offer rejected — re-broadcasting to more ustads" })
+    );
+  });
+
+  it("rejects a worker who never responded", async () => {
+    const responded = withStatus(
+      { ...responding, matching: { ...responding.matching, accepted_worker_ids: ["w1"] } },
+      "WORKER_RESPONSES"
+    ) as unknown as JobDoc;
+    vi.mocked(Job.findOne).mockResolvedValue(responded as never);
+    await expect(
+      customerRejectWorker("job1", "cust1", "w2", "close", NOW)
+    ).rejects.toMatchObject({ code: "worker_not_responding" });
+  });
+
+  it("refuses when the job is not awaiting selection", async () => {
+    vi.mocked(Job.findOne).mockResolvedValue(withStatus(jobDoc(), "ACCEPTED") as never);
+    await expect(
+      customerRejectWorker("job1", "cust1", "w1", "close", NOW)
+    ).rejects.toMatchObject({ code: "invalid_status" });
+  });
+});
+
+describe("workerCancelJob", () => {
+  const active = withStatus(
+    jobDoc({
+      matching: {
+        ...jobDoc().matching,
+        broadcast_id: "b-1",
+        selected_worker_id: "w1",
+      } as unknown as JobDoc["matching"],
+    }),
+    "EN_ROUTE"
+  );
+
+  it("cancels the job, releases the worker and raises the cancellation rate", async () => {
+    vi.mocked(Job.findOne).mockResolvedValue(active as never);
+    mockFindOneAndUpdate(active);
+    vi.mocked(Worker.updateOne).mockResolvedValue({ matchedCount: 1 } as never);
+
+    const job = await workerCancelJob("job1", "w1", "vehicle breakdown");
+
+    expect(job.status).toBe("CANCELLED");
+    expect(Worker.updateOne).toHaveBeenCalledWith(
+      { _id: "w1", active_job_id: "job1" },
+      {
+        $set: { active_job_id: null, is_available: true },
+        $inc: { cancellation_rate: 1 },
+        $min: { cancellation_rate: 100 },
+      }
+    );
+    expect(JobEvent.create).toHaveBeenCalledWith(
+      expect.objectContaining({
+        from_state: "EN_ROUTE",
+        to_state: "CANCELLED",
+        actor_id: "w1",
+        actor_type: "worker",
+        metadata: { reason: "worker-cancelled", note: "vehicle breakdown" },
+      })
+    );
+    expect(Message.create).toHaveBeenCalledWith(
+      expect.objectContaining({ sender_type: "system", content: "Job cancelled by the worker" })
+    );
+  });
+
+  it("refuses to cancel from a finished status", async () => {
+    vi.mocked(Job.findOne).mockResolvedValue(
+      withStatus({ ...active, status: "AWAITING_CUSTOMER_CONFIRMATION" }, "AWAITING_CUSTOMER_CONFIRMATION") as never
+    );
+    await expect(
+      workerCancelJob("job1", "w1")
+    ).rejects.toMatchObject({ code: "invalid_status" });
+  });
+
+  it("refuses a worker who is not assigned to the job", async () => {
+    vi.mocked(Job.findOne).mockResolvedValue(null);
+    await expect(workerCancelJob("job1", "w2")).rejects.toMatchObject({
+      code: "job_not_found",
+      statusCode: 404,
+    });
   });
 });
 

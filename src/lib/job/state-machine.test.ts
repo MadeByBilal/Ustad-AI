@@ -84,6 +84,28 @@ describe("canTransition", () => {
     );
   });
 
+  it("allows the assigned worker to cancel an active job", () => {
+    expect(canTransition("ACCEPTED", "CANCELLED", "worker")).toBe(true);
+    expect(canTransition("EN_ROUTE", "CANCELLED", "worker")).toBe(true);
+    expect(canTransition("ARRIVED", "CANCELLED", "worker")).toBe(true);
+    expect(canTransition("IN_PROGRESS", "CANCELLED", "worker")).toBe(true);
+    expect(canTransition("AWAITING_CUSTOMER_CONFIRMATION", "CANCELLED", "worker")).toBe(
+      false
+    );
+  });
+
+  it("lets the customer send a rejected job back to re-broadcast", () => {
+    expect(canTransition("WORKER_RESPONSES", "READY_TO_MATCH", "customer")).toBe(
+      true
+    );
+    expect(canTransition("CUSTOMER_SELECTING", "READY_TO_MATCH", "customer")).toBe(
+      true
+    );
+    expect(canTransition("WORKER_RESPONSES", "READY_TO_MATCH", "worker")).toBe(
+      false
+    );
+  });
+
   it("rejects unknown / backwards transitions", () => {
     expect(canTransition("ACCEPTED", "BROADCASTING", "system")).toBe(false);
     expect(canTransition("DRAFT", "CUSTOMER_SELECTING", "system")).toBe(false);

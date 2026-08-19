@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import { fileToPhotoBase64 } from "@/lib/image";
+import { useJobStream } from "@/lib/useJobStream";
 
 interface ChatMessage {
   id: string;
@@ -52,6 +53,8 @@ export default function WorkerChat({ jobId }: { jobId: string }) {
     const timer = setInterval(() => void load(), POLL_MS);
     return () => clearInterval(timer);
   }, [load]);
+
+  useJobStream(jobId, () => void load());
 
   useEffect(() => {
     endRef.current?.scrollIntoView({ behavior: "smooth" });

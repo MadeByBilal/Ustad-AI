@@ -31,7 +31,7 @@ export interface SendMessageInput {
  * responded to, or jobs they were selected for. Phone numbers are never
  * part of the chat payload.
  */
-async function accessJob(
+export async function getAccessibleJob(
   jobId: string,
   userId: string,
   role: "customer" | "worker"
@@ -59,7 +59,7 @@ export async function listJobMessages(
   userId: string,
   role: "customer" | "worker"
 ): Promise<ChatMessageView[]> {
-  await accessJob(jobId, userId, role);
+  await getAccessibleJob(jobId, userId, role);
   const messages = await Message.find({ job_id: jobId })
     .sort({ created_at: 1 })
     .lean();
@@ -106,7 +106,7 @@ export async function sendJobMessage(
   senderType: "customer" | "worker",
   input: SendMessageInput
 ): Promise<MessageDoc> {
-  await accessJob(jobId, senderId, senderType);
+  await getAccessibleJob(jobId, senderId, senderType);
   return Message.create({
     job_id: jobId,
     sender_id: senderId,

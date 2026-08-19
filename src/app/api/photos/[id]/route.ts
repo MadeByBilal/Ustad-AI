@@ -35,7 +35,7 @@ export async function GET(
     | { value: () => Buffer }
     | (Uint8Array & { buffer: ArrayBufferLike });
   const bytes = new Uint8Array(
-    typeof source.value === "function"
+    "value" in source
       ? Buffer.from(source.value())
       : Buffer.from(source.buffer, source.byteOffset, source.byteLength)
   );
