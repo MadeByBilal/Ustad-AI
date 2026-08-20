@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import {
   CATEGORY_ESTIMATES,
+  INSPECTION_FEES,
   analyzeJobInput,
   deriveAnalysisForCategory,
 } from "@/lib/job/analyze";
@@ -90,5 +91,52 @@ describe("deriveAnalysisForCategory", () => {
     const r = deriveAnalysisForCategory("electrician", "short_circuit", "emergency");
     expect(r.urgency).toBe("emergency");
     expect(r.safety_flags.length).toBeGreaterThan(0);
+  });
+});
+
+describe("score-based category detection", () => {
+  it("picks the category with the most keyword hits", () => {
+    // "tap" + "leak" + "drain" = 3 plumber hits vs 0 for others
+    const r = analyzeJobInput("Bathroom ka tap leak ho raha hai, drain bhi blocked hai");
+    expect(r.category).toBe("plumber");
+  });
+
+  it("expands Roman-Urdu keywords to match canonical rules", () => {
+    const r = analyzeJobInput("nal ka paani nahi aa raha");
+    expect(r.category).toBe("plumber");
+  });
+
+  it("detects AC from short keyword", () => {
+    const r = analyzeJobInput("AC kharab hai, hawa nahi de raha");
+    expect(r.category).toBe("ac_technician");
+  });
+
+  it("detects carpenter from expanded keywords", () => {
+    const r = analyzeJobInput("Sootay mein darwaza tut gaya hai");
+    expect(r.category).toBe("carpenter");
+  });
+});
+
+describe("inspection fees (visit & check fee)", () => {
+  it("defines an inspection fee for every category", () => {
+    for (const category of Object.keys(CATEGORY_ESTIMATES)) {
+      expect(INSPECTION_FEES[category]).toBeGreaterThan(0);
+    }
+  });
+
+  it("returns the inspection fee on every analysis", () => {
+    const r = analyzeJobInput("Bathroom ka tap leak ho raha hai");
+    expect(r.inspection_fee).toBe(INSPECTION_FEES.plumber);
+  });
+
+  it("keeps the inspection fee small relative to the repair estimate", () => {
+    const r = analyzeJobInput("AC ki tandi nahi aa rahi, compressor check karwana hai");
+    expect(r.category).toBe("ac_technician");
+    expect(r.inspection_fee).toBeLessThan(r.estimate_min);
+  });
+
+  it("zeroes the inspection fee when the category is unknown", () => {
+    const r = analyzeJobInput("Kuch bhi random baat");
+    expect(r.inspection_fee).toBe(0);
   });
 });

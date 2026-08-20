@@ -47,7 +47,7 @@ const ACTOR_ALLOWANCES: Record<string, JobActor[]> = {
   "CUSTOMER_SELECTING->READY_TO_MATCH": ["customer", "system"],
   "CUSTOMER_SELECTING->EXPIRED": ["system"],
   "ACCEPTED->EN_ROUTE": ["worker"],
-  "EN_ROUTE->ARRIVED": ["worker"],
+  "EN_ROUTE->ARRIVED": ["worker", "system"],
   "ARRIVED->IN_PROGRESS": ["worker"],
   "IN_PROGRESS->AWAITING_CUSTOMER_CONFIRMATION": ["worker"],
   "AWAITING_CUSTOMER_CONFIRMATION->COMPLETED": ["customer", "system"],

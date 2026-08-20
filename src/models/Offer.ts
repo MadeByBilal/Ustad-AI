@@ -1,6 +1,11 @@
 import mongoose, { Schema, type InferSchemaType } from "mongoose";
 
-export const OFFER_TYPES = ["accept", "counter_offer", "decline"] as const;
+export const OFFER_TYPES = [
+  "accept",
+  "counter_offer",
+  "decline",
+  "customer_offer",
+] as const;
 export const OFFER_STATUSES = [
   "pending",
   "accepted",
@@ -37,7 +42,7 @@ const offerSchema = new Schema(
   },
   {
     timestamps: { createdAt: "created_at", updatedAt: "updated_at" },
-  }
+  },
 );
 
 offerSchema.index({ job_id: 1, worker_id: 1 }, { unique: true });

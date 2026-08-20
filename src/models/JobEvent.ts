@@ -8,7 +8,6 @@ const jobEventSchema = new Schema(
       type: Schema.Types.ObjectId,
       ref: "Job",
       required: true,
-      index: true,
     },
     from_state: { type: String, required: true },
     to_state: { type: String, required: true },
@@ -22,7 +21,7 @@ const jobEventSchema = new Schema(
   },
   {
     timestamps: { createdAt: "created_at", updatedAt: false },
-  }
+  },
 );
 
 jobEventSchema.index({ job_id: 1, created_at: 1 });

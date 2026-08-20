@@ -37,3 +37,28 @@ export function buildBoundingBox(
 function toRad(deg: number): number {
   return (deg * Math.PI) / 180;
 }
+
+/**
+ * Returns true if (lat1, lng1) is within `radiusMeters` of (lat2, lng2).
+ */
+export function isWithinRadius(
+  lat1: number,
+  lng1: number,
+  lat2: number,
+  lng2: number,
+  radiusMeters: number
+): boolean {
+  return haversineDistanceKm(lat1, lng1, lat2, lng2) * 1000 <= radiusMeters;
+}
+
+/**
+ * Estimates travel time in minutes assuming `averageSpeedKmph` (default 30 km/h
+ * for urban areas).
+ */
+export function estimateETAMinutes(
+  distanceKm: number,
+  averageSpeedKmph: number = 30
+): number {
+  if (distanceKm <= 0) return 0;
+  return Math.max(1, Math.round((distanceKm / averageSpeedKmph) * 60));
+}

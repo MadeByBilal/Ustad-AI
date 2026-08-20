@@ -1,10 +1,15 @@
 import { describe, expect, it } from "vitest";
 import {
   EMERGENCY_CAPABILITY_BONUS,
+  NO_GEO_WEIGHTS,
   RANKING_WEIGHTS,
+  VERIFIED_BONUS,
+  canonicalizeSkill,
+  pickBestAndOthers,
   rankWorkers,
   scoreWorker,
   workerCompletenessPct,
+  type WorkerOption,
   type WorkerScoreInput,
 } from "@/lib/matching";
 
@@ -179,5 +184,132 @@ describe("workerCompletenessPct", () => {
         NOW
       )
     ).toBe(100);
+  });
+});
+
+describe("pickBestAndOthers", () => {
+  function opt(id: string, score: number, category = "plumber" as const): WorkerOption {
+    return {
+      id,
+      name: `Worker ${id}`,
+      category,
+      skills: [],
+      verified: true,
+      verification_level: "identity_reviewed",
+      ustad_score: 80,
+      completed_jobs: 10,
+      average_rating: 4.5,
+      skills_match: 100,
+      final_score: score,
+    };
+  }
+
+  it("returns the top worker as best and the rest as others", () => {
+    const ranked = [opt("b", 95), opt("a", 99), opt("c", 80)];
+    const { best, others } = pickBestAndOthers(ranked, 3);
+    expect(best?.id).toBe("a");
+    expect(others.map((o) => o.id)).toEqual(["b", "c"]);
+  });
+
+  it("caps the others list to limit - 1", () => {
+    const ranked = [opt("1", 90), opt("2", 80), opt("3", 70), opt("4", 60)];
+    const { best, others } = pickBestAndOthers(ranked, 3);
+    expect(best?.id).toBe("1");
+    expect(others.map((o) => o.id)).toEqual(["2", "3"]);
+  });
+
+  it("handles an empty list", () => {
+    const { best, others } = pickBestAndOthers([], 3);
+    expect(best).toBeNull();
+    expect(others).toEqual([]);
+  });
+});
+
+describe("canonicalizeSkill", () => {
+  it("lowercases and trims", () => {
+    expect(canonicalizeSkill("  Faucet Repair  ")).toBe("faucet repair");
+  });
+
+  it("replaces Roman-Urdu synonyms with canonical tokens", () => {
+    expect(canonicalizeSkill("tap repair")).toBe("faucet repair");
+    expect(canonicalizeSkill("naali cleaning")).toBe("drain cleaning");
+    expect(canonicalizeSkill("nalka fitting")).toBe("faucet fitting");
+    expect(canonicalizeSkill("lakri door")).toBe("wood door");
+    expect(canonicalizeSkill("darwaza repair")).toBe("door repair");
+  });
+
+  it("leaves canonical skills unchanged", () => {
+    expect(canonicalizeSkill("faucet repair")).toBe("faucet repair");
+    expect(canonicalizeSkill("wiring")).toBe("wiring");
+  });
+});
+
+describe("skill matching with synonyms", () => {
+  const CTX_SYNONYM = {
+    required_skills: ["faucet repair"],
+    radius_km: 5,
+    urgency: "normal" as const,
+  };
+
+  it("gives full credit when worker skill matches via synonym", () => {
+    const s = scoreWorker(
+      makeWorker({ skills: ["tap repair"] }),
+      { ...CTX_SYNONYM, distance_km: 1 }
+    );
+    expect(s.skill_match_score).toBe(100);
+  });
+
+  it("gives full credit when worker skill is the canonical form", () => {
+    const s = scoreWorker(
+      makeWorker({ skills: ["faucet repair"] }),
+      { ...CTX_SYNONYM, distance_km: 1 }
+    );
+    expect(s.skill_match_score).toBe(100);
+  });
+
+  it("gives zero when no synonym or canonical match exists", () => {
+    const s = scoreWorker(
+      makeWorker({ skills: ["wiring", "fault finding"] }),
+      { ...CTX_SYNONYM, distance_km: 1 }
+    );
+    expect(s.skill_match_score).toBe(0);
+  });
+});
+
+describe("rating_score", () => {
+  it("scales average_rating to 0-100 (5.0 → 100, 4.0 → 80)", () => {
+    const s5 = scoreWorker(makeWorker({ average_rating: 5.0 }), {
+      ...CTX,
+      distance_km: 1,
+    });
+    const s4 = scoreWorker(makeWorker({ average_rating: 4.0 }), {
+      ...CTX,
+      distance_km: 1,
+    });
+    expect(s5.rating_score).toBe(100);
+    expect(s4.rating_score).toBe(80);
+  });
+});
+
+describe("no-geo weights", () => {
+  it("sum to 1.0", () => {
+    const sum =
+      NO_GEO_WEIGHTS.skill_match +
+      NO_GEO_WEIGHTS.distance +
+      NO_GEO_WEIGHTS.reliability +
+      NO_GEO_WEIGHTS.ustad +
+      NO_GEO_WEIGHTS.response +
+      NO_GEO_WEIGHTS.rating;
+    expect(sum).toBeCloseTo(1.0, 10);
+  });
+
+  it("has distance weight of 0", () => {
+    expect(NO_GEO_WEIGHTS.distance).toBe(0);
+  });
+});
+
+describe("verified bonus", () => {
+  it("is a positive constant", () => {
+    expect(VERIFIED_BONUS).toBeGreaterThan(0);
   });
 });

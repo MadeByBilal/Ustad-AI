@@ -3,6 +3,7 @@
 import { useState } from "react";
 import JobPhotoUpload from "./JobPhotoUpload";
 import WorkerChat from "./WorkerChat";
+import LiveTracker from "./LiveTracker";
 
 interface ActiveJob {
   _id: string;
@@ -208,6 +209,10 @@ export default function ActiveJobPanel({
         <p className="rounded-xl bg-stone-50 px-3 py-2 text-xs text-stone-600">
           Work note: {completionNote}
         </p>
+      )}
+
+      {activeJob.status === "EN_ROUTE" && (
+        <LiveTracker jobId={activeJob._id} />
       )}
 
       <div className="border-t border-stone-100 pt-3">

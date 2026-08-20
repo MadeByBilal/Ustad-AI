@@ -12,7 +12,6 @@ const messageSchema = new Schema(
       type: Schema.Types.ObjectId,
       ref: "Job",
       required: true,
-      index: true,
     },
     sender_id: {
       type: Schema.Types.Mixed,
@@ -32,7 +31,7 @@ const messageSchema = new Schema(
   },
   {
     timestamps: { createdAt: "created_at", updatedAt: false },
-  }
+  },
 );
 
 messageSchema.index({ job_id: 1, created_at: 1 });

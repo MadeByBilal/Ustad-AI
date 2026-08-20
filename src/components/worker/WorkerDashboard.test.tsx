@@ -48,6 +48,7 @@ function dashboardPayload(): unknown {
           my_offer: null,
         },
       ],
+      direct_requests: [],
     },
   };
 }

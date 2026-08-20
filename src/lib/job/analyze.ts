@@ -15,6 +15,21 @@ export const CATEGORY_ESTIMATES: Record<WorkerCategory, PriceEstimate> = {
   carpenter: { min: 1500, max: 5000 },
 };
 
+/**
+ * Visit-and-check fee: the only amount the customer commits to upfront.
+ * The main repair payment is settled after the ustad inspects the problem.
+ */
+export const INSPECTION_FEES: Record<WorkerCategory, number> = {
+  plumber: 300,
+  electrician: 350,
+  ac_technician: 500,
+  carpenter: 300,
+};
+
+export function inspectionFeeFor(category: WorkerCategory | null): number {
+  return category ? INSPECTION_FEES[category] : 0;
+}
+
 export const CANONICAL_SKILLS: Record<WorkerCategory, string[]> = {
   plumber: ["faucet repair", "pipe fitting", "drain cleaning", "geyser installation", "water tank installation"],
   electrician: ["wiring", "fault finding", "switchboard installation", "inverter installation", "lighting"],
@@ -33,6 +48,7 @@ export interface AnalysisResult {
   clarification_required: boolean;
   estimate_min: number;
   estimate_max: number;
+  inspection_fee: number;
 }
 
 interface KeywordRule {
@@ -45,27 +61,42 @@ interface KeywordRule {
 const KEYWORD_RULES: KeywordRule[] = [
   {
     category: "electrician",
-    keywords: ["short circuit", "wiring", "fuse", "switchboard", "switch", "socket", "inverter", "generator", "lighting", "bijli", "luce", "shock", "current"],
+    keywords: [
+      "short circuit", "wiring", "fuse", "switchboard", "switch", "socket",
+      "inverter", "generator", "lighting", "bijli", "luce", "shock", "current",
+      "main switch", "db", "meter", "power outage",
+    ],
     subcategory: "electrical_fault",
-    skills: ["fault finding", "wiring"],
+    skills: ["fault finding", "wiring", "switchboard installation", "inverter installation", "lighting"],
   },
   {
     category: "plumber",
-    keywords: ["leak", "tap", "faucet", "pani", "paani", "water tank", "pipe", "bathroom", "toilet", "geyser", "drain", "naali", "motor"],
+    keywords: [
+      "leak", "tap", "faucet", "pani", "paani", "water tank", "pipe",
+      "bathroom", "toilet", "geyser", "drain", "naali", "motor",
+      "nal", "nala", "towel radiator",
+    ],
     subcategory: "plumbing_fault",
-    skills: ["pipe fitting", "faucet repair"],
+    skills: ["pipe fitting", "faucet repair", "drain cleaning", "geyser installation", "water tank installation"],
   },
   {
     category: "ac_technician",
-    keywords: ["air conditioner", "window ac", "split ac", "compressor", "gas refill", "refrigerant", "cooler"],
+    keywords: [
+      "air conditioner", "window ac", "split ac", "compressor",
+      "gas refill", "refrigerant", "cooler", "ac", "hawa",
+    ],
     subcategory: "ac_fault",
-    skills: ["ac repair", "gas refilling"],
+    skills: ["ac repair", "gas refilling", "compressor service", "ac installation", "deep cleaning"],
   },
   {
     category: "carpenter",
-    keywords: ["darwaza", "door", "lakri", "lakdi", "wood", "furniture", "almari", "cabinet", "wardrobe", "sofa", "kitchen"],
+    keywords: [
+      "darwaza", "door", "lakri", "lakdi", "wood", "furniture",
+      "almari", "cabinet", "wardrobe", "sofa", "kitchen",
+      "table", "chair", "shelf",
+    ],
     subcategory: "carpentry_work",
-    skills: ["door repair", "furniture making"],
+    skills: ["door repair", "furniture making", "cabinet repair", "wardrobe installation", "kitchen cabinets"],
   },
 ];
 
@@ -155,13 +186,27 @@ export function analyzeJobInput(
       clarification_required: !categoryHint,
       estimate_min: categoryHint ? CATEGORY_ESTIMATES[categoryHint].min : 0,
       estimate_max: categoryHint ? CATEGORY_ESTIMATES[categoryHint].max : 0,
+      inspection_fee: inspectionFeeFor(categoryHint),
     };
   }
 
-  const matchedRule = KEYWORD_RULES.find((rule) =>
-    hasKeyword(normalized, rule.keywords)
-  );
-  const category = matchedRule?.category ?? categoryHint ?? null;
+  // Score-based category detection: count keyword hits per category,
+  // pick the highest. Ties broken by rule order (electrician first).
+  let bestCategory: WorkerCategory | null = null;
+  let bestHits = 0;
+  let bestRule: KeywordRule | null = null;
+
+  for (const rule of KEYWORD_RULES) {
+    const hits = rule.keywords.filter((k) => normalized.includes(k)).length;
+    if (hits > bestHits) {
+      bestHits = hits;
+      bestCategory = rule.category;
+      bestRule = rule;
+    }
+  }
+
+  const category = bestCategory ?? categoryHint ?? null;
+  const matchedRule = bestRule;
 
   if (!category) {
     return {
@@ -175,6 +220,7 @@ export function analyzeJobInput(
       clarification_required: true,
       estimate_min: 0,
       estimate_max: 0,
+      inspection_fee: 0,
     };
   }
 
@@ -194,16 +240,16 @@ export function analyzeJobInput(
           .filter((flag, idx, arr) => arr.indexOf(flag) === idx)
       : [];
 
+  // Use skills from the matched rule; fall back to first 2 canonical skills
   const required_skills =
     matchedRule && matchedSkillsFor(normalized, matchedRule.skills).length > 0
       ? matchedSkillsFor(normalized, matchedRule.skills)
       : CANONICAL_SKILLS[category].slice(0, 2);
 
-  const keywordHits = KEYWORD_RULES.flatMap((r) =>
-    r.keywords.filter((k) => normalized.includes(k))
-  ).length;
-
-  const confidence = Math.min(0.95, 0.7 + (keywordHits >= 2 ? 0.1 : 0));
+  const confidence = Math.min(
+    0.95,
+    0.7 + (bestHits >= 2 ? 0.1 : 0) + (bestHits >= 3 ? 0.05 : 0)
+  );
 
   return {
     category,
@@ -216,6 +262,7 @@ export function analyzeJobInput(
     clarification_required: false,
     estimate_min: CATEGORY_ESTIMATES[category].min,
     estimate_max: CATEGORY_ESTIMATES[category].max,
+    inspection_fee: INSPECTION_FEES[category],
   };
 }
 
@@ -237,6 +284,7 @@ export function deriveAnalysisForCategory(
     clarification_required: false,
     estimate_min: estimates.min,
     estimate_max: estimates.max,
+    inspection_fee: INSPECTION_FEES[category],
   };
 }
 

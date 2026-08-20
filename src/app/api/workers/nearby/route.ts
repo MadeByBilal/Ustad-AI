@@ -47,8 +47,10 @@ export async function GET(req: NextRequest) {
   }
 
   const workers = (await Worker.find(query).limit(limit).lean()).filter(
-    (w): w is typeof w & { location: NonNullable<typeof w.location> } =>
-      Boolean(w.location?.coordinates)
+    (w) => {
+      const loc = w.location;
+      return Boolean(loc?.coordinates) && (loc!.coordinates as number[]).length === 2;
+    }
   );
 
   const results = workers
@@ -69,8 +71,8 @@ export async function GET(req: NextRequest) {
         haversineDistanceKm(
           lat,
           lng,
-          w.location.coordinates[1],
-          w.location.coordinates[0]
+          (w.location!.coordinates as number[])[1],
+          (w.location!.coordinates as number[])[0]
         ).toFixed(2)
       ),
     }))

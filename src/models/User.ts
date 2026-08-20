@@ -12,11 +12,15 @@ const userSchema = new Schema(
       default: "customer",
     },
     name: { type: String, trim: true },
-    phone: {
+    email: {
       type: String,
       required: true,
-      unique: true,
-      index: true,
+      lowercase: true,
+      trim: true,
+    },
+    password_hash: { type: String, required: true, select: false },
+    phone: {
+      type: String,
       match: /^03\d{9}$/,
     },
     language: {
@@ -24,8 +28,6 @@ const userSchema = new Schema(
       enum: ["ur", "en"],
       default: "ur",
     },
-    otp_hash: { type: String, select: false },
-    otp_expires_at: { type: Date, select: false },
     location: {
       type: {
         type: String,
@@ -38,10 +40,13 @@ const userSchema = new Schema(
   },
   {
     timestamps: { createdAt: "created_at", updatedAt: "updated_at" },
-  }
+  },
 );
 
-userSchema.index({ phone: 1 }, { unique: true });
+userSchema.index({ email: 1 }, { unique: true });
+// Sparse: legacy phone-OTP accounts keep their number; email-auth users
+// simply have no phone, and many such users must be able to coexist.
+userSchema.index({ phone: 1 }, { unique: true, sparse: true });
 
 export type UserDoc = InferSchemaType<typeof userSchema>;
 

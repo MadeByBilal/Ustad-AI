@@ -6,7 +6,6 @@ const sessionSchema = new Schema(
       type: String,
       required: true,
       unique: true,
-      index: true,
     },
     user_id: {
       type: Schema.Types.ObjectId,
@@ -24,7 +23,7 @@ const sessionSchema = new Schema(
   },
   {
     timestamps: { createdAt: "created_at", updatedAt: "updated_at" },
-  }
+  },
 );
 
 sessionSchema.index({ expires_at: 1 }, { expireAfterSeconds: 0 });

@@ -149,6 +149,7 @@ export async function createAndAnalyzeJob(
     pricing: {
       estimate_min: analysis.estimate_min,
       estimate_max: analysis.estimate_max,
+      inspection_fee: analysis.inspection_fee ?? 0,
     },
     location: {
       type: "Point",
@@ -220,6 +221,7 @@ export async function reanalyzeJob(
         "understanding.clarification_required": analysis.clarification_required,
         "pricing.estimate_min": analysis.estimate_min,
         "pricing.estimate_max": analysis.estimate_max,
+        "pricing.inspection_fee": analysis.inspection_fee ?? 0,
         ...(input.location
           ? {
               "location.coordinates": input.location.coordinates ?? [],

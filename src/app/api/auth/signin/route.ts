@@ -2,12 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { connectDB } from "@/lib/mongodb";
 import { fail, ok } from "@/lib/api";
-import {
-  hashOtp,
-  isValidOtpFormat,
-  isValidPakistaniPhone,
-  normalizePhone,
-} from "@/lib/auth/otp";
+import { verifyPassword } from "@/lib/auth/password";
 import {
   SESSION_COOKIE_NAME,
   SESSION_TTL_DAYS,
@@ -19,9 +14,11 @@ import { Session, User } from "@/models";
 export const dynamic = "force-dynamic";
 
 const bodySchema = z.object({
-  phone: z.string().min(1, "Phone is required"),
-  otp: z.string().min(1, "OTP is required"),
+  email: z.string().trim().email("Enter a valid email address"),
+  password: z.string().min(1, "Password is required"),
 });
+
+const INVALID_CREDENTIALS = "Invalid email or password";
 
 function setSessionCookie(response: NextResponse, token: string) {
   response.cookies.set(SESSION_COOKIE_NAME, token, {
@@ -34,9 +31,8 @@ function setSessionCookie(response: NextResponse, token: string) {
 }
 
 /**
- * Verifies the OTP, creates a server-side session record and issues an
- * httpOnly cookie. Roles are enforced by the session record, so the
- * cookie itself carries no user data.
+ * Email + password sign-in. Uses a single generic error for unknown emails
+ * and wrong passwords so the endpoint cannot be used to enumerate accounts.
  */
 export async function POST(req: NextRequest) {
   const parsed = bodySchema.safeParse(await req.json().catch(() => ({})));
@@ -44,51 +40,35 @@ export async function POST(req: NextRequest) {
     return fail("Invalid request", 400, parsed.error.flatten().fieldErrors);
   }
 
-  const phone = normalizePhone(parsed.data.phone);
-  const { otp } = parsed.data;
-
-  if (!isValidPakistaniPhone(phone)) {
-    return fail("Enter a valid Pakistani mobile number (03XXXXXXXXX)", 422);
-  }
-  if (!isValidOtpFormat(otp)) {
-    return fail("OTP must be six digits", 422);
-  }
+  const email = parsed.data.email.trim().toLowerCase();
 
   await connectDB();
 
-  const user = await User.findOne({ phone })
-    .select("+otp_hash +otp_expires_at")
+  const user = await User.findOne({ email })
+    .select("+password_hash")
     .lean();
 
-  if (!user || !user.otp_hash || !user.otp_expires_at) {
-    return fail("No OTP was requested for this number. Request one first.", 404);
-  }
-
-  if (user.otp_expires_at.getTime() < Date.now()) {
-    return fail("OTP expired. Request a new one.", 410);
-  }
-
-  if (hashOtp(otp, phone) !== user.otp_hash) {
-    return fail("Incorrect OTP", 401);
+  if (
+    !user ||
+    typeof user.password_hash !== "string" ||
+    !verifyPassword(parsed.data.password, user.password_hash)
+  ) {
+    return fail(INVALID_CREDENTIALS, 401);
   }
 
   const token = createSessionToken();
   const userAgent = req.headers.get("user-agent") ?? "";
   const ip = req.headers.get("x-forwarded-for") ?? "local";
-
-  const session = await Session.create({
+  await Session.create({
     token,
     user_id: user._id,
     role: user.role,
     fingerprint: fingerprint(userAgent, ip),
-    expires_at: new Date(
-      Date.now() + SESSION_TTL_DAYS * 24 * 60 * 60 * 1000
-    ),
+    expires_at: new Date(Date.now() + SESSION_TTL_DAYS * 24 * 60 * 60 * 1000),
   });
 
   const response = ok({
-    user: { id: user._id, role: user.role, name: user.name, phone: user.phone },
-    session_id: session._id,
+    user: { id: user._id, role: user.role, name: user.name, email: user.email },
   });
   setSessionCookie(response, token);
   return response;

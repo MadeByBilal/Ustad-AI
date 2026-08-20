@@ -130,6 +130,14 @@ describe("worker journey transitions", () => {
     expect(canTransition("EN_ROUTE", "ARRIVED", "worker")).toBe(true);
   });
 
+  it("allows EN_ROUTE -> ARRIVED for system (geofence auto-arrival)", () => {
+    expect(canTransition("EN_ROUTE", "ARRIVED", "system")).toBe(true);
+  });
+
+  it("rejects EN_ROUTE -> ARRIVED for the customer", () => {
+    expect(canTransition("EN_ROUTE", "ARRIVED", "customer")).toBe(false);
+  });
+
   it("allows ARRIVED -> IN_PROGRESS for the worker", () => {
     expect(canTransition("ARRIVED", "IN_PROGRESS", "worker")).toBe(true);
   });

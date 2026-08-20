@@ -2,7 +2,6 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import VoiceCapture from "./VoiceCapture";
 import PhotoPicker from "./PhotoPicker";
 import WorkerResults from "./WorkerResults";
 
@@ -50,6 +49,7 @@ interface AnalyzedJob {
     currency?: string;
     estimate_min?: number;
     estimate_max?: number;
+    inspection_fee?: number;
   };
   location?: {
     address_label?: string;
@@ -126,6 +126,10 @@ export default function NewWorkWizard() {
     const u = params.get("urgency");
     if (u === "emergency" || u === "potentially_urgent") {
       setInput((prev) => ({ ...prev, urgency_hint: u }));
+    }
+    const c = params.get("category");
+    if (c === "plumber" || c === "electrician" || c === "ac_technician" || c === "carpenter") {
+      setInput((prev) => ({ ...prev, category_hint: c }));
     }
   }, []);
 
@@ -249,6 +253,7 @@ export default function NewWorkWizard() {
 
   const estimateMin = job?.pricing?.estimate_min ?? 0;
   const estimateMax = job?.pricing?.estimate_max ?? 0;
+  const inspectionFee = job?.pricing?.inspection_fee ?? 0;
   const isEmergency = job?.understanding?.urgency === "emergency";
   const defaultOffer = estimateMin > 0 ? String(estimateMin) : "";
 
@@ -291,7 +296,16 @@ export default function NewWorkWizard() {
       {step === 1 && (
         <div className="card space-y-4">
           {method === "voice" && (
-            <VoiceCapture onFinal={(transcript) => setInput((prev) => ({ ...prev, original_text: transcript }))} />
+            <div className="rounded-xl border border-dashed border-[#0e5f44]/40 bg-[#0e5f44]/5 p-4 text-sm text-stone-600">
+              پہلے ہوم پیج پر مائیک کا بٹن دبائیں اور اپنا مسئلہ بتائیں — price
+              and ustads are set automatically.
+              <Link
+                href="/"
+                className="mt-2 block font-semibold text-[#0e5f44] underline"
+              >
+                Record on the home page →
+              </Link>
+            </div>
           )}
           {method === "photo" && <PhotoPicker onPhotos={setPhotoIds} />}
           <div>
@@ -465,6 +479,13 @@ export default function NewWorkWizard() {
                 </span>
               )}
             </p>
+            {inspectionFee > 0 && (
+              <p className="mt-2 rounded-lg bg-amber-50 px-3 py-1.5 text-xs text-amber-800">
+                Visit &amp; check fee: <b>₨ {inspectionFee.toLocaleString("en-PK")}</b>{" "}
+                paid first — main price ustad ke muaina ke baad tay hogi (final
+                repair price is set after the ustad inspects the problem).
+              </p>
+            )}
           </div>
 
           {job.location?.address_label && (
@@ -498,6 +519,7 @@ export default function NewWorkWizard() {
         <OfferStep
           estimateMin={estimateMin}
           estimateMax={estimateMax}
+          inspectionFee={inspectionFee}
           isEmergency={isEmergency}
           defaultOffer={defaultOffer}
           busy={busy}
@@ -551,6 +573,7 @@ export default function NewWorkWizard() {
 function OfferStep({
   estimateMin,
   estimateMax,
+  inspectionFee,
   isEmergency,
   defaultOffer,
   busy,
@@ -559,6 +582,7 @@ function OfferStep({
 }: {
   estimateMin: number;
   estimateMax: number;
+  inspectionFee: number;
   isEmergency: boolean;
   defaultOffer: string;
   busy: boolean;
@@ -583,6 +607,12 @@ function OfferStep({
           )}
           {isEmergency && " · optional for emergency jobs"}
         </p>
+        {inspectionFee > 0 && (
+          <p className="mt-2 rounded-lg bg-amber-50 px-3 py-1.5 text-xs text-amber-800">
+            Visit &amp; check fee <b>₨ {inspectionFee.toLocaleString("en-PK")}</b>{" "}
+            — pehle sirf itni fee, main price ustad ke muaine ke baad.
+          </p>
+        )}
       </div>
 
       <div>

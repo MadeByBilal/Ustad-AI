@@ -1,46 +1,98 @@
 // @vitest-environment jsdom
 import { describe, expect, it, vi, beforeEach, afterEach } from "vitest";
-import { render, screen, act } from "@testing-library/react";
+import { render, screen, act, fireEvent } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import VoiceCapture from "./VoiceCapture";
 
-class FakeSpeechRecognition {
-  static instances: FakeSpeechRecognition[] = [];
-  lang = "";
-  continuous = false;
-  interimResults = false;
-  onresult: ((event: unknown) => void) | null = null;
-  onend: (() => void) | null = null;
-  onerror: ((event: { error: string }) => void) | null = null;
-  start = vi.fn();
-  stop = vi.fn();
+async function holdThenRelease() {
+  const mic = screen.getByRole("button", { name: "Hold to speak" });
+  await act(async () => {
+    fireEvent.pointerDown(mic);
+  });
+  await act(async () => {
+    await new Promise((resolve) => setTimeout(resolve, 0));
+  });
+  await act(async () => {
+    fireEvent.pointerUp(mic);
+  });
+}
 
-  constructor() {
-    FakeSpeechRecognition.instances.push(this);
-  }
+class FakeMediaRecorder {
+  static instances: FakeMediaRecorder[] = [];
+  mimeType = "audio/webm";
+  state: "inactive" | "recording" = "inactive";
+  ondataavailable: ((e: { data: Blob }) => void) | null = null;
+  onstop: (() => void) | null = null;
 
-  fireResult(transcript: string, isFinal: boolean): void {
-    const event = {
-      results: {
-        0: { 0: { transcript, confidence: 1 }, isFinal },
-        length: 1,
-      },
-    };
-    this.onresult?.(event);
-  }
+  start = vi.fn(() => {
+    this.state = "recording";
+  });
 
-  fireError(error: string): void {
-    this.onerror?.({ error });
-  }
+  stop = vi.fn(() => {
+    this.state = "inactive";
+    const blob = new Blob([new Uint8Array([0x1f, 0xa6])], { type: this.mimeType });
+    this.ondataavailable?.({ data: blob });
+    this.onstop?.();
+  });
 
-  fireEnd(): void {
-    this.onend?.();
+  constructor(public stream: unknown) {
+    FakeMediaRecorder.instances.push(this);
   }
 }
 
+const fetchMock = vi.fn();
+
+const WORKERS = {
+  best: {
+    id: "w1",
+    name: "Muhammad Imran",
+    category: "electrician",
+    skills: ["electrical_fault", "switch_repair"],
+    verified: true,
+    verification_level: "identity_reviewed",
+    ustad_score: 88,
+    completed_jobs: 55,
+    average_rating: 4.5,
+    skills_match: 100,
+    final_score: 95,
+  },
+  others: [],
+};
+
+const UNDERSTANDING = {
+  category: "electrician",
+  subcategory: "electrical_fault",
+  description: "Switch sparks lag rahi hai",
+  required_skills: ["electrical_fault", "switch_repair"],
+  urgency: "emergency",
+  safety_flags: ["sparking_switch"],
+  confidence: 0.98,
+  clarification_required: false,
+  estimate_min: 1500,
+  estimate_max: 4000,
+  inspection_fee: 350,
+};
+
+function okResponse(data: unknown) {
+  return new Response(JSON.stringify({ success: true, data }), {
+    status: 200,
+    headers: { "Content-Type": "application/json" },
+  });
+}
+
+function stubRecorderGlobals() {
+  vi.stubGlobal("MediaRecorder", FakeMediaRecorder);
+  vi.stubGlobal("navigator", {
+    mediaDevices: {
+      getUserMedia: vi.fn().mockResolvedValue({ getTracks: () => [] }),
+    },
+  });
+}
+
 beforeEach(() => {
-  FakeSpeechRecognition.instances = [];
-  vi.stubGlobal("SpeechRecognition", FakeSpeechRecognition);
+  FakeMediaRecorder.instances = [];
+  fetchMock.mockReset();
+  vi.stubGlobal("fetch", fetchMock);
 });
 
 afterEach(() => {
@@ -48,74 +100,95 @@ afterEach(() => {
 });
 
 describe("VoiceCapture", () => {
-  it("shows a disabled note when speech recognition is unsupported", () => {
-    vi.unstubAllGlobals();
-    render(<VoiceCapture onFinal={vi.fn()} />);
-    expect(screen.getByText(/voice not supported/i)).toBeDisabled();
+  it("shows only a mic button with no forms", () => {
+    render(<VoiceCapture />);
+    expect(screen.getByRole("button", { name: "Hold to speak" })).toBeInTheDocument();
+    expect(screen.queryByRole("textbox")).not.toBeInTheDocument();
+    expect(screen.queryByRole("tab")).not.toBeInTheDocument();
   });
 
-  it("starts listening in Urdu and toggles the button on click", async () => {
+  it("shows an error when speech is not supported and lets the user reset", async () => {
     const user = userEvent.setup();
-    render(<VoiceCapture onFinal={vi.fn()} />);
+    render(<VoiceCapture />);
 
-    await user.click(screen.getByRole("button", { name: /voice note/i }));
+    await user.click(screen.getByRole("button", { name: "Hold to speak" }));
 
-    const rec = FakeSpeechRecognition.instances[0];
-    expect(rec).toBeDefined();
-    expect(rec.lang).toBe("ur-PK");
-    expect(rec.continuous).toBe(true);
-    expect(rec.interimResults).toBe(true);
-    expect(rec.start).toHaveBeenCalledTimes(1);
-    expect(screen.getByRole("button", { name: /stop listening/i })).toBeInTheDocument();
+    expect(await screen.findByText(/voice recording is not supported/i)).toBeInTheDocument();
+    await user.click(screen.getByRole("button", { name: "Try again" }));
+    expect(screen.getByRole("button", { name: "Hold to speak" })).toBeInTheDocument();
   });
 
-  it("shows interim transcript while speaking", async () => {
-    const user = userEvent.setup();
-    render(<VoiceCapture onFinal={vi.fn()} />);
-    await user.click(screen.getByRole("button", { name: /voice note/i }));
+  it("records audio, analyzes it, and shows category, urgency, price and the best worker", async () => {
+    stubRecorderGlobals();
+    render(<VoiceCapture />);
 
-    const rec = FakeSpeechRecognition.instances[0];
-    act(() => rec.fireResult("geyser", false));
-    act(() => rec.fireResult("geyser on", false));
+    fetchMock.mockResolvedValueOnce(
+      okResponse({ understanding: UNDERSTANDING, workers: WORKERS, source: "gemini" })
+    );
 
-    expect(screen.getByText("geyser on", { exact: false })).toBeInTheDocument();
+    await holdThenRelease();
+
+    expect(await screen.findByText("Best match")).toBeInTheDocument();
+    expect(screen.getByText("Electrician")).toBeInTheDocument();
+    expect(screen.getByText("Emergency")).toBeInTheDocument();
+    expect(screen.getByText("98% confident")).toBeInTheDocument();
+    expect(screen.getByText("PKR 350 visit fee · then PKR 1,500 – PKR 4,000")).toBeInTheDocument();
+    expect(screen.getByText("Muhammad Imran")).toBeInTheDocument();
+    expect(screen.getByText(/sparking_switch/)).toBeInTheDocument();
+
+    const [url, init] = fetchMock.mock.calls[0] as [string, RequestInit];
+    expect(url).toBe("/api/ai/understand");
+    expect(init.method).toBe("POST");
+    expect(init.body).toBeInstanceOf(FormData);
+
+    const cta = screen.getByRole("link", { name: "Set price & find workers" });
+    expect(cta.getAttribute("href")).toContain("/login?next=");
+    expect(cta.getAttribute("href")).toContain("%2Fnew-work%3Fmethod%3Dvoice");
+    expect(cta.getAttribute("href")).toContain("urgency%3Demergency");
   });
 
-  it("delivers the final transcript and appends it visibly", async () => {
+  it("asks one clarifying question then commits the answer", async () => {
+    stubRecorderGlobals();
     const user = userEvent.setup();
-    const onFinal = vi.fn();
-    render(<VoiceCapture onFinal={onFinal} />);
-    await user.click(screen.getByRole("button", { name: /voice note/i }));
+    render(<VoiceCapture />);
 
-    const rec = FakeSpeechRecognition.instances[0];
-    act(() => rec.fireResult("geyser on nahi ho rahi", true));
-    act(() => rec.fireEnd());
+    fetchMock.mockResolvedValueOnce(
+      okResponse({
+        understanding: { ...UNDERSTANDING, category: null, confidence: 0.3 },
+        clarification_question: "Kya masla hai? Bijli ya paani?",
+        workers: { best: null, others: [] },
+      })
+    );
+    await holdThenRelease();
 
-    expect(onFinal).toHaveBeenCalledWith("geyser on nahi ho rahi");
-    expect(screen.getByText(/geyser on nahi ho rahi/)).toBeInTheDocument();
+    expect(await screen.findByText("Kya masla hai? Bijli ya paani?")).toBeInTheDocument();
+
+    await user.type(screen.getByPlaceholderText(/bijli/m), "bijli ka masla hai");
+    fetchMock.mockResolvedValueOnce(
+      okResponse({ understanding: UNDERSTANDING, workers: WORKERS, source: "gemini" })
+    );
+    await user.click(screen.getByRole("button", { name: "Continue" }));
+
+    expect(await screen.findByText("Electrician")).toBeInTheDocument();
+    const [, secondCall] = fetchMock.mock.calls[1] as [string, RequestInit];
+    expect(JSON.parse(String(secondCall.body)).clarification).toContain("bijli");
   });
 
-  it("stops listening when the stop button is clicked", async () => {
+  it("shows the server error and lets the user retry", async () => {
+    stubRecorderGlobals();
     const user = userEvent.setup();
-    render(<VoiceCapture onFinal={vi.fn()} />);
-    await user.click(screen.getByRole("button", { name: /voice note/i }));
+    render(<VoiceCapture />);
 
-    const rec = FakeSpeechRecognition.instances[0];
-    await user.click(screen.getByRole("button", { name: /stop listening/i }));
+    fetchMock.mockResolvedValueOnce(
+      new Response(
+        JSON.stringify({ success: false, error: "Something went wrong. Please try again." }),
+        { status: 500 }
+      )
+    );
+    await holdThenRelease();
 
-    expect(rec.stop).toHaveBeenCalledTimes(1);
-  });
-
-  it("shows a message on recognition errors and resets the button", async () => {
-    const user = userEvent.setup();
-    render(<VoiceCapture onFinal={vi.fn()} />);
-    await user.click(screen.getByRole("button", { name: /voice note/i }));
-
-    const rec = FakeSpeechRecognition.instances[0];
-    act(() => rec.fireError("no-speech"));
-    act(() => rec.fireEnd());
-
-    expect(screen.getByText(/couldn't hear anything/i)).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: /voice note/i })).toBeInTheDocument();
+    expect(await screen.findByText(/something went wrong/i)).toBeInTheDocument();
+    await user.click(screen.getByRole("button", { name: "Try again" }));
+    expect(screen.getByRole("button", { name: "Hold to speak" })).toBeInTheDocument();
   });
 });

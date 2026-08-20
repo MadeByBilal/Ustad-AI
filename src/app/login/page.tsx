@@ -3,72 +3,78 @@
 import { useRouter, useSearchParams } from "next/navigation";
 import { Suspense, useState } from "react";
 import Link from "next/link";
+import { CANONICAL_SKILLS } from "@/lib/job/analyze";
+import type { WorkerCategory } from "@/models";
 
-type Step = "phone" | "otp";
+type Mode = "signin" | "signup";
+type Role = "customer" | "worker";
 
-function LoginForm() {
+const CATEGORY_LABELS: Record<WorkerCategory, string> = {
+  plumber: "Plumber",
+  electrician: "Electrician",
+  ac_technician: "AC Technician",
+  carpenter: "Carpenter",
+};
+
+function destinationFor(role: string): string {
+  if (role === "customer") return "/dashboard/customer";
+  if (role === "worker") return "/dashboard/worker";
+  return "/dashboard";
+}
+
+function AuthForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const next = searchParams.get("next") ?? "/dashboard";
 
-  const [step, setStep] = useState<Step>("phone");
-  const [phone, setPhone] = useState("");
-  const [role, setRole] = useState<"customer" | "worker">("customer");
-  const [otp, setOtp] = useState("");
-  const [mockOtp, setMockOtp] = useState<string | null>(null);
+  const [mode, setMode] = useState<Mode>("signin");
+  const [role, setRole] = useState<Role>("customer");
+  const [name, setName] = useState("");
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [category, setCategory] = useState<WorkerCategory>("plumber");
+  const [skills, setSkills] = useState<string[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
 
-  async function requestOtp(e: React.FormEvent) {
+  function toggleSkill(skill: string) {
+    setSkills((prev) =>
+      prev.includes(skill) ? prev.filter((s) => s !== skill) : [...prev, skill]
+    );
+  }
+
+  function switchMode(nextMode: Mode) {
+    setMode(nextMode);
+    setError(null);
+  }
+
+  async function submit(e: React.FormEvent) {
     e.preventDefault();
     setError(null);
     setLoading(true);
     try {
-      const res = await fetch("/api/auth/otp", {
+      const payload =
+        mode === "signin"
+          ? { email, password }
+          : {
+              name,
+              email,
+              password,
+              role,
+              ...(role === "worker" ? { worker: { category, skills } } : {}),
+            };
+      const res = await fetch(`/api/auth/${mode === "signin" ? "signin" : "signup"}`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ phone, role }),
+        body: JSON.stringify(payload),
       });
       const body = await res.json();
       if (!res.ok) {
         setError(body.error ?? "Something went wrong");
         return;
       }
-      if (body.data.mock_otp) {
-        setMockOtp(body.data.mock_otp);
-        setOtp(body.data.mock_otp);
-      }
-      setStep("otp");
-    } catch {
-      setError("Network error — is the dev server running?");
-    } finally {
-      setLoading(false);
-    }
-  }
-
-  async function verifyOtp(e: React.FormEvent) {
-    e.preventDefault();
-    setError(null);
-    setLoading(true);
-    try {
-      const res = await fetch("/api/auth/verify", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ phone, otp }),
-      });
-      const body = await res.json();
-      if (!res.ok) {
-        setError(body.error ?? "Verification failed");
-        return;
-      }
-      const role = body.data.user.role;
-      const dest =
-        role === "customer"
-          ? "/dashboard/customer"
-          : role === "worker"
-            ? "/dashboard/worker"
-            : "/dashboard";
-      router.push(next.startsWith("/dashboard") ? dest : dest);
+      const dest = destinationFor(body.data.user.role);
+      router.push(next.startsWith("/dashboard") ? next : dest);
       router.refresh();
     } catch {
       setError("Network error — is the dev server running?");
@@ -77,10 +83,7 @@ function LoginForm() {
     }
   }
 
-  const demoNumbers = [
-    { label: "Customer demo", phone: "03001234567", name: "Ahmed Raza" },
-    { label: "Worker demo", phone: "03010000001", name: "Muhammad Imran (plumber)" },
-  ];
+  const availableSkills = CANONICAL_SKILLS[category];
 
   return (
     <div className="card mx-auto w-full max-w-md p-6 sm:p-8">
@@ -91,11 +94,31 @@ function LoginForm() {
         ← Back
       </Link>
 
-      <h1 className="font-urdu text-2xl font-bold">لاگ ان کریں</h1>
+      {/* Sign in / Sign up tabs */}
+      <div className="grid grid-cols-2 gap-2 rounded-xl bg-stone-100 p-1">
+        {(["signin", "signup"] as const).map((m) => (
+          <button
+            key={m}
+            type="button"
+            onClick={() => switchMode(m)}
+            className={`rounded-lg py-2 text-sm font-semibold transition-colors ${
+              mode === m
+                ? "bg-white text-[#0e5f44] shadow-sm"
+                : "text-stone-500 hover:text-stone-700"
+            }`}
+          >
+            {m === "signin" ? "Sign in" : "Sign up"}
+          </button>
+        ))}
+      </div>
+
+      <h1 className="mt-5 font-urdu text-2xl font-bold">
+        {mode === "signin" ? "لاگ ان کریں" : "اکاؤنٹ بنائیں"}
+      </h1>
       <p className="mt-1 text-sm text-stone-500">
-        {step === "phone"
-          ? "Enter your mobile number — no password needed"
-          : `OTP sent to ${phone}`}
+        {mode === "signin"
+          ? "Sign in with your email and password"
+          : "Create your account with email and password"}
       </p>
 
       {error && (
@@ -104,102 +127,138 @@ function LoginForm() {
         </p>
       )}
 
-      {step === "phone" ? (
-        <form onSubmit={requestOtp} className="mt-6 space-y-4">
-          <div className="grid grid-cols-2 gap-2 rounded-xl bg-stone-100 p-1">
-            {(["customer", "worker"] as const).map((r) => (
-              <button
-                key={r}
-                type="button"
-                onClick={() => setRole(r)}
-                className={`rounded-lg py-2 text-sm font-semibold transition-colors ${
-                  role === r
-                    ? "bg-white text-[#0e5f44] shadow-sm"
-                    : "text-stone-500 hover:text-stone-700"
-                }`}
-              >
-                {r === "customer" ? "Customer" : "Technician"}
-              </button>
-            ))}
-          </div>
-
-          <div>
-            <label htmlFor="phone" className="mb-1 block text-sm font-medium text-stone-700">
-              Mobile number
-            </label>
-            <input
-              id="phone"
-              type="tel"
-              inputMode="numeric"
-              placeholder="03XXXXXXXXX"
-              value={phone}
-              onChange={(e) => setPhone(e.target.value)}
-              className="input"
-              required
-            />
-          </div>
-
-          <button type="submit" disabled={loading} className="btn-primary w-full disabled:opacity-60">
-            {loading ? "Sending OTP…" : "Send OTP"}
-          </button>
-
-          <div className="rounded-xl bg-stone-50 p-3">
-            <p className="text-xs font-semibold uppercase tracking-wide text-stone-400">
-              Demo accounts
-            </p>
-            <div className="mt-2 space-y-1.5">
-              {demoNumbers.map((d) => (
+      <form onSubmit={submit} className="mt-6 space-y-4">
+        {mode === "signup" && (
+          <>
+            <div className="grid grid-cols-2 gap-2 rounded-xl bg-stone-100 p-1">
+              {(["customer", "worker"] as const).map((r) => (
                 <button
-                  key={d.phone}
+                  key={r}
                   type="button"
-                  onClick={() => setPhone(d.phone)}
-                  className="flex w-full items-center justify-between rounded-lg bg-white px-3 py-2 text-left text-xs text-stone-600 ring-1 ring-stone-200 transition-colors hover:bg-stone-100"
+                  onClick={() => setRole(r)}
+                  className={`rounded-lg py-2 text-sm font-semibold transition-colors ${
+                    role === r
+                      ? "bg-white text-[#0e5f44] shadow-sm"
+                      : "text-stone-500 hover:text-stone-700"
+                  }`}
                 >
-                  <span className="font-medium">{d.name}</span>
-                  <span className="font-mono">{d.phone}</span>
+                  {r === "customer" ? "Customer" : "Technician"}
                 </button>
               ))}
             </div>
-          </div>
-        </form>
-      ) : (
-        <form onSubmit={verifyOtp} className="mt-6 space-y-4">
-          {mockOtp && (
-            <p className="rounded-lg bg-emerald-50 px-3 py-2 text-sm text-emerald-800">
-              Demo mode — your OTP is <span className="font-mono font-bold">{mockOtp}</span>
-            </p>
-          )}
-          <div>
-            <label htmlFor="otp" className="mb-1 block text-sm font-medium text-stone-700">
-              Enter OTP
-            </label>
-            <input
-              id="otp"
-              type="text"
-              inputMode="numeric"
-              maxLength={6}
-              value={otp}
-              onChange={(e) => setOtp(e.target.value.replace(/\D/g, ""))}
-              className="input text-center font-mono text-lg tracking-[0.5em]"
-              required
-            />
-          </div>
-          <button type="submit" disabled={loading} className="btn-primary w-full disabled:opacity-60">
-            {loading ? "Verifying…" : "Verify & continue"}
-          </button>
-          <button
-            type="button"
-            onClick={() => {
-              setStep("phone");
-              setOtp("");
-              setMockOtp(null);
-            }}
-            className="w-full text-center text-sm text-stone-500 hover:text-stone-700"
-          >
-            Change number
-          </button>
-        </form>
-      )}
+
+            <div>
+              <label htmlFor="name" className="mb-1 block text-sm font-medium text-stone-700">
+                Full name
+              </label>
+              <input
+                id="name"
+                type="text"
+                autoComplete="name"
+                placeholder="e.g. Ayesha Khan"
+                value={name}
+                onChange={(e) => setName(e.target.value)}
+                className="input"
+                required
+              />
+            </div>
+          </>
+        )}
+
+        <div>
+          <label htmlFor="email" className="mb-1 block text-sm font-medium text-stone-700">
+            Email
+          </label>
+          <input
+            id="email"
+            type="email"
+            autoComplete="email"
+            placeholder="you@example.com"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            className="input"
+            required
+          />
+        </div>
+
+        <div>
+          <label htmlFor="password" className="mb-1 block text-sm font-medium text-stone-700">
+            Password
+          </label>
+          <input
+            id="password"
+            type="password"
+            autoComplete={mode === "signin" ? "current-password" : "new-password"}
+            placeholder={mode === "signup" ? "8+ characters with a letter and a number" : "Your password"}
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            className="input"
+            required
+          />
+        </div>
+
+        {mode === "signup" && role === "worker" && (
+          <>
+            <div>
+              <label htmlFor="category" className="mb-1 block text-sm font-medium text-stone-700">
+                Trade
+              </label>
+              <select
+                id="category"
+                value={category}
+                onChange={(e) => {
+                  setCategory(e.target.value as WorkerCategory);
+                  setSkills([]);
+                }}
+                className="input"
+              >
+                {(Object.keys(CATEGORY_LABELS) as WorkerCategory[]).map((c) => (
+                  <option key={c} value={c}>
+                    {CATEGORY_LABELS[c]}
+                  </option>
+                ))}
+              </select>
+            </div>
+            <fieldset>
+              <legend className="mb-1 block text-sm font-medium text-stone-700">
+                Skills <span className="font-normal text-stone-400">(pick at least one)</span>
+              </legend>
+              <div className="flex flex-wrap gap-2">
+                {availableSkills.map((skill) => {
+                  const active = skills.includes(skill);
+                  return (
+                    <button
+                      key={skill}
+                      type="button"
+                      aria-pressed={active}
+                      onClick={() => toggleSkill(skill)}
+                      className={`rounded-full px-3 py-1.5 text-xs font-semibold transition-colors ${
+                        active
+                          ? "bg-[#0e5f44] text-white"
+                          : "bg-stone-100 text-stone-600 hover:bg-stone-200"
+                      }`}
+                    >
+                      {skill}
+                    </button>
+                  );
+                })}
+              </div>
+            </fieldset>
+          </>
+        )}
+
+        <button type="submit" disabled={loading} className="btn-primary w-full disabled:opacity-60">
+          {loading
+            ? mode === "signin"
+              ? "Signing in…"
+              : "Creating account…"
+            : mode === "signin"
+              ? "Sign in"
+              : role === "worker"
+                ? "Create technician account"
+                : "Create account"}
+        </button>
+      </form>
     </div>
   );
 }
@@ -208,7 +267,7 @@ export default function LoginPage() {
   return (
     <main className="flex min-h-screen items-center justify-center bg-[#eae4d6] px-4 py-10">
       <Suspense fallback={<div className="card p-8">Loading…</div>}>
-        <LoginForm />
+        <AuthForm />
       </Suspense>
     </main>
   );

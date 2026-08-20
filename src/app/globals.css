@@ -2,37 +2,136 @@
 @tailwind components;
 @tailwind utilities;
 
+@import url('https://fonts.googleapis.com/css2?family=Noto+Nastaliq+Urdu:wght@400;500;600;700&display=swap');
+
 :root {
   --sand: #f6f3ec;
   --ink: #16231d;
   --pine: #0e5f44;
   --pine-dark: #0a4632;
+  --font-urdu: "Noto Nastaliq Urdu", serif;
+  --font-ui: "Inter", system-ui, -apple-system, sans-serif;
+  --line-height-urdu: 2.2;
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html {
+  direction: ltr;
+  scroll-behavior: smooth;
+  -webkit-overflow-scrolling: touch;
 }
 
 body {
   color: var(--ink);
   background: var(--sand);
-  font-family: "Inter", system-ui, -apple-system, sans-serif;
+  font-family: var(--font-ui);
+  -webkit-tap-highlight-color: transparent;
+  overscroll-behavior: none;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
 }
 
+/* Urdu content — Nastaliq with proper RTL and line-height */
 .font-urdu {
-  font-family: "Noto Nastaliq Urdu", "Inter", sans-serif;
+  font-family: var(--font-urdu);
+  direction: rtl;
+  text-align: right;
+  line-height: var(--line-height-urdu);
+  unicode-bidi: isolate;
+}
+
+/* Urdu heading — larger, bolder */
+.urdu-heading {
+  font-family: var(--font-urdu);
+  direction: rtl;
+  text-align: right;
+  line-height: 1.8;
+  font-weight: 700;
+  unicode-bidi: isolate;
+}
+
+/* Urdu body text — readable with generous line-height */
+.urdu-body {
+  font-family: var(--font-urdu);
+  direction: rtl;
+  text-align: right;
+  line-height: var(--line-height-urdu);
+  unicode-bidi: isolate;
+}
+
+/* Mixed content — Urdu paragraph in LTR layout */
+.urdu-paragraph {
+  font-family: var(--font-urdu);
+  direction: rtl;
+  text-align: right;
+  line-height: var(--line-height-urdu);
+  margin: 0;
+  padding: 0;
+  unicode-bidi: isolate;
+}
+
+/* Hide scrollbar but keep scrollable */
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+.no-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
 }
 
 @layer components {
   .btn-primary {
-    @apply inline-flex items-center justify-center rounded-xl bg-[#0e5f44] px-5 py-3 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-[#0a4632] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#0e5f44] active:scale-[0.98];
+    @apply inline-flex items-center justify-center rounded-2xl bg-[#0e5f44] px-6 py-4 text-base font-semibold text-white shadow-lg transition-all hover:bg-[#0a4632] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#0e5f44] active:scale-[0.97];
   }
   .btn-secondary {
-    @apply inline-flex items-center justify-center rounded-xl border border-stone-300 bg-white px-5 py-3 text-sm font-semibold text-stone-800 transition-colors hover:bg-stone-50 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-stone-400 active:scale-[0.98];
+    @apply inline-flex items-center justify-center rounded-2xl border border-stone-200 bg-white px-6 py-4 text-base font-semibold text-stone-800 shadow-sm transition-all hover:bg-stone-50 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-stone-400 active:scale-[0.97];
+  }
+  .btn-danger {
+    @apply inline-flex items-center justify-center rounded-2xl border-2 border-red-200 bg-white px-6 py-4 text-base font-semibold text-red-600 shadow-sm transition-all hover:bg-red-50 active:scale-[0.97];
   }
   .card {
     @apply rounded-2xl border border-stone-200 bg-white p-5 shadow-sm;
   }
+  .card-lg {
+    @apply rounded-2xl border border-stone-200 bg-white p-6 shadow-sm;
+  }
   .input {
-    @apply w-full rounded-xl border border-stone-300 bg-white px-4 py-3 text-sm text-stone-900 placeholder:text-stone-400 focus:border-[#0e5f44] focus:outline-none focus:ring-2 focus:ring-[#0e5f44]/20;
+    @apply w-full rounded-2xl border border-stone-200 bg-white px-5 py-4 text-base text-stone-900 placeholder:text-stone-400 focus:border-[#0e5f44] focus:outline-none focus:ring-2 focus:ring-[#0e5f44]/20;
   }
   .badge {
-    @apply inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-xs font-medium;
+    @apply inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-sm font-medium;
+  }
+
+  /* Mobile bottom nav */
+  .bottom-nav {
+    @apply fixed bottom-0 left-0 right-0 z-50 border-t border-stone-200 bg-white/95 backdrop-blur-lg safe-area-bottom;
+  }
+  .bottom-nav-item {
+    @apply flex flex-1 flex-col items-center gap-1 py-3 text-xs font-medium text-stone-400 transition-colors;
+  }
+  .bottom-nav-item.active {
+    @apply text-[#0e5f44];
+  }
+  .bottom-nav-item svg {
+    @apply h-6 w-6;
+  }
+
+  .safe-area-bottom {
+    padding-bottom: env(safe-area-inset-bottom, 0px);
+  }
+
+  .page {
+    @apply min-h-screen pb-28;
+  }
+  .page-header {
+    @apply sticky top-0 z-40 border-b border-stone-200 bg-white/95 px-5 py-4 backdrop-blur-lg;
+  }
+  .page-content {
+    @apply px-5 py-5;
   }
 }

@@ -70,10 +70,27 @@ export interface ActiveJobView {
   };
 }
 
+/** A direct customer request awaiting this worker's response. */
+export interface DirectRequestView {
+  offer_id: string;
+  job_id: string;
+  category: string;
+  description: string;
+  original_text: string;
+  required_skills: string[];
+  urgency: string;
+  customer_offer: number;
+  my_counter_price: number | null;
+  offer_status: string;
+  address_label: string;
+  created_at: string;
+}
+
 export interface WorkerDashboardData {
   worker: WorkerView;
   active_job: ActiveJobView | null;
   incoming_jobs: IncomingJobView[];
+  direct_requests: DirectRequestView[];
 }
 
 /**
@@ -95,7 +112,7 @@ export async function getWorkerDashboard(workerId: string): Promise<WorkerDashbo
       ? worker.location.coordinates
       : [null, null];
 
-  const [activeJob, incomingJobs, openOffers] = await Promise.all([
+  const [activeJob, incomingJobs, openOffers, directRequestOffers] = await Promise.all([
     worker.active_job_id ? Job.findById(worker.active_job_id).lean() : null,
     Job.find({
       status: "BROADCASTING",
@@ -107,6 +124,14 @@ export async function getWorkerDashboard(workerId: string): Promise<WorkerDashbo
       .limit(10)
       .lean(),
     Offer.find({ worker_id: worker._id, status: { $in: ["pending", "declined"] } })
+      .lean(),
+    // Direct customer requests targeting this worker
+    Offer.find({
+      worker_id: worker._id,
+      type: { $in: ["customer_offer", "counter_offer"] },
+      status: "pending",
+    })
+      .sort({ created_at: -1 })
       .lean(),
   ]);
 
@@ -156,6 +181,45 @@ export async function getWorkerDashboard(workerId: string): Promise<WorkerDashbo
         my_offer: offerByJob.get(String(job._id)) ?? null,
       };
     });
+
+  // Fetch jobs for direct customer offers
+  const directJobIds = directRequestOffers
+    .filter((o) => o.type === "customer_offer")
+    .map((o) => o.job_id);
+  const directJobs = directJobIds.length > 0
+    ? await Job.find({ _id: { $in: directJobIds } }).lean()
+    : [];
+  const directJobMap = new Map(directJobs.map((j) => [String(j._id), j]));
+
+  // Latest offer per job (the one the worker needs to respond to)
+  const latestOfferByJob = new Map<string, typeof directRequestOffers[0]>();
+  for (const o of directRequestOffers) {
+    const jid = String(o.job_id);
+    const existing = latestOfferByJob.get(jid);
+    if (!existing || new Date(o.created_at).getTime() > new Date(existing.created_at).getTime()) {
+      latestOfferByJob.set(jid, o);
+    }
+  }
+
+  const direct_requests: DirectRequestView[] = [];
+  for (const [jid, offer] of latestOfferByJob) {
+    const job = directJobMap.get(jid);
+    if (!job || job.status !== "BROADCASTING") continue;
+    direct_requests.push({
+      offer_id: String(offer._id),
+      job_id: jid,
+      category: job.understanding?.category ?? "",
+      description: job.understanding?.description ?? "",
+      original_text: job.input?.original_text ?? "",
+      required_skills: job.understanding?.required_skills ?? [],
+      urgency: job.understanding?.urgency ?? "normal",
+      customer_offer: job.pricing?.customer_offer ?? 0,
+      my_counter_price: offer.type === "counter_offer" ? (offer.counter_price ?? null) : null,
+      offer_status: offer.status,
+      address_label: job.location?.address_label ?? "",
+      created_at: new Date(offer.created_at).toISOString(),
+    });
+  }
 
   return {
     worker: {
@@ -224,5 +288,6 @@ export async function getWorkerDashboard(workerId: string): Promise<WorkerDashbo
         }
       : null,
     incoming_jobs,
+    direct_requests,
   };
 }

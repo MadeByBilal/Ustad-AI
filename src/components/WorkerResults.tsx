@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { parseApiResponse } from "@/lib/api-client";
+import CustomerOfferModal from "@/components/worker/CustomerOfferModal";
 
 const POLL_INTERVAL_MS = 3000;
 
@@ -37,7 +38,11 @@ export interface JobDetailResponse {
     status: string;
     urgency: string;
     matching: { selected_worker_id: string | null };
-    pricing: { final_price: number | null };
+    pricing: {
+      final_price: number | null;
+      estimate_min?: number;
+      estimate_max?: number;
+    };
   };
   responders: Responder[];
 }
@@ -61,6 +66,7 @@ export default function WorkerResults({
 }: WorkerResultsProps) {
   const [detail, setDetail] = useState<JobDetailResponse | null>(null);
   const [expanded, setExpanded] = useState<string | null>(null);
+  const [offerModalWorkerId, setOfferModalWorkerId] = useState<string | null>(null);
   const [hired, setHired] = useState<ResponderWorker | null>(null);
   const [finalPrice, setFinalPrice] = useState<number | null>(null);
   const [busy, setBusy] = useState(false);
@@ -177,6 +183,7 @@ export default function WorkerResults({
   }
 
   return (
+    <>
     <div className="space-y-3">
       {error && (
         <div className="rounded-2xl border border-red-200 bg-red-50 p-4">
@@ -234,6 +241,13 @@ export default function WorkerResults({
               </button>
               <button
                 type="button"
+                className="btn btn-outline text-blue-600 hover:bg-blue-50"
+                onClick={() => setOfferModalWorkerId(worker.id)}
+              >
+                Make Offer
+              </button>
+              <button
+                type="button"
                 disabled={busy}
                 className="btn btn-primary"
                 onClick={() => hire(worker)}
@@ -251,5 +265,27 @@ export default function WorkerResults({
         );
       })}
     </div>
+    {offerModalWorkerId != null && (
+      <CustomerOfferModal
+        jobId={jobId}
+        workerId={offerModalWorkerId}
+        workerName={responders.find((r) => r.worker.id === offerModalWorkerId)?.worker.name || "Worker"}
+        currentOffer={customerOffer}
+        estimateMin={detail?.job.pricing?.estimate_min ?? 0}
+        estimateMax={detail?.job.pricing?.estimate_max ?? 0}
+        onClose={() => setOfferModalWorkerId(null)}
+        onSubmitted={() => {
+          setOfferModalWorkerId(null);
+          // Refresh the detail to show updated offer
+          void (async () => {
+            const body = await parseApiResponse<JobDetailResponse>(
+              await fetch(`/api/jobs/${jobId}`)
+            );
+            setDetail(body);
+          })();
+        }}
+      />
+    )}
+    </>
   );
 }

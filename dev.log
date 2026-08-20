@@ -1,0 +1,52 @@
+npm notice run ustad-ai@0.1.0 dev
+npm notice run next dev
+ ⚠ Port 3000 is in use, trying 3001 instead.
+  ▲ Next.js 14.2.35
+  - Local:        http://localhost:3001
+  - Environments: .env.local
+
+ ✓ Starting...
+ ✓ Ready in 2.9s
+ ○ Compiling /api/auth/signup ...
+ ✓ Compiled /api/auth/signup in 1012ms (152 modules)
+(node:301479) [MONGOOSE] Warning: Duplicate schema index on {"email":1} found. This is often due to declaring an index using both "index: true" and "schema.index()". Please remove the duplicate index definition.
+(Use `node --trace-warnings ...` to show where the warning was created)
+ POST /api/auth/signup 201 in 1644ms
+ ⨯ MongoServerError: Can't extract geo keys: { _id: ObjectId('6a8732e7f6c1a31827196203'), user_id: ObjectId('6a8732e7f6c1a31827196201'), name: "Ali Plumber", category: "plumber", skills: [ "pipe fitting", "faucet repair", "drain cleaning" ], is_online: false, is_available: true, emergency_available: false, verified: false, verification_level: "identity_reviewed", suspended: false, location: { type: "Point" }, service_area: { type: "Polygon" }, active_job_id: null, ustad_score: 0, completed_jobs: 0, confirmed_jobs: 0, response_rate: 100, cancellation_rate: 0, average_rating: 0, repeat_customers: 0, emergency_capabilities: [], location_updated_at: new Date(1787245287979), created_at: new Date(1787245287982), updated_at: new Date(1787245287982), __v: 0 }  Point must be an array or object, instead got type missing
+    at InsertOneOperation.handleOk (/home/bilal_dev/Documents/projects/oss/Ustad Ai/node_modules/mongodb/lib/operations/insert.js:51:19)
+    at tryOperation (/home/bilal_dev/Documents/projects/oss/Ustad Ai/node_modules/mongodb/lib/operations/execute_operation.js:214:34)
+    at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+    at async executeOperation (/home/bilal_dev/Documents/projects/oss/Ustad Ai/node_modules/mongodb/lib/operations/execute_operation.js:78:16)
+    at async Collection.insertOne (/home/bilal_dev/Documents/projects/oss/Ustad Ai/node_modules/mongodb/lib/collection.js:154:16) {
+  errorLabelSet: Set(0) {},
+  errorResponse: {
+    index: 0,
+    code: 16755,
+    errmsg: `Can't extract geo keys: { _id: ObjectId('6a8732e7f6c1a31827196203'), user_id: ObjectId('6a8732e7f6c1a31827196201'), name: "Ali Plumber", category: "plumber", skills: [ "pipe fitting", "faucet repair", "drain cleaning" ], is_online: false, is_available: true, emergency_available: false, verified: false, verification_level: "identity_reviewed", suspended: false, location: { type: "Point" }, service_area: { type: "Polygon" }, active_job_id: null, ustad_score: 0, completed_jobs: 0, confirmed_jobs: 0, response_rate: 100, cancellation_rate: 0, average_rating: 0, repeat_customers: 0, emergency_capabilities: [], location_updated_at: new Date(1787245287979), created_at: new Date(1787245287982), updated_at: new Date(1787245287982), __v: 0 }  Point must be an array or object, instead got type missing`
+  },
+  index: 0,
+  code: 16755
+}
+ POST /api/auth/signup 500 in 250ms
+ ✓ Compiled in 518ms (152 modules)
+(node:301479) [MONGOOSE] Warning: Duplicate schema index on {"email":1} found. This is often due to declaring an index using both "index: true" and "schema.index()". Please remove the duplicate index definition.
+ POST /api/auth/signup 409 in 129ms
+ POST /api/auth/signup 201 in 87ms
+ ✓ Compiled /api/auth/signin in 355ms (154 modules)
+(node:301479) [MONGOOSE] Warning: Duplicate schema index on {"email":1 ✓ Compiled in 751ms (203 modules)
+ ✓ Compiled in 118ms (203 modules)
+ ✓ Compiled in 84ms (203 modules)
+ ✓ Compiled in 106ms (203 modules)
+ ✓ Compiled in 32ms (203 modules)
+ ✓ Compiled in 49ms (203 modules)
+ ✓ Compiled in 59ms (203 modules)
+ ✓ Compiled in 56ms (203 modules)
+n {"email":1} found. This is often due to declaring an index using both "index: true" and "schema.index()". Please remove the duplicate index definition.
+ GET /api/auth/session 200 in 261ms
+ ✓ Compiled in 402ms (156 modules)
+ ✓ Compiled /api/health in 388ms (158 modules)
+ GET /api/health 200 in 457ms
+ ○ Compiling /_not-found ...
+ ✓ Compiled /_not-found in 1554ms (584 modules)
+ GET /health 404 in 1670ms
+ ✓ Compiled in 156ms (235 modules)

@@ -21,7 +21,11 @@ export const JOB_STATUSES = [
 export type JobStatus = (typeof JOB_STATUSES)[number];
 
 export const INPUT_TYPES = ["voice", "text", "photo"] as const;
-export const URGENCY_LEVELS = ["normal", "potentially_urgent", "emergency"] as const;
+export const URGENCY_LEVELS = [
+  "normal",
+  "potentially_urgent",
+  "emergency",
+] as const;
 export type UrgencyLevel = (typeof URGENCY_LEVELS)[number];
 export const PRICING_STATUSES = ["pending", "agreed", "disputed"] as const;
 
@@ -31,13 +35,11 @@ const jobSchema = new Schema(
       type: Schema.Types.ObjectId,
       ref: "User",
       required: true,
-      index: true,
     },
     status: {
       type: String,
       enum: JOB_STATUSES,
       default: "DRAFT",
-      index: true,
     },
     input: {
       type: {
@@ -75,6 +77,7 @@ const jobSchema = new Schema(
     pricing: {
       estimate_min: { type: Number, default: 0 },
       estimate_max: { type: Number, default: 0 },
+      inspection_fee: { type: Number, default: 0 },
       customer_offer: { type: Number, default: 0 },
       worker_counter_offer: { type: Number, default: null },
       final_price: { type: Number, default: null },
@@ -113,7 +116,7 @@ const jobSchema = new Schema(
   },
   {
     timestamps: { createdAt: "created_at", updatedAt: "updated_at" },
-  }
+  },
 );
 
 jobSchema.index({ customer_id: 1, status: 1, created_at: -1 });

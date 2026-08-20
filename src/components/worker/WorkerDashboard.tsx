@@ -6,6 +6,7 @@ import { useJobStream } from "@/lib/useJobStream";
 import WorkerAvailability from "@/components/WorkerAvailability";
 import LocationUpdater from "./LocationUpdater";
 import IncomingJobCard from "./IncomingJobCard";
+import DirectRequestCard from "./DirectRequestCard";
 import ActiveJobPanel from "./ActiveJobPanel";
 
 const POLL_MS = 15000;
@@ -160,6 +161,23 @@ export default function WorkerDashboard({ workerId }: { workerId: string }) {
               </div>
             )}
           </section>
+
+          {data.direct_requests.length > 0 && (
+            <section className="card">
+              <h2 className="text-sm font-bold uppercase tracking-wide text-stone-500">
+                Direct Requests from Customers
+              </h2>
+              <div className="mt-3 space-y-3">
+                {data.direct_requests.map((req) => (
+                  <DirectRequestCard
+                    key={req.offer_id}
+                    request={req}
+                    onChanged={() => void refresh()}
+                  />
+                ))}
+              </div>
+            </section>
+          )}
         </div>
       </section>
 

@@ -1,25 +1,35 @@
 import { redirect } from "next/navigation";
-import { connectDB } from "@/lib/mongodb";
 import { requireRole } from "@/lib/auth";
+import { connectDB } from "@/lib/mongodb";
 import { Worker } from "@/models";
-import WorkerDashboard from "@/components/worker/WorkerDashboard";
+import WorkerHome from "@/components/worker/WorkerHome";
 
 export const dynamic = "force-dynamic";
 
 export default async function WorkerDashboardPage() {
-  const { user } = await requireRole(["worker"]).catch(() => {
+  let session;
+  try {
+    session = await requireRole(["worker"]);
+  } catch {
     redirect("/login");
     throw new Error("unreachable");
-  });
+  }
 
   await connectDB();
-
-  const worker = await Worker.findOne({ user_id: user._id }).lean();
+  const worker = await Worker.findOne({ user_id: session.user._id }).lean();
   if (!worker) {
     redirect("/login");
+    throw new Error("unreachable");
   }
 
   return (
-    <WorkerDashboard workerId={String(worker!._id)} />
+    <div className="page">
+      <div className="page-header">
+        <h1 className="text-lg font-bold text-stone-900">Ustad AI</h1>
+      </div>
+      <div className="page-content">
+        <WorkerHome workerId={String(worker._id)} />
+      </div>
+    </div>
   );
 }

@@ -58,7 +58,15 @@ describe("NewWorkWizard integration", () => {
     render(<NewWorkWizard />);
 
     expect(screen.getByLabelText("Urgency (optional)")).toHaveValue("emergency");
-    expect(screen.getByText(/voice note|voice not supported/i)).toBeInTheDocument();
+    expect(screen.getByText(/record on the home page/i)).toBeInTheDocument();
+    expect(screen.getByText(/price and ustads are set automatically/i)).toBeInTheDocument();
+  });
+
+  it("presets the category selector from the ?category param", () => {
+    history.replaceState(null, "", "/new-work?method=voice&category=electrician");
+    render(<NewWorkWizard />);
+
+    expect(screen.getByLabelText("Category (optional)")).toHaveValue("electrician");
   });
 
   it("shows the photo capture branch for ?method=photo", () => {

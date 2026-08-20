@@ -29,7 +29,7 @@ export async function GET(req: NextRequest) {
     _id: unknown;
     role: string;
     name?: string;
-    phone: string;
+    email: string;
     language: string;
   };
 
@@ -38,7 +38,7 @@ export async function GET(req: NextRequest) {
       id: user._id,
       role: user.role,
       name: user.name,
-      phone: user.phone,
+      email: user.email,
       language: user.language,
     },
   });
