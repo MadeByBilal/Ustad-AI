@@ -1,5 +1,4 @@
 export const OFFER_LOW_FACTOR = 0.5;
-export const OFFER_HIGH_FACTOR = 2.0;
 
 export interface OfferValidation {
   valid: boolean;
@@ -10,26 +9,25 @@ export interface OfferValidation {
 
 /**
  * Validates a customer's offer against the AI/historical estimate.
- * Offers must stay within [50% of estimate_min, 200% of estimate_max].
- * An empty estimate (0/0) is treated as unconstrained.
+ * Offers must be at least 50% of estimate_min. Customers may enter any
+ * higher amount because complexity, materials, and travel can exceed the AI
+ * estimate. An empty estimate (0/0) is treated as unconstrained.
  */
 export function validateCustomerOffer(
   amount: number,
   estimateMin: number,
   estimateMax: number
 ): OfferValidation {
+  void estimateMax;
   if (!Number.isFinite(amount) || amount <= 0) {
     return { valid: false, reason: "too_low", min_allowed: 1, max_allowed: 0 };
   }
 
-  const max_allowed = estimateMax > 0 ? Math.round(estimateMax * OFFER_HIGH_FACTOR) : 0;
+  const max_allowed = 0;
   const min_allowed = estimateMin > 0 ? Math.round(estimateMin * OFFER_LOW_FACTOR) : 0;
 
   if (min_allowed > 0 && amount < min_allowed) {
     return { valid: false, reason: "too_low", min_allowed, max_allowed };
-  }
-  if (max_allowed > 0 && amount > max_allowed) {
-    return { valid: false, reason: "too_high", min_allowed, max_allowed };
   }
   return { valid: true, min_allowed, max_allowed };
 }

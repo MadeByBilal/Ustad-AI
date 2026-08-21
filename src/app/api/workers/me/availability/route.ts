@@ -25,27 +25,32 @@ export async function PATCH(req: NextRequest) {
     return authError(e);
   }
 
-  const parsed = bodySchema.safeParse(await req.json().catch(() => ({})));
-  if (!parsed.success) {
-    return fail("Invalid request", 400, parsed.error.flatten().fieldErrors);
+  try {
+    const parsed = bodySchema.safeParse(await req.json().catch(() => ({})));
+    if (!parsed.success) {
+      return fail("Invalid request", 400, parsed.error.flatten().fieldErrors);
+    }
+
+    await connectDB();
+
+    const worker = await Worker.findOneAndUpdate(
+      { user_id: sessionUser.user._id },
+      { $set: parsed.data },
+      { new: true }
+    ).lean();
+
+    if (!worker) {
+      return fail("Worker profile not found for this account", 404);
+    }
+
+    return ok({
+      is_available: worker.is_available,
+      is_online: worker.is_online,
+      emergency_available: worker.emergency_available,
+      location_updated_at: worker.location_updated_at,
+    });
+  } catch (error) {
+    console.error("[workers/availability] error:", error);
+    return fail("Internal error", 500);
   }
-
-  await connectDB();
-
-  const worker = await Worker.findOneAndUpdate(
-    { user_id: sessionUser.user._id },
-    { $set: parsed.data },
-    { new: true }
-  ).lean();
-
-  if (!worker) {
-    return fail("Worker profile not found for this account", 404);
-  }
-
-  return ok({
-    is_available: worker.is_available,
-    is_online: worker.is_online,
-    emergency_available: worker.emergency_available,
-    location_updated_at: worker.location_updated_at,
-  });
 }

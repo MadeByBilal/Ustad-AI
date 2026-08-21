@@ -28,6 +28,7 @@ export interface DirectRequestInput {
     estimate_min?: number;
     estimate_max?: number;
     inspection_fee?: number;
+    complexity?: "low" | "medium" | "high";
   };
   input: {
     type: "voice" | "text" | "photo";
@@ -104,6 +105,7 @@ export async function createDirectRequest(
       safety_flags: [],
       confidence: input.understanding.confidence ?? 0,
       clarification_required: false,
+      complexity: input.understanding.complexity ?? "medium",
     },
     pricing: {
       estimate_min: estMin,

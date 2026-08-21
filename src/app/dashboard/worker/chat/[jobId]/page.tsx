@@ -30,7 +30,7 @@ export default async function WorkerChatDetailPage({ params }: ChatPageProps) {
   if (!job) notFound();
 
   const status = job.status as string;
-  if (!["ACCEPTED", "EN_ROUTE", "ARRIVED", "IN_PROGRESS"].includes(status)) {
+  if (!["ACCEPTED", "EN_ROUTE", "ARRIVED", "IN_PROGRESS", "AWAITING_CUSTOMER_CONFIRMATION"].includes(status)) {
     notFound();
   }
 
@@ -39,6 +39,11 @@ export default async function WorkerChatDetailPage({ params }: ChatPageProps) {
       jobId={jobId}
       jobStatus={status}
       originalText={job.input?.original_text ?? ""}
+      completion={job.completion ? {
+        before_photo_id: job.completion.before_photo_id ?? null,
+        after_photo_id: job.completion.after_photo_id ?? null,
+        note: job.completion.note ?? null,
+      } : null}
     />
   );
 }

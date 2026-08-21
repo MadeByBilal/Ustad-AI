@@ -1,0 +1,379 @@
+"use client";
+
+import { useCallback, useEffect, useState, useRef } from "react";
+import Link from "next/link";
+import dynamic from "next/dynamic";
+import ReviewScreen from "./ReviewScreen";
+
+const TrackingMap = dynamic(() => import("@/components/tracking/TrackingMap"), {
+  ssr: false,
+  loading: () => (
+    <div className="flex h-full items-center justify-center bg-stone-100">
+      <div className="h-10 w-10 animate-spin rounded-full border-4 border-stone-200 border-t-[#0e5f44]" />
+    </div>
+  ),
+});
+
+interface ActiveJob {
+  job_id: string;
+  status: string;
+  category: string;
+  original_text: string;
+  worker_name: string;
+  destination: { lat: number; lng: number; label: string } | null;
+}
+
+const STATUS_LABELS: Record<string, { label: string; color: string }> = {
+  ACCEPTED: { label: "Worker accepted", color: "text-amber-600" },
+  EN_ROUTE: { label: "On the way", color: "text-green-600" },
+  ARRIVED: { label: "Arrived", color: "text-blue-600" },
+  IN_PROGRESS: { label: "Work in progress", color: "text-violet-600" },
+  AWAITING_CUSTOMER_CONFIRMATION: { label: "Needs your approval", color: "text-amber-600" },
+};
+
+export default function ActiveJobTracking() {
+  const [job, setJob] = useState<ActiveJob | null>(null);
+  const [workerLocation, setWorkerLocation] = useState<{ lat: number; lng: number } | null>(null);
+  const [distanceKm, setDistanceKm] = useState<number | undefined>();
+  const [etaMinutes, setEtaMinutes] = useState<number | null>(null);
+  const [lastUpdate, setLastUpdate] = useState<Date | null>(null);
+  const [approving, setApproving] = useState(false);
+  const [cancelling, setCancelling] = useState(false);
+  const [message, setMessage] = useState<{ ok: boolean; text: string } | null>(null);
+  const [showReview, setShowReview] = useState(false);
+  const [mapReady, setMapReady] = useState(false);
+  const mapContainerRef = useRef<HTMLDivElement>(null);
+
+  // Fetch active job
+  const refresh = useCallback(async () => {
+    try {
+      const res = await fetch("/api/requests/list", { cache: "no-store" });
+      const body = await res.json().catch(() => null);
+      if (!body?.success) return;
+
+      const active = (body.data?.requests ?? []).find((r: { status: string }) =>
+        ["ACCEPTED", "EN_ROUTE", "ARRIVED", "IN_PROGRESS", "AWAITING_CUSTOMER_CONFIRMATION"].includes(r.status)
+      );
+
+      if (active) {
+        // Get destination from job detail
+        const jobRes = await fetch(`/api/jobs/${active.job_id}/tracking`);
+        const jobBody = await jobRes.json().catch(() => null);
+
+        setJob({
+          job_id: active.job_id,
+          status: active.status,
+          category: active.category,
+          original_text: active.original_text,
+          worker_name: active.worker_name ?? "Worker",
+          destination: jobBody?.data?.destination_lat ? {
+            lat: jobBody.data.destination_lat,
+            lng: jobBody.data.destination_lng,
+            label: jobBody.data.destination_label ?? "Destination",
+          } : null,
+        });
+
+        if (jobBody?.data?.worker_lat && jobBody?.data?.worker_lng) {
+          setWorkerLocation({ lat: jobBody.data.worker_lat, lng: jobBody.data.worker_lng });
+          setDistanceKm(jobBody.data.distance_km);
+          setEtaMinutes(jobBody.data.eta_minutes);
+          setLastUpdate(new Date());
+        }
+      }
+    } catch {
+      // ignore
+    }
+  }, []);
+
+  useEffect(() => {
+    void refresh();
+    const poll = setInterval(() => void refresh(), 3000);
+    return () => clearInterval(poll);
+  }, [refresh]);
+
+  // Socket.io for real-time updates
+  const activeJobId = job?.job_id;
+  useEffect(() => {
+    if (!activeJobId) return;
+    let mounted = true;
+
+    async function connect() {
+      try {
+        const { connectSocket } = await import("@/lib/socket-client");
+        const socket = connectSocket();
+        socket.emit("join-job", { jobId: activeJobId, role: "customer" });
+
+        socket.on("location-update", (data: { lat: number; lng: number; distanceKm: number; etaMinutes: number }) => {
+          if (!mounted) return;
+          setWorkerLocation({ lat: data.lat, lng: data.lng });
+          setDistanceKm(data.distanceKm);
+          setEtaMinutes(data.etaMinutes);
+          setLastUpdate(new Date());
+        });
+
+        socket.on("worker-arrived", () => {
+          if (!mounted) return;
+          setDistanceKm(0);
+          setEtaMinutes(0);
+          void refresh();
+        });
+
+        return () => {
+          socket.emit("leave-job", { jobId: activeJobId });
+          socket.off("location-update");
+          socket.off("worker-arrived");
+        };
+      } catch {
+        // Socket not available
+      }
+    }
+
+    void connect();
+    return () => { mounted = false; };
+  }, [activeJobId, refresh]);
+
+  // Approve work
+  async function handleApprove(action: "approve" | "dispute") {
+    if (!job) return;
+    setApproving(true);
+    setMessage(null);
+    try {
+      const res = await fetch(`/api/jobs/${job.job_id}/approve`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ action }),
+      });
+      const body = await res.json().catch(() => null);
+      if (!res.ok || !body?.success) {
+        throw new Error(body?.error ?? "Action failed");
+      }
+      setMessage({
+        ok: true,
+        text: action === "approve" ? "Work approved!" : "Dispute submitted",
+      });
+      if (action === "approve") {
+        setTimeout(() => setShowReview(true), 1000);
+      } else {
+        setTimeout(() => void refresh(), 1000);
+      }
+    } catch (e) {
+      setMessage({ ok: false, text: e instanceof Error ? e.message : "Action failed" });
+    } finally {
+      setApproving(false);
+    }
+  }
+
+  async function handleCancel() {
+    if (!job || !window.confirm("Are you sure you want to cancel this job?")) return;
+    setCancelling(true);
+    try {
+      const res = await fetch(`/api/jobs/${job.job_id}/cancel`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ reason: "Cancelled by customer" }),
+      });
+      const body = await res.json().catch(() => null);
+      if (!res.ok || !body?.success) {
+        throw new Error(body?.error ?? "Cancel failed");
+      }
+      setJob(null);
+    } catch (e) {
+      setMessage({ ok: false, text: e instanceof Error ? e.message : "Cancel failed" });
+    } finally {
+      setCancelling(false);
+    }
+  }
+
+  // Force map to resize after mount
+  useEffect(() => {
+    const timer = setTimeout(() => setMapReady(true), 500);
+    return () => clearTimeout(timer);
+  }, []);
+
+  if (!job) {
+    return (
+      <div className="flex h-full flex-col items-center justify-center bg-stone-50 px-5">
+        <div className="flex h-20 w-20 items-center justify-center rounded-full bg-stone-200">
+          <svg className="h-10 w-10 text-stone-400" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" d="M15 10.5a3 3 0 11-6 0 3 3 0 016 0z" />
+            <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 10.5c0 7.142-7.5 11.25-7.5 11.25S4.5 17.642 4.5 10.5a7.5 7.5 0 1115 0z" />
+          </svg>
+        </div>
+        <p className="mt-5 text-lg font-bold text-stone-700">No active job</p>
+        <p className="mt-1 text-sm text-stone-400">
+          Tracking will appear here when a worker is on the way
+        </p>
+        <Link href="/dashboard/customer" className="btn-primary mt-6">
+          Back to home
+        </Link>
+      </div>
+    );
+  }
+
+  const statusInfo = STATUS_LABELS[job.status] ?? { label: job.status, color: "text-stone-600" };
+  const isApproval = job.status === "AWAITING_CUSTOMER_CONFIRMATION";
+
+  // Show review screen after approval
+  if (showReview) {
+    return (
+      <ReviewScreen
+        jobId={job.job_id}
+        workerName={job.worker_name}
+        onDone={() => {
+          setShowReview(false);
+          setJob(null);
+        }}
+      />
+    );
+  }
+
+  // Show completion screen after dispute
+  if (message?.ok && message.text === "Dispute submitted") {
+    return (
+      <div className="flex h-full flex-col items-center justify-center bg-white px-5">
+        <div className="flex h-20 w-20 items-center justify-center rounded-full bg-amber-100">
+          <svg className="h-10 w-10 text-amber-600" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v3.75m9-.75a9 9 0 11-18 0 9 9 0 0118 0zm-9 3.75h.008v.008H12v-.008z" />
+          </svg>
+        </div>
+        <h1 className="mt-6 text-2xl font-bold text-stone-900">Dispute submitted</h1>
+        <p className="mt-2 text-center text-base text-stone-500">
+          We will review your dispute and get back to you.
+        </p>
+        <Link href="/dashboard/customer" className="btn-primary mt-8">
+          Back to home
+        </Link>
+      </div>
+    );
+  }
+
+  return (
+    <div className="relative flex h-full flex-col overflow-hidden bg-white">
+      {/* Header */}
+      <div className="absolute left-0 right-0 top-0 z-30 flex items-center gap-3 bg-white/95 px-4 py-3 backdrop-blur-lg">
+        <Link
+          href="/dashboard/customer"
+          className="flex h-10 w-10 items-center justify-center rounded-full hover:bg-stone-100"
+        >
+          <svg className="h-5 w-5 text-stone-600" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 19.5L8.25 12l7.5-7.5" />
+          </svg>
+        </Link>
+        <div className="min-w-0 flex-1">
+          <p className="text-sm font-bold text-stone-800">{job.worker_name}</p>
+          <p className={`text-xs font-medium ${statusInfo.color}`}>{statusInfo.label}</p>
+        </div>
+        {!isApproval && (
+          <Link
+            href={`/dashboard/customer/chat/${job.job_id}`}
+            className="flex h-10 w-10 items-center justify-center rounded-full bg-[#0e5f44] text-white"
+          >
+            <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" d="M8.625 12a.375.375 0 11-.75 0 .375.375 0 01.75 0zm0 0H8.25m4.125 0a.375.375 0 11-.75 0 .375.375 0 01.75 0zm0 0H12m4.125 0a.375.375 0 11-.75 0 .375.375 0 01.75 0zm0 0h-.375M21 12c0 4.556-4.03 8.25-9 8.25a9.764 9.764 0 01-2.555-.337A5.972 5.972 0 015.41 20.97a5.969 5.969 0 01-.474-.065 4.48 4.48 0 00.978-2.025c.09-.457-.133-.901-.467-1.226C3.93 16.178 3 14.189 3 12c0-4.556 4.03-8.25 9-8.25s9 3.694 9 8.25z" />
+            </svg>
+          </Link>
+        )}
+      </div>
+
+      {/* Map - Always render, show waiting message inside */}
+      <div ref={mapContainerRef} className="h-[65vh] w-full shrink-0">
+        {mapReady ? (
+          <TrackingMap
+            workerLocation={workerLocation}
+            destination={job.destination}
+            distanceKm={distanceKm}
+            perspective="customer"
+            className="h-full w-full"
+          />
+        ) : (
+          <div className="flex h-full items-center justify-center bg-stone-100">
+            <div className="h-10 w-10 animate-spin rounded-full border-4 border-stone-200 border-t-[#0e5f44]" />
+          </div>
+        )}
+      </div>
+
+      {/* Bottom Panel */}
+      <div className="flex-1 bg-white px-5 pt-4 pb-6">
+        {/* Status + Distance */}
+        <div className="flex items-center justify-between">
+          <div>
+            <p className={`text-lg font-bold ${statusInfo.color}`}>
+              {isApproval ? "Work Complete" : statusInfo.label}
+            </p>
+            <p className="text-sm text-stone-500">{job.worker_name}</p>
+          </div>
+          <div className="text-right">
+            {distanceKm !== undefined && !isApproval && (
+              <>
+                <p className="text-2xl font-bold text-stone-800">
+                  {distanceKm < 1 ? `${Math.round(distanceKm * 1000)}m` : `${distanceKm.toFixed(1)}km`}
+                </p>
+                {etaMinutes !== null && (
+                  <p className="text-sm text-stone-500">~{etaMinutes} min</p>
+                )}
+              </>
+            )}
+          </div>
+        </div>
+
+        {/* Message */}
+        {message && (
+          <p className={`mt-3 rounded-xl px-4 py-3 text-sm ${message.ok ? "bg-emerald-50 text-emerald-700" : "bg-red-50 text-red-700"}`}>
+            {message.text}
+          </p>
+        )}
+
+        {/* Action Buttons */}
+        <div className="mt-4 flex gap-3">
+          {isApproval ? (
+            <>
+              <button
+                type="button"
+                onClick={() => void handleApprove("approve")}
+                disabled={approving}
+                className="btn-primary flex-1 !bg-emerald-600 hover:!bg-emerald-700 disabled:opacity-60"
+              >
+                {approving ? "Approving..." : "Approve Work"}
+              </button>
+              <button
+                type="button"
+                onClick={() => void handleApprove("dispute")}
+                disabled={approving}
+                className="btn-danger flex-1 disabled:opacity-60"
+              >
+                {approving ? "Submitting..." : "Dispute"}
+              </button>
+            </>
+          ) : (
+            <Link
+              href={`/dashboard/customer/chat/${job.job_id}`}
+              className="btn-primary flex-1 text-center"
+            >
+              <svg className="mr-2 inline h-5 w-5" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M8.625 12a.375.375 0 11-.75 0 .375.375 0 01.75 0zm0 0H8.25m4.125 0a.375.375 0 11-.75 0 .375.375 0 01.75 0zm0 0H12m4.125 0a.375.375 0 11-.75 0 .375.375 0 01.75 0zm0 0h-.375M21 12c0 4.556-4.03 8.25-9 8.25a9.764 9.764 0 01-2.555-.337A5.972 5.972 0 015.41 20.97a5.969 5.969 0 01-.474-.065 4.48 4.48 0 00.978-2.025c.09-.457-.133-.901-.467-1.226C3.93 16.178 3 14.189 3 12c0-4.556 4.03-8.25 9-8.25s9 3.694 9 8.25z" />
+              </svg>
+              Chat with worker
+            </Link>
+          )}
+        </div>
+
+        {!isApproval && (
+          <button
+            type="button"
+            onClick={() => void handleCancel()}
+            disabled={cancelling}
+            className="mt-3 w-full rounded-xl border border-red-200 px-4 py-2.5 text-sm font-semibold text-red-600 transition hover:bg-red-50 disabled:opacity-60"
+          >
+            {cancelling ? "Cancelling..." : "Cancel Job"}
+          </button>
+        )}
+
+        {lastUpdate && (
+          <p className="mt-3 text-center text-xs text-stone-400">
+            Updated {lastUpdate.toLocaleTimeString("en-GB", { hour: "2-digit", minute: "2-digit", second: "2-digit" })}
+          </p>
+        )}
+      </div>
+    </div>
+  );
+}

@@ -70,7 +70,7 @@ function AuthForm() {
       });
       const body = await res.json();
       if (!res.ok) {
-        setError(body.error ?? "Something went wrong");
+        setError(typeof body.error === "object" ? body.error.message_ur ?? body.error.message ?? "Something went wrong" : body.error ?? "Something went wrong");
         return;
       }
       const dest = destinationFor(body.data.user.role);

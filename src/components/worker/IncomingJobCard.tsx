@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 import type { IncomingJobView } from "@/lib/worker/dashboard";
 import CounterOfferModal from "./CounterOfferModal";
 
@@ -42,6 +43,7 @@ export default function IncomingJobCard({
   now: number;
   onChanged: () => void;
 }) {
+  const router = useRouter();
   const [busy, setBusy] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [showCounter, setShowCounter] = useState(false);
@@ -203,9 +205,10 @@ export default function IncomingJobCard({
                 <button
                   type="button"
                   onClick={() =>
-                    void act("accept", () =>
-                      postJson(`/api/jobs/${job.id}/accept`)
-                    )
+                    void act("accept", async () => {
+                      await postJson(`/api/jobs/${job.id}/accept`);
+                      router.push("/dashboard/worker/work");
+                    })
                   }
                   disabled={busy !== null}
                   className="rounded-xl bg-[#0e5f44] px-4 py-2 text-sm font-bold text-white transition hover:bg-[#0b4c37] disabled:opacity-60"

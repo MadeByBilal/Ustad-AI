@@ -98,7 +98,7 @@ describe("POST /api/jobs/[id]/broadcast", () => {
     const res = await POST(postRequest({ offer_rs: 100 }), { params: { id: "job-1" } });
     expect(res.status).toBe(400);
     const body = await res.json();
-    expect(body.error).toContain("floor");
+    expect(body.error.message).toContain("floor");
   });
 
   it("returns 500 for unexpected errors", async () => {

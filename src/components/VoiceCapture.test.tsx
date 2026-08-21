@@ -174,6 +174,28 @@ describe("VoiceCapture", () => {
     expect(JSON.parse(String(secondCall.body)).clarification).toContain("bijli");
   });
 
+  it("shows checkbox choices when the AI returns clarification options", async () => {
+    stubRecorderGlobals();
+    const user = userEvent.setup();
+    render(<VoiceCapture />);
+
+    fetchMock.mockResolvedValueOnce(
+      okResponse({
+        understanding: { ...UNDERSTANDING, category: null, confidence: 0.3 },
+        clarification_question: "Kis qisam ka kaam hai?",
+        clarification_options: ["Bijli", "Pani", "AC", "Lakri"],
+        workers: { best: null, others: [] },
+      })
+    );
+    await holdThenRelease();
+
+    expect(await screen.findByRole("checkbox", { name: "Bijli" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Continue" })).toBeDisabled();
+
+    await user.click(screen.getByRole("checkbox", { name: "Bijli" }));
+    expect(screen.getByRole("button", { name: "Continue" })).toBeEnabled();
+  });
+
   it("shows the server error and lets the user retry", async () => {
     stubRecorderGlobals();
     const user = userEvent.setup();

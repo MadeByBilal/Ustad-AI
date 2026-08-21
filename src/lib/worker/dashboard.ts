@@ -22,6 +22,8 @@ export interface WorkerView {
   confirmed_jobs: number;
   location_updated_at: string | null;
   active_job_id: string | null;
+  location_lat: number | null;
+  location_lng: number | null;
 }
 
 export interface IncomingJobView {
@@ -153,6 +155,11 @@ export async function getWorkerDashboard(workerId: string): Promise<WorkerDashbo
 
   const incoming_jobs: IncomingJobView[] = incomingJobs
     .filter((job) => !declinedJobIds.has(String(job._id)))
+    .filter((job) => {
+      // Remove jobs that already appear as direct requests
+      const jid = String(job._id);
+      return !directRequestOffers.some((o) => String(o.job_id) === jid);
+    })
     .map((job) => {
       const [jobLng, jobLat] =
         job.location?.coordinates && job.location.coordinates.length === 2
@@ -243,6 +250,8 @@ export async function getWorkerDashboard(workerId: string): Promise<WorkerDashbo
         ? new Date(worker.location_updated_at).toISOString()
         : null,
       active_job_id: worker.active_job_id ? String(worker.active_job_id) : null,
+      location_lat: workerLat,
+      location_lng: workerLng,
     },
     active_job: activeJob
       ? {

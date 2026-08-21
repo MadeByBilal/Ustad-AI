@@ -2,7 +2,6 @@
 
 import { useState } from "react";
 import JobPhotoUpload from "./JobPhotoUpload";
-import WorkerChat from "./WorkerChat";
 import LiveTracker from "./LiveTracker";
 
 interface ActiveJob {
@@ -211,16 +210,9 @@ export default function ActiveJobPanel({
         </p>
       )}
 
-      {activeJob.status === "EN_ROUTE" && (
+      {(activeJob.status === "EN_ROUTE" || activeJob.status === "ARRIVED") && (
         <LiveTracker jobId={activeJob._id} />
       )}
-
-      <div className="border-t border-stone-100 pt-3">
-        <h3 className="mb-2 text-xs font-bold uppercase tracking-wide text-stone-500">
-          Chat with customer
-        </h3>
-        <WorkerChat jobId={job._id} />
-      </div>
     </section>
   );
 }

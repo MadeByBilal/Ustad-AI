@@ -42,6 +42,7 @@ export default function TrackingPageClient({
   const [jobStatus, setJobStatus] = useState(initialStatus);
   const [arrived, setArrived] = useState(initialStatus === "ARRIVED");
   const [lastUpdate, setLastUpdate] = useState<Date | null>(null);
+  const [cancelling, setCancelling] = useState(false);
 
   const handleLocationUpdate = useCallback(
     (data: { lat: number; lng: number; distanceKm: number; etaMinutes: number }) => {
@@ -140,6 +141,30 @@ export default function TrackingPageClient({
   }, [jobId]);
 
   const isArrived = arrived || jobStatus === "ARRIVED";
+  const isAccepted = jobStatus === "ACCEPTED";
+
+  async function handleCancel() {
+    if (!confirm("Are you sure you want to cancel this job?")) return;
+    setCancelling(true);
+    try {
+      const res = await fetch(`/api/jobs/${jobId}/cancel`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ reason: "Cancelled by customer" }),
+      });
+      const body = await res.json().catch(() => null);
+      if (!res.ok || !body?.success) {
+        throw new Error(body?.error ?? "Cancel failed");
+      }
+      setJobStatus("CANCELLED");
+    } catch {
+      // ignore
+    } finally {
+      setCancelling(false);
+    }
+  }
+
+  const isCancelled = jobStatus === "CANCELLED";
 
   return (
     <div className="mx-auto max-w-2xl space-y-4 p-4">
@@ -158,10 +183,12 @@ export default function TrackingPageClient({
           className={`badge ${
             isArrived
               ? "!bg-blue-100 !text-blue-800"
-              : "!bg-green-100 !text-green-800"
+              : isAccepted
+                ? "!bg-amber-100 !text-amber-800"
+                : "!bg-green-100 !text-green-800"
           }`}
         >
-          {isArrived ? "Arrived" : "On the way"}
+          {isArrived ? "Arrived" : isAccepted ? "Accepted" : "On the way"}
         </span>
       </div>
 
@@ -170,13 +197,17 @@ export default function TrackingPageClient({
         <div className="flex items-center gap-3">
           <div
             className={`flex h-12 w-12 items-center justify-center rounded-full ${
-              isArrived ? "bg-blue-100" : "bg-green-100"
+              isArrived ? "bg-blue-100" : isAccepted ? "bg-amber-100" : "bg-green-100"
             }`}
           >
             {isArrived ? (
               <svg className="h-6 w-6 text-blue-600" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" d="M15 10.5a3 3 0 11-6 0 3 3 0 016 0z" />
                 <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 10.5c0 7.142-7.5 11.25-7.5 11.25S4.5 17.642 4.5 10.5a7.5 7.5 0 1115 0z" />
+              </svg>
+            ) : isAccepted ? (
+              <svg className="h-6 w-6 text-amber-600" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
               </svg>
             ) : (
               <svg className="h-6 w-6 text-green-600" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
@@ -189,7 +220,7 @@ export default function TrackingPageClient({
               {workerName}
             </p>
             <p className="text-xs text-stone-500">
-              {isArrived ? "Has arrived at your location" : "On the way to you"}
+              {isArrived ? "Has arrived at your location" : isAccepted ? "Worker accepted your job" : "On the way to you"}
             </p>
           </div>
         </div>
@@ -229,6 +260,7 @@ export default function TrackingPageClient({
           workerLocation={workerLocation}
           destination={destination}
           distanceKm={distanceKm}
+          perspective="customer"
           className="h-[400px]"
         />
       ) : (
@@ -255,6 +287,24 @@ export default function TrackingPageClient({
           </p>
         )}
       </div>
+
+      {/* Cancel Button */}
+      {!isCancelled && (
+        <button
+          type="button"
+          onClick={() => void handleCancel()}
+          disabled={cancelling}
+          className="w-full rounded-2xl border border-red-200 bg-white px-4 py-3 text-sm font-semibold text-red-600 transition hover:bg-red-50 disabled:opacity-60"
+        >
+          {cancelling ? "Cancelling…" : "Cancel Job"}
+        </button>
+      )}
+
+      {isCancelled && (
+        <div className="rounded-2xl border border-red-200 bg-red-50 p-4 text-center">
+          <p className="text-sm font-semibold text-red-700">Job has been cancelled</p>
+        </div>
+      )}
     </div>
   );
 }

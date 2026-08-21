@@ -2,6 +2,7 @@ import type {
   UrgencyLevel,
   WorkerCategory,
 } from "@/models";
+import type { ComplexityLevel } from "@/lib/job/pricing";
 
 export interface PriceEstimate {
   min: number;
@@ -49,6 +50,39 @@ export interface AnalysisResult {
   estimate_min: number;
   estimate_max: number;
   inspection_fee: number;
+  complexity?: ComplexityLevel;
+}
+
+const HIGH_COMPLEXITY_KEYWORDS = [
+  "installation",
+  "replace",
+  "replacement",
+  "compressor",
+  "main wiring",
+  "complete wiring",
+  "wardrobe",
+  "kitchen cabinets",
+  "renovation",
+];
+
+const LOW_COMPLEXITY_KEYWORDS = [
+  "tighten",
+  "minor",
+  "small leak",
+  "switch repair",
+  "faucet repair",
+  "drain cleaning",
+];
+
+export function complexityFor(text: string): ComplexityLevel {
+  const normalized = text.toLowerCase();
+  if (HIGH_COMPLEXITY_KEYWORDS.some((keyword) => normalized.includes(keyword))) {
+    return "high";
+  }
+  if (LOW_COMPLEXITY_KEYWORDS.some((keyword) => normalized.includes(keyword))) {
+    return "low";
+  }
+  return "medium";
 }
 
 interface KeywordRule {
@@ -187,6 +221,7 @@ export function analyzeJobInput(
       estimate_min: categoryHint ? CATEGORY_ESTIMATES[categoryHint].min : 0,
       estimate_max: categoryHint ? CATEGORY_ESTIMATES[categoryHint].max : 0,
       inspection_fee: inspectionFeeFor(categoryHint),
+      complexity: complexityFor(text),
     };
   }
 
@@ -221,6 +256,7 @@ export function analyzeJobInput(
       estimate_min: 0,
       estimate_max: 0,
       inspection_fee: 0,
+      complexity: complexityFor(text),
     };
   }
 
@@ -263,6 +299,7 @@ export function analyzeJobInput(
     estimate_min: CATEGORY_ESTIMATES[category].min,
     estimate_max: CATEGORY_ESTIMATES[category].max,
     inspection_fee: INSPECTION_FEES[category],
+    complexity: complexityFor(normalized),
   };
 }
 
@@ -285,6 +322,7 @@ export function deriveAnalysisForCategory(
     estimate_min: estimates.min,
     estimate_max: estimates.max,
     inspection_fee: INSPECTION_FEES[category],
+    complexity: "medium",
   };
 }
 

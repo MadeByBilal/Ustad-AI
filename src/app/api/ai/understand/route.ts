@@ -27,7 +27,34 @@ export async function POST(req: NextRequest) {
     clarification?: string;
     audio?: { mime: string; buffer: Buffer };
     image?: { mime: string; data: string };
+    location?: { lat: number; lng: number };
   };
+
+  function parseLocation(lat: unknown, lng: unknown): { lat: number; lng: number } | undefined {
+    if (
+      lat === null ||
+      lat === undefined ||
+      lng === null ||
+      lng === undefined ||
+      lat === "" ||
+      lng === ""
+    ) {
+      return undefined;
+    }
+    const parsedLat = Number(lat);
+    const parsedLng = Number(lng);
+    if (
+      !Number.isFinite(parsedLat) ||
+      !Number.isFinite(parsedLng) ||
+      parsedLat < -90 ||
+      parsedLat > 90 ||
+      parsedLng < -180 ||
+      parsedLng > 180
+    ) {
+      return undefined;
+    }
+    return { lat: parsedLat, lng: parsedLng };
+  }
 
   try {
     const contentType = req.headers.get("content-type") ?? "";
@@ -42,6 +69,7 @@ export async function POST(req: NextRequest) {
         text: typeof text === "string" ? text : undefined,
         clarification:
           typeof clarification === "string" ? clarification : undefined,
+        location: parseLocation(form.get("lat"), form.get("lng")),
         ...(audio instanceof File
           ? {
               audio: {
@@ -67,6 +95,7 @@ export async function POST(req: NextRequest) {
           typeof body?.clarification === "string"
             ? body.clarification
             : undefined,
+        location: parseLocation(body?.lat, body?.lng),
       };
     }
   } catch {
@@ -122,12 +151,17 @@ export async function POST(req: NextRequest) {
       required_skills: understood.understanding.required_skills,
       urgency: (understood.understanding.urgency ?? "normal") as UrgencyLevel,
       limit: 4,
+      location: payload.location,
+      estimate_min: understood.understanding.estimate_min,
+      estimate_max: understood.understanding.estimate_max,
+      complexity: understood.understanding.complexity,
     });
 
     return ok({
       source: understood.source,
       understanding: understood.understanding,
       clarification_question: understood.clarification_question,
+      clarification_options: understood.clarification_options,
       manual_fallback: understood.manual_fallback ?? false,
       transcript,
       workers,

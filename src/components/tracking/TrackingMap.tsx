@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState, useCallback } from "react";
 import type L from "leaflet";
+import { haversineDistanceKm } from "@/lib/geo";
 
 export interface TrackingMarker {
   id: string;
@@ -13,13 +14,40 @@ export interface TrackingMarker {
 
 interface TrackingMapProps {
   workerLocation: { lat: number; lng: number } | null;
-  destination: { lat: number; lng: number; label?: string };
+  destination: { lat: number; lng: number; label?: string } | null;
   distanceKm?: number;
   showArrivalZone?: boolean;
   className?: string;
+  perspective?: "customer" | "worker";
 }
 
 const ARRIVAL_ZONE_RADIUS = 100; // meters
+const ROUTE_REFRESH_DISTANCE_KM = 0.15;
+
+function hasValidCoordinate(
+  point: { lat: number; lng: number } | null
+): point is { lat: number; lng: number } {
+  return Boolean(
+    point &&
+      Number.isFinite(point.lat) &&
+      Number.isFinite(point.lng) &&
+      point.lat >= -90 &&
+      point.lat <= 90 &&
+      point.lng >= -180 &&
+      point.lng <= 180
+  );
+}
+
+function isRouteCoordinate(value: unknown): value is [number, number] {
+  return (
+    Array.isArray(value) &&
+    value.length === 2 &&
+    typeof value[0] === "number" &&
+    Number.isFinite(value[0]) &&
+    typeof value[1] === "number" &&
+    Number.isFinite(value[1])
+  );
+}
 
 export default function TrackingMap({
   workerLocation,
@@ -27,13 +55,19 @@ export default function TrackingMap({
   distanceKm,
   showArrivalZone = true,
   className = "",
+  perspective = "worker",
 }: TrackingMapProps) {
   const mapRef = useRef<HTMLDivElement>(null);
   const mapInstanceRef = useRef<L.Map | null>(null);
   const workerMarkerRef = useRef<L.Marker | null>(null);
   const destMarkerRef = useRef<L.Marker | null>(null);
   const arrivalCircleRef = useRef<L.Circle | null>(null);
-  const polylineRef = useRef<L.Polyline | null>(null);
+  const fallbackPolylineRef = useRef<L.Polyline | null>(null);
+  const roadPolylineRef = useRef<L.Polyline | null>(null);
+  const routeRequestIdRef = useRef(0);
+  const lastRouteOriginRef = useRef<[number, number] | null>(null);
+  const lastRouteDestinationRef = useRef<[number, number] | null>(null);
+  const workerAnimationFrameRef = useRef<number | null>(null);
   const [leaflet, setLeaflet] = useState<typeof L | null>(null);
 
   // Load Leaflet dynamically (client-side only)
@@ -75,9 +109,15 @@ export default function TrackingMap({
 
     leaflet.control.zoom({ position: "bottomright" }).addTo(map);
 
+    // Invalidate size after a short delay to ensure container is fully rendered
+    setTimeout(() => map.invalidateSize(), 100);
+
     mapInstanceRef.current = map;
 
     return () => {
+      if (workerAnimationFrameRef.current !== null) {
+        cancelAnimationFrame(workerAnimationFrameRef.current);
+      }
       map.remove();
       mapInstanceRef.current = null;
     };
@@ -86,8 +126,31 @@ export default function TrackingMap({
   // Create custom icons
   const getWorkerIcon = useCallback(
     (L: typeof import("leaflet")) => {
+      const isCustomerPerspective = perspective === "customer";
       return L.divIcon({
-        html: `
+        html: isCustomerPerspective
+          ? `
+          <div style="
+            width: 32px; height: 32px;
+            display: flex; align-items: center; justify-content: center;
+            background: #2563eb;
+            border: 3px solid white;
+            border-radius: 50%;
+            box-shadow: 0 0 0 3px rgba(37,99,235,0.25), 0 2px 8px rgba(0,0,0,0.3);
+            animation: moving-worker-pulse 1.8s infinite;
+          ">
+            <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M5 17h14"/><path d="M6 17l1.2-5h9.6l1.2 5"/><path d="M8 12l1-3h6l1 3"/><circle cx="8" cy="17" r="1.5" fill="white"/><circle cx="16" cy="17" r="1.5" fill="white"/>
+            </svg>
+          </div>
+          <style>
+            @keyframes moving-worker-pulse {
+              0%, 100% { box-shadow: 0 0 0 3px rgba(37,99,235,0.25), 0 2px 8px rgba(0,0,0,0.3); }
+              50% { box-shadow: 0 0 0 9px rgba(37,99,235,0.12), 0 2px 8px rgba(0,0,0,0.3); }
+            }
+          </style>
+        `
+          : `
           <div style="
             width: 24px; height: 24px;
             background: #22c55e;
@@ -104,15 +167,32 @@ export default function TrackingMap({
           </style>
         `,
         className: "",
-        iconSize: [24, 24],
-        iconAnchor: [12, 12],
+        iconSize: isCustomerPerspective ? [32, 32] : [24, 24],
+        iconAnchor: isCustomerPerspective ? [16, 16] : [12, 12],
       });
     },
-    []
+    [perspective]
   );
 
   const getDestIcon = useCallback(
     (L: typeof import("leaflet")) => {
+      if (perspective === "customer") {
+        return L.divIcon({
+          html: `
+            <div style="
+              width: 24px; height: 24px;
+              background: #22c55e;
+              border: 4px solid white;
+              border-radius: 50%;
+              box-shadow: 0 0 0 3px rgba(34,197,94,0.3), 0 2px 8px rgba(0,0,0,0.3);
+            "></div>
+          `,
+          className: "",
+          iconSize: [24, 24],
+          iconAnchor: [12, 12],
+        });
+      }
+
       return L.divIcon({
         html: `
           <div style="
@@ -130,7 +210,7 @@ export default function TrackingMap({
         iconAnchor: [16, 40],
       });
     },
-    []
+    [perspective]
   );
 
   // Update markers
@@ -138,18 +218,31 @@ export default function TrackingMap({
     if (!leaflet || !mapInstanceRef.current) return;
     const map = mapInstanceRef.current;
 
-    // Destination marker
-    if (destination.lat && destination.lng) {
+    const hasDest = hasValidCoordinate(destination);
+    const hasWorker = hasValidCoordinate(workerLocation);
+
+    if (!hasDest || !hasWorker) {
+      fallbackPolylineRef.current?.remove();
+      fallbackPolylineRef.current = null;
+      roadPolylineRef.current?.remove();
+      roadPolylineRef.current = null;
+      lastRouteOriginRef.current = null;
+      lastRouteDestinationRef.current = null;
+    }
+
+    // Destination marker — only when valid coordinates exist
+    if (hasDest) {
       if (destMarkerRef.current) {
-        destMarkerRef.current.setLatLng([destination.lat, destination.lng]);
+        destMarkerRef.current.setLatLng([destination!.lat, destination!.lng]);
+        destMarkerRef.current.setIcon(getDestIcon(leaflet));
       } else {
         destMarkerRef.current = leaflet
-          .marker([destination.lat, destination.lng], {
+          .marker([destination!.lat, destination!.lng], {
             icon: getDestIcon(leaflet),
           })
           .addTo(map);
-        if (destination.label) {
-          destMarkerRef.current.bindTooltip(destination.label, {
+        if (destination!.label) {
+          destMarkerRef.current.bindTooltip(destination!.label, {
             permanent: true,
             direction: "top",
             offset: [0, -40],
@@ -157,15 +250,18 @@ export default function TrackingMap({
           });
         }
       }
+    } else if (destMarkerRef.current) {
+      destMarkerRef.current.remove();
+      destMarkerRef.current = null;
     }
 
     // Arrival zone circle
-    if (showArrivalZone && destination.lat && destination.lng) {
+    if (showArrivalZone && hasDest) {
       if (arrivalCircleRef.current) {
-        arrivalCircleRef.current.setLatLng([destination.lat, destination.lng]);
+        arrivalCircleRef.current.setLatLng([destination!.lat, destination!.lng]);
       } else {
         arrivalCircleRef.current = leaflet
-          .circle([destination.lat, destination.lng], {
+          .circle([destination!.lat, destination!.lng], {
             radius: ARRIVAL_ZONE_RADIUS,
             color: "#22c55e",
             fillColor: "#22c55e",
@@ -175,30 +271,60 @@ export default function TrackingMap({
           })
           .addTo(map);
       }
+    } else if (arrivalCircleRef.current) {
+      arrivalCircleRef.current.remove();
+      arrivalCircleRef.current = null;
     }
 
     // Worker marker
-    if (workerLocation?.lat && workerLocation?.lng) {
+    if (hasWorker) {
       const latlng: [number, number] = [workerLocation.lat, workerLocation.lng];
 
       if (workerMarkerRef.current) {
-        workerMarkerRef.current.setLatLng(latlng);
+        workerMarkerRef.current.setIcon(getWorkerIcon(leaflet));
+        const marker = workerMarkerRef.current;
+        const current = marker.getLatLng();
+        if (current.lat === latlng[0] && current.lng === latlng[1]) {
+          marker.setLatLng(latlng);
+        } else {
+          if (workerAnimationFrameRef.current !== null) {
+            cancelAnimationFrame(workerAnimationFrameRef.current);
+          }
+          const startedAt = performance.now();
+          const startLat = current.lat;
+          const startLng = current.lng;
+          const duration = 900;
+          const animate = (now: number) => {
+            const progress = Math.min((now - startedAt) / duration, 1);
+            const eased = 1 - (1 - progress) ** 3;
+            marker.setLatLng([
+              startLat + (latlng[0] - startLat) * eased,
+              startLng + (latlng[1] - startLng) * eased,
+            ]);
+            if (progress < 1) {
+              workerAnimationFrameRef.current = requestAnimationFrame(animate);
+            } else {
+              workerAnimationFrameRef.current = null;
+            }
+          };
+          workerAnimationFrameRef.current = requestAnimationFrame(animate);
+        }
       } else {
         workerMarkerRef.current = leaflet
           .marker(latlng, { icon: getWorkerIcon(leaflet) })
           .addTo(map);
       }
 
-      // Draw polyline from worker to destination
-      if (destination.lat && destination.lng) {
+      // Draw a direct fallback until the road route is available.
+      if (hasDest) {
         const points: [number, number][] = [
           latlng,
-          [destination.lat, destination.lng],
+          [destination!.lat, destination!.lng],
         ];
-        if (polylineRef.current) {
-          polylineRef.current.setLatLngs(points);
-        } else {
-          polylineRef.current = leaflet
+        if (!roadPolylineRef.current && fallbackPolylineRef.current) {
+          fallbackPolylineRef.current.setLatLngs(points);
+        } else if (!roadPolylineRef.current) {
+          fallbackPolylineRef.current = leaflet
             .polyline(points, {
               color: "#22c55e",
               weight: 3,
@@ -211,19 +337,132 @@ export default function TrackingMap({
 
       // Fit bounds to show both markers
       const bounds = leaflet.latLngBounds([latlng]);
-      if (destination.lat && destination.lng) {
-        bounds.extend([destination.lat, destination.lng]);
+      if (hasDest) {
+        bounds.extend([destination!.lat, destination!.lng]);
       }
       map.fitBounds(bounds, { padding: [60, 60], maxZoom: 16 });
+    } else if (hasDest) {
+      // No worker location yet — center on destination
+        map.setView([destination!.lat, destination!.lng], 15);
     }
+
+    return () => {
+      if (workerAnimationFrameRef.current !== null) {
+        cancelAnimationFrame(workerAnimationFrameRef.current);
+        workerAnimationFrameRef.current = null;
+      }
+    };
   }, [leaflet, workerLocation, destination, getWorkerIcon, getDestIcon, showArrivalZone]);
+
+  // Fetch a road-following route. The direct line above remains visible while
+  // routing loads or if the public routing service is unavailable.
+  useEffect(() => {
+    const map = mapInstanceRef.current;
+    const leafletModule = leaflet;
+    if (!leafletModule || !map) return;
+    const routingLeaflet = leafletModule;
+    const routingMap = map;
+
+    const hasDest = hasValidCoordinate(destination);
+    const hasWorker = hasValidCoordinate(workerLocation);
+    if (!hasDest || !hasWorker) return;
+
+    const origin: [number, number] = [workerLocation.lat, workerLocation.lng];
+    const target: [number, number] = [destination.lat, destination.lng];
+    const previousOrigin = lastRouteOriginRef.current;
+    const previousTarget = lastRouteDestinationRef.current;
+    const movedEnough =
+      !previousOrigin ||
+      haversineDistanceKm(
+        previousOrigin[0],
+        previousOrigin[1],
+        origin[0],
+        origin[1]
+      ) >= ROUTE_REFRESH_DISTANCE_KM;
+    const destinationChanged =
+      !previousTarget ||
+      previousTarget[0] !== target[0] ||
+      previousTarget[1] !== target[1];
+
+    if (!movedEnough && !destinationChanged) return;
+
+    lastRouteOriginRef.current = origin;
+    lastRouteDestinationRef.current = target;
+    roadPolylineRef.current?.remove();
+    roadPolylineRef.current = null;
+
+    const directPoints: [number, number][] = [origin, target];
+    if (fallbackPolylineRef.current) {
+      fallbackPolylineRef.current.setLatLngs(directPoints);
+      fallbackPolylineRef.current.setStyle({
+        color: "#22c55e",
+        weight: 3,
+        opacity: 0.7,
+        dashArray: "8 6",
+      });
+    } else {
+      fallbackPolylineRef.current = routingLeaflet
+        .polyline(directPoints, {
+          color: "#22c55e",
+          weight: 3,
+          opacity: 0.7,
+          dashArray: "8 6",
+        })
+        .addTo(map);
+    }
+
+    const requestId = ++routeRequestIdRef.current;
+    const controller = new AbortController();
+    const query = new URLSearchParams({
+      fromLat: String(origin[0]),
+      fromLng: String(origin[1]),
+      toLat: String(target[0]),
+      toLng: String(target[1]),
+    });
+
+    async function loadRoute() {
+      try {
+        const response = await fetch(`/api/routes?${query.toString()}`, {
+          signal: controller.signal,
+        });
+        const body = await response.json().catch(() => null);
+        const coordinates = body?.data?.coordinates;
+        if (
+          requestId !== routeRequestIdRef.current ||
+          !response.ok ||
+          !body?.success ||
+          !Array.isArray(coordinates)
+        ) {
+          return;
+        }
+
+        const routePoints = coordinates
+          .filter((point: unknown): point is [number, number] => isRouteCoordinate(point))
+          .map(([lng, lat]) => [lat, lng] as [number, number]);
+        if (routePoints.length < 2) return;
+
+        roadPolylineRef.current = routingLeaflet
+          .polyline(routePoints, {
+          color: "#0e5f44",
+          weight: 5,
+          opacity: 0.9,
+          dashArray: "",
+          })
+          .addTo(routingMap)
+          .bringToFront();
+        fallbackPolylineRef.current?.remove();
+        fallbackPolylineRef.current = null;
+      } catch {
+        // Keep the direct fallback line when routing is unavailable.
+      }
+    }
+
+    void loadRoute();
+    return () => controller.abort();
+  }, [leaflet, workerLocation, destination]);
 
   return (
     <div className={`relative overflow-hidden rounded-2xl ${className}`}>
-      <link
-        rel="stylesheet"
-        href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css"
-      />
       <div ref={mapRef} className="h-full w-full" style={{ minHeight: "300px" }} />
 
       {distanceKm !== undefined && (

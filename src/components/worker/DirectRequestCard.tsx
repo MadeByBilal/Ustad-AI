@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 import type { DirectRequestView } from "@/lib/worker/dashboard";
 
 async function postJson(url: string, body?: unknown): Promise<void> {
@@ -37,6 +38,7 @@ export default function DirectRequestCard({
   request: DirectRequestView;
   onChanged: () => void;
 }) {
+  const router = useRouter();
   const [busy, setBusy] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [showCounter, setShowCounter] = useState(false);
@@ -134,9 +136,10 @@ export default function DirectRequestCard({
             <button
               type="button"
               onClick={() =>
-                void act("accept", () =>
-                  postJson("/api/requests/respond", { offer_id: req.offer_id, action: "accept" })
-                )
+                void act("accept", async () => {
+                  await postJson("/api/requests/respond", { offer_id: req.offer_id, action: "accept" });
+                  router.push("/dashboard/worker/work");
+                })
               }
               disabled={busy !== null}
               className="rounded-xl bg-[#0e5f44] px-4 py-2 text-sm font-bold text-white transition hover:bg-[#0b4c37] disabled:opacity-60"

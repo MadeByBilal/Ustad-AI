@@ -75,3 +75,19 @@ All changes are in the working tree and verified via:
 - `npm test` — 393/393 pass
 - `npm run lint` — 0 errors
 - `npm run build` — passes
+
+## Follow-up: Clarification and Travel Pricing
+
+**Date:** 2026-08-21
+
+| What is guaranteed | Test file or command | Result |
+|---|---|---|
+| Unclear AI responses expose checkbox-friendly clarification options, including fallback mode | `src/lib/job/ai.test.ts`, `src/components/VoiceCapture.test.tsx` | PASS |
+| Checkbox selections can continue the clarification flow | `src/components/VoiceCapture.test.tsx` | PASS |
+| Bike travel cost uses round-trip distance, 40 km/l, and 350 PKR/l | `src/lib/job/pricing.test.ts` | PASS |
+| Predicted price combines complexity-adjusted service midpoint and travel cost | `src/lib/job/pricing.test.ts` | PASS |
+| Worker results receive customer-relative distance and per-worker predicted pricing | `src/app/api/ai/understand/route.ts`, `src/lib/matching.ts` | Covered by pricing/matching suite |
+
+Validation: `npm test` — 413/413 passed.
+
+Pricing assumptions: bike efficiency is 40 km/l; petrol is 350 PKR/l; travel uses round-trip distance; complexity multipliers are low 0.85, medium 1.0, high 1.35. The visit/check fee remains separate from the predicted repair price.

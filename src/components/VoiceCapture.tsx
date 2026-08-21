@@ -79,11 +79,30 @@ function WorkerCard({
           ))}
         </div>
       )}
+      {(worker.distance_km != null || worker.predicted_price != null) && (
+        <div className="mt-2 flex flex-wrap gap-2 text-xs text-stone-500">
+          {worker.distance_km != null && (
+            <span className="rounded-md bg-stone-100 px-2 py-0.5">
+              {worker.distance_km.toFixed(1)} km away
+            </span>
+          )}
+          {worker.predicted_price != null && (
+            <span className="rounded-md bg-amber-50 px-2 py-0.5 text-amber-800">
+              Est. PKR {worker.predicted_price.toLocaleString("en-PK")}
+            </span>
+          )}
+          {worker.travel_cost_pkr != null && worker.travel_cost_pkr > 0 && (
+            <span className="rounded-md bg-stone-100 px-2 py-0.5">
+              Travel PKR {worker.travel_cost_pkr.toLocaleString("en-PK")}
+            </span>
+          )}
+        </div>
+      )}
     </div>
   );
 }
 
-function ResultPanel({ data, variant }: { data: UnderstandResponse; variant: "landing" | "dashboard" }) {
+function ResultPanel({ data, variant, location }: { data: UnderstandResponse; variant: "landing" | "dashboard"; location?: { lat: number; lng: number } | null }) {
   const u = data.understanding;
   const ranked = data.workers.ranked ?? [
     ...(data.workers.best ? [data.workers.best] : []),
@@ -158,6 +177,11 @@ function ResultPanel({ data, variant }: { data: UnderstandResponse; variant: "la
           <p className="text-xs text-amber-800/80">
             آپ پہلے صرف معائنہ فیس دیتے ہیں — اصل مرمت کی قیمت اُستاد کے معائنے کے بعد طے ہوگی۔
           </p>
+          {u.complexity && (
+            <p className="mt-1 text-xs text-amber-800/80">
+              Complexity: {u.complexity}
+            </p>
+          )}
         </div>
       )}
 
@@ -192,7 +216,7 @@ function ResultPanel({ data, variant }: { data: UnderstandResponse; variant: "la
                           </span>
                         )}
                       </div>
-                      {w.skills.length > 0 && (
+                        {w.skills.length > 0 && (
                         <div className="mt-1.5 flex flex-wrap gap-1">
                           {w.skills.slice(0, 3).map((s) => (
                             <span key={s} className="rounded-md bg-stone-100 px-2 py-0.5 text-[11px] text-stone-600">
@@ -200,7 +224,20 @@ function ResultPanel({ data, variant }: { data: UnderstandResponse; variant: "la
                             </span>
                           ))}
                         </div>
-                      )}
+                        )}
+                        {(w.distance_km != null || w.predicted_price != null) && (
+                          <div className="mt-1.5 flex flex-wrap gap-2 text-xs text-stone-500">
+                            {w.distance_km != null && <span>{w.distance_km.toFixed(1)} km away</span>}
+                            {w.predicted_price != null && (
+                              <span className="font-semibold text-amber-700">
+                                Est. PKR {w.predicted_price.toLocaleString("en-PK")}
+                              </span>
+                            )}
+                            {w.travel_cost_pkr != null && w.travel_cost_pkr > 0 && (
+                              <span>Travel PKR {w.travel_cost_pkr.toLocaleString("en-PK")}</span>
+                            )}
+                          </div>
+                        )}
                     </div>
                     <span className="shrink-0 rounded-lg bg-[#0e5f44] px-2 py-1 text-xs font-bold text-white">
                       {w.final_score}
@@ -250,6 +287,7 @@ function ResultPanel({ data, variant }: { data: UnderstandResponse; variant: "la
             original_text: u.description ?? "",
             transcript: data.transcript,
           }}
+          location={location}
           onClose={() => setSelectedWorker(null)}
           onSubmitted={(result) => {
             setSelectedWorker(null);
@@ -267,7 +305,9 @@ export default function VoiceCapture({ variant = "landing" }: VoiceCaptureProps)
   const [error, setError] = useState("");
   const [result, setResult] = useState<UnderstandResponse | null>(null);
   const [clarificationAnswer, setClarificationAnswer] = useState("");
+  const [clarificationSelections, setClarificationSelections] = useState<string[]>([]);
   const [busy, setBusy] = useState(false);
+  const [customerLocation, setCustomerLocation] = useState<{ lat: number; lng: number } | null>(null);
 
   const recorderRef = useRef<{
     recorder: MediaRecorder;
@@ -301,6 +341,12 @@ export default function VoiceCapture({ variant = "landing" }: VoiceCaptureProps)
       try {
         // Get customer location for finding nearest workers
         const location = await getLocation();
+        setCustomerLocation(location);
+
+        if (body instanceof FormData && location) {
+          body.set("lat", String(location.lat));
+          body.set("lng", String(location.lng));
+        }
 
         const fetchBody = body instanceof FormData ? body : {
           headers: { "Content-Type": "application/json" },
@@ -318,7 +364,8 @@ export default function VoiceCapture({ variant = "landing" }: VoiceCaptureProps)
         });
         const data = await parseApiResponse<UnderstandResponse>(response);
         setResult(data);
-        setStatus(data.clarification_question ? "clarifying" : "done");
+        setClarificationSelections([]);
+        setStatus(data.clarification_question || data.manual_fallback ? "clarifying" : "done");
       } catch (err) {
         setStatus("error");
         setError(
@@ -388,6 +435,7 @@ export default function VoiceCapture({ variant = "landing" }: VoiceCaptureProps)
     setError("");
     setResult(null);
     setClarificationAnswer("");
+    setClarificationSelections([]);
   }, []);
 
   return (
@@ -426,6 +474,30 @@ export default function VoiceCapture({ variant = "landing" }: VoiceCaptureProps)
           <p className="text-sm font-medium text-stone-800">
             {result.clarification_question}
           </p>
+          {result.clarification_options && result.clarification_options.length > 0 && (
+            <div className="space-y-2">
+              {result.clarification_options.map((option) => (
+                <label
+                  key={option}
+                  className="flex cursor-pointer items-center gap-2 rounded-lg border border-amber-200 bg-white px-3 py-2 text-sm text-stone-700"
+                >
+                  <input
+                    type="checkbox"
+                    checked={clarificationSelections.includes(option)}
+                    onChange={(event) => {
+                      setClarificationSelections((current) =>
+                        event.target.checked
+                          ? [...current, option]
+                          : current.filter((selected) => selected !== option)
+                      );
+                    }}
+                    className="h-4 w-4 accent-[#0e5f44]"
+                  />
+                  {option}
+                </label>
+              ))}
+            </div>
+          )}
           <input
             type="text"
             value={clarificationAnswer}
@@ -435,8 +507,14 @@ export default function VoiceCapture({ variant = "landing" }: VoiceCaptureProps)
           />
           <button
             type="button"
-            onClick={() => void run({ clarification: clarificationAnswer })}
-            disabled={busy || !clarificationAnswer.trim()}
+            onClick={() =>
+              void run({
+                clarification: [...clarificationSelections, clarificationAnswer.trim()]
+                  .filter(Boolean)
+                  .join(", "),
+              })
+            }
+            disabled={busy || (!clarificationAnswer.trim() && clarificationSelections.length === 0)}
             className="w-full rounded-lg bg-amber-500 py-2 text-sm font-semibold text-white hover:bg-amber-600 disabled:opacity-50"
           >
             Continue
@@ -475,7 +553,7 @@ export default function VoiceCapture({ variant = "landing" }: VoiceCaptureProps)
       {/* Result */}
       {status === "done" && result && (
         <div className="mt-6 w-full">
-          <ResultPanel data={result} variant={variant} />
+          <ResultPanel data={result} variant={variant} location={customerLocation} />
           <button
             type="button"
             onClick={reset}

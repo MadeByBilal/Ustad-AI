@@ -90,6 +90,17 @@ describe("normalizeGeminiJob", () => {
     expect(r.clarification_required).toBe(true);
     expect(r.clarification_question).toBe("Pani se related masla hai?");
   });
+
+  it("keeps checkbox clarification options", () => {
+    const r = normalizeGeminiJob({
+      category: null,
+      clarification_required: true,
+      clarification_question: "Kis qisam ka kaam hai?",
+      clarification_options: ["Bijli", "Pani", "AC", "Lakri"],
+    });
+
+    expect(r.clarification_options).toEqual(["Bijli", "Pani", "AC", "Lakri"]);
+  });
 });
 
 describe("understandJobInput", () => {
@@ -98,6 +109,14 @@ describe("understandJobInput", () => {
     const r = await understandJobInput({ text: "Bathroom ka tap leak ho raha hai" });
     expect(r.source).toBe("fallback");
     expect(r.understanding.category).toBe("plumber");
+  });
+
+  it("offers checkbox clarification when the fallback engine is unsure", async () => {
+    delete process.env.GEMINI_API_KEY;
+    const r = await understandJobInput({ text: "Kuch random kaam hai" });
+
+    expect(r.clarification_question).toBeDefined();
+    expect(r.clarification_options?.length).toBeGreaterThan(1);
   });
 
   it("returns a clarification question on the first unclear round", async () => {
@@ -174,7 +193,8 @@ describe("understandJobInput", () => {
     const r = await understandJobInput({ text: "kuchbhi", clarification: "bijli" });
     expect(r.source).toBe("gemini");
     expect(r.manual_fallback).toBe(true);
-    expect(r.clarification_question).toBeUndefined();
+    expect(r.clarification_question).toBeDefined();
+    expect(r.clarification_options?.length).toBeGreaterThan(1);
   });
 
   it("falls back to the keyword engine when Gemini errors out", async () => {

@@ -4,6 +4,10 @@ import { render, screen, fireEvent, waitFor } from "@testing-library/react";
 import IncomingJobCard from "./IncomingJobCard";
 import type { IncomingJobView } from "@/lib/worker/dashboard";
 
+vi.mock("next/navigation", () => ({
+  useRouter: () => ({ push: vi.fn() }),
+}));
+
 const fetchMock = vi.fn();
 
 function okResponse(payload: unknown) {

@@ -17,6 +17,7 @@ interface TechnicianRequestModalProps {
   worker: WorkerOption;
   understanding: UnderstandResponse["understanding"];
   input: { type: "voice" | "text" | "photo"; original_text?: string; transcript?: string };
+  location?: { lat: number; lng: number } | null;
   onClose: () => void;
   onSubmitted: (result: { job_id: string; offer_id: string }) => void;
 }
@@ -25,12 +26,17 @@ export default function TechnicianRequestModal({
   worker,
   understanding,
   input,
+  location,
   onClose,
   onSubmitted,
 }: TechnicianRequestModalProps) {
   const estMin = understanding.estimate_min ?? 0;
   const estMax = understanding.estimate_max ?? 0;
-  const defaultPrice = estMin > 0 ? String(estMin) : "";
+  const defaultPrice = worker.predicted_price != null
+    ? String(worker.predicted_price)
+    : estMin > 0
+      ? String(estMin)
+      : "";
 
   const [price, setPrice] = useState(defaultPrice);
   const [message, setMessage] = useState("");
@@ -65,8 +71,12 @@ export default function TechnicianRequestModal({
             estimate_min: estMin,
             estimate_max: estMax,
             inspection_fee: understanding.inspection_fee,
+            complexity: understanding.complexity,
           },
           input,
+          location: location ? {
+            coordinates: [location.lng, location.lat],
+          } : undefined,
         }),
       });
 
@@ -147,6 +157,17 @@ export default function TechnicianRequestModal({
             {estMin > 0 && estMax > 0 && (
               <p className="mt-1 text-xs text-stone-500">
                 AI estimate: {currency(estMin)} – {currency(estMax)}
+              </p>
+            )}
+            {worker.predicted_price != null && (
+              <p className="mt-1 text-xs font-semibold text-amber-700">
+                Predicted base for this ustad: {currency(worker.predicted_price)}
+                {worker.distance_km != null
+                  ? ` (${worker.distance_km.toFixed(1)} km travel included)`
+                  : ""}
+                {worker.travel_cost_pkr != null && worker.travel_cost_pkr > 0
+                  ? ` · petrol PKR ${worker.travel_cost_pkr.toLocaleString("en-PK")}`
+                  : ""}
               </p>
             )}
             {understanding.inspection_fee && understanding.inspection_fee > 0 && (

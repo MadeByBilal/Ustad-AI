@@ -52,17 +52,18 @@ export async function GET(req: NextRequest) {
       return fail("Worker profile not found for this account", 404);
     }
 
-    const ownActive = worker.active_job_id
-      ? await Job.find({ _id: worker.active_job_id }).lean()
-      : [];
-
-    const broadcast = await Job.find({
-      status: "BROADCASTING",
-      "matching.acceptance_deadline": { $gte: new Date() },
-    })
-      .sort({ created_at: -1 })
-      .limit(limit)
-      .lean();
+    const [ownActive, broadcast] = await Promise.all([
+      worker.active_job_id
+        ? Job.find({ _id: worker.active_job_id }).lean()
+        : [],
+      Job.find({
+        status: "BROADCASTING",
+        "matching.acceptance_deadline": { $gte: new Date() },
+      })
+        .sort({ created_at: -1 })
+        .limit(limit)
+        .lean(),
+    ]);
 
     jobs = [...ownActive, ...broadcast];
   }

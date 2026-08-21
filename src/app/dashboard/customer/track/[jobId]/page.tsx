@@ -27,7 +27,7 @@ export default async function TrackingPage({ params }: TrackingPageProps) {
   if (!job) notFound();
 
   const status = job.status as string;
-  if (!["EN_ROUTE", "ARRIVED", "IN_PROGRESS"].includes(status)) {
+  if (!["ACCEPTED", "EN_ROUTE", "ARRIVED", "IN_PROGRESS"].includes(status)) {
     notFound();
   }
 

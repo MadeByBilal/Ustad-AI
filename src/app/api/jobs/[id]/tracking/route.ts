@@ -1,15 +1,22 @@
-import { NextResponse } from "next/server";
+import { NextRequest } from "next/server";
 import { requireRole } from "@/lib/auth";
 import { connectDB } from "@/lib/mongodb";
 import { Job, Worker } from "@/models";
 import { haversineDistanceKm, estimateETAMinutes } from "@/lib/geo";
+import { authError, fail, ok } from "@/lib/api";
 
 export async function GET(
   _request: Request,
   { params }: { params: Promise<{ id: string }> }
 ) {
+  let sessionUser;
   try {
-    const sessionUser = await requireRole(["customer", "worker"]);
+    sessionUser = await requireRole(["customer", "worker"]);
+  } catch (error) {
+    return authError(error);
+  }
+
+  try {
     const userId = String(sessionUser.user._id);
     const role = sessionUser.user.role as string;
     const { id: jobId } = await params;
@@ -18,32 +25,33 @@ export async function GET(
 
     const job = await Job.findOne({ _id: jobId }).lean();
     if (!job) {
-      return NextResponse.json(
-        { success: false, error: "Job not found" },
-        { status: 404 }
-      );
+      return fail("Job not found", 404, undefined, "job_not_found", "کام نہیں ملا");
+    }
+
+    // Jobs store the worker profile id, while the session contains the user id.
+    // Resolve the profile before checking worker access.
+    let workerProfileId: string | null = null;
+    if (role === "worker") {
+      const workerProfile = await Worker.findOne({ user_id: userId })
+        .select("_id")
+        .lean();
+      workerProfileId = workerProfile ? String(workerProfile._id) : null;
     }
 
     // Access check: customer owns the job or worker is assigned
     const isCustomer = role === "customer" && String(job.customer_id) === userId;
     const isWorker =
       role === "worker" &&
-      String(job.matching?.selected_worker_id) === userId;
+      String(job.matching?.selected_worker_id) === workerProfileId;
 
     if (!isCustomer && !isWorker) {
-      return NextResponse.json(
-        { success: false, error: "Unauthorized" },
-        { status: 403 }
-      );
+      return fail("Unauthorized", 403, undefined, "unauthorized", "اجازت نہیں ہے");
     }
 
     // Get worker location
     const workerId = job.matching?.selected_worker_id;
     if (!workerId) {
-      return NextResponse.json({
-        success: true,
-        data: { status: job.status },
-      });
+      return ok({ status: job.status });
     }
 
     const worker = await Worker.findOne({ _id: workerId })
@@ -51,9 +59,16 @@ export async function GET(
       .lean();
 
     if (!worker?.location?.coordinates || worker.location.coordinates.length !== 2) {
-      return NextResponse.json({
-        success: true,
-        data: { status: job.status, worker_name: worker?.name ?? "Ustad" },
+      const destCoords = job.location?.coordinates;
+      return ok({
+        status: job.status,
+        worker_name: worker?.name ?? "Ustad",
+        destination_lat: destCoords?.[1] ?? null,
+        destination_lng: destCoords?.[0] ?? null,
+        destination_label: job.location?.address_label ?? null,
+        before_photo_id: job.completion?.before_photo_id ?? null,
+        after_photo_id: job.completion?.after_photo_id ?? null,
+        note: job.completion?.note ?? null,
       });
     }
 
@@ -69,32 +84,23 @@ export async function GET(
       etaMinutes = estimateETAMinutes(distanceKm);
     }
 
-    return NextResponse.json({
-      success: true,
-      data: {
-        status: job.status,
-        worker_name: worker.name ?? "Ustad",
-        worker_lat: workerLat,
-        worker_lng: workerLng,
-        worker_location_updated_at: worker.location_updated_at,
-        distance_km: distanceKm,
-        eta_minutes: etaMinutes,
-        destination_lat: destCoords?.[1] ?? null,
-        destination_lng: destCoords?.[0] ?? null,
-        destination_label: job.location?.address_label ?? null,
-      },
+    return ok({
+      status: job.status,
+      worker_name: worker.name ?? "Ustad",
+      worker_lat: workerLat,
+      worker_lng: workerLng,
+      worker_location_updated_at: worker.location_updated_at,
+      distance_km: distanceKm,
+      eta_minutes: etaMinutes,
+      destination_lat: destCoords?.[1] ?? null,
+      destination_lng: destCoords?.[0] ?? null,
+      destination_label: job.location?.address_label ?? null,
+      before_photo_id: job.completion?.before_photo_id ?? null,
+      after_photo_id: job.completion?.after_photo_id ?? null,
+      note: job.completion?.note ?? null,
     });
   } catch (error) {
-    if (error instanceof Error && error.message === "AUTH_REQUIRED") {
-      return NextResponse.json(
-        { success: false, error: "Unauthorized" },
-        { status: 401 }
-      );
-    }
     console.error("[tracking] error:", error);
-    return NextResponse.json(
-      { success: false, error: "Internal error" },
-      { status: 500 }
-    );
+    return fail("Internal error", 500, undefined, "internal_error", "اندرونی خرابی ہوئی ہے");
   }
 }

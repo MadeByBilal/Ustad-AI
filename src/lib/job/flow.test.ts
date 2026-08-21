@@ -474,6 +474,29 @@ describe("customerSelectWorker", () => {
     vi.mocked(Job.findOne).mockResolvedValue(stale as never);
     await expect(customerSelectWorker("job1", "cust1", "w1", NOW)).rejects.toMatchObject({ code: "selection_window_closed" });
   });
+
+  it("rolls back the job when the worker lock fails after ACCEPTED", async () => {
+    vi.mocked(Job.findOne).mockResolvedValue(responding as never);
+    // First findOneAndUpdate: job -> ACCEPTED (succeeds)
+    mockFindOneAndUpdate(responding);
+    // Worker lock fails
+    vi.mocked(Worker.updateOne).mockResolvedValue({ matchedCount: 0, modifiedCount: 0 } as never);
+
+    await expect(customerSelectWorker("job1", "cust1", "w1", NOW)).rejects.toMatchObject({
+      code: "worker_not_available",
+    });
+
+    // Verify rollback: second findOneAndUpdate should revert the job
+    const calls = vi.mocked(Job.findOneAndUpdate).mock.calls;
+    expect(calls.length).toBe(2);
+    const rollbackCall = calls[1];
+    const rollbackFilter = rollbackCall[0] as Record<string, unknown>;
+    const rollbackUpdate = rollbackCall[1] as { $set: Record<string, unknown> };
+
+    expect(rollbackFilter).toMatchObject({ status: "ACCEPTED", "matching.selected_worker_id": "w1" });
+    expect(rollbackUpdate.$set.status).toBe("WORKER_RESPONSES");
+    expect(rollbackUpdate.$set["matching.selected_worker_id"]).toBeNull();
+  });
 });
 
 describe("customerRejectWorker", () => {
@@ -586,8 +609,9 @@ describe("workerCancelJob", () => {
       { _id: "w1", active_job_id: "job1" },
       {
         $set: { active_job_id: null, is_available: true },
-        $inc: { cancellation_rate: 1 },
+        $inc: { cancellation_rate: 1, ustad_score: -5 },
         $min: { cancellation_rate: 100 },
+        $max: { ustad_score: 0 },
       }
     );
     expect(JobEvent.create).toHaveBeenCalledWith(

@@ -31,7 +31,7 @@ export default function WorkerAvailability({
       });
       const body = await res.json();
       if (!res.ok) {
-        throw new Error(body.error ?? "Update failed");
+        throw new Error(typeof body.error === "object" ? body.error.message ?? "Update failed" : body.error ?? "Update failed");
       }
       setState((s) => ({ ...s, ...body.data }));
       onChanged?.();

@@ -1,6 +1,8 @@
 import { connectDB } from "@/lib/mongodb";
 import { buildBoundingBox, haversineDistanceKm } from "@/lib/geo";
 import { Worker, type UrgencyLevel, type WorkerCategory } from "@/models";
+import { calculatePredictedPrice } from "@/lib/job/pricing";
+import type { ComplexityLevel } from "@/lib/job/pricing";
 
 export const RANKING_WEIGHTS = {
   skill_match: 0.3,
@@ -422,6 +424,9 @@ export interface WorkerOption {
   average_rating: number;
   skills_match: number;
   final_score: number;
+  distance_km?: number | null;
+  predicted_price?: number;
+  travel_cost_pkr?: number;
 }
 
 export interface WorkerOptionsFilters {
@@ -429,6 +434,10 @@ export interface WorkerOptionsFilters {
   required_skills: string[];
   urgency: UrgencyLevel;
   limit?: number;
+  location?: { lat: number; lng: number };
+  estimate_min?: number;
+  estimate_max?: number;
+  complexity?: ComplexityLevel;
 }
 
 /**
@@ -475,9 +484,9 @@ export async function getWorkerOptions(
   }
 
   const candidates = await Worker.find(query)
-    .select(
-      "_id name category skills ustad_score completed_jobs confirmed_jobs response_rate cancellation_rate average_rating emergency_available emergency_capabilities verification_level verified"
-    )
+      .select(
+        "_id name category skills ustad_score completed_jobs confirmed_jobs response_rate cancellation_rate average_rating emergency_available emergency_capabilities verification_level verified location"
+      )
     .lean();
 
   const ctx: MatchContext = {
@@ -518,19 +527,45 @@ export async function getWorkerOptions(
         b.score.ustad_score - a.score.ustad_score
     );
 
-  const options: WorkerOption[] = ranked.map(({ doc, score }) => ({
-    id: String(doc._id),
-    name: doc.name || "Ustad",
-    category: (doc.category ?? "plumber") as WorkerCategory,
-    skills: doc.skills,
-    verified: doc.verified === true,
-    verification_level: doc.verification_level ?? "identity_reviewed",
-    ustad_score: score.ustad_score,
-    completed_jobs: doc.completed_jobs,
-    average_rating: doc.average_rating,
-    skills_match: score.skill_match_score,
-    final_score: score.final_score,
-  }));
+  const options: WorkerOption[] = ranked.map(({ doc, score }) => {
+    const coordinates = doc.location?.coordinates;
+    const distanceKm =
+      filters.location && coordinates && coordinates.length === 2
+        ? Number(
+            haversineDistanceKm(
+              filters.location.lat,
+              filters.location.lng,
+              coordinates[1],
+              coordinates[0]
+            ).toFixed(2)
+          )
+        : null;
+    const predicted = calculatePredictedPrice({
+      estimateMin: filters.estimate_min ?? 0,
+      estimateMax: filters.estimate_max ?? 0,
+      complexity: filters.complexity,
+      distanceKm,
+    });
+
+    return {
+      id: String(doc._id),
+      name: doc.name || "Ustad",
+      category: (doc.category ?? "plumber") as WorkerCategory,
+      skills: doc.skills,
+      verified: doc.verified === true,
+      verification_level: doc.verification_level ?? "identity_reviewed",
+      ustad_score: score.ustad_score,
+      completed_jobs: doc.completed_jobs,
+      average_rating: doc.average_rating,
+      skills_match: score.skill_match_score,
+      final_score: score.final_score,
+      distance_km: distanceKm,
+      ...(predicted.predicted_price_pkr > 0
+        ? { predicted_price: predicted.predicted_price_pkr }
+        : {}),
+      travel_cost_pkr: predicted.travel_cost_pkr,
+    };
+  });
 
   const limit = filters.limit ?? 10;
   return { ...pickBestAndOthers(options, limit), ranked: options };

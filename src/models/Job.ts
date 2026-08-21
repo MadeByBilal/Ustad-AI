@@ -64,6 +64,11 @@ const jobSchema = new Schema(
       safety_flags: { type: [String], default: [] },
       confidence: { type: Number, min: 0, max: 1, default: 0 },
       clarification_required: { type: Boolean, default: false },
+      complexity: {
+        type: String,
+        enum: ["low", "medium", "high"],
+        default: "medium",
+      },
     },
     location: {
       type: {

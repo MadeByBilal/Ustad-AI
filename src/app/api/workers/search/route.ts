@@ -38,27 +38,32 @@ export async function GET(req: NextRequest) {
     return authError(e);
   }
 
-  const parsed = querySchema.safeParse(
-    Object.fromEntries(req.nextUrl.searchParams)
-  );
-  if (!parsed.success) {
-    return fail("Invalid query parameters", 400, parsed.error.flatten().fieldErrors);
+  try {
+    const parsed = querySchema.safeParse(
+      Object.fromEntries(req.nextUrl.searchParams)
+    );
+    if (!parsed.success) {
+      return fail("Invalid query parameters", 400, parsed.error.flatten().fieldErrors);
+    }
+
+    const { category, lat, lng, radius_km, urgency, required_skills, limit } = parsed.data;
+
+    const results = await getWorkerResults({
+      category,
+      lat,
+      lng,
+      radius_km,
+      urgency,
+      required_skills,
+      limit,
+    });
+
+    return ok({
+      results,
+      query: { category, lat, lng, radius_km, urgency },
+    });
+  } catch (error) {
+    console.error("[workers/search] error:", error);
+    return fail("Internal error", 500);
   }
-
-  const { category, lat, lng, radius_km, urgency, required_skills, limit } = parsed.data;
-
-  const results = await getWorkerResults({
-    category,
-    lat,
-    lng,
-    radius_km,
-    urgency,
-    required_skills,
-    limit,
-  });
-
-  return ok({
-    results,
-    query: { category, lat, lng, radius_km, urgency },
-  });
 }

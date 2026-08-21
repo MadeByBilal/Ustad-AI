@@ -24,15 +24,10 @@ describe("validateCustomerOffer", () => {
     expect(validateCustomerOffer(400, 800, 1500).valid).toBe(true);
   });
 
-  it("rejects offers above the high threshold", () => {
+  it("accepts offers above the AI estimate ceiling", () => {
     const v = validateCustomerOffer(9000, 2000, 4000);
-    expect(v.valid).toBe(false);
-    expect(v.reason).toBe("too_high");
-    expect(v.max_allowed).toBe(8000);
-  });
-
-  it("accepts an offer exactly at the high threshold", () => {
-    expect(validateCustomerOffer(8000, 2000, 4000).valid).toBe(true);
+    expect(v.valid).toBe(true);
+    expect(v.max_allowed).toBe(0);
   });
 
   it("rejects zero and negative offers", () => {

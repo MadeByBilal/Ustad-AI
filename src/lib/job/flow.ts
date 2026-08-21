@@ -32,6 +32,9 @@ export class FlowError extends Error {
   }
 }
 
+export const WORKER_SCORE_CANCEL_PENALTY = 5;
+export const WORKER_SCORE_COMPLETION_REWARD = 2;
+
 export interface JobInputPayload {
   type: "voice" | "text" | "photo";
   original_text?: string;
@@ -145,6 +148,7 @@ export async function createAndAnalyzeJob(
       safety_flags: analysis.safety_flags,
       confidence: analysis.confidence,
       clarification_required: analysis.clarification_required,
+      complexity: analysis.complexity ?? "medium",
     },
     pricing: {
       estimate_min: analysis.estimate_min,
@@ -219,6 +223,7 @@ export async function reanalyzeJob(
         "understanding.safety_flags": analysis.safety_flags,
         "understanding.confidence": analysis.confidence,
         "understanding.clarification_required": analysis.clarification_required,
+        "understanding.complexity": analysis.complexity ?? "medium",
         "pricing.estimate_min": analysis.estimate_min,
         "pricing.estimate_max": analysis.estimate_max,
         "pricing.inspection_fee": analysis.inspection_fee ?? 0,
@@ -770,6 +775,20 @@ export async function customerSelectWorker(
     { $set: { is_available: false } }
   );
   if (lock.matchedCount !== 1) {
+    // Roll back the job: revert from ACCEPTED back to WORKER_RESPONSES,
+    // clear the selected worker, and restore the selection deadline.
+    const previousStatus = job.status;
+    await Job.findOneAndUpdate(
+      { _id: jobId, status: "ACCEPTED", "matching.selected_worker_id": workerId },
+      {
+        $set: {
+          status: previousStatus,
+          "matching.selected_worker_id": null,
+          "matching.selection_deadline": job.matching?.selection_deadline ?? resolveSelectionDeadline(now),
+        },
+      },
+      { new: true }
+    );
     throw new FlowError("worker_not_available", "Worker is no longer available", 409);
   }
 
@@ -909,8 +928,12 @@ export async function workerCancelJob(
     { _id: workerId, active_job_id: jobId },
     {
       $set: { active_job_id: null, is_available: true },
-      $inc: { cancellation_rate: 1 },
+      $inc: {
+        cancellation_rate: 1,
+        ustad_score: -WORKER_SCORE_CANCEL_PENALTY,
+      },
       $min: { cancellation_rate: 100 },
+      $max: { ustad_score: 0 },
     }
   );
   await Offer.updateMany(
@@ -923,6 +946,55 @@ export async function workerCancelJob(
     ...(note ? { note } : {}),
   });
   await recordSystemMessage(jobId, "Job cancelled by the worker");
+  return updated;
+}
+
+/**
+ * Customer cancels a job they created. The job is closed, the worker
+ * (if assigned) is released back to availability.
+ */
+export async function customerCancelJob(
+  jobId: string,
+  customerId: string,
+  note?: string
+): Promise<JobDoc> {
+  const job = await requireJob({ _id: jobId, customer_id: customerId });
+  const cancellable: JobStatus[] = ["ACCEPTED", "EN_ROUTE", "ARRIVED", "IN_PROGRESS"];
+  if (!cancellable.includes(job.status)) {
+    throw new FlowError("invalid_status", `Job cannot be cancelled from ${job.status}`, 409);
+  }
+  guardJourney(job, job.status, "CANCELLED", "customer");
+
+  const updated = await Job.findOneAndUpdate(
+    { _id: jobId, status: job.status, customer_id: customerId },
+    { $set: { status: "CANCELLED" } },
+    { new: true }
+  );
+  if (!updated) {
+    throw new FlowError("invalid_status", "Job changed concurrently", 409);
+  }
+
+  const workerId = job.matching?.selected_worker_id;
+  if (workerId) {
+    await Worker.updateOne(
+      { _id: workerId, active_job_id: jobId },
+      {
+        $set: { active_job_id: null, is_available: true },
+        $inc: {
+          cancellation_rate: 1,
+          ustad_score: -WORKER_SCORE_CANCEL_PENALTY,
+        },
+        $min: { cancellation_rate: 100 },
+        $max: { ustad_score: 0 },
+      }
+    );
+  }
+
+  await recordEvent(jobId, job.status, "CANCELLED", customerId, "customer", {
+    reason: "customer-cancelled",
+    ...(note ? { note } : {}),
+  });
+  await recordSystemMessage(jobId, "Job cancelled by the customer");
   return updated;
 }
 

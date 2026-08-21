@@ -27,7 +27,7 @@ export default function TrackingJobsList() {
 
       const trackingJobs = (body.data?.requests ?? [])
         .filter((r: { status: string }) =>
-          ["EN_ROUTE", "ARRIVED"].includes(r.status)
+          ["ACCEPTED", "EN_ROUTE", "ARRIVED"].includes(r.status)
         )
         .map((r: {
           job_id: string;
@@ -104,7 +104,7 @@ export default function TrackingJobsList() {
                     <span className="relative inline-flex h-2 w-2 rounded-full bg-green-500"></span>
                   </span>
                   <span className="text-xs font-bold text-green-700">
-                    {job.status === "EN_ROUTE" ? "On the way" : "Arrived"}
+                    {job.status === "ACCEPTED" ? "Accepted" : job.status === "EN_ROUTE" ? "On the way" : "Arrived"}
                   </span>
                 </div>
                 <p className="mt-1 font-urdu text-sm font-bold text-stone-800">

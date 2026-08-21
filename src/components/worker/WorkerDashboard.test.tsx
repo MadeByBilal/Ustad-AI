@@ -3,6 +3,10 @@ import { describe, expect, it, vi, beforeEach, afterEach } from "vitest";
 import { render, screen, fireEvent, act } from "@testing-library/react";
 import WorkerDashboard from "./WorkerDashboard";
 
+vi.mock("next/navigation", () => ({
+  useRouter: () => ({ push: vi.fn() }),
+}));
+
 const fetchMock = vi.fn();
 
 function dashboardPayload(): unknown {

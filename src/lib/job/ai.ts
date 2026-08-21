@@ -4,6 +4,7 @@ import {
   CATEGORY_ESTIMATES,
   inspectionFeeFor,
 } from "@/lib/job/analyze";
+import type { ComplexityLevel } from "@/lib/job/pricing";
 
 export const GEMINI_MODEL = "gemini-2.5-flash";
 
@@ -14,6 +15,17 @@ const WORKER_CATEGORIES = [
   "carpenter",
 ];
 const URGENCY_LEVELS = ["normal", "potentially_urgent", "emergency"];
+
+/** Max time (ms) for any single external API call. */
+const API_TIMEOUT_MS = 10_000;
+/** Max retries for transient Gemini errors (429, 5xx, network). */
+const GEMINI_MAX_RETRIES = 2;
+/** Base delay (ms) for exponential backoff. */
+const RETRY_BASE_DELAY_MS = 500;
+/** Max total time (ms) for the AssemblyAI polling loop. */
+const ASSEMBLYAI_POLL_DEADLINE_MS = 20_000;
+/** Interval (ms) between AssemblyAI poll attempts. */
+const ASSEMBLYAI_POLL_INTERVAL_MS = 1_500;
 
 export interface AiImageInput {
   mime: string;
@@ -32,12 +44,14 @@ export interface AiUnderstandResult {
   understanding: AnalysisResult;
   /** Set on round 1 when the model needs more information. */
   clarification_question?: string;
+  clarification_options?: string[];
   /** Set on round 2 when the model is still unclear -> show manual pickers. */
   manual_fallback?: boolean;
 }
 
 export type NormalizedGeminiJob = AnalysisResult & {
   clarification_question?: string;
+  clarification_options?: string[];
 };
 
 interface GeminiRawJob {
@@ -52,7 +66,16 @@ interface GeminiRawJob {
   confidence?: number;
   clarification_required?: boolean;
   clarification_question?: string;
+  clarification_options?: string[];
+  complexity?: string;
 }
+
+export const DEFAULT_CLARIFICATION_OPTIONS = [
+  "Bijli / electrician",
+  "Pani / plumber",
+  "AC / cooling",
+  "Lakri / carpenter",
+];
 
 export const SYSTEM_PROMPT = `You are a job-assistant for a Pakistani home-repair app (Ustad). The user speaks Roman Urdu, Urdu, or English. You must respond with ONLY valid strict JSON, exactly matching this schema (no markdown, no commentary):
 
@@ -67,13 +90,17 @@ export const SYSTEM_PROMPT = `You are a job-assistant for a Pakistani home-repai
   "estimated_price_max": "integer >= 0 in PKR",
   "confidence": "float 0 to 1",
   "clarification_required": "boolean",
-  "clarification_question": "string or null"
+  "clarification_question": "string or null",
+  "clarification_options": ["string"] or [],
+  "complexity": "low" | "medium" | "high"
 }
 
 Rules:
 - Infer from text, voice transcript, or the attached photo of the problem.
 - urgency: "emergency" if user mentions sparks (chingari), gas smell (gas ki boo), burning smell, fire (aag), exposed/bare wire, electric shock, short circuit. "potentially_urgent" for high-risk jobs (power outage, fuse, wiring, water flooding). Otherwise "normal".
 - If category is "unknown" or confidence < 0.65, set clarification_required=true and ask ONE SHORT question in the user's language (Roman Urdu preferred) about category or part of the problem, then STOP (do not ask further questions).
+- When clarification_required=true, provide 2-5 short checkbox-friendly clarification_options. Keep them mutually understandable and in the user's language.
+- Set complexity to low for a simple adjustment/cleaning, medium for normal repair, and high for installation, replacement, compressor, full wiring, renovation, or multi-part work.
 - This is a matching/detection step, never a diagnosis or price quote. Conservative prices only as placeholder estimates.
 - On the second round the user answers the clarification question; commit the best possible category even if unsure.
 - If the input is not relevant, confusing, or too vague, ask a single clarifying question.`;
@@ -87,6 +114,14 @@ function coerceToArray(value: unknown): string[] {
   return value
     .filter((v): v is string => typeof v === "string" && v.length > 0)
     .map((s) => s.trim().toLowerCase())
+    .filter((s, idx, arr) => arr.indexOf(s) === idx);
+}
+
+function coerceDisplayArray(value: unknown): string[] {
+  if (!Array.isArray(value)) return [];
+  return value
+    .filter((v): v is string => typeof v === "string" && v.trim().length > 0)
+    .map((s) => s.trim())
     .filter((s, idx, arr) => arr.indexOf(s) === idx);
 }
 
@@ -104,6 +139,10 @@ export function normalizeGeminiJob(raw: unknown): NormalizedGeminiJob {
     ? (job.urgency as NonNullable<AnalysisResult["urgency"]>)
     : "normal";
   const estimates = category ? CATEGORY_ESTIMATES[category] : null;
+  const complexity = ["low", "medium", "high"].includes(job.complexity ?? "")
+    ? (job.complexity as ComplexityLevel)
+    : "medium";
+  const clarificationOptions = coerceDisplayArray(job.clarification_options).slice(0, 5);
 
   return {
     category,
@@ -117,10 +156,31 @@ export function normalizeGeminiJob(raw: unknown): NormalizedGeminiJob {
     estimate_min: coerceNumber(job.estimated_price_min, estimates?.min ?? 0),
     estimate_max: coerceNumber(job.estimated_price_max, estimates?.max ?? 0),
     inspection_fee: inspectionFeeFor(category),
+    complexity,
     ...(typeof job.clarification_question === "string"
       ? { clarification_question: job.clarification_question }
       : {}),
+    ...(clarificationOptions.length > 0
+      ? { clarification_options: clarificationOptions }
+      : {}),
   };
+}
+
+/** Returns true for transient errors worth retrying (429, 5xx, network). */
+function isRetryable(error: unknown): boolean {
+  if (error instanceof DOMException && error.name === "TimeoutError") return true;
+  if (error instanceof TypeError) return true; // network errors
+  if (error instanceof Error) {
+    const msg = error.message.toLowerCase();
+    if (msg.includes("429") || msg.includes("rate limit")) return true;
+    if (msg.includes("500") || msg.includes("502") || msg.includes("503")) return true;
+    if (msg.includes("econnreset") || msg.includes("fetch")) return true;
+  }
+  return false;
+}
+
+async function sleep(ms: number): Promise<void> {
+  return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
 export async function geminiUnderstand(
@@ -134,43 +194,73 @@ export async function geminiUnderstand(
   }
   parts.push({ text: input || "Analyze the attached photo of the problem." });
 
-  const response = await fetch(geminiEndpoint(apiKey), {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({
-      system_instruction: { parts: [{ text: SYSTEM_PROMPT }] },
-      contents: [{ parts }],
-      generationConfig: {
-        temperature: 0.3,
-        responseMimeType: "application/json",
-      },
-    }),
-    signal: AbortSignal.timeout(25_000),
-  });
+  let lastError: Error | null = null;
 
-  if (!response.ok) {
-    throw new Error(
-      `Gemini API ${response.status}: ${await response.text().catch(() => "")}`,
-    );
+  for (let attempt = 0; attempt <= GEMINI_MAX_RETRIES; attempt++) {
+    try {
+      const response = await fetch(geminiEndpoint(apiKey), {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          system_instruction: { parts: [{ text: SYSTEM_PROMPT }] },
+          contents: [{ parts }],
+          generationConfig: {
+            temperature: 0.3,
+            responseMimeType: "application/json",
+          },
+        }),
+        signal: AbortSignal.timeout(API_TIMEOUT_MS),
+      });
+
+      if (!response.ok) {
+        const errorText = await response.text().catch(() => "");
+        const err = new Error(
+          `Gemini API ${response.status}: ${errorText}`,
+        );
+        // 429 and 5xx are retryable; 4xx (except 429) are not
+        if (response.status === 429 || response.status >= 500) {
+          lastError = err;
+          if (attempt < GEMINI_MAX_RETRIES) {
+            await sleep(RETRY_BASE_DELAY_MS * Math.pow(2, attempt));
+            continue;
+          }
+        }
+        throw err;
+      }
+
+      const data = (await response.json()) as {
+        candidates?: Array<{ content?: { parts?: Array<{ text?: string }> } }>;
+      };
+      const modelText = data.candidates?.[0]?.content?.parts?.[0]?.text;
+      if (!modelText) {
+        throw new Error("Gemini returned no candidates");
+      }
+
+      let parsed: unknown;
+      try {
+        parsed = JSON.parse(modelText);
+      } catch {
+        throw new Error("Gemini returned malformed JSON");
+      }
+      return normalizeGeminiJob(parsed);
+    } catch (error) {
+      if (error instanceof Error && isRetryable(error) && attempt < GEMINI_MAX_RETRIES) {
+        lastError = error;
+        await sleep(RETRY_BASE_DELAY_MS * Math.pow(2, attempt));
+        continue;
+      }
+      throw error;
+    }
   }
 
-  const data = (await response.json()) as {
-    candidates?: Array<{ content?: { parts?: Array<{ text?: string }> } }>;
-  };
-  const modelText = data.candidates?.[0]?.content?.parts?.[0]?.text;
-  if (!modelText) {
-    throw new Error("Gemini returned no candidates");
-  }
-
-  let parsed: unknown;
-  try {
-    parsed = JSON.parse(modelText);
-  } catch {
-    throw new Error("Gemini returned malformed JSON");
-  }
-  return normalizeGeminiJob(parsed);
+  // Should not reach here, but just in case
+  throw lastError ?? new Error("Gemini failed after retries");
 }
 
+/**
+ * Upload audio to AssemblyAI and poll for transcription.
+ * Returns the transcribed text or throws on failure.
+ */
 async function transcriptionFromAudio(
   audio: Buffer,
   mime: string,
@@ -178,6 +268,7 @@ async function transcriptionFromAudio(
 ): Promise<string> {
   const auth = { headers: { Authorization: apiKey } };
 
+  // Step 1: Upload audio (10s timeout)
   const upload = await fetch("https://api.assemblyai.com/v2/upload", {
     method: "POST",
     headers: {
@@ -185,7 +276,7 @@ async function transcriptionFromAudio(
       ...auth.headers,
     },
     body: audio,
-    signal: AbortSignal.timeout(30_000),
+    signal: AbortSignal.timeout(API_TIMEOUT_MS),
   });
   if (!upload.ok) {
     const errorText = await upload.text().catch(() => "");
@@ -198,14 +289,16 @@ async function transcriptionFromAudio(
     throw new Error("AssemblyAI upload missing upload_url");
   }
 
+  // Step 2: Create transcript job (10s timeout, auto-detect language)
   const created = await fetch("https://api.assemblyai.com/v2/transcript", {
     method: "POST",
     headers: { "Content-Type": "application/json", ...auth.headers },
     body: JSON.stringify({
       audio_url: uploaded.upload_url,
-      language_code: "ur",
+      // No language_code: let AssemblyAI auto-detect.
+      // This handles Roman Urdu, Urdu, English, and mixed speech.
     }),
-    signal: AbortSignal.timeout(30_000),
+    signal: AbortSignal.timeout(API_TIMEOUT_MS),
   });
   if (!created.ok) {
     throw new Error(`AssemblyAI transcript create ${created.status}`);
@@ -216,15 +309,19 @@ async function transcriptionFromAudio(
     throw new Error("AssemblyAI transcript missing id");
   }
 
-  const pollDeadline = Date.now() + 45_000;
+  // Step 3: Poll for completion (20s total deadline, 10s per poll)
+  const pollDeadline = Date.now() + ASSEMBLYAI_POLL_DEADLINE_MS;
   for (;;) {
     if (Date.now() > pollDeadline) {
       throw new Error("AssemblyAI transcription timed out");
     }
-    await new Promise((resolve) => setTimeout(resolve, 1500));
+    await sleep(ASSEMBLYAI_POLL_INTERVAL_MS);
     const status = await fetch(
       `https://api.assemblyai.com/v2/transcript/${transcriptId}`,
-      { headers: { "Content-Type": "application/json", ...auth.headers } },
+      {
+        headers: { "Content-Type": "application/json", ...auth.headers },
+        signal: AbortSignal.timeout(API_TIMEOUT_MS),
+      },
     );
     if (!status.ok) {
       throw new Error(`AssemblyAI status ${status.status}`);
@@ -255,7 +352,13 @@ export async function transcribeAudio(
       "ASSEMBLYAI_API_KEY is not configured. Please set it in your environment variables.",
     );
   }
-  return transcriptionFromAudio(audio, mime, apiKey);
+  const text = await transcriptionFromAudio(audio, mime, apiKey);
+  if (!text || text.length < 2) {
+    throw new Error(
+      "Transcription was empty or too short. The audio may be silent or unclear.",
+    );
+  }
+  return text;
 }
 
 export async function understandJobInput(
@@ -287,6 +390,12 @@ export async function understandJobInput(
         source: "gemini",
         understanding: normalized,
         manual_fallback: normalized.clarification_required,
+        ...(normalized.clarification_required
+          ? {
+              clarification_question: "Choose the closest type of work to continue.",
+              clarification_options: normalized.clarification_options ?? DEFAULT_CLARIFICATION_OPTIONS,
+            }
+          : {}),
       };
     }
 
@@ -295,6 +404,8 @@ export async function understandJobInput(
         source: "gemini",
         understanding: normalized,
         clarification_question: normalized.clarification_question,
+        clarification_options:
+          normalized.clarification_options ?? DEFAULT_CLARIFICATION_OPTIONS,
       };
     }
 
@@ -309,8 +420,15 @@ export async function understandJobInput(
 }
 
 function fallbackResult(text: string): AiUnderstandResult {
+  const understanding = analyzeJobInput(text);
   return {
     source: "fallback",
-    understanding: analyzeJobInput(text),
+    understanding,
+    ...(understanding.clarification_required
+      ? {
+          clarification_question: "Aap kis qisam ka kaam karwana chahte hain?",
+          clarification_options: DEFAULT_CLARIFICATION_OPTIONS,
+        }
+      : {}),
   };
 }

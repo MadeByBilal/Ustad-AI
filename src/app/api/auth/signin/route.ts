@@ -35,41 +35,46 @@ function setSessionCookie(response: NextResponse, token: string) {
  * and wrong passwords so the endpoint cannot be used to enumerate accounts.
  */
 export async function POST(req: NextRequest) {
-  const parsed = bodySchema.safeParse(await req.json().catch(() => ({})));
-  if (!parsed.success) {
-    return fail("Invalid request", 400, parsed.error.flatten().fieldErrors);
+  try {
+    const parsed = bodySchema.safeParse(await req.json().catch(() => ({})));
+    if (!parsed.success) {
+      return fail("Invalid request", 400, parsed.error.flatten().fieldErrors);
+    }
+
+    const email = parsed.data.email.trim().toLowerCase();
+
+    await connectDB();
+
+    const user = await User.findOne({ email })
+      .select("+password_hash")
+      .lean();
+
+    if (
+      !user ||
+      typeof user.password_hash !== "string" ||
+      !verifyPassword(parsed.data.password, user.password_hash)
+    ) {
+      return fail(INVALID_CREDENTIALS, 401);
+    }
+
+    const token = createSessionToken();
+    const userAgent = req.headers.get("user-agent") ?? "";
+    const ip = req.headers.get("x-forwarded-for") ?? "local";
+    await Session.create({
+      token,
+      user_id: user._id,
+      role: user.role,
+      fingerprint: fingerprint(userAgent, ip),
+      expires_at: new Date(Date.now() + SESSION_TTL_DAYS * 24 * 60 * 60 * 1000),
+    });
+
+    const response = ok({
+      user: { id: user._id, role: user.role, name: user.name, email: user.email },
+    });
+    setSessionCookie(response, token);
+    return response;
+  } catch (error) {
+    console.error("[auth/signin] error:", error);
+    return fail("Internal error", 500);
   }
-
-  const email = parsed.data.email.trim().toLowerCase();
-
-  await connectDB();
-
-  const user = await User.findOne({ email })
-    .select("+password_hash")
-    .lean();
-
-  if (
-    !user ||
-    typeof user.password_hash !== "string" ||
-    !verifyPassword(parsed.data.password, user.password_hash)
-  ) {
-    return fail(INVALID_CREDENTIALS, 401);
-  }
-
-  const token = createSessionToken();
-  const userAgent = req.headers.get("user-agent") ?? "";
-  const ip = req.headers.get("x-forwarded-for") ?? "local";
-  await Session.create({
-    token,
-    user_id: user._id,
-    role: user.role,
-    fingerprint: fingerprint(userAgent, ip),
-    expires_at: new Date(Date.now() + SESSION_TTL_DAYS * 24 * 60 * 60 * 1000),
-  });
-
-  const response = ok({
-    user: { id: user._id, role: user.role, name: user.name, email: user.email },
-  });
-  setSessionCookie(response, token);
-  return response;
 }

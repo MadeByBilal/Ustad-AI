@@ -43,78 +43,83 @@ function setSessionCookie(response: NextResponse, token: string) {
  * issued right away — sign-up doubles as sign-in.
  */
 export async function POST(req: NextRequest) {
-  const parsed = bodySchema.safeParse(await req.json().catch(() => ({})));
-  if (!parsed.success) {
-    return fail("Invalid request", 400, parsed.error.flatten().fieldErrors);
-  }
+  try {
+    const parsed = bodySchema.safeParse(await req.json().catch(() => ({})));
+    if (!parsed.success) {
+      return fail("Invalid request", 400, parsed.error.flatten().fieldErrors);
+    }
 
-  const { name, role } = parsed.data;
-  const email = parsed.data.email.trim().toLowerCase();
+    const { name, role } = parsed.data;
+    const email = parsed.data.email.trim().toLowerCase();
 
-  const strength = validatePasswordStrength(parsed.data.password);
-  if (!strength.valid) {
-    return fail(strength.reason ?? "Weak password", 422);
-  }
+    const strength = validatePasswordStrength(parsed.data.password);
+    if (!strength.valid) {
+      return fail(strength.reason ?? "Weak password", 422);
+    }
 
-  if (role === "worker" && !parsed.data.worker) {
-    return fail("Technicians must pick a category and at least one skill", 400);
-  }
+    if (role === "worker" && !parsed.data.worker) {
+      return fail("Technicians must pick a category and at least one skill", 400);
+    }
 
-  await connectDB();
+    await connectDB();
 
-  const existing = await User.findOne({ email }).lean();
-  if (existing) {
-    return fail("An account with this email already exists", 409);
-  }
+    const existing = await User.findOne({ email }).lean();
+    if (existing) {
+      return fail("An account with this email already exists", 409);
+    }
 
-  const user = await User.create({
-    role,
-    name,
-    email,
-    password_hash: hashPassword(parsed.data.password),
-  });
-
-  if (role === "worker" && parsed.data.worker) {
-    await Worker.create({
-      user_id: user._id,
+    const user = await User.create({
+      role,
       name,
-      category: parsed.data.worker.category,
-      skills: parsed.data.worker.skills,
-      verified: false,
-      is_online: false,
-      is_available: true,
-      // Default location in Karachi — workers update via LocationUpdater
-      location: { type: "Point", coordinates: [67.0011, 24.8607] },
-      service_area: {
-        type: "Polygon",
-        coordinates: [
-          [
-            [66.94, 24.80],
-            [67.06, 24.80],
-            [67.06, 24.92],
-            [66.94, 24.92],
-            [66.94, 24.80],
-          ],
-        ],
-      },
+      email,
+      password_hash: hashPassword(parsed.data.password),
     });
+
+    if (role === "worker" && parsed.data.worker) {
+      await Worker.create({
+        user_id: user._id,
+        name,
+        category: parsed.data.worker.category,
+        skills: parsed.data.worker.skills,
+        verified: false,
+        is_online: false,
+        is_available: true,
+        // Default location in Karachi — workers update via LocationUpdater
+        location: { type: "Point", coordinates: [67.0011, 24.8607] },
+        service_area: {
+          type: "Polygon",
+          coordinates: [
+            [
+              [66.94, 24.80],
+              [67.06, 24.80],
+              [67.06, 24.92],
+              [66.94, 24.92],
+              [66.94, 24.80],
+            ],
+          ],
+        },
+      });
+    }
+
+    const token = createSessionToken();
+    const userAgent = req.headers.get("user-agent") ?? "";
+    const ip = req.headers.get("x-forwarded-for") ?? "local";
+    await Session.create({
+      token,
+      user_id: user._id,
+      role: user.role,
+      fingerprint: fingerprint(userAgent, ip),
+      expires_at: new Date(Date.now() + SESSION_TTL_DAYS * 24 * 60 * 60 * 1000),
+    });
+
+    const response = ok(
+      { user: { id: user._id, role: user.role, name: user.name, email: user.email } },
+      201
+    );
+    setSessionCookie(response, token);
+    return response;
+  } catch (error) {
+    console.error("[auth/signup] error:", error);
+    return fail("Internal error", 500);
   }
-
-  const token = createSessionToken();
-  const userAgent = req.headers.get("user-agent") ?? "";
-  const ip = req.headers.get("x-forwarded-for") ?? "local";
-  await Session.create({
-    token,
-    user_id: user._id,
-    role: user.role,
-    fingerprint: fingerprint(userAgent, ip),
-    expires_at: new Date(Date.now() + SESSION_TTL_DAYS * 24 * 60 * 60 * 1000),
-  });
-
-  const response = ok(
-    { user: { id: user._id, role: user.role, name: user.name, email: user.email } },
-    201
-  );
-  setSessionCookie(response, token);
-  return response;
 }

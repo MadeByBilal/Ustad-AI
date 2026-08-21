@@ -99,7 +99,7 @@ describe("POST /api/auth/signin", () => {
     );
     const a = await unknownEmail.json();
     const b = await wrongPassword.json();
-    expect(a.error).toBe(b.error);
+    expect(a.error.message).toBe(b.error.message);
   });
 
   it("rejects an account record without a password hash", async () => {

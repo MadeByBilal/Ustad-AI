@@ -27,6 +27,22 @@ export function registerSocketHandlers(io: Server): void {
         try {
           const { jobId, lat, lng } = data;
 
+          // Save worker location to database so tracking API can read it
+          const Worker = mongoose.model("Worker");
+          const workerId = socket.data?.workerId;
+          if (workerId) {
+            await Worker.findOneAndUpdate(
+              { _id: workerId },
+              {
+                $set: {
+                  "location.type": "Point",
+                  "location.coordinates": [lng, lat],
+                  "location_updated_at": new Date(),
+                },
+              }
+            );
+          }
+
           // Fetch job to get destination
           const Job = mongoose.model("Job");
           const job = await Job.findOne({ _id: jobId }).lean() as Record<string, unknown> | null;

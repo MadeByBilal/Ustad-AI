@@ -20,30 +20,35 @@ export async function GET(
     return authError(e);
   }
 
-  const photoId = params.id.trim();
-  if (!photoId) {
-    return fail("Photo id is required", 400);
-  }
+  try {
+    const photoId = params.id.trim();
+    if (!photoId) {
+      return fail("Photo id is required", 400);
+    }
 
-  await connectDB();
-  const upload = await Upload.findById(photoId).lean();
-  if (!upload) {
-    return fail("Photo not found", 404);
-  }
+    await connectDB();
+    const upload = await Upload.findById(photoId).lean();
+    if (!upload) {
+      return fail("Photo not found", 404);
+    }
 
-  const source = upload.data as unknown as
-    | { value: () => Buffer }
-    | (Uint8Array & { buffer: ArrayBufferLike });
-  const bytes = new Uint8Array(
-    "value" in source
-      ? Buffer.from(source.value())
-      : Buffer.from(source.buffer, source.byteOffset, source.byteLength)
-  );
-  return new Response(bytes, {
-    headers: {
-      "Content-Type": upload.mime,
-      "Content-Length": String(upload.data.length),
-      "Cache-Control": "public, max-age=300",
-    },
-  });
+    const source = upload.data as unknown as
+      | { value: () => Buffer }
+      | (Uint8Array & { buffer: ArrayBufferLike });
+    const bytes = new Uint8Array(
+      "value" in source
+        ? Buffer.from(source.value())
+        : Buffer.from(source.buffer, source.byteOffset, source.byteLength)
+    );
+    return new Response(bytes, {
+      headers: {
+        "Content-Type": upload.mime,
+        "Content-Length": String(upload.data.length),
+        "Cache-Control": "public, max-age=300",
+      },
+    });
+  } catch (error) {
+    console.error("[photos] error:", error);
+    return fail("Internal error", 500);
+  }
 }

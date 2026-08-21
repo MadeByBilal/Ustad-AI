@@ -1,26 +1,26 @@
-# Graph Report - Ustad Ai  (2026-08-20)
+# Graph Report - Ustad Ai  (2026-08-21)
 
 ## Corpus Check
-- 141 files · ~60,727 words
+- 200 files · ~87,055 words
 - Verdict: corpus is large enough that graph structure adds value.
 
 ## Summary
-- 774 nodes · 1760 edges · 63 communities (46 shown, 17 thin omitted)
-- Extraction: 100% EXTRACTED · 0% INFERRED · 0% AMBIGUOUS · INFERRED: 4 edges (avg confidence: 0.83)
+- 1079 nodes · 2429 edges · 89 communities (66 shown, 23 thin omitted)
+- Extraction: 100% EXTRACTED · 0% INFERRED · 0% AMBIGUOUS · INFERRED: 12 edges (avg confidence: 0.61)
 - Token cost: 0 input · 0 output
 
 ## Graph Freshness
-- Built from commit: `0ecd7bbd`
+- Built from commit: `868dbda5`
 - Run `git rev-parse HEAD` and compare to check if the graph is stale.
 - Run `graphify update .` after code changes (no API cost).
 
 ## Community Hubs (Navigation)
-- requireRole
+- fail
+- broadcast/route.test.ts
 - flow.ts
-- Worker.ts
-- NewWorkWizard.tsx
+- WorkerResults.tsx
 - Graphify Tool
-- verify/route.ts
+- signup/route.ts
 - analyze.ts
 - devDependencies
 - matching.ts
@@ -30,12 +30,12 @@
 - VoiceCapture.tsx
 - AcceptJobButton
 - dashboard.ts
-- cancel/route.ts
+- FlowError
 - jobs/route.test.ts
 - login/page.tsx
 - extends
 - opencode.json
-- WorkerDashboard.tsx
+- location/route.test.ts
 - graphify.js
 - postcss.config.mjs
 - app/layout.tsx
@@ -44,61 +44,86 @@
 - God Nodes Analysis
 - Obsidian Vault Export
 - ai.ts
-- auth.ts
-- stream.ts
-- messages/route.ts
-- ActiveJobPanel.tsx
-- stream/route.test.ts
-- WorkerCategory
-- User.ts
-- seed.ts
-- FlowError
-- offers/route.ts
-- index.ts
-- media/route.ts
+- jobs/photos/route.ts
+- haversineDistanceKm
+- chat.ts
+- TrackingMap.tsx
 - Worker
-- status/route.ts
-- LocationUpdater
-- JobEvent.ts
+- photos/route.test.ts
+- index.ts
+- requireRole
+- accept/route.test.ts
+- cancel/route.ts
+- approve/route.ts
+- messages/route.ts
+- socket-client.ts
+- customer/jobs/page.tsx
+- Real-Time GPS Tracking Integration Plan
+- CustomerRequestsPanel.tsx
 - scripts
-- VoiceCapture.test.tsx
+- WorkerCategory
 - safety.ts
-- WorkerChat
+- pricing.ts
 - package.json
-- location/route.ts
-- Review.ts
-- eslint-config-next
-- @testing-library/user-event
-- jsdom
-- tailwindcss
+- auth.ts
+- VoiceCapture.test.tsx
+- counter-response/route.ts
+- WorkerActiveTracking.tsx
+- BottomNav.tsx
+- ActiveJobTracking.tsx
+- requests.ts
 - tsx
 - @types/node
 - @types/react
+- NewWorkWizard
 - vitest
+- server.ts
+- state-machine.ts
+- NewWorkWizard.tsx
+- TDD Evidence Report: Service Marketplace Features
+- flow.test.ts
+- jobs/[id]/route.ts
+- workerOffer
+- track/page.tsx
+- customer/page.tsx
+- offers/route.test.ts
+- chat/page.tsx
+- NewWorkWizard.test.tsx
+- media/route.ts
+- LogoutButton
+- TrackingPreview.tsx
+- reject-offer/route.test.ts
+- status/route.test.ts
+- @testing-library/jest-dom
+- @types/leaflet
+- jsdom
+- seed.ts
+- Worker.ts
+- eslint
 
 ## God Nodes (most connected - your core abstractions)
-1. `requireRole()` - 69 edges
-2. `fail()` - 53 edges
-3. `ok()` - 52 edges
-4. `connectDB()` - 52 edges
-5. `authError()` - 45 edges
-6. `FlowError` - 33 edges
-7. `Worker` - 32 edges
-8. `Graphify Tool` - 21 edges
-9. `WorkerCategory` - 17 edges
-10. `compilerOptions` - 15 edges
+1. `requireRole()` - 113 edges
+2. `connectDB()` - 82 edges
+3. `fail()` - 69 edges
+4. `ok()` - 68 edges
+5. `authError()` - 63 edges
+6. `Worker` - 46 edges
+7. `FlowError` - 33 edges
+8. `Job` - 21 edges
+9. `Graphify Tool` - 21 edges
+10. `haversineDistanceKm()` - 19 edges
 
 ## Surprising Connections (you probably didn't know these)
 - `Graphify Usage Rules` --conceptually_related_to--> `Ustad AI Marketplace`  [INFERRED]
   AGENTS.md → README.md
+- `ActiveJobPage()` --calls--> `requireRole()`  [EXTRACTED]
+  src/app/dashboard/customer/active/page.tsx → src/lib/auth.ts
+- `CustomerJobsPage()` --calls--> `requireRole()`  [EXTRACTED]
+  src/app/dashboard/customer/jobs/page.tsx → src/lib/auth.ts
 - `NewWorkPage()` --calls--> `requireRole()`  [EXTRACTED]
   src/app/dashboard/customer/new-work/page.tsx → src/lib/auth.ts
-- `CustomerDashboardPage()` --calls--> `requireRole()`  [EXTRACTED]
+- `CustomerHomePage()` --calls--> `requireRole()`  [EXTRACTED]
   src/app/dashboard/customer/page.tsx → src/lib/auth.ts
-- `handleFile()` --calls--> `fileToPhotoBase64()`  [EXTRACTED]
-  src/components/worker/JobPhotoUpload.tsx → src/lib/image.ts
-- `WorkerSeed` --references--> `WorkerCategory`  [EXTRACTED]
-  src/scripts/seed.ts → src/models/Worker.ts
 
 ## Import Cycles
 - None detected.
@@ -108,71 +133,75 @@
 - **Graph Export Targets** — opencode_skills_graphify_skill_html_viz, opencode_skills_graphify_skill_obsidian_vault, opencode_skills_graphify_references_exports_wiki_export, opencode_skills_graphify_references_exports_neo4j_export, opencode_skills_graphify_references_exports_mcp_server [EXTRACTED 1.00]
 - **Graph Query Flows** — opencode_skills_graphify_skill_query_subcommand, opencode_skills_graphify_skill_path_subcommand, opencode_skills_graphify_skill_explain_subcommand [EXTRACTED 1.00]
 
-## Communities (63 total, 17 thin omitted)
+## Communities (89 total, 23 thin omitted)
 
-### Community 0 - "requireRole"
+### Community 0 - "fail"
+Cohesion: 0.10
+Nodes (37): dynamic, POST(), bodySchema, dynamic, POST(), bodySchema, dynamic, bodySchema (+29 more)
+
+### Community 1 - "broadcast/route.test.ts"
+Cohesion: 0.18
+Nodes (5): CUSTOMER_SESSION, FlowError, CUSTOMER_SESSION, FlowError, confirmJobDetails()
+
+### Community 2 - "flow.ts"
+Cohesion: 0.13
+Nodes (15): JobDetail, JobResponder, JobResponderOffer, JobResponderWorker, NOW, AttachPhotoInput, BroadcastResult, STATUS_SYSTEM_MESSAGES (+7 more)
+
+### Community 3 - "WorkerResults.tsx"
 Cohesion: 0.16
-Nodes (29): bodySchema, dynamic, POST(), dynamic, POST(), dynamic, GET(), PATCH() (+21 more)
-
-### Community 1 - "flow.ts"
-Cohesion: 0.05
-Nodes (65): CUSTOMER_SESSION, FlowError, CUSTOMER_SESSION, FlowError, CUSTOMER_SESSION, FlowError, JobDetail, analysisTextFor() (+57 more)
-
-### Community 2 - "Worker.ts"
-Cohesion: 0.40
-Nodes (4): VERIFICATION_LEVELS, VerificationLevel, WorkerDoc, workerSchema
-
-### Community 3 - "NewWorkWizard.tsx"
-Cohesion: 0.05
-Nodes (29): dynamic, NewWorkPage(), AnalyzedJob, BroadcastInfo, CATEGORY_OPTIONS, Coords, DEMO_COORDS, humanize() (+21 more)
+Nodes (8): formatRs(), JobDetailResponse, Responder, ResponderOffer, ResponderWorker, fetchMock, WorkerResults(), WorkerResultsProps
 
 ### Community 4 - "Graphify Tool"
 Cohesion: 0.07
 Nodes (43): Graphify Usage Rules, URL Ingestion, MCP Server, Neo4j Export, Wiki Export, Confidence Rubric, Hyperedges, Node ID Convention (+35 more)
 
-### Community 5 - "verify/route.ts"
-Cohesion: 0.09
-Nodes (33): dynamic, POST(), bodySchema, dynamic, POST(), dynamic, GET(), bodySchema (+25 more)
+### Community 5 - "signup/route.ts"
+Cohesion: 0.08
+Nodes (32): dynamic, POST(), dynamic, GET(), bodySchema, dynamic, POST(), setSessionCookie() (+24 more)
 
 ### Community 6 - "analyze.ts"
-Cohesion: 0.17
-Nodes (13): fallbackResult(), analyzeJobInput(), CANONICAL_SKILLS, CATEGORY_ESTIMATES, deriveAnalysisForCategory(), EMERGENCY_KEYWORDS, FLAG_BY_KEYWORD, hasKeyword() (+5 more)
+Cohesion: 0.16
+Nodes (14): analyzeJobInput(), CATEGORY_ESTIMATES, complexityFor(), deriveAnalysisForCategory(), EMERGENCY_KEYWORDS, FLAG_BY_KEYWORD, hasKeyword(), HIGH_COMPLEXITY_KEYWORDS (+6 more)
 
 ### Community 7 - "devDependencies"
-Cohesion: 0.13
-Nodes (15): eslint, devDependencies, eslint, postcss, @testing-library/jest-dom, @testing-library/react, @types/react-dom, typescript (+7 more)
+Cohesion: 0.12
+Nodes (17): eslint-config-next, devDependencies, eslint-config-next, postcss, tailwindcss, @testing-library/react, @testing-library/user-event, @types/react-dom (+9 more)
 
 ### Community 8 - "matching.ts"
-Cohesion: 0.06
-Nodes (36): CUSTOMER_SESSION, FlowError, JOB, dynamic, GET(), querySchema, CUSTOMER_SESSION, buildBoundingBox() (+28 more)
+Cohesion: 0.11
+Nodes (27): dynamic, GET(), querySchema, CUSTOMER_SESSION, canonicalizeSkill(), clamp(), CompletenessSignals, EMERGENCY_CAPABILITY_BONUS (+19 more)
 
 ### Community 9 - "compilerOptions"
 Cohesion: 0.08
 Nodes (25): dom, dom.iterable, esnext, next-env.d.ts, .next/types/**/*.ts, node_modules, **/*.ts, **/*.tsx (+17 more)
 
 ### Community 10 - "dependencies"
-Cohesion: 0.18
-Nodes (11): mongoose, dependencies, mongoose, next, react, react-dom, zod, next (+3 more)
+Cohesion: 0.12
+Nodes (17): mongoose, dependencies, leaflet, mongoose, next, react, react-dom, socket.io (+9 more)
 
 ### Community 11 - "fileToPhotoBase64"
-Cohesion: 0.19
-Nodes (12): PhotoPicker(), handleFiles(), remove(), update(), PhotoUpload, fetchMock, dataUrlToBase64(), downscale() (+4 more)
+Cohesion: 0.07
+Nodes (31): CustomerChatPageClient(), NEXT_ACTIONS, WorkerChatPageClient(), NEXT_ACTIONS, STATUS_LABELS, WorkerWorkPageClient(), PhotoPicker(), handleFiles() (+23 more)
 
 ### Community 12 - "VoiceCapture.tsx"
-Cohesion: 0.18
-Nodes (9): CustomerDashboardPage(), dynamic, CATEGORY_LABELS, currency(), ResultPanel(), Status, URGENCY_LABELS, VoiceCapture() (+1 more)
+Cohesion: 0.16
+Nodes (13): CATEGORY_LABELS, currency(), TechnicianRequestModal(), TechnicianRequestModalProps, CATEGORY_LABELS, currency(), ResultPanel(), Status (+5 more)
 
 ### Community 14 - "dashboard.ts"
-Cohesion: 0.17
-Nodes (13): CounterOfferModal(), IncomingJobCard(), act(), askClarification(), postJson(), fetchMock, JOB, NOW (+5 more)
+Cohesion: 0.06
+Nodes (39): dynamic, GET(), DASHBOARD, WORKER_SESSION, dynamic, dynamic, CounterOfferModal(), CATEGORY_LABELS (+31 more)
 
-### Community 15 - "cancel/route.ts"
-Cohesion: 0.25
-Nodes (5): bodySchema, dynamic, POST(), FlowError, WORKER_SESSION
+### Community 15 - "FlowError"
+Cohesion: 0.16
+Nodes (8): dynamic, POST(), CUSTOMER_SESSION, FlowError, bodySchema, dynamic, POST(), FlowError
 
 ### Community 16 - "jobs/route.test.ts"
 Cohesion: 0.33
 Nodes (3): ANALYZED_JOB, CUSTOMER_SESSION, FlowError
+
+### Community 17 - "login/page.tsx"
+Cohesion: 0.20
+Nodes (7): AuthForm(), submit(), CATEGORY_LABELS, destinationFor(), Mode, Role, CANONICAL_SKILLS
 
 ### Community 18 - "extends"
 Cohesion: 0.50
@@ -182,125 +211,197 @@ Nodes (3): extends, next/core-web-vitals, next/typescript
 Cohesion: 0.50
 Nodes (3): plugin, $schema, .opencode/plugins/graphify.js
 
-### Community 20 - "WorkerDashboard.tsx"
-Cohesion: 0.22
-Nodes (6): ChatMessage, fetchMock, WorkerDashboard(), AvailabilityState, WorkerAvailability(), useJobStream()
-
 ### Community 31 - "ai.ts"
-Cohesion: 0.14
-Nodes (20): dynamic, POST(), AiImageInput, AiUnderstandOptions, coerceNumber(), coerceToArray(), GEMINI_MODEL, geminiEndpoint() (+12 more)
-
-### Community 32 - "auth.ts"
-Cohesion: 0.10
-Nodes (24): dynamic, GET(), dynamic, GET(), dynamic, POST(), CUSTOMER_SESSION, JPEG_PNG (+16 more)
-
-### Community 33 - "stream.ts"
-Cohesion: 0.29
-Nodes (7): getAccessibleJob(), createJobStream(), JobStreamEvent, JobStreamMessage, JobStreamOptions, DECODER, Message
-
-### Community 34 - "messages/route.ts"
-Cohesion: 0.24
-Nodes (11): dynamic, GET(), POST(), postSchema, CUSTOMER_SESSION, WORKER_SESSION, ChatMessageView, listJobMessages() (+3 more)
-
-### Community 35 - "ActiveJobPanel.tsx"
-Cohesion: 0.25
-Nodes (6): ActiveJob, ActiveJobPanel(), NEXT_ACTIONS, STATUS_LABELS, JobPhotoUpload(), handleFile()
-
-### Community 36 - "stream/route.test.ts"
-Cohesion: 0.29
-Nodes (4): CUSTOMER_SESSION, encoder, FlowError, WORKER_SESSION
-
-### Community 37 - "WorkerCategory"
-Cohesion: 0.23
-Nodes (12): UnderstandResponse, AiUnderstandResult, AnalysisResult, KeywordRule, JobInputPayload, MatchContext, SearchFilters, WorkerOption (+4 more)
-
-### Community 38 - "User.ts"
-Cohesion: 0.33
-Nodes (5): SessionUser, USER_ROLES, UserDoc, UserRole, userSchema
-
-### Community 39 - "seed.ts"
-Cohesion: 0.21
-Nodes (12): disconnectDB(), CITIES, City, CUSTOMERS, EMERGENCY_CAPABILITIES, jitter(), main(), REVIEW_TAGS (+4 more)
-
-### Community 40 - "FlowError"
-Cohesion: 0.22
-Nodes (6): bodySchema, dynamic, POST(), CUSTOMER_SESSION, FlowError, FlowError
-
-### Community 41 - "offers/route.ts"
-Cohesion: 0.25
-Nodes (5): bodySchema, dynamic, POST(), FlowError, WORKER_SESSION
-
-### Community 42 - "index.ts"
 Cohesion: 0.12
-Nodes (17): JOB_STATUS_STYLES, INPUT_TYPES, JOB_STATUSES, jobSchema, PRICING_STATUSES, messageSchema, MessageSenderType, SENDER_TYPES (+9 more)
+Nodes (23): dynamic, POST(), AiImageInput, AiUnderstandOptions, coerceDisplayArray(), coerceNumber(), coerceToArray(), DEFAULT_CLARIFICATION_OPTIONS (+15 more)
 
-### Community 43 - "media/route.ts"
+### Community 32 - "jobs/photos/route.ts"
+Cohesion: 0.24
+Nodes (7): dynamic, POST(), dynamic, POST(), MAX_PHOTO_BYTES, PhotoUploadInput, photoUploadSchema
+
+### Community 33 - "haversineDistanceKm"
+Cohesion: 0.35
+Nodes (9): GET(), buildBoundingBox(), EARTH_RADIUS_KM, estimateETAMinutes(), haversineDistanceKm(), isWithinRadius(), kmToDegreesRadius(), toRad() (+1 more)
+
+### Community 34 - "chat.ts"
+Cohesion: 0.16
+Nodes (12): ChatMessageView, getAccessibleJob(), SendMessageInput, JobStreamEvent, JobStreamMessage, JobStreamOptions, DECODER, Message (+4 more)
+
+### Community 35 - "TrackingMap.tsx"
+Cohesion: 0.24
+Nodes (8): TrackingMap, TrackingPageClientProps, hasValidCoordinate(), isRouteCoordinate(), TrackingMap(), loadRoute(), TrackingMapProps, TrackingMarker
+
+### Community 36 - "Worker"
+Cohesion: 0.23
+Nodes (8): dynamic, GET(), CUSTOMER_SESSION, encoder, FlowError, WORKER_SESSION, createJobStream(), Worker
+
+### Community 37 - "photos/route.test.ts"
 Cohesion: 0.25
-Nodes (5): bodySchema, dynamic, POST(), FlowError, WORKER_SESSION
+Nodes (5): CUSTOMER_SESSION, JPEG_PNG, Upload, UploadDoc, uploadSchema
 
-### Community 44 - "Worker"
-Cohesion: 0.17
-Nodes (10): dynamic, POST(), FlowError, WORKER_SESSION, dynamic, GET(), DASHBOARD, WORKER_SESSION (+2 more)
+### Community 38 - "index.ts"
+Cohesion: 0.12
+Nodes (19): SessionUser, INPUT_TYPES, JOB_STATUSES, jobSchema, PRICING_STATUSES, URGENCY_LEVELS, OFFER_STATUSES, OFFER_TYPES (+11 more)
 
-### Community 45 - "status/route.ts"
+### Community 39 - "requireRole"
+Cohesion: 0.10
+Nodes (30): dynamic, GET(), POST(), bodySchema, dynamic, POST(), statusSchema, dynamic (+22 more)
+
+### Community 41 - "cancel/route.ts"
+Cohesion: 0.18
+Nodes (17): bodySchema, dynamic, POST(), FlowError, WORKER_SESSION, analysisTextFor(), createAndAnalyzeJob(), customerCancelJob() (+9 more)
+
+### Community 42 - "approve/route.ts"
+Cohesion: 0.18
+Nodes (7): bodySchema, dynamic, job, WORKER_SESSION, dynamic, Job, SYSTEM_SENDER_ID
+
+### Community 43 - "messages/route.ts"
+Cohesion: 0.33
+Nodes (8): dynamic, GET(), POST(), postSchema, CUSTOMER_SESSION, WORKER_SESSION, listJobMessages(), sendJobMessage()
+
+### Community 44 - "socket-client.ts"
 Cohesion: 0.22
-Nodes (6): bodySchema, dynamic, POST(), statusSchema, FlowError, WORKER_SESSION
+Nodes (6): TrackingPageClient(), connect(), LiveTracker(), LiveTrackerProps, connectSocket(), getSocket()
 
-### Community 46 - "LocationUpdater"
-Cohesion: 0.47
-Nodes (5): Coordinates, LocationUpdater(), send(), submitManual(), useAutomatic()
+### Community 45 - "customer/jobs/page.tsx"
+Cohesion: 0.33
+Nodes (5): CustomerJobsPage(), dynamic, CustomerJobsList(), JobItem, STATUS_LABELS
 
-### Community 47 - "JobEvent.ts"
-Cohesion: 0.50
-Nodes (3): ACTOR_TYPES, JobEventDoc, jobEventSchema
+### Community 46 - "Real-Time GPS Tracking Integration Plan"
+Cohesion: 0.06
+Nodes (33): 1.1 Install Dependencies, 1.2 Create Socket.io Server (`src/lib/socket.ts`), 1.3 Create Socket.io API Route (`src/app/api/socketio/route.ts`), 1.4 Socket.io Events, 1.5 Room Isolation, 2.1 New Component: `src/components/worker/LiveTracker.tsx`, 2.2 Integration with `ActiveJobPanel.tsx`, 3.1 Install React Leaflet (+25 more)
+
+### Community 47 - "CustomerRequestsPanel.tsx"
+Cohesion: 0.17
+Nodes (11): ApprovalJob, CustomerApprovalPanel(), CATEGORY_LABELS, currency(), CustomerRequestsPanel(), handleCounterResponse(), ListResponse, postJson() (+3 more)
 
 ### Community 48 - "scripts"
-Cohesion: 0.29
-Nodes (7): scripts, build, dev, lint, seed, start, test
+Cohesion: 0.25
+Nodes (8): scripts, build, dev, dev:next, lint, seed, start, test
 
-### Community 49 - "VoiceCapture.test.tsx"
-Cohesion: 0.22
-Nodes (4): FakeMediaRecorder, fetchMock, UNDERSTANDING, WORKERS
+### Community 49 - "WorkerCategory"
+Cohesion: 0.25
+Nodes (11): AiUnderstandResult, AnalysisResult, KeywordRule, JobInputPayload, ComplexityLevel, MatchContext, SearchFilters, WorkerOptionsFilters (+3 more)
 
 ### Community 50 - "safety.ts"
 Cohesion: 0.40
 Nodes (4): DEFAULT_EMERGENCY_GUIDANCE, FLAG_GUIDANCE, getSafetyGuidance(), SafetyGuidance
 
-### Community 51 - "WorkerChat"
-Cohesion: 0.83
-Nodes (4): WorkerChat(), send(), sendLocation(), sendPhoto()
+### Community 51 - "pricing.ts"
+Cohesion: 0.33
+Nodes (8): BIKE_FUEL_EFFICIENCY_KM_PER_LITER, calculatePredictedPrice(), COMPLEXITY_MULTIPLIERS, estimateTravelCost(), PETROL_PRICE_PER_LITER_PKR, PredictedPriceEstimate, PredictedPriceInput, TravelCostEstimate
 
 ### Community 52 - "package.json"
 Cohesion: 0.50
 Nodes (3): name, private, version
 
-### Community 53 - "location/route.ts"
-Cohesion: 0.29
-Nodes (5): bodySchema, dynamic, PATCH(), POSITION, WORKER_SESSION
+### Community 53 - "auth.ts"
+Cohesion: 0.18
+Nodes (10): dynamic, GET(), PNG, WORKER_SESSION, dynamic, GET(), isCoordinatePair(), OsrmResponse (+2 more)
 
-### Community 54 - "Review.ts"
+### Community 54 - "VoiceCapture.test.tsx"
+Cohesion: 0.22
+Nodes (4): FakeMediaRecorder, fetchMock, UNDERSTANDING, WORKERS
+
+### Community 55 - "counter-response/route.ts"
+Cohesion: 0.20
+Nodes (9): bodySchema, dynamic, POST(), bodySchema, dynamic, POST(), createDirectRequest(), RequestError (+1 more)
+
+### Community 56 - "WorkerActiveTracking.tsx"
+Cohesion: 0.22
+Nodes (6): ActiveJob, NEXT_ACTIONS, STATUS_LABELS, TrackingMap, WorkerActiveTracking(), connect()
+
+### Community 57 - "BottomNav.tsx"
+Cohesion: 0.27
+Nodes (9): DashboardLayout(), BottomNav(), BriefcaseIcon(), ClipboardCheckIcon(), HomeIcon(), MapIcon(), NavItem, UserIcon() (+1 more)
+
+### Community 58 - "ActiveJobTracking.tsx"
+Cohesion: 0.15
+Nodes (9): ActiveJobPage(), dynamic, ActiveJob, ActiveJobTracking(), connect(), STATUS_LABELS, TrackingMap, ReviewScreen() (+1 more)
+
+### Community 59 - "requests.ts"
+Cohesion: 0.13
+Nodes (17): CustomerOfferModal(), submit(), COUNTER_HIGH_FACTOR, COUNTER_LOW_FACTOR, midpointOffer(), OFFER_LOW_FACTOR, offerIsExpired(), OfferValidation (+9 more)
+
+### Community 63 - "NewWorkWizard"
+Cohesion: 0.17
+Nodes (9): dynamic, NewWorkPage(), humanize(), NewWorkWizard(), handleConfirm(), handleEditDetails(), handleLocation(), parseJson() (+1 more)
+
+### Community 65 - "server.ts"
+Cohesion: 0.29
+Nodes (4): app, handle, port, initIO()
+
+### Community 66 - "state-machine.ts"
+Cohesion: 0.23
+Nodes (11): submitOfferAndBroadcast(), ACTOR_ALLOWANCES, assertAllowedTransition(), canTransition(), DeadlineFields, EMERGENCY_ACCEPTANCE_MINUTES, JobActor, NORMAL_ACCEPTANCE_MINUTES (+3 more)
+
+### Community 67 - "NewWorkWizard.tsx"
+Cohesion: 0.18
+Nodes (10): AnalyzedJob, BroadcastInfo, CATEGORY_OPTIONS, Coords, DEMO_COORDS, JobInput, LocationState, RADIUS_OPTIONS (+2 more)
+
+### Community 68 - "TDD Evidence Report: Service Marketplace Features"
+Cohesion: 0.18
+Nodes (10): Coverage and Known Gaps, Follow-up: Clarification and Travel Pricing, Merge Evidence, P1: Authentication System, P2: Voice AI Matching Optimization, P3: Technician Recommendation & Job Request, Source Plan, Task Report (+2 more)
+
+### Community 69 - "flow.test.ts"
+Cohesion: 0.21
+Nodes (8): JOB_STATUS_STYLES, applyUpdate(), INPUT, mockFindOneAndUpdate(), NOW, pushByPath(), setByPath(), JobStatus
+
+### Community 70 - "jobs/[id]/route.ts"
+Cohesion: 0.14
+Nodes (12): dynamic, GET(), PATCH(), patchSchema, CUSTOMER_SESSION, FlowError, JOB, dynamic (+4 more)
+
+### Community 71 - "workerOffer"
+Cohesion: 0.36
+Nodes (8): customerSelectWorker(), formatPrice(), markExpired(), rollbackClaim(), workerAcceptJob(), workerOffer(), expireIfDeadlinePassed(), resolveSelectionDeadline()
+
+### Community 72 - "track/page.tsx"
+Cohesion: 0.40
+Nodes (4): CustomerTrackPage(), dynamic, TrackingJob, TrackingJobsList()
+
+### Community 73 - "customer/page.tsx"
+Cohesion: 0.33
+Nodes (5): CustomerHomePage(), dynamic, ActiveJob, ActiveJobStatusBar(), STATUS_CONFIG
+
+### Community 75 - "chat/page.tsx"
 Cohesion: 0.50
-Nodes (3): Review, ReviewDoc, reviewSchema
+Nodes (3): dynamic, ChatJob, WorkerChatList()
+
+### Community 78 - "media/route.ts"
+Cohesion: 0.25
+Nodes (5): bodySchema, dynamic, POST(), FlowError, WORKER_SESSION
+
+### Community 81 - "reject-offer/route.test.ts"
+Cohesion: 0.33
+Nodes (3): POST(), CUSTOMER_SESSION, FlowError
+
+### Community 87 - "seed.ts"
+Cohesion: 0.29
+Nodes (6): disconnectDB(), ACTOR_TYPES, JobEvent, JobEventDoc, jobEventSchema, main()
+
+### Community 89 - "Worker.ts"
+Cohesion: 0.40
+Nodes (4): VERIFICATION_LEVELS, VerificationLevel, WorkerDoc, workerSchema
 
 ## Knowledge Gaps
-- **254 isolated node(s):** `next/core-web-vitals`, `next/typescript`, `$schema`, `.opencode/plugins/graphify.js`, `nextConfig` (+249 more)
+- **369 isolated node(s):** `next/core-web-vitals`, `next/typescript`, `$schema`, `.opencode/plugins/graphify.js`, `nextConfig` (+364 more)
   These have ≤1 connection - possible missing edges or undocumented components.
-- **17 thin communities (<3 nodes) omitted from report** — run `graphify query` to explore isolated nodes.
+- **23 thin communities (<3 nodes) omitted from report** — run `graphify query` to explore isolated nodes.
 
 ## Suggested Questions
 _Questions this graph is uniquely positioned to answer:_
 
-- **Why does `requireRole()` connect `requireRole` to `auth.ts`, `flow.ts`, `messages/route.ts`, `NewWorkWizard.tsx`, `stream/route.test.ts`, `verify/route.ts`, `FlowError`, `matching.ts`, `offers/route.ts`, `media/route.ts`, `Worker`, `status/route.ts`, `VoiceCapture.tsx`, `cancel/route.ts`, `jobs/route.test.ts`, `location/route.ts`?**
-  _High betweenness centrality (0.060) - this node is a cross-community bridge._
-- **Why does `connectDB()` connect `auth.ts` to `requireRole`, `stream.ts`, `messages/route.ts`, `verify/route.ts`, `seed.ts`, `matching.ts`, `offers/route.ts`, `media/route.ts`, `Worker`, `status/route.ts`, `dashboard.ts`, `location/route.ts`?**
-  _High betweenness centrality (0.038) - this node is a cross-community bridge._
+- **Why does `requireRole()` connect `requireRole` to `fail`, `broadcast/route.test.ts`, `signup/route.ts`, `matching.ts`, `dashboard.ts`, `FlowError`, `jobs/route.test.ts`, `location/route.test.ts`, `jobs/photos/route.ts`, `haversineDistanceKm`, `Worker`, `photos/route.test.ts`, `accept/route.test.ts`, `cancel/route.ts`, `approve/route.ts`, `messages/route.ts`, `customer/jobs/page.tsx`, `auth.ts`, `counter-response/route.ts`, `ActiveJobTracking.tsx`, `NewWorkWizard`, `jobs/[id]/route.ts`, `track/page.tsx`, `customer/page.tsx`, `offers/route.test.ts`, `chat/page.tsx`, `media/route.ts`, `reject-offer/route.test.ts`, `status/route.test.ts`?**
+  _High betweenness centrality (0.104) - this node is a cross-community bridge._
+- **Why does `connectDB()` connect `requireRole` to `fail`, `flow.ts`, `signup/route.ts`, `matching.ts`, `dashboard.ts`, `FlowError`, `jobs/photos/route.ts`, `haversineDistanceKm`, `chat.ts`, `Worker`, `approve/route.ts`, `messages/route.ts`, `auth.ts`, `counter-response/route.ts`, `requests.ts`, `jobs/[id]/route.ts`, `chat/page.tsx`, `media/route.ts`, `seed.ts`?**
+  _High betweenness centrality (0.047) - this node is a cross-community bridge._
+- **Why does `haversineDistanceKm()` connect `haversineDistanceKm` to `flow.ts`, `TrackingMap.tsx`, `jobs/[id]/route.ts`, `matching.ts`, `dashboard.ts`?**
+  _High betweenness centrality (0.033) - this node is a cross-community bridge._
 - **What connects `next/core-web-vitals`, `next/typescript`, `$schema` to the rest of the system?**
-  _254 weakly-connected nodes found - possible documentation gaps or missing edges._
+  _369 weakly-connected nodes found - possible documentation gaps or missing edges._
+- **Should `fail` be split into smaller, more focused modules?**
+  _Cohesion score 0.10034013605442177 - nodes in this community are weakly interconnected._
 - **Should `flow.ts` be split into smaller, more focused modules?**
-  _Cohesion score 0.05450165612767239 - nodes in this community are weakly interconnected._
-- **Should `NewWorkWizard.tsx` be split into smaller, more focused modules?**
-  _Cohesion score 0.05410628019323672 - nodes in this community are weakly interconnected._
+  _Cohesion score 0.12857142857142856 - nodes in this community are weakly interconnected._
 - **Should `Graphify Tool` be split into smaller, more focused modules?**
   _Cohesion score 0.07087486157253599 - nodes in this community are weakly interconnected._
-- **Should `verify/route.ts` be split into smaller, more focused modules?**
-  _Cohesion score 0.0858843537414966 - nodes in this community are weakly interconnected._
