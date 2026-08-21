@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
+import { motion } from "framer-motion";
 import PhotoPicker from "./PhotoPicker";
 import WorkerResults from "./WorkerResults";
 
@@ -65,9 +66,9 @@ interface BroadcastInfo {
 const STEPS = ["Describe", "Summary", "Offer", "Done"];
 
 const inputStyles =
-  "w-full rounded-xl border border-stone-200 bg-white px-3 py-2 text-sm text-stone-900 outline-none transition focus:border-[#0e5f44] focus:ring-2 focus:ring-[#0e5f44]/20";
+  "w-full rounded-xl border border-divider bg-surface px-3 py-2 text-sm text-text outline-none transition-colors focus:border-accent focus:ring-2 focus:ring-accent/20";
 
-const labelStyles = "mb-1 block text-xs font-semibold uppercase tracking-wide text-stone-500";
+const labelStyles = "mb-1 block text-xs font-semibold uppercase tracking-wide text-muted";
 
 function humanize(value: string): string {
   return value.replace(/_/g, " ");
@@ -267,17 +268,17 @@ export default function NewWorkWizard() {
               <span
                 className={`flex h-7 w-7 items-center justify-center rounded-full text-xs font-bold ${
                   step > i + 1
-                    ? "bg-[#0e5f44] text-white"
+                    ? "bg-success text-success-fg"
                     : step === i + 1
-                      ? "bg-[#0e5f44]/10 text-[#0e5f44] ring-2 ring-[#0e5f44]/30"
-                      : "bg-stone-100 text-stone-400"
+                      ? "bg-accent/15 text-accent ring-2 ring-accent/30"
+                      : "bg-surface text-muted"
                 }`}
               >
                 {i + 1}
               </span>
               <span
                 className={`hidden text-xs font-semibold sm:block ${
-                  step === i + 1 ? "text-stone-800" : "text-stone-400"
+                    step === i + 1 ? "text-text" : "text-muted"
                 }`}
               >
                 {label}
@@ -288,20 +289,20 @@ export default function NewWorkWizard() {
       </div>
 
       {error && (
-        <div className="rounded-xl border border-red-200 bg-red-50 p-3 text-sm text-red-700">
+        <div className="rounded-xl border border-warning/40 bg-warning/10 p-3 text-sm text-warning">
           {error}
         </div>
       )}
 
       {step === 1 && (
-        <div className="card space-y-4">
+        <motion.div className="card space-y-4" whileHover={{ y: -2 }} transition={{ duration: 0.2, ease: "easeOut" }}>
           {method === "voice" && (
-            <div className="rounded-xl border border-dashed border-[#0e5f44]/40 bg-[#0e5f44]/5 p-4 text-sm text-stone-600">
+            <div className="rounded-xl border border-dashed border-accent/40 bg-accent/10 p-4 text-sm text-muted">
               پہلے ہوم پیج پر مائیک کا بٹن دبائیں اور اپنا مسئلہ بتائیں — price
               and ustads are set automatically.
               <Link
                 href="/"
-                className="mt-2 block font-semibold text-[#0e5f44] underline"
+                className="mt-2 block font-semibold text-accent underline"
               >
                 Record on the home page →
               </Link>
@@ -395,11 +396,14 @@ export default function NewWorkWizard() {
             </div>
             <div>
               <span className={labelStyles}>Location</span>
-              <button
+              <motion.button
                 type="button"
                 onClick={handleLocation}
                 disabled={busy}
-                className="w-full rounded-xl border border-dashed border-stone-300 px-3 py-2 text-left text-sm text-stone-600 transition hover:border-[#0e5f44] hover:text-[#0e5f44] disabled:opacity-60"
+                className="w-full rounded-xl border border-dashed border-divider px-3 py-2 text-left text-sm text-muted transition-colors hover:border-accent hover:text-accent disabled:opacity-60"
+                whileTap={{ scale: 0.95 }}
+                whileHover={{ y: -1 }}
+                transition={{ duration: 0.15, ease: "easeOut" }}
               >
                 {location ? (
                   <span className="flex items-center justify-between gap-2">
@@ -408,47 +412,50 @@ export default function NewWorkWizard() {
                         ? "Approximate (Karachi demo)"
                         : `📍 ${location.lat.toFixed(4)}, ${location.lng.toFixed(4)}`}
                     </span>
-                    <span className="text-xs font-semibold uppercase text-[#0e5f44]">
+                    <span className="text-xs font-semibold uppercase text-accent">
                       Change
                     </span>
                   </span>
                 ) : (
                   "Use my location"
                 )}
-              </button>
+              </motion.button>
             </div>
           </div>
 
-          <button
+          <motion.button
             type="button"
             onClick={handleAnalyze}
             disabled={busy || !input.original_text.trim()}
             className="btn-primary w-full disabled:opacity-60"
+            whileTap={{ scale: 0.95 }}
+            whileHover={{ y: -1 }}
+            transition={{ duration: 0.15, ease: "easeOut" }}
           >
             {busy ? "Analyzing…" : "Analyze & see summary"}
-          </button>
-        </div>
+          </motion.button>
+        </motion.div>
       )}
 
       {step === 2 && job && (
-        <div className="card space-y-4">
+        <motion.div className="card space-y-4" whileHover={{ y: -2 }} transition={{ duration: 0.2, ease: "easeOut" }}>
           <div className="flex flex-wrap items-center gap-2">
-            <span className="badge !bg-[#0e5f44] !text-white">
+            <span className="badge bg-accent text-bg">
               {humanize(job.understanding?.category ?? "uncategorized")}
             </span>
             {isEmergency && (
-              <span className="badge !bg-red-600 !text-white">Emergency</span>
+              <span className="badge bg-warning text-bg">Emergency</span>
             )}
-            <span className="badge !bg-stone-100 !text-stone-600">
+            <span className="badge bg-surface text-muted">
               Confidence in AI summary
             </span>
           </div>
 
           <div>
-            <h2 className="text-sm font-bold uppercase tracking-wide text-stone-500">
+            <h2 className="text-sm font-bold uppercase tracking-wide text-muted">
               What the AI understood
             </h2>
-            <p className="mt-1 text-stone-800">
+            <p className="mt-1 text-text">
               {job.understanding?.description || input.original_text}
             </p>
             {job.understanding?.required_skills &&
@@ -457,7 +464,7 @@ export default function NewWorkWizard() {
                   {job.understanding.required_skills.map((s) => (
                     <span
                       key={s}
-                      className="rounded-full bg-stone-100 px-2.5 py-0.5 text-xs text-stone-600"
+                      className="rounded-full bg-surface px-2.5 py-0.5 text-xs text-muted"
                     >
                       {humanize(s)}
                     </span>
@@ -466,22 +473,22 @@ export default function NewWorkWizard() {
               )}
           </div>
 
-          <div className="rounded-xl bg-stone-50 p-4 text-center">
-            <p className="text-xs uppercase tracking-wide text-stone-500">
+          <div className="rounded-xl bg-surface p-4 text-center">
+            <p className="text-xs uppercase tracking-wide text-muted">
               Estimated price
             </p>
-            <p className="mt-1 text-3xl font-extrabold text-[#0e5f44]">
+            <p className="mt-1 font-mono text-3xl font-extrabold text-accent">
               ₨ {estimateMin.toLocaleString("en-PK")}
               {estimateMax > estimateMin && (
-                <span className="text-lg font-semibold text-stone-400">
+                <span className="text-lg font-semibold text-muted">
                   {" "}
                   – ₨ {estimateMax.toLocaleString("en-PK")}
                 </span>
               )}
             </p>
             {inspectionFee > 0 && (
-              <p className="mt-2 rounded-lg bg-amber-50 px-3 py-1.5 text-xs text-amber-800">
-                Visit &amp; check fee: <b>₨ {inspectionFee.toLocaleString("en-PK")}</b>{" "}
+              <p className="mt-2 rounded-lg bg-warning/10 px-3 py-1.5 text-xs text-warning">
+                Visit &amp; check fee: <b className="font-mono">₨ {inspectionFee.toLocaleString("en-PK")}</b>{" "}
                 paid first — main price ustad ke muaina ke baad tay hogi (final
                 repair price is set after the ustad inspects the problem).
               </p>
@@ -489,30 +496,36 @@ export default function NewWorkWizard() {
           </div>
 
           {job.location?.address_label && (
-            <p className="text-xs text-stone-500">
+            <p className="text-xs text-muted">
               📍 {job.location.address_label}
             </p>
           )}
 
           <div className="flex flex-col gap-2 sm:flex-row">
-            <button
+            <motion.button
               type="button"
               onClick={handleConfirm}
               disabled={busy}
               className="btn-primary flex-1 disabled:opacity-60"
+              whileTap={{ scale: 0.95 }}
+              whileHover={{ y: -1 }}
+              transition={{ duration: 0.15, ease: "easeOut" }}
             >
               {busy ? "Confirming…" : "Sab theek hai — confirm"}
-            </button>
-            <button
+            </motion.button>
+            <motion.button
               type="button"
               onClick={() => setStep(1)}
               disabled={busy}
-              className="rounded-xl border border-stone-200 px-4 py-2 text-sm font-semibold text-stone-600 transition hover:bg-stone-50 disabled:opacity-60"
+              className="rounded-xl border border-divider bg-surface px-4 py-2 text-sm font-semibold text-muted transition-colors hover:bg-bg disabled:opacity-60"
+              whileTap={{ scale: 0.95 }}
+              whileHover={{ y: -1 }}
+              transition={{ duration: 0.15, ease: "easeOut" }}
             >
               Edit details
-            </button>
+            </motion.button>
           </div>
-        </div>
+        </motion.div>
       )}
 
       {step === 3 && job && (
@@ -529,12 +542,12 @@ export default function NewWorkWizard() {
       )}
 
       {step === 4 && job && broadcast && (
-        <div className="card space-y-4">
-          <div className="rounded-xl border border-emerald-200 bg-emerald-50 p-4 text-center">
-            <p className="text-2xl font-extrabold text-emerald-800">
+        <motion.div className="card space-y-4" whileHover={{ y: -2 }} transition={{ duration: 0.2, ease: "easeOut" }}>
+          <div className="rounded-xl border border-success/40 bg-success p-4 text-center">
+            <p className="text-2xl font-extrabold text-success-fg">
               {broadcast.eligible_workers_count} workers notified 🎉
             </p>
-            <p className="mt-1 text-sm text-emerald-700">
+            <p className="mt-1 text-sm text-success-fg">
               Workers nearby can accept until{" "}
               {new Date(broadcast.acceptance_deadline).toLocaleTimeString("en-GB", {
                 hour: "2-digit",
@@ -552,19 +565,22 @@ export default function NewWorkWizard() {
           />
 
           <div className="flex flex-col gap-2 sm:flex-row">
-            <button
+            <motion.button
               type="button"
               onClick={handleEditDetails}
               disabled={busy}
-              className="rounded-xl border border-stone-200 px-4 py-2 text-sm font-semibold text-stone-600 transition hover:bg-stone-50 disabled:opacity-60"
+              className="rounded-xl border border-divider bg-surface px-4 py-2 text-sm font-semibold text-muted transition-colors hover:bg-bg disabled:opacity-60"
+              whileTap={{ scale: 0.95 }}
+              whileHover={{ y: -1 }}
+              transition={{ duration: 0.15, ease: "easeOut" }}
             >
               {busy ? "Restarting…" : "Edit job & restart"}
-            </button>
+            </motion.button>
             <Link href="/dashboard" className="btn-primary block w-full text-center">
               Back to dashboard
             </Link>
           </div>
-        </div>
+        </motion.div>
       )}
     </div>
   );
@@ -592,12 +608,12 @@ function OfferStep({
   const [offer, setOffer] = useState(defaultOffer);
 
   return (
-    <div className="card space-y-4">
+    <motion.div className="card space-y-4" whileHover={{ y: -2 }} transition={{ duration: 0.2, ease: "easeOut" }}>
       <div>
-        <h2 className="text-sm font-bold uppercase tracking-wide text-stone-500">
+        <h2 className="text-sm font-bold uppercase tracking-wide text-muted">
           Your offer
         </h2>
-        <p className="mt-1 text-sm text-stone-500">
+        <p className="mt-1 font-mono text-sm text-muted">
           AI estimate: ₨ {estimateMin.toLocaleString("en-PK")}
           {estimateMax > estimateMin && (
             <>
@@ -608,8 +624,8 @@ function OfferStep({
           {isEmergency && " · optional for emergency jobs"}
         </p>
         {inspectionFee > 0 && (
-          <p className="mt-2 rounded-lg bg-amber-50 px-3 py-1.5 text-xs text-amber-800">
-            Visit &amp; check fee <b>₨ {inspectionFee.toLocaleString("en-PK")}</b>{" "}
+          <p className="mt-2 rounded-lg bg-warning/10 px-3 py-1.5 text-xs text-warning">
+            Visit &amp; check fee <b className="font-mono">₨ {inspectionFee.toLocaleString("en-PK")}</b>{" "}
             — pehle sirf itni fee, main price ustad ke muaine ke baad.
           </p>
         )}
@@ -620,7 +636,7 @@ function OfferStep({
           Offer in PKR
         </label>
         <div className="relative">
-          <span className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-sm font-semibold text-stone-400">
+          <span className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-sm font-semibold text-muted">
             ₨
           </span>
           <input
@@ -636,23 +652,29 @@ function OfferStep({
       </div>
 
       <div className="flex flex-col gap-2 sm:flex-row">
-        <button
+        <motion.button
           type="button"
           onClick={() => onBroadcast(offer)}
           disabled={busy}
           className="btn-primary flex-1 disabled:opacity-60"
+          whileTap={{ scale: 0.95 }}
+          whileHover={{ y: -1 }}
+          transition={{ duration: 0.15, ease: "easeOut" }}
         >
           {busy ? "Broadcasting…" : "Broadcast to workers"}
-        </button>
-        <button
+        </motion.button>
+        <motion.button
           type="button"
           onClick={onBack}
           disabled={busy}
-          className="rounded-xl border border-stone-200 px-4 py-2 text-sm font-semibold text-stone-600 transition hover:bg-stone-50 disabled:opacity-60"
+          className="rounded-xl border border-divider bg-surface px-4 py-2 text-sm font-semibold text-muted transition-colors hover:bg-bg disabled:opacity-60"
+          whileTap={{ scale: 0.95 }}
+          whileHover={{ y: -1 }}
+          transition={{ duration: 0.15, ease: "easeOut" }}
         >
           Back
-        </button>
+        </motion.button>
       </div>
-    </div>
+    </motion.div>
   );
 }

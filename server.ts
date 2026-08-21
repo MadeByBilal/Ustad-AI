@@ -11,17 +11,44 @@ const port = parseInt(process.env.PORT || "3001", 10);
 
 let shuttingDown = false;
 
+// Synchronous write so the message is never lost when the process exits
+// immediately afterwards (a normal console.error to a pipe can drop the line).
+function logFatal(label: string, err: unknown): void {
+  const stack = err instanceof Error ? (err.stack ?? err.message) : String(err);
+  process.stderr.write(`\n[server] ${label}:\n${stack}\n`);
+}
+
+// A stray rejection in a request/socket handler should NOT take down the
+// whole dev server. Log it and keep serving instead of crashing silently.
 process.on("unhandledRejection", (reason) => {
-  console.error("[server] unhandledRejection:", reason);
+  logFatal("unhandledRejection", reason);
 });
 
+// uncaughtException leaves the process in unknown state, but for a dev server
+// the better failure mode is "keep running and log loudly" rather than a
+// silent death. We flush the full stack synchronously before deciding.
 process.on("uncaughtException", (err) => {
-  console.error("[server] uncaughtException:", err);
-  process.exit(1);
+  logFatal("uncaughtException", err);
 });
+
+// When run in a foreground terminal/pane, closing or detaching the terminal
+// sends SIGHUP, whose default action terminates the process with no output.
+// Ignore it so the server survives a disconnected terminal. (Use SIGTERM/
+// SIGINT — e.g. Ctrl+C — for a clean shutdown.)
+process.on("SIGHUP", () => {
+  process.stderr.write("\n[server] received SIGHUP, ignoring (detached terminal)\n");
+});
+
+// If stdout/stderr is a pipe to a now-closed terminal, writes throw EPIPE.
+// Swallow it so logging after a detach doesn't crash the server.
+for (const stream of [process.stdout, process.stderr]) {
+  stream.on("error", (err: NodeJS.ErrnoException) => {
+    if (err?.code !== "EPIPE") logFatal("stream error", err);
+  });
+}
 
 process.on("exit", (code) => {
-  console.log(`[server] process exited with code ${code}`);
+  process.stderr.write(`\n[server] process exited with code ${code}\n`);
 });
 
 const app = next({ dev, hostname, port });
@@ -33,8 +60,16 @@ app
     const connections = new Set<import("net").Socket>();
 
     const server = createServer(async (req, res) => {
-      const parsedUrl = parse(req.url!, true);
-      await handle(req, res, parsedUrl);
+      try {
+        const parsedUrl = parse(req.url!, true);
+        await handle(req, res, parsedUrl);
+      } catch (err) {
+        logFatal("request handler error", err);
+        if (!res.headersSent) {
+          res.statusCode = 500;
+          res.end("Internal Server Error");
+        }
+      }
     });
 
     server.on("connection", (conn) => {

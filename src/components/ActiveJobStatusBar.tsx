@@ -14,13 +14,13 @@ interface ActiveJob {
 }
 
 const STATUS_CONFIG: Record<string, { label: string; color: string; icon: string }> = {
-  BROADCASTING: { label: "Looking for worker", color: "bg-amber-500", icon: "🔍" },
-  WORKER_RESPONSES: { label: "Waiting for response", color: "bg-blue-500", icon: "💬" },
-  ACCEPTED: { label: "Worker confirmed", color: "bg-emerald-500", icon: "✅" },
-  EN_ROUTE: { label: "On the way", color: "bg-green-500", icon: "🚗" },
-  ARRIVED: { label: "Worker arrived", color: "bg-blue-500", icon: "📍" },
-  IN_PROGRESS: { label: "Work in progress", color: "bg-violet-500", icon: "🔧" },
-  AWAITING_CUSTOMER_CONFIRMATION: { label: "Needs your approval", color: "bg-amber-500", icon: "⏳" },
+  BROADCASTING: { label: "Looking for worker", color: "bg-warning", icon: "🔍" },
+  WORKER_RESPONSES: { label: "Waiting for response", color: "bg-muted", icon: "💬" },
+  ACCEPTED: { label: "Worker confirmed", color: "bg-success", icon: "✅" },
+  EN_ROUTE: { label: "On the way", color: "bg-accent", icon: "🚗" },
+  ARRIVED: { label: "Worker arrived", color: "bg-accent", icon: "📍" },
+  IN_PROGRESS: { label: "Work in progress", color: "bg-accent", icon: "🔧" },
+  AWAITING_CUSTOMER_CONFIRMATION: { label: "Needs your approval", color: "bg-warning", icon: "⏳" },
 };
 
 export default function ActiveJobStatusBar() {
@@ -65,7 +65,7 @@ export default function ActiveJobStatusBar() {
 
   const config = STATUS_CONFIG[job.status] ?? {
     label: job.status.replace(/_/g, " "),
-    color: "bg-stone-500",
+    color: "bg-muted",
     icon: "📋",
   };
 
@@ -79,7 +79,7 @@ export default function ActiveJobStatusBar() {
 
   return (
     <Link href={href}>
-      <div className={`border-t border-stone-200 bg-white px-5 py-4 transition-all active:scale-[0.99]`}>
+      <div className="border-t border-divider bg-surface px-5 py-4 transition-transform active:scale-[0.99]">
         <div className="flex items-center gap-3">
           {/* Status dot */}
           <div className="relative">
@@ -91,11 +91,11 @@ export default function ActiveJobStatusBar() {
 
           {/* Info */}
           <div className="min-w-0 flex-1">
-            <p className="text-sm font-bold text-stone-800">
+            <p className="text-sm font-bold text-text">
               {config.icon} {config.label}
             </p>
             {job.worker_name && job.status !== "BROADCASTING" && (
-              <p className="truncate text-xs text-stone-500">
+              <p className="truncate text-xs text-muted">
                 {job.worker_name}
                 {job.original_text && ` · ${job.original_text}`}
               </p>
@@ -103,7 +103,7 @@ export default function ActiveJobStatusBar() {
           </div>
 
           {/* Arrow */}
-          <svg className="h-5 w-5 shrink-0 text-stone-400" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
+          <svg className="h-5 w-5 shrink-0 text-muted" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
             <path strokeLinecap="round" strokeLinejoin="round" d="M8.25 4.5l7.5 7.5-7.5 7.5" />
           </svg>
         </div>

@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useState } from "react";
 import type { WorkerDashboardData } from "@/lib/worker/dashboard";
 import { useJobStream } from "@/lib/useJobStream";
+import { motion } from "framer-motion";
 import WorkerAvailability from "@/components/WorkerAvailability";
 import LocationUpdater from "./LocationUpdater";
 import IncomingJobCard from "./IncomingJobCard";
@@ -50,9 +51,9 @@ export default function WorkerDashboard({ workerId }: { workerId: string }) {
 
   if (!data) {
     return (
-      <div className="card p-8 text-center text-sm text-stone-500">
+      <motion.div className="card text-center text-sm text-muted" whileHover={{ y: -2 }} transition={{ duration: 0.2, ease: "easeOut" }}>
         {error ?? "Loading dashboard…"}
-      </div>
+      </motion.div>
     );
   }
 
@@ -63,22 +64,22 @@ export default function WorkerDashboard({ workerId }: { workerId: string }) {
       <section className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <h1 className="font-urdu text-2xl font-bold">سلام، {w.name}!</h1>
-          <p className="mt-1 text-sm capitalize text-stone-500">
+          <p className="mt-1 text-sm capitalize text-muted">
             {w.category.replace(/_/g, " ")} · {w.skills.slice(0, 3).join(", ")}
           </p>
         </div>
         <div className="flex flex-wrap items-center gap-2">
-          <span className="badge !bg-stone-100 !text-stone-700">
+          <span className="font-mono badge bg-surface text-muted">
             ⭐ {w.average_rating.toFixed(1)}
           </span>
-          <span className="badge !bg-stone-100 !text-stone-700">
+          <span className="badge bg-surface text-muted">
             {w.completed_jobs} jobs
           </span>
           <span
             className={`badge ${
               w.verification_level === "documents_verified"
-                ? "!bg-emerald-100 !text-emerald-800"
-                : "!bg-amber-100 !text-amber-800"
+                ? "bg-success text-success-fg"
+                : "bg-warning/10 text-warning"
             }`}
           >
             ✓ {w.verification_level.replace("_", " ")}
@@ -88,39 +89,39 @@ export default function WorkerDashboard({ workerId }: { workerId: string }) {
 
       <section className="grid gap-8 lg:grid-cols-3">
         <div className="space-y-4 lg:col-span-1">
-          <div className="card">
-            <h3 className="text-sm font-bold text-stone-800">Ustad Score</h3>
-            <p className="mt-2 text-4xl font-extrabold tracking-tight text-[#0e5f44]">
+          <motion.div className="card" whileHover={{ y: -2 }} transition={{ duration: 0.2, ease: "easeOut" }}>
+            <h3 className="text-sm font-bold text-text">Ustad Score</h3>
+            <p className="mt-2 text-4xl font-extrabold tracking-tight text-accent">
               {w.ustad_score}
-              <span className="text-base font-semibold text-stone-400">/100</span>
+              <span className="text-base font-semibold text-muted">/100</span>
             </p>
-            <div className="mt-2 h-2 overflow-hidden rounded-full bg-stone-100">
+            <div className="mt-2 h-2 overflow-hidden rounded-full bg-bg">
               <div
-                className="h-full rounded-full bg-[#0e5f44]"
+                className="h-full rounded-full bg-accent"
                 style={{ width: `${w.ustad_score}%` }}
               />
             </div>
             <dl className="mt-4 grid grid-cols-2 gap-2 text-xs">
-              <div className="rounded-lg bg-stone-50 p-2">
-                <dt className="text-stone-400">Completed jobs</dt>
-                <dd className="font-semibold text-stone-800">{w.completed_jobs}</dd>
+              <div className="rounded-lg bg-bg p-2">
+                <dt className="text-muted">Completed jobs</dt>
+                <dd className="font-semibold text-text">{w.completed_jobs}</dd>
               </div>
-              <div className="rounded-lg bg-stone-50 p-2">
-                <dt className="text-stone-400">Average rating</dt>
-                <dd className="font-semibold text-stone-800">
+              <div className="rounded-lg bg-bg p-2">
+                <dt className="text-muted">Average rating</dt>
+                <dd className="font-semibold text-text">
                   {w.average_rating.toFixed(1)} ⭐
                 </dd>
               </div>
-              <div className="rounded-lg bg-stone-50 p-2">
-                <dt className="text-stone-400">Response rate</dt>
-                <dd className="font-semibold text-stone-800">{w.response_rate}%</dd>
+              <div className="rounded-lg bg-bg p-2">
+                <dt className="text-muted">Response rate</dt>
+                <dd className="font-mono font-semibold text-text">{w.response_rate}%</dd>
               </div>
-              <div className="rounded-lg bg-stone-50 p-2">
-                <dt className="text-stone-400">Cancellation</dt>
-                <dd className="font-semibold text-stone-800">{w.cancellation_rate}%</dd>
+              <div className="rounded-lg bg-bg p-2">
+                <dt className="text-muted">Cancellation</dt>
+                <dd className="font-semibold text-text">{w.cancellation_rate}%</dd>
               </div>
             </dl>
-          </div>
+          </motion.div>
 
           <WorkerAvailability
             initial={{
@@ -141,11 +142,11 @@ export default function WorkerDashboard({ workerId }: { workerId: string }) {
           <ActiveJobPanel job={data.active_job} onChanged={() => void refresh()} />
 
           <section className="card">
-            <h2 className="text-sm font-bold uppercase tracking-wide text-stone-500">
+            <h2 className="text-sm font-bold uppercase tracking-wide text-muted">
               Jobs near you
             </h2>
             {data.incoming_jobs.length === 0 ? (
-              <p className="mt-3 rounded-xl border border-dashed border-stone-200 p-4 text-sm text-stone-400">
+              <p className="mt-3 rounded-xl border border-dashed border-divider p-4 text-sm text-muted">
                 Nothing broadcasting right now — check back soon.
               </p>
             ) : (
@@ -164,7 +165,7 @@ export default function WorkerDashboard({ workerId }: { workerId: string }) {
 
           {data.direct_requests.length > 0 && (
             <section className="card">
-              <h2 className="text-sm font-bold uppercase tracking-wide text-stone-500">
+              <h2 className="text-sm font-bold uppercase tracking-wide text-muted">
                 Direct Requests from Customers
               </h2>
               <div className="mt-3 space-y-3">
@@ -181,7 +182,7 @@ export default function WorkerDashboard({ workerId }: { workerId: string }) {
         </div>
       </section>
 
-      {error && <p className="text-xs text-red-600">{error}</p>}
+      {error && <p className="text-xs text-warning">{error}</p>}
     </div>
   );
 }

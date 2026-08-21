@@ -15,7 +15,7 @@ export default async function CustomerTrackPage() {
   return (
     <div className="page">
       <div className="page-header">
-        <h1 className="text-lg font-bold text-stone-900">Live Tracking</h1>
+        <h1 className="font-display text-lg font-bold text-text">Live Tracking</h1>
       </div>
       <div className="page-content">
         <TrackingJobsList />

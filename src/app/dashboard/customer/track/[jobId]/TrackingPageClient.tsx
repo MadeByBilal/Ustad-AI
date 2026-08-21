@@ -2,19 +2,8 @@
 
 import { useEffect, useState, useCallback } from "react";
 import Link from "next/link";
-import dynamic from "next/dynamic";
-
-const TrackingMap = dynamic(() => import("@/components/tracking/TrackingMap"), {
-  ssr: false,
-  loading: () => (
-    <div className="flex h-[400px] items-center justify-center rounded-2xl bg-stone-100">
-      <div className="text-center">
-        <div className="mx-auto h-8 w-8 animate-spin rounded-full border-4 border-stone-200 border-t-[#0e5f44]"></div>
-        <p className="mt-2 text-sm text-stone-500">Loading map...</p>
-      </div>
-    </div>
-  ),
-});
+import { motion } from "framer-motion";
+import TrackingMap from "@/components/tracking/dynamicTrackingMap";
 
 interface TrackingPageClientProps {
   jobId: string;
@@ -172,7 +161,7 @@ export default function TrackingPageClient({
       <div className="flex items-center justify-between">
         <Link
           href="/dashboard/customer"
-          className="flex items-center gap-1 text-sm font-medium text-stone-600 hover:text-[#0e5f44]"
+          className="flex items-center gap-1 text-sm font-medium text-muted hover:text-accent"
         >
           <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
             <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 19.5L8.25 12l7.5-7.5" />
@@ -182,10 +171,10 @@ export default function TrackingPageClient({
         <span
           className={`badge ${
             isArrived
-              ? "!bg-blue-100 !text-blue-800"
+              ? "!bg-accent/15 !text-accent"
               : isAccepted
-                ? "!bg-amber-100 !text-amber-800"
-                : "!bg-green-100 !text-green-800"
+                ? "!bg-success !text-success-fg"
+                : "!bg-accent/15 !text-accent"
           }`}
         >
           {isArrived ? "Arrived" : isAccepted ? "Accepted" : "On the way"}
@@ -193,33 +182,33 @@ export default function TrackingPageClient({
       </div>
 
       {/* Status Card */}
-      <div className="rounded-2xl border border-stone-200 bg-white p-4">
+      <div className="rounded-xl border border-divider bg-surface p-4">
         <div className="flex items-center gap-3">
           <div
             className={`flex h-12 w-12 items-center justify-center rounded-full ${
-              isArrived ? "bg-blue-100" : isAccepted ? "bg-amber-100" : "bg-green-100"
+              isArrived ? "bg-accent/15" : isAccepted ? "bg-success" : "bg-accent/15"
             }`}
           >
             {isArrived ? (
-              <svg className="h-6 w-6 text-blue-600" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
+              <svg className="h-6 w-6 text-accent" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" d="M15 10.5a3 3 0 11-6 0 3 3 0 016 0z" />
                 <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 10.5c0 7.142-7.5 11.25-7.5 11.25S4.5 17.642 4.5 10.5a7.5 7.5 0 1115 0z" />
               </svg>
             ) : isAccepted ? (
-              <svg className="h-6 w-6 text-amber-600" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
+              <svg className="h-6 w-6 text-success-fg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
               </svg>
             ) : (
-              <svg className="h-6 w-6 text-green-600" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
+              <svg className="h-6 w-6 text-accent" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" d="M8.25 18.75a1.5 1.5 0 01-3 0m3 0a1.5 1.5 0 00-3 0m3 0h6m-9 0H3.375a1.125 1.125 0 01-1.125-1.125V14.25m17.25 4.5a1.5 1.5 0 01-3 0m3 0a1.5 1.5 0 00-3 0m3 0h1.125c.621 0 1.129-.504 1.09-1.124a17.902 17.902 0 00-3.213-9.193 2.056 2.056 0 00-1.58-.86H14.25M16.5 18.75h-2.25m0-11.177v-.958c0-.568-.422-1.048-.987-1.106a48.554 48.554 0 00-10.026 0 1.106 1.106 0 00-.987 1.106v7.635m12-6.677v6.677m0 4.5v-4.5m0 0h-12" />
               </svg>
             )}
           </div>
           <div className="min-w-0 flex-1">
-            <p className="font-urdu text-sm font-bold text-stone-800">
+            <p className="font-urdu text-sm font-bold text-text">
               {workerName}
             </p>
-            <p className="text-xs text-stone-500">
+            <p className="text-xs text-muted">
               {isArrived ? "Has arrived at your location" : isAccepted ? "Worker accepted your job" : "On the way to you"}
             </p>
           </div>
@@ -227,28 +216,28 @@ export default function TrackingPageClient({
 
         {/* Distance & ETA */}
         <div className="mt-4 grid grid-cols-2 gap-3">
-          <div className="rounded-xl bg-stone-50 p-3 text-center">
-            <p className="text-2xl font-bold text-stone-800">
+          <div className="rounded-xl bg-bg p-3 text-center">
+            <p className="text-2xl font-bold text-text">
               {distanceKm !== undefined
                 ? distanceKm < 1
                   ? `${Math.round(distanceKm * 1000)}`
                   : distanceKm.toFixed(1)
                 : "—"}
             </p>
-            <p className="text-xs text-stone-500">
+            <p className="text-xs text-muted">
               {distanceKm !== undefined && distanceKm < 1 ? "meters" : "km"}
             </p>
           </div>
-          <div className="rounded-xl bg-stone-50 p-3 text-center">
-            <p className="text-2xl font-bold text-stone-800">
+          <div className="rounded-xl bg-bg p-3 text-center">
+            <p className="text-2xl font-bold text-text">
               {etaMinutes !== null ? etaMinutes : "—"}
             </p>
-            <p className="text-xs text-stone-500">min ETA</p>
+            <p className="text-xs text-muted">min ETA</p>
           </div>
         </div>
 
         {lastUpdate && (
-          <p className="mt-2 text-center text-[10px] text-stone-400">
+          <p className="mt-2 text-center text-xs text-muted">
             Last updated: {lastUpdate.toLocaleTimeString("en-GB", { hour: "2-digit", minute: "2-digit", second: "2-digit" })}
           </p>
         )}
@@ -264,21 +253,21 @@ export default function TrackingPageClient({
           className="h-[400px]"
         />
       ) : (
-        <div className="flex h-[300px] items-center justify-center rounded-2xl bg-stone-100">
-          <p className="text-sm text-stone-500">Location not available</p>
+        <div className="flex h-[300px] items-center justify-center rounded-xl bg-surface">
+          <p className="text-sm text-muted">Location not available</p>
         </div>
       )}
 
       {/* Job Info */}
-      <div className="rounded-2xl border border-stone-200 bg-white p-4">
+      <div className="rounded-xl border border-divider bg-surface p-4">
         <div className="flex items-center gap-2">
-          <span className="badge !bg-[#0e5f44] !text-white">
+          <span className="badge bg-accent text-bg">
             {category?.replace(/_/g, " ")}
           </span>
         </div>
-        <p className="mt-2 font-urdu text-sm text-stone-700">{originalText}</p>
+        <p className="mt-2 font-urdu text-sm text-text">{originalText}</p>
         {destination?.label && (
-          <p className="mt-2 flex items-center gap-1 text-xs text-stone-500">
+          <p className="mt-2 flex items-center gap-1 text-xs text-muted">
             <svg className="h-3 w-3" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" d="M15 10.5a3 3 0 11-6 0 3 3 0 016 0z" />
               <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 10.5c0 7.142-7.5 11.25-7.5 11.25S4.5 17.642 4.5 10.5a7.5 7.5 0 1115 0z" />
@@ -290,19 +279,22 @@ export default function TrackingPageClient({
 
       {/* Cancel Button */}
       {!isCancelled && (
-        <button
+        <motion.button
           type="button"
           onClick={() => void handleCancel()}
           disabled={cancelling}
-          className="w-full rounded-2xl border border-red-200 bg-white px-4 py-3 text-sm font-semibold text-red-600 transition hover:bg-red-50 disabled:opacity-60"
+          whileTap={{ scale: 0.95 }}
+          whileHover={{ y: -1 }}
+          transition={{ duration: 0.15, ease: "easeOut" }}
+          className="w-full rounded-xl border border-warning bg-surface px-4 py-3 text-sm font-semibold text-warning transition-colors hover:bg-warning/10 disabled:opacity-60"
         >
           {cancelling ? "Cancelling…" : "Cancel Job"}
-        </button>
+        </motion.button>
       )}
 
       {isCancelled && (
-        <div className="rounded-2xl border border-red-200 bg-red-50 p-4 text-center">
-          <p className="text-sm font-semibold text-red-700">Job has been cancelled</p>
+        <div className="rounded-xl border border-warning bg-warning/10 p-4 text-center">
+          <p className="text-sm font-semibold text-warning">Job has been cancelled</p>
         </div>
       )}
     </div>

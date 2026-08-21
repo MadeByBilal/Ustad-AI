@@ -5,6 +5,7 @@ import { Suspense, useState } from "react";
 import Link from "next/link";
 import { CANONICAL_SKILLS } from "@/lib/job/analyze";
 import type { WorkerCategory } from "@/models";
+import { motion } from "framer-motion";
 
 type Mode = "signin" | "signup";
 type Role = "customer" | "worker";
@@ -86,43 +87,46 @@ function AuthForm() {
   const availableSkills = CANONICAL_SKILLS[category];
 
   return (
-    <div className="card mx-auto w-full max-w-md p-6 sm:p-8">
+    <motion.div className="card mx-auto w-full max-w-md" whileHover={{ y: -2 }} transition={{ duration: 0.2, ease: "easeOut" }}>
       <Link
         href="/"
-        className="mb-6 inline-flex items-center gap-1.5 text-sm font-semibold text-[#0e5f44] hover:underline"
+        className="mb-6 inline-flex items-center gap-1.5 text-sm font-semibold text-accent hover:underline"
       >
         ← Back
       </Link>
 
       {/* Sign in / Sign up tabs */}
-      <div className="grid grid-cols-2 gap-2 rounded-xl bg-stone-100 p-1">
+      <div className="grid grid-cols-2 gap-2 rounded-xl bg-surface p-1">
         {(["signin", "signup"] as const).map((m) => (
-          <button
+          <motion.button
             key={m}
             type="button"
             onClick={() => switchMode(m)}
+            whileTap={{ scale: 0.95 }}
+            whileHover={{ y: -1 }}
+            transition={{ duration: 0.15, ease: "easeOut" }}
             className={`rounded-lg py-2 text-sm font-semibold transition-colors ${
               mode === m
-                ? "bg-white text-[#0e5f44] shadow-sm"
-                : "text-stone-500 hover:text-stone-700"
+                ? "bg-accent text-bg shadow-sm"
+                : "text-muted hover:text-text"
             }`}
           >
             {m === "signin" ? "Sign in" : "Sign up"}
-          </button>
+          </motion.button>
         ))}
       </div>
 
       <h1 className="mt-5 font-urdu text-2xl font-bold">
         {mode === "signin" ? "لاگ ان کریں" : "اکاؤنٹ بنائیں"}
       </h1>
-      <p className="mt-1 text-sm text-stone-500">
+      <p className="mt-1 text-sm text-muted">
         {mode === "signin"
           ? "Sign in with your email and password"
           : "Create your account with email and password"}
       </p>
 
       {error && (
-        <p className="mt-4 rounded-lg bg-red-50 px-3 py-2 text-sm text-red-700">
+        <p className="mt-4 rounded-lg border border-warning/40 bg-warning/10 px-3 py-2 text-sm text-warning">
           {error}
         </p>
       )}
@@ -130,25 +134,28 @@ function AuthForm() {
       <form onSubmit={submit} className="mt-6 space-y-4">
         {mode === "signup" && (
           <>
-            <div className="grid grid-cols-2 gap-2 rounded-xl bg-stone-100 p-1">
+            <div className="grid grid-cols-2 gap-2 rounded-xl bg-surface p-1">
               {(["customer", "worker"] as const).map((r) => (
-                <button
+                <motion.button
                   key={r}
                   type="button"
                   onClick={() => setRole(r)}
+                  whileTap={{ scale: 0.95 }}
+                  whileHover={{ y: -1 }}
+                  transition={{ duration: 0.15, ease: "easeOut" }}
                   className={`rounded-lg py-2 text-sm font-semibold transition-colors ${
                     role === r
-                      ? "bg-white text-[#0e5f44] shadow-sm"
-                      : "text-stone-500 hover:text-stone-700"
+                      ? "bg-accent text-bg shadow-sm"
+                      : "text-muted hover:text-text"
                   }`}
                 >
                   {r === "customer" ? "Customer" : "Technician"}
-                </button>
+                </motion.button>
               ))}
             </div>
 
             <div>
-              <label htmlFor="name" className="mb-1 block text-sm font-medium text-stone-700">
+              <label htmlFor="name" className="mb-1 block text-sm font-medium text-text">
                 Full name
               </label>
               <input
@@ -166,7 +173,7 @@ function AuthForm() {
         )}
 
         <div>
-          <label htmlFor="email" className="mb-1 block text-sm font-medium text-stone-700">
+          <label htmlFor="email" className="mb-1 block text-sm font-medium text-text">
             Email
           </label>
           <input
@@ -182,7 +189,7 @@ function AuthForm() {
         </div>
 
         <div>
-          <label htmlFor="password" className="mb-1 block text-sm font-medium text-stone-700">
+          <label htmlFor="password" className="mb-1 block text-sm font-medium text-text">
             Password
           </label>
           <input
@@ -200,7 +207,7 @@ function AuthForm() {
         {mode === "signup" && role === "worker" && (
           <>
             <div>
-              <label htmlFor="category" className="mb-1 block text-sm font-medium text-stone-700">
+              <label htmlFor="category" className="mb-1 block text-sm font-medium text-text">
                 Trade
               </label>
               <select
@@ -220,26 +227,29 @@ function AuthForm() {
               </select>
             </div>
             <fieldset>
-              <legend className="mb-1 block text-sm font-medium text-stone-700">
-                Skills <span className="font-normal text-stone-400">(pick at least one)</span>
+                <legend className="mb-1 block text-sm font-medium text-text">
+                Skills <span className="font-normal text-muted">(pick at least one)</span>
               </legend>
               <div className="flex flex-wrap gap-2">
                 {availableSkills.map((skill) => {
                   const active = skills.includes(skill);
                   return (
-                    <button
+                    <motion.button
                       key={skill}
                       type="button"
                       aria-pressed={active}
                       onClick={() => toggleSkill(skill)}
+                      whileTap={{ scale: 0.95 }}
+                      whileHover={{ y: -1 }}
+                      transition={{ duration: 0.15, ease: "easeOut" }}
                       className={`rounded-full px-3 py-1.5 text-xs font-semibold transition-colors ${
                         active
-                          ? "bg-[#0e5f44] text-white"
-                          : "bg-stone-100 text-stone-600 hover:bg-stone-200"
+                          ? "bg-accent text-bg"
+                          : "bg-surface text-muted hover:bg-bg"
                       }`}
                     >
                       {skill}
-                    </button>
+                    </motion.button>
                   );
                 })}
               </div>
@@ -247,7 +257,7 @@ function AuthForm() {
           </>
         )}
 
-        <button type="submit" disabled={loading} className="btn-primary w-full disabled:opacity-60">
+        <motion.button type="submit" disabled={loading} whileTap={{ scale: 0.95 }} whileHover={{ y: -1 }} transition={{ duration: 0.15, ease: "easeOut" }} className="btn-primary w-full disabled:opacity-60">
           {loading
             ? mode === "signin"
               ? "Signing in…"
@@ -257,16 +267,16 @@ function AuthForm() {
               : role === "worker"
                 ? "Create technician account"
                 : "Create account"}
-        </button>
+        </motion.button>
       </form>
-    </div>
+    </motion.div>
   );
 }
 
 export default function LoginPage() {
   return (
-    <main className="flex min-h-screen items-center justify-center bg-[#eae4d6] px-4 py-10">
-      <Suspense fallback={<div className="card p-8">Loading…</div>}>
+    <main className="flex min-h-screen items-center justify-center bg-bg px-4 py-10">
+      <Suspense fallback={<motion.div className="card" whileHover={{ y: -2 }} transition={{ duration: 0.2, ease: "easeOut" }}>Loading…</motion.div>}>
         <AuthForm />
       </Suspense>
     </main>

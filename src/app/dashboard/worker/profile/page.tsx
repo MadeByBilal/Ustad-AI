@@ -25,7 +25,7 @@ export default async function WorkerProfilePage() {
   return (
     <div className="page">
       <div className="page-header">
-        <h1 className="text-lg font-bold text-stone-900">Profile</h1>
+        <h1 className="font-display text-lg font-bold text-text">Profile</h1>
       </div>
       <div className="page-content">
         <WorkerProfile workerId={String(worker._id)} />

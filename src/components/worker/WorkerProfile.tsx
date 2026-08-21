@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
+import { motion } from "framer-motion";
 import type { WorkerDashboardData } from "@/lib/worker/dashboard";
 import WorkerAvailability from "@/components/WorkerAvailability";
 import LocationUpdater from "./LocationUpdater";
@@ -34,7 +35,7 @@ export default function WorkerProfile({ workerId }: { workerId: string }) {
   if (!data) {
     return (
       <div className="flex items-center justify-center py-12">
-        <div className="h-8 w-8 animate-spin rounded-full border-4 border-stone-200 border-t-[#0e5f44]" />
+        <div className="h-8 w-8 animate-spin rounded-full border-4 border-divider border-t-accent" />
       </div>
     );
   }
@@ -44,56 +45,56 @@ export default function WorkerProfile({ workerId }: { workerId: string }) {
   return (
     <div className="space-y-6">
       {/* Profile Header */}
-      <div className="card flex items-center gap-4">
-        <div className="flex h-16 w-16 items-center justify-center rounded-full bg-[#0e5f44]">
-          <span className="text-2xl font-bold text-white">
+      <motion.div className="card flex items-center gap-4" whileHover={{ y: -2 }} transition={{ duration: 0.2, ease: "easeOut" }}>
+        <div className="flex h-16 w-16 items-center justify-center rounded-full bg-accent">
+          <span className="text-2xl font-bold text-bg">
             {w.name?.charAt(0) ?? "U"}
           </span>
         </div>
         <div className="min-w-0 flex-1">
-          <h2 className="font-urdu text-lg font-bold text-stone-900">{w.name}</h2>
-          <p className="text-sm capitalize text-stone-500">
+          <h2 className="font-urdu text-lg font-bold text-text">{w.name}</h2>
+          <p className="text-sm capitalize text-muted">
             {w.category.replace(/_/g, " ")}
           </p>
           <div className="mt-1 flex flex-wrap gap-1.5">
             {w.skills.slice(0, 4).map((skill) => (
-              <span key={skill} className="badge !bg-stone-100 !text-stone-600">
+              <span key={skill} className="badge bg-surface text-muted">
                 {skill}
               </span>
             ))}
           </div>
         </div>
-      </div>
+      </motion.div>
 
       {/* Stats */}
-      <div className="card">
-        <h3 className="mb-3 text-sm font-bold text-stone-800">Performance</h3>
+      <motion.div className="card" whileHover={{ y: -2 }} transition={{ duration: 0.2, ease: "easeOut" }}>
+        <h3 className="mb-3 text-sm font-bold text-text">Performance</h3>
         <div className="grid grid-cols-2 gap-3">
-          <div className="rounded-xl bg-stone-50 p-3 text-center">
-            <p className="text-xl font-bold text-[#0e5f44]">{w.ustad_score}</p>
-            <p className="text-[10px] text-stone-500">Ustad Score</p>
+          <div className="rounded-xl bg-bg p-3 text-center">
+            <p className="text-xl font-bold text-accent">{w.ustad_score}</p>
+            <p className="text-xs text-muted">Ustad Score</p>
           </div>
-          <div className="rounded-xl bg-stone-50 p-3 text-center">
-            <p className="text-xl font-bold text-stone-800">{w.completed_jobs}</p>
-            <p className="text-[10px] text-stone-500">Jobs Done</p>
+          <div className="rounded-xl bg-bg p-3 text-center">
+            <p className="text-xl font-bold text-text">{w.completed_jobs}</p>
+            <p className="text-xs text-muted">Jobs Done</p>
           </div>
-          <div className="rounded-xl bg-stone-50 p-3 text-center">
-            <p className="text-xl font-bold text-amber-500">{w.average_rating.toFixed(1)}</p>
-            <p className="text-[10px] text-stone-500">Rating</p>
+          <div className="rounded-xl bg-bg p-3 text-center">
+            <p className="font-mono text-xl font-bold text-warning">{w.average_rating.toFixed(1)}</p>
+            <p className="text-xs text-muted">Rating</p>
           </div>
-          <div className="rounded-xl bg-stone-50 p-3 text-center">
-            <p className="text-xl font-bold text-stone-800">{w.response_rate}%</p>
-            <p className="text-[10px] text-stone-500">Response Rate</p>
+          <div className="rounded-xl bg-bg p-3 text-center">
+            <p className="font-mono text-xl font-bold text-text">{w.response_rate}%</p>
+            <p className="text-xs text-muted">Response Rate</p>
           </div>
         </div>
-      </div>
+      </motion.div>
 
       {/* Verification */}
-      <div className="card">
+      <motion.div className="card" whileHover={{ y: -2 }} transition={{ duration: 0.2, ease: "easeOut" }}>
         <div className="flex items-center justify-between">
           <div>
-            <h3 className="text-sm font-bold text-stone-800">Verification</h3>
-            <p className="text-xs text-stone-500">
+            <h3 className="text-sm font-bold text-text">Verification</h3>
+            <p className="text-xs text-muted">
               {w.verification_level === "documents_verified"
                 ? "Documents verified"
                 : "Identity reviewed"}
@@ -102,14 +103,14 @@ export default function WorkerProfile({ workerId }: { workerId: string }) {
           <span
             className={`badge ${
               w.verification_level === "documents_verified"
-                ? "!bg-emerald-100 !text-emerald-800"
-                : "!bg-amber-100 !text-amber-800"
+                ? "bg-success text-success-fg"
+                : "bg-warning/10 text-warning"
             }`}
           >
             {w.verification_level === "documents_verified" ? "✓ Verified" : "⏳ Pending"}
           </span>
         </div>
-      </div>
+      </motion.div>
 
       {/* Availability */}
       <WorkerAvailability
@@ -130,12 +131,15 @@ export default function WorkerProfile({ workerId }: { workerId: string }) {
       {/* Logout */}
       <div className="pt-4">
         <form action="/api/auth/logout" method="POST">
-          <button
+          <motion.button
             type="submit"
             className="btn-danger w-full"
+            whileTap={{ scale: 0.95 }}
+            whileHover={{ y: -1 }}
+            transition={{ duration: 0.15, ease: "easeOut" }}
           >
             Sign out
-          </button>
+          </motion.button>
         </form>
       </div>
     </div>

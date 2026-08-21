@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { motion } from "framer-motion";
 
 export default function AcceptJobButton({ jobId }: { jobId: string }) {
   const [busy, setBusy] = useState(false);
@@ -29,7 +30,7 @@ export default function AcceptJobButton({ jobId }: { jobId: string }) {
 
   if (accepted) {
     return (
-      <span className="badge shrink-0 !bg-emerald-100 !text-emerald-800">
+      <span className="badge shrink-0 bg-success text-success-fg">
         ✓ Accepted
       </span>
     );
@@ -37,15 +38,18 @@ export default function AcceptJobButton({ jobId }: { jobId: string }) {
 
   return (
     <div className="flex flex-col items-end gap-1">
-      <button
+      <motion.button
         type="button"
         onClick={handleAccept}
         disabled={busy}
-        className="rounded-xl bg-[#0e5f44] px-4 py-2 text-sm font-bold text-white transition hover:bg-[#0b4c37] disabled:opacity-60"
+        className="btn-primary !rounded-xl !px-4 !py-2 text-sm disabled:opacity-60"
+        whileTap={{ scale: 0.95 }}
+        whileHover={{ y: -1 }}
+        transition={{ duration: 0.15, ease: "easeOut" }}
       >
         {busy ? "Accepting…" : "Accept job"}
-      </button>
-      {error && <span className="text-xs text-red-600">{error}</span>}
+      </motion.button>
+      {error && <span className="text-xs text-warning">{error}</span>}
     </div>
   );
 }

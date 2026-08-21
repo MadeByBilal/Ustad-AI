@@ -133,36 +133,36 @@ export default function TrackingMap({
           <div style="
             width: 32px; height: 32px;
             display: flex; align-items: center; justify-content: center;
-            background: #2563eb;
-            border: 3px solid white;
-            border-radius: 50%;
-            box-shadow: 0 0 0 3px rgba(37,99,235,0.25), 0 2px 8px rgba(0,0,0,0.3);
+             background: #C97A3D;
+             border: 3px solid #F5EDE0;
+             border-radius: 50%;
+             box-shadow: 0 0 0 3px rgba(201,122,61,0.25), 0 2px 8px rgba(0,0,0,0.3);
             animation: moving-worker-pulse 1.8s infinite;
           ">
-            <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-              <path d="M5 17h14"/><path d="M6 17l1.2-5h9.6l1.2 5"/><path d="M8 12l1-3h6l1 3"/><circle cx="8" cy="17" r="1.5" fill="white"/><circle cx="16" cy="17" r="1.5" fill="white"/>
+             <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="#1A1410" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+               <path d="M5 17h14"/><path d="M6 17l1.2-5h9.6l1.2 5"/><path d="M8 12l1-3h6l1 3"/><circle cx="8" cy="17" r="1.5" fill="#1A1410"/><circle cx="16" cy="17" r="1.5" fill="#1A1410"/>
             </svg>
           </div>
           <style>
             @keyframes moving-worker-pulse {
-              0%, 100% { box-shadow: 0 0 0 3px rgba(37,99,235,0.25), 0 2px 8px rgba(0,0,0,0.3); }
-              50% { box-shadow: 0 0 0 9px rgba(37,99,235,0.12), 0 2px 8px rgba(0,0,0,0.3); }
+               0%, 100% { box-shadow: 0 0 0 3px rgba(201,122,61,0.25), 0 2px 8px rgba(0,0,0,0.3); }
+               50% { box-shadow: 0 0 0 9px rgba(201,122,61,0.12), 0 2px 8px rgba(0,0,0,0.3); }
             }
           </style>
         `
           : `
           <div style="
             width: 24px; height: 24px;
-            background: #22c55e;
-            border: 3px solid white;
-            border-radius: 50%;
-            box-shadow: 0 0 0 2px #22c55e, 0 2px 8px rgba(0,0,0,0.3);
+             background: #C97A3D;
+             border: 3px solid #F5EDE0;
+             border-radius: 50%;
+             box-shadow: 0 0 0 2px #C97A3D, 0 2px 8px rgba(0,0,0,0.3);
             animation: pulse 2s infinite;
           "></div>
           <style>
             @keyframes pulse {
-              0%, 100% { box-shadow: 0 0 0 2px #22c55e, 0 2px 8px rgba(0,0,0,0.3); }
-              50% { box-shadow: 0 0 0 8px rgba(34,197,94,0.2), 0 2px 8px rgba(0,0,0,0.3); }
+               0%, 100% { box-shadow: 0 0 0 2px #C97A3D, 0 2px 8px rgba(0,0,0,0.3); }
+               50% { box-shadow: 0 0 0 8px rgba(201,122,61,0.2), 0 2px 8px rgba(0,0,0,0.3); }
             }
           </style>
         `,
@@ -181,10 +181,10 @@ export default function TrackingMap({
           html: `
             <div style="
               width: 24px; height: 24px;
-              background: #22c55e;
-              border: 4px solid white;
-              border-radius: 50%;
-              box-shadow: 0 0 0 3px rgba(34,197,94,0.3), 0 2px 8px rgba(0,0,0,0.3);
+               background: #E8A93C;
+               border: 4px solid #F5EDE0;
+               border-radius: 50%;
+               box-shadow: 0 0 0 3px rgba(232,169,60,0.3), 0 2px 8px rgba(0,0,0,0.3);
             "></div>
           `,
           className: "",
@@ -200,8 +200,8 @@ export default function TrackingMap({
             position: relative;
           ">
             <svg viewBox="0 0 24 36" fill="none" xmlns="http://www.w3.org/2000/svg">
-              <path d="M12 0C5.4 0 0 5.4 0 12c0 9 12 24 12 24s12-15 12-24C24 5.4 18.6 0 12 0z" fill="#ef4444"/>
-              <circle cx="12" cy="12" r="5" fill="white"/>
+              <path d="M12 0C5.4 0 0 5.4 0 12c0 9 12 24 12 24s12-15 12-24C24 5.4 18.6 0 12 0z" fill="#E8A93C"/>
+              <circle cx="12" cy="12" r="5" fill="#F5EDE0"/>
             </svg>
           </div>
         `,
@@ -263,8 +263,8 @@ export default function TrackingMap({
         arrivalCircleRef.current = leaflet
           .circle([destination!.lat, destination!.lng], {
             radius: ARRIVAL_ZONE_RADIUS,
-            color: "#22c55e",
-            fillColor: "#22c55e",
+            color: "#C97A3D",
+            fillColor: "#C97A3D",
             fillOpacity: 0.08,
             weight: 2,
             dashArray: "6 4",
@@ -326,7 +326,7 @@ export default function TrackingMap({
         } else if (!roadPolylineRef.current) {
           fallbackPolylineRef.current = leaflet
             .polyline(points, {
-              color: "#22c55e",
+              color: "#C97A3D",
               weight: 3,
               opacity: 0.7,
               dashArray: "8 6",
@@ -395,7 +395,7 @@ export default function TrackingMap({
     if (fallbackPolylineRef.current) {
       fallbackPolylineRef.current.setLatLngs(directPoints);
       fallbackPolylineRef.current.setStyle({
-        color: "#22c55e",
+        color: "#C97A3D",
         weight: 3,
         opacity: 0.7,
         dashArray: "8 6",
@@ -403,7 +403,7 @@ export default function TrackingMap({
     } else {
       fallbackPolylineRef.current = routingLeaflet
         .polyline(directPoints, {
-          color: "#22c55e",
+          color: "#C97A3D",
           weight: 3,
           opacity: 0.7,
           dashArray: "8 6",
@@ -443,7 +443,7 @@ export default function TrackingMap({
 
         roadPolylineRef.current = routingLeaflet
           .polyline(routePoints, {
-          color: "#0e5f44",
+          color: "#C97A3D",
           weight: 5,
           opacity: 0.9,
           dashArray: "",
@@ -462,33 +462,33 @@ export default function TrackingMap({
   }, [leaflet, workerLocation, destination]);
 
   return (
-    <div className={`relative overflow-hidden rounded-2xl ${className}`}>
+    <div className={`relative overflow-hidden rounded-xl ${className}`}>
       <div ref={mapRef} className="h-full w-full" style={{ minHeight: "300px" }} />
 
       {distanceKm !== undefined && (
-        <div className="absolute left-3 top-3 z-[1000] rounded-xl bg-white/95 px-3 py-2 shadow-lg backdrop-blur-sm">
-          <p className="text-xs font-bold text-stone-800">
+        <div className="absolute left-3 top-3 z-[1000] rounded-xl bg-surface/95 px-3 py-2 shadow-lg backdrop-blur-sm">
+          <p className="text-xs font-bold text-text">
             {distanceKm < 1
               ? `${Math.round(distanceKm * 1000)} m`
               : `${distanceKm.toFixed(1)} km`}
           </p>
-          <p className="text-[10px] text-stone-500">away</p>
+          <p className="text-xs text-muted">away</p>
         </div>
       )}
 
       <style>{`
         .dest-tooltip {
-          background: white !important;
+          background: #241C15 !important;
           border: none !important;
           box-shadow: 0 2px 8px rgba(0,0,0,0.15) !important;
           border-radius: 8px !important;
           padding: 4px 8px !important;
           font-size: 11px !important;
           font-weight: 600 !important;
-          color: #44403c !important;
+          color: #F5EDE0 !important;
         }
         .dest-tooltip::before {
-          border-top-color: white !important;
+          border-top-color: #241C15 !important;
         }
       `}</style>
     </div>

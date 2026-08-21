@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { motion, AnimatePresence } from "framer-motion";
 import { parseApiResponse } from "@/lib/api-client";
 import CustomerOfferModal from "@/components/worker/CustomerOfferModal";
 
@@ -144,15 +145,15 @@ export default function WorkerResults({
 
   if (hired) {
     return (
-      <div className="rounded-2xl border border-green-200 bg-green-50 p-6 text-center">
-        <p className="text-lg font-semibold text-green-900">
+      <div className="rounded-xl border border-success/40 bg-success p-6 text-center">
+        <p className="text-lg font-semibold text-success-fg">
           {urgency === "emergency" ? `${hired.name} arrived` : `Hired ${hired.name} 🎉`}
         </p>
         {finalPrice !== null && (
-          <p className="mt-2 text-stone-700">Final price: {formatRs(finalPrice)}</p>
+          <p className="mt-2 text-success-fg">Final price: {formatRs(finalPrice)}</p>
         )}
         {urgency === "emergency" && (
-          <p className="mt-1 text-sm text-stone-600">Assigned automatically — keep your phone close</p>
+          <p className="mt-1 text-sm text-success-fg/80">Assigned automatically — keep your phone close</p>
         )}
       </div>
     );
@@ -164,16 +165,16 @@ export default function WorkerResults({
 
   if (detail && !isAccepted && urgency === "normal" && deadlinePassed && responders.length === 0) {
     return (
-      <div className="rounded-2xl border border-stone-200 bg-stone-50 p-6 text-center">
-        <p className="text-stone-600">No ustads responded yet</p>
+      <div className="rounded-xl border border-divider bg-surface p-6 text-center">
+        <p className="text-muted">No ustads responded yet</p>
       </div>
     );
   }
 
   if (responders.length === 0) {
     return (
-      <div className="rounded-2xl border border-stone-200 bg-stone-50 p-6 text-center">
-        <p className="text-stone-600">
+      <div className="rounded-xl border border-divider bg-surface p-6 text-center">
+        <p className="text-muted">
           {urgency === "emergency"
             ? "Finding nearest available worker…"
             : "Waiting for ustads to respond…"}
@@ -186,11 +187,11 @@ export default function WorkerResults({
     <>
     <div className="space-y-3">
       {error && (
-        <div className="rounded-2xl border border-red-200 bg-red-50 p-4">
-          <p className="text-sm text-red-700">{error}</p>
+          <div className="rounded-xl border border-warning/40 bg-warning/10 p-4">
+            <p className="text-sm text-warning">{error}</p>
         </div>
       )}
-      <p className="text-sm font-medium text-stone-600">
+      <p className="text-sm font-medium text-muted">
         {responders.length} ustad{responders.length === 1 ? "" : "s"} responded
       </p>
       {responders.map((responder) => {
@@ -200,63 +201,72 @@ export default function WorkerResults({
         return (
           <div
             key={worker.id}
-            className="rounded-2xl border border-stone-200 bg-white p-4 shadow-sm"
+            className="rounded-xl border border-divider bg-surface p-4 shadow-sm"
           >
             <div className="flex flex-wrap items-center gap-2">
-              <span className="rounded-full bg-[#0e5f44] px-2 py-0.5 text-xs font-bold text-white">
+              <span className="rounded-full bg-accent px-2 py-0.5 text-xs font-bold text-bg">
                 Ustad {worker.ustad_score}
               </span>
               {worker.verified && (
-                <span className="rounded-full bg-blue-100 px-2 py-0.5 text-xs font-medium text-blue-800">
+                <span className="rounded-full bg-success px-2 py-0.5 text-xs font-medium text-success-fg">
                   Verified
                 </span>
               )}
               {urgency === "emergency" && (
-                <span className="rounded-full bg-red-100 px-2 py-0.5 text-xs font-medium text-red-700">
+                <span className="rounded-full bg-warning/10 px-2 py-0.5 text-xs font-medium text-warning">
                   Emergency
                 </span>
               )}
               <span className="text-sm font-semibold">{worker.name}</span>
-              <span className="text-sm text-stone-500">⭐ {worker.average_rating}</span>
+              <span className="font-mono text-sm text-muted">⭐ {worker.average_rating}</span>
               {responder.distance_km !== null && (
-                <span className="text-sm text-stone-500">{responder.distance_km.toFixed(1)} km</span>
+                <span className="font-mono text-sm text-muted">{responder.distance_km.toFixed(1)} km</span>
               )}
             </div>
-            <p className="mt-1 text-xs text-stone-500">{worker.skills.join(", ")}</p>
+            <p className="mt-1 text-xs text-muted">{worker.skills.join(", ")}</p>
             {offer && (
-              <p className="mt-2 text-sm text-stone-700">
+              <p className="mt-2 text-sm text-text">
                 Your offer {formatRs(customerOffer ?? 0)}
                 {offer.counter_price > 0 && (
-                  <span className="text-green-700"> · Counter {formatRs(offer.counter_price)}</span>
+                  <span className="text-accent"> · Counter {formatRs(offer.counter_price)}</span>
                 )}
               </p>
             )}
             <div className="mt-3 flex flex-wrap gap-2">
-              <button
+              <motion.button
                 type="button"
                 className="btn btn-outline"
                 onClick={() => setExpanded(isExpanded ? null : worker.id)}
+                whileTap={{ scale: 0.95 }}
+                whileHover={{ y: -1 }}
+                transition={{ duration: 0.15, ease: "easeOut" }}
               >
                 {isExpanded ? "− Hide Profile" : "+ View Profile"}
-              </button>
-              <button
+              </motion.button>
+              <motion.button
                 type="button"
-                className="btn btn-outline text-blue-600 hover:bg-blue-50"
+                className="btn btn-outline text-accent hover:bg-bg"
                 onClick={() => setOfferModalWorkerId(worker.id)}
+                whileTap={{ scale: 0.95 }}
+                whileHover={{ y: -1 }}
+                transition={{ duration: 0.15, ease: "easeOut" }}
               >
                 Make Offer
-              </button>
-              <button
+              </motion.button>
+              <motion.button
                 type="button"
                 disabled={busy}
                 className="btn btn-primary"
                 onClick={() => hire(worker)}
+                whileTap={{ scale: 0.95 }}
+                whileHover={{ y: -1 }}
+                transition={{ duration: 0.15, ease: "easeOut" }}
               >
                 Hire {worker.name}
-              </button>
+              </motion.button>
             </div>
             {isExpanded && (
-              <div className="mt-3 border-t border-stone-100 pt-3 text-sm text-stone-600">
+              <div className="mt-3 border-t border-divider pt-3 text-sm text-muted">
                 <p>{worker.completed_jobs} jobs completed</p>
                 <p>{worker.verification_level}</p>
               </div>
@@ -265,27 +275,30 @@ export default function WorkerResults({
         );
       })}
     </div>
-    {offerModalWorkerId != null && (
-      <CustomerOfferModal
-        jobId={jobId}
-        workerId={offerModalWorkerId}
-        workerName={responders.find((r) => r.worker.id === offerModalWorkerId)?.worker.name || "Worker"}
-        currentOffer={customerOffer}
-        estimateMin={detail?.job.pricing?.estimate_min ?? 0}
-        estimateMax={detail?.job.pricing?.estimate_max ?? 0}
-        onClose={() => setOfferModalWorkerId(null)}
-        onSubmitted={() => {
-          setOfferModalWorkerId(null);
-          // Refresh the detail to show updated offer
-          void (async () => {
-            const body = await parseApiResponse<JobDetailResponse>(
-              await fetch(`/api/jobs/${jobId}`)
-            );
-            setDetail(body);
-          })();
-        }}
-      />
-    )}
+    <AnimatePresence mode="wait">
+      {offerModalWorkerId != null && (
+        <CustomerOfferModal
+          key={offerModalWorkerId}
+          jobId={jobId}
+          workerId={offerModalWorkerId}
+          workerName={responders.find((r) => r.worker.id === offerModalWorkerId)?.worker.name || "Worker"}
+          currentOffer={customerOffer}
+          estimateMin={detail?.job.pricing?.estimate_min ?? 0}
+          estimateMax={detail?.job.pricing?.estimate_max ?? 0}
+          onClose={() => setOfferModalWorkerId(null)}
+          onSubmitted={() => {
+            setOfferModalWorkerId(null);
+            // Refresh the detail to show updated offer
+            void (async () => {
+              const body = await parseApiResponse<JobDetailResponse>(
+                await fetch(`/api/jobs/${jobId}`)
+              );
+              setDetail(body);
+            })();
+          }}
+        />
+      )}
+    </AnimatePresence>
     </>
   );
 }

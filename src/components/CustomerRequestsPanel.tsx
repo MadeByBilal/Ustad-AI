@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
+import { motion } from "framer-motion";
 import { parseApiResponse } from "@/lib/api-client";
 
 const POLL_MS = 10000;
@@ -41,13 +42,13 @@ interface ListResponse {
 }
 
 const STATUS_LABELS: Record<string, { label: string; color: string }> = {
-  BROADCASTING: { label: "Waiting for response", color: "bg-amber-100 text-amber-800" },
-  WORKER_RESPONSES: { label: "Negotiating", color: "bg-blue-100 text-blue-800" },
-  ACCEPTED: { label: "Confirmed", color: "bg-emerald-100 text-emerald-800" },
-  EN_ROUTE: { label: "On the way", color: "bg-green-100 text-green-800" },
-  ARRIVED: { label: "Arrived", color: "bg-blue-100 text-blue-800" },
-  IN_PROGRESS: { label: "Work in progress", color: "bg-violet-100 text-violet-800" },
-  CANCELLED: { label: "Declined", color: "bg-red-100 text-red-700" },
+  BROADCASTING: { label: "Waiting for response", color: "bg-warning/10 text-warning" },
+  WORKER_RESPONSES: { label: "Negotiating", color: "bg-surface text-muted" },
+  ACCEPTED: { label: "Confirmed", color: "bg-success text-success-fg" },
+  EN_ROUTE: { label: "On the way", color: "bg-accent/15 text-accent" },
+  ARRIVED: { label: "Arrived", color: "bg-accent/15 text-accent" },
+  IN_PROGRESS: { label: "Work in progress", color: "bg-accent/15 text-accent" },
+  CANCELLED: { label: "Declined", color: "bg-warning/10 text-warning" },
 };
 
 async function postJson(url: string, body: unknown): Promise<void> {
@@ -108,59 +109,65 @@ export default function CustomerRequestsPanel() {
 
   return (
     <section>
-      <h2 className="mb-3 text-base font-bold text-stone-800">Recent Requests</h2>
+        <h2 className="mb-3 font-display text-base font-bold text-text">Recent Requests</h2>
       {error && (
-        <p className="mb-3 rounded-xl bg-red-50 px-4 py-2.5 text-sm text-red-700">{error}</p>
+        <p className="mb-3 rounded-xl border border-warning/40 bg-warning/10 px-4 py-2.5 text-sm text-warning">{error}</p>
       )}
       <div className="space-y-3">
         {requests.map((req) => {
-          const statusInfo = STATUS_LABELS[req.status] ?? { label: req.status, color: "bg-stone-100 text-stone-600" };
+          const statusInfo = STATUS_LABELS[req.status] ?? { label: req.status, color: "bg-surface text-muted" };
           const hasCounter = req.latest_offer?.type === "counter_offer" && req.latest_offer?.status === "pending";
           return (
-            <div key={req.job_id} className="card">
+            <motion.div key={req.job_id} className="card" whileHover={{ y: -2 }} transition={{ duration: 0.2, ease: "easeOut" }}>
               <div className="flex items-center justify-between gap-2">
                 <div className="flex flex-wrap items-center gap-2">
-                  <span className="badge shrink-0 !bg-[#0e5f44] !text-white">
+                  <span className="badge shrink-0 bg-accent text-bg">
                     {CATEGORY_LABELS[req.category] ?? req.category}
                   </span>
                   <span className={`badge shrink-0 ${statusInfo.color}`}>{statusInfo.label}</span>
                 </div>
-                <span className="text-sm text-stone-400">
+                <span className="text-sm text-muted">
                   {new Date(req.created_at).toLocaleDateString("en-GB", { day: "numeric", month: "short" })}
                 </span>
               </div>
-              <p className="mt-3 line-clamp-2 text-base text-stone-800">{req.original_text}</p>
-              <div className="mt-3 flex flex-wrap gap-4 text-sm text-stone-500">
+              <p className="mt-3 line-clamp-2 text-base text-text">{req.original_text}</p>
+              <div className="mt-3 flex flex-wrap gap-4 text-sm text-muted">
                 <span>Your offer: {currency(req.customer_offer)}</span>
                 {req.worker_counter_price && (
-                  <span className="text-blue-700">Counter: {currency(req.worker_counter_price)}</span>
+                  <span className="text-accent">Counter: {currency(req.worker_counter_price)}</span>
                 )}
                 {req.final_price && (
-                  <span className="font-semibold text-emerald-700">Final: {currency(req.final_price)}</span>
+                  <span className="font-semibold text-success-fg">Final: {currency(req.final_price)}</span>
                 )}
               </div>
               {hasCounter && (
-                <div className="mt-4 flex gap-3 border-t border-stone-100 pt-4">
-                  <button
+                <div className="mt-4 flex gap-3 border-t border-divider pt-4">
+                  <motion.button
                     type="button"
                     onClick={() => void handleCounterResponse(req.latest_offer!.offer_id, "accept")}
                     disabled={busy !== null}
                     className="btn-primary flex-1 !py-3 text-sm"
+                    whileTap={{ scale: 0.95 }}
+                    whileHover={{ y: -1 }}
+                    transition={{ duration: 0.15, ease: "easeOut" }}
                   >
                     {busy === `${req.latest_offer!.offer_id}-accept` ? "Accepting…" : "Accept counter"}
-                  </button>
-                  <button
+                  </motion.button>
+                  <motion.button
                     type="button"
                     onClick={() => void handleCounterResponse(req.latest_offer!.offer_id, "decline")}
                     disabled={busy !== null}
                     className="btn-secondary flex-1 !py-3 text-sm"
+                    whileTap={{ scale: 0.95 }}
+                    whileHover={{ y: -1 }}
+                    transition={{ duration: 0.15, ease: "easeOut" }}
                   >
                     Decline
-                  </button>
+                  </motion.button>
                 </div>
               )}
               {["EN_ROUTE", "ARRIVED", "IN_PROGRESS"].includes(req.status) && (
-                <div className="mt-4 border-t border-stone-100 pt-4">
+                <div className="mt-4 border-t border-divider pt-4">
                   <Link
                     href={`/dashboard/customer/track/${req.job_id}`}
                     className="btn-primary w-full"
@@ -173,7 +180,7 @@ export default function CustomerRequestsPanel() {
                   </Link>
                 </div>
               )}
-            </div>
+            </motion.div>
           );
         })}
       </div>

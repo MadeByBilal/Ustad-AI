@@ -100,7 +100,7 @@ export default function BottomNav({ role }: { role: "customer" | "worker" }) {
               className={`bottom-nav-item ${isActive ? "active" : ""}`}
             >
               {item.icon(isActive)}
-              <span className="text-[11px]">{item.label}</span>
+              <span className="text-xs">{item.label}</span>
             </Link>
           );
         })}

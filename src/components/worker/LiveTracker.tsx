@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState, useCallback } from "react";
+import { motion } from "framer-motion";
 
 interface LiveTrackerProps {
   jobId: string;
@@ -125,11 +126,11 @@ export default function LiveTracker({
   }, [startTracking]);
 
   return (
-    <div className="card">
+    <motion.div className="card" whileHover={{ y: -2 }} transition={{ duration: 0.2, ease: "easeOut" }}>
       <div className="flex items-center justify-between">
         <div>
-          <h3 className="text-sm font-bold text-stone-800">Live Tracking</h3>
-          <p className="text-xs text-stone-500">
+          <h3 className="text-sm font-bold text-text">Live Tracking</h3>
+          <p className="text-xs text-muted">
             {tracking
               ? lastPing
                 ? `Last ping: ${lastPing.toLocaleTimeString("en-GB", { hour: "2-digit", minute: "2-digit", second: "2-digit" })}`
@@ -140,38 +141,41 @@ export default function LiveTracker({
         <div className="flex items-center gap-2">
           {tracking && (
             <span className="relative flex h-3 w-3">
-              <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-green-400 opacity-75"></span>
-              <span className="relative inline-flex h-3 w-3 rounded-full bg-green-500"></span>
+              <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-accent opacity-75"></span>
+              <span className="relative inline-flex h-3 w-3 rounded-full bg-accent"></span>
             </span>
           )}
-          <button
+          <motion.button
             type="button"
             onClick={tracking ? stopTracking : startTracking}
             className={`rounded-xl px-4 py-2 text-sm font-bold transition ${
               tracking
-                ? "border border-red-200 text-red-600 hover:bg-red-50"
-                : "bg-[#0e5f44] text-white hover:bg-[#0b4c37]"
+                ? "border border-warning text-warning hover:bg-warning/10"
+                : "bg-accent text-bg hover:bg-accent/90"
             }`}
+            whileTap={{ scale: 0.95 }}
+            whileHover={{ y: -1 }}
+            transition={{ duration: 0.15, ease: "easeOut" }}
           >
             {tracking ? "Stop" : "Start tracking"}
-          </button>
+          </motion.button>
         </div>
       </div>
 
       {error && (
-        <p className="mt-2 rounded-lg bg-red-50 px-3 py-1.5 text-xs text-red-700">
+        <p className="mt-2 rounded-lg border border-warning/40 bg-warning/10 px-3 py-1.5 text-xs text-warning">
           {error}
         </p>
       )}
 
       {tracking && (
-        <div className="mt-3 flex items-center gap-2 rounded-xl bg-green-50 px-3 py-2">
-          <div className="h-2 w-2 rounded-full bg-green-500"></div>
-          <span className="text-xs font-medium text-green-800">
+        <div className="mt-3 flex items-center gap-2 rounded-xl bg-accent/15 px-3 py-2">
+          <div className="h-2 w-2 rounded-full bg-accent"></div>
+          <span className="text-xs font-medium text-accent">
             Broadcasting your location to the customer
           </span>
         </div>
       )}
-    </div>
+    </motion.div>
   );
 }

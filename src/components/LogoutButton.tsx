@@ -2,6 +2,7 @@
 
 import { useRouter } from "next/navigation";
 import { useState } from "react";
+import { motion } from "framer-motion";
 
 export default function LogoutButton() {
   const router = useRouter();
@@ -18,12 +19,15 @@ export default function LogoutButton() {
   }
 
   return (
-    <button
+    <motion.button
       onClick={logout}
       disabled={busy}
-      className="rounded-lg border border-stone-300 px-3 py-1.5 text-xs font-semibold text-stone-600 transition-colors hover:bg-stone-50 disabled:opacity-60"
+      whileTap={{ scale: 0.95 }}
+      whileHover={{ y: -1 }}
+      transition={{ duration: 0.15, ease: "easeOut" }}
+      className="rounded-lg border border-divider bg-surface px-3 py-1.5 text-xs font-semibold text-muted transition-colors hover:bg-bg disabled:opacity-60"
     >
       {busy ? "…" : "Logout"}
-    </button>
+    </motion.button>
   );
 }

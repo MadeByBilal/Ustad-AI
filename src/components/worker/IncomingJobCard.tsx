@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import type { IncomingJobView } from "@/lib/worker/dashboard";
+import { motion, AnimatePresence } from "framer-motion";
 import CounterOfferModal from "./CounterOfferModal";
 
 function timeLeft(deadline: string | null, now: number): string | null {
@@ -79,51 +80,51 @@ export default function IncomingJobCard({
   }
 
   return (
-    <div className="rounded-xl border border-stone-200 p-4">
+    <div className="rounded-xl border border-divider bg-surface p-4">
       <div className="flex items-start justify-between gap-3">
         <div className="min-w-0">
           <div className="flex flex-wrap items-center gap-2">
-            <span className="badge shrink-0 !bg-[#0e5f44] !text-white">
+            <span className="badge shrink-0 bg-accent text-bg">
               {job.category.replace(/_/g, " ")}
             </span>
             {job.subcategory && (
-              <span className="badge shrink-0 !bg-stone-100 !text-stone-600">
+              <span className="badge shrink-0 bg-bg text-muted">
                 {job.subcategory.replace(/_/g, " ")}
               </span>
             )}
             <span
               className={`badge shrink-0 ${
-                emergency ? "!bg-red-600 !text-white" : "!bg-stone-100 !text-stone-600"
+                emergency ? "!bg-warning !text-bg" : "!bg-bg !text-muted"
               }`}
             >
               {emergency ? "Emergency" : "Normal"}
             </span>
           </div>
-          <p className="mt-2 font-urdu text-lg font-bold leading-relaxed text-stone-800">
+          <p className="mt-2 font-urdu text-lg font-bold leading-relaxed text-text">
             {job.original_text}
           </p>
         </div>
         <span
           className={`badge shrink-0 font-mono ${
             expired
-              ? "!bg-red-100 !text-red-700"
-              : left
-                ? "!bg-amber-100 !text-amber-800"
-                : "!bg-stone-100 !text-stone-600"
+               ? "!bg-warning/10 !text-warning"
+               : left
+                 ? "!bg-warning/10 !text-warning"
+                 : "!bg-bg !text-muted"
           }`}
         >
           {expired ? "Expired" : left ? `⏱ ${left}` : "No deadline"}
         </span>
       </div>
 
-      <p className="mt-2 line-clamp-2 text-sm text-stone-600">{job.description}</p>
+      <p className="mt-2 line-clamp-2 text-sm text-muted">{job.description}</p>
 
       {job.required_skills.length > 0 && (
         <div className="mt-2 flex flex-wrap gap-1.5">
           {job.required_skills.map((skill) => (
             <span
               key={skill}
-              className="rounded-full bg-stone-100 px-2.5 py-0.5 text-xs text-stone-600"
+              className="rounded-full bg-bg px-2.5 py-0.5 text-xs text-muted"
             >
               {skill.replace(/_/g, " ")}
             </span>
@@ -138,36 +139,36 @@ export default function IncomingJobCard({
               key={id}
               src={`/api/photos/${id}`}
               alt="Problem photo"
-              className="h-16 w-16 rounded-lg object-cover ring-1 ring-stone-200"
+            className="h-16 w-16 rounded-lg object-cover ring-1 ring-divider"
             />
           ))}
         </div>
       )}
 
-      <div className="mt-3 grid grid-cols-2 gap-2 text-xs text-stone-500 sm:grid-cols-4">
-        <div className="rounded-lg bg-stone-50 p-2">
-          <dt className="text-stone-400">Customer offer</dt>
-          <dd className="font-semibold text-stone-800">
+      <div className="mt-3 grid grid-cols-2 gap-2 text-xs text-muted sm:grid-cols-4">
+        <div className="rounded-lg bg-bg p-2">
+          <dt className="text-muted">Customer offer</dt>
+          <dd className="font-mono font-semibold text-text">
             Rs {job.customer_offer.toLocaleString("en-PK")}
           </dd>
         </div>
-        <div className="rounded-lg bg-stone-50 p-2">
-          <dt className="text-stone-400">Distance</dt>
-          <dd className="font-semibold text-stone-800">
+        <div className="rounded-lg bg-bg p-2">
+          <dt className="text-muted">Distance</dt>
+          <dd className="font-semibold text-text">
             {job.distance_km != null ? `~${job.distance_km} km` : "Unknown"}
           </dd>
         </div>
-        <div className="rounded-lg bg-stone-50 p-2 sm:col-span-2">
-          <dt className="text-stone-400">Location</dt>
-          <dd className="truncate font-semibold text-stone-800">
+        <div className="rounded-lg bg-bg p-2 sm:col-span-2">
+          <dt className="text-muted">Location</dt>
+          <dd className="truncate font-semibold text-text">
             {job.address_label || "Area not shared"}
           </dd>
         </div>
       </div>
 
       {pendingCounter && (
-        <p className="mt-3 rounded-lg bg-cyan-50 px-3 py-1.5 text-xs text-cyan-800">
-          Counter-offer submitted (Rs {job.my_offer?.counter_price?.toLocaleString("en-PK")}) —
+        <p className="mt-3 rounded-lg bg-surface px-3 py-1.5 text-xs text-muted">
+          Counter-offer submitted (<span className="font-mono">Rs {job.my_offer?.counter_price?.toLocaleString("en-PK")}</span>) —
           waiting for the customer to approve.
         </p>
       )}
@@ -180,29 +181,32 @@ export default function IncomingJobCard({
             onChange={(e) => setQuestion(e.target.value)}
             placeholder="Ask the customer a question…"
             aria-label="Clarification question"
-            className="w-full rounded-xl border border-stone-200 bg-white px-3 py-2 text-sm outline-none focus:border-[#0e5f44]"
+            className="w-full rounded-xl border border-divider bg-surface px-3 py-2 text-sm outline-none focus:border-accent"
           />
-          <button
+          <motion.button
             type="button"
             onClick={() => void askClarification()}
             disabled={busy === "clarify" || !question.trim()}
-            className="shrink-0 rounded-xl bg-[#0e5f44] px-3 py-2 text-sm font-bold text-white transition hover:bg-[#0b4c37] disabled:opacity-60"
+            className="btn-primary shrink-0 !rounded-xl !px-3 !py-2 text-sm disabled:opacity-60"
+            whileTap={{ scale: 0.95 }}
+            whileHover={{ y: -1 }}
+            transition={{ duration: 0.15, ease: "easeOut" }}
           >
             Send
-          </button>
+          </motion.button>
         </div>
       )}
 
-      {error && <p className="mt-2 text-xs text-red-600">{error}</p>}
+      {error && <p className="mt-2 text-xs text-warning">{error}</p>}
 
-      <div className="mt-3 flex flex-wrap justify-end gap-2 border-t border-stone-100 pt-3">
+      <div className="mt-3 flex flex-wrap justify-end gap-2 border-t border-divider pt-3">
         {pendingCounter ? (
-          <span className="badge !bg-cyan-100 !text-cyan-800">Awaiting customer approval</span>
+          <span className="badge bg-surface text-muted">Awaiting customer approval</span>
         ) : (
           <>
             {!expired && (
               <>
-                <button
+                <motion.button
                   type="button"
                   onClick={() =>
                     void act("accept", async () => {
@@ -211,21 +215,27 @@ export default function IncomingJobCard({
                     })
                   }
                   disabled={busy !== null}
-                  className="rounded-xl bg-[#0e5f44] px-4 py-2 text-sm font-bold text-white transition hover:bg-[#0b4c37] disabled:opacity-60"
+                  className="btn-primary !rounded-xl !px-4 !py-2 text-sm disabled:opacity-60"
+                  whileTap={{ scale: 0.95 }}
+                  whileHover={{ y: -1 }}
+                  transition={{ duration: 0.15, ease: "easeOut" }}
                 >
                   {busy === "accept" ? "Accepting…" : "Accept offer"}
-                </button>
-                <button
+                </motion.button>
+                <motion.button
                   type="button"
                   onClick={() => setShowCounter(true)}
                   disabled={busy !== null}
-                  className="rounded-xl border border-[#0e5f44] px-4 py-2 text-sm font-semibold text-[#0e5f44] transition hover:bg-emerald-50 disabled:opacity-60"
+                  className="rounded-xl border border-accent bg-surface px-4 py-2 text-sm font-semibold text-accent transition-colors hover:bg-accent/10 disabled:opacity-60"
+                  whileTap={{ scale: 0.95 }}
+                  whileHover={{ y: -1 }}
+                  transition={{ duration: 0.15, ease: "easeOut" }}
                 >
                   Counter-offer
-                </button>
+                </motion.button>
               </>
             )}
-            <button
+            <motion.button
               type="button"
               onClick={() =>
                 void act("decline", () =>
@@ -233,32 +243,41 @@ export default function IncomingJobCard({
                 )
               }
               disabled={busy !== null}
-              className="rounded-xl border border-stone-200 px-4 py-2 text-sm font-semibold text-stone-600 transition hover:bg-stone-50 disabled:opacity-60"
+              className="rounded-xl border border-divider bg-surface px-4 py-2 text-sm font-semibold text-muted transition-colors hover:bg-bg disabled:opacity-60"
+              whileTap={{ scale: 0.95 }}
+              whileHover={{ y: -1 }}
+              transition={{ duration: 0.15, ease: "easeOut" }}
             >
               {busy === "decline" ? "Declining…" : "Decline"}
-            </button>
-            <button
+            </motion.button>
+            <motion.button
               type="button"
               onClick={() => setClarifying((v) => !v)}
               disabled={busy !== null}
-              className="rounded-xl border border-stone-200 px-4 py-2 text-sm font-semibold text-stone-600 transition hover:bg-stone-50 disabled:opacity-60"
+              className="rounded-xl border border-divider bg-surface px-4 py-2 text-sm font-semibold text-muted transition-colors hover:bg-bg disabled:opacity-60"
+              whileTap={{ scale: 0.95 }}
+              whileHover={{ y: -1 }}
+              transition={{ duration: 0.15, ease: "easeOut" }}
             >
               Ask clarification
-            </button>
+            </motion.button>
           </>
         )}
       </div>
 
-      {showCounter && (
-        <CounterOfferModal
-          job={job}
-          onClose={() => setShowCounter(false)}
-          onSubmitted={() => {
-            setShowCounter(false);
-            onChanged();
-          }}
-        />
-      )}
+      <AnimatePresence mode="wait">
+        {showCounter && (
+          <CounterOfferModal
+            key={job.id}
+            job={job}
+            onClose={() => setShowCounter(false)}
+            onSubmitted={() => {
+              setShowCounter(false);
+              onChanged();
+            }}
+          />
+        )}
+      </AnimatePresence>
     </div>
   );
 }

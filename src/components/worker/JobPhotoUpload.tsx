@@ -1,6 +1,7 @@
 "use client";
 
 import { useRef, useState } from "react";
+import { motion } from "framer-motion";
 import { fileToPhotoBase64 } from "@/lib/image";
 
 /**
@@ -78,24 +79,24 @@ export default function JobPhotoUpload({
   const shown = preview ?? (currentId ? `/api/photos/${currentId}` : null);
 
   return (
-    <div className="rounded-xl border border-stone-200 p-3">
+    <div className="rounded-xl border border-divider bg-surface p-3">
       <div className="flex flex-wrap items-center gap-3">
         {shown ? (
           <img
             src={shown}
             alt={`${type} photo`}
-            className="h-16 w-16 rounded-lg object-cover ring-1 ring-stone-200"
+            className="h-16 w-16 rounded-lg object-cover ring-1 ring-divider"
           />
         ) : (
-          <span className="flex h-16 w-16 items-center justify-center rounded-lg bg-stone-100 text-2xl">
+          <span className="flex h-16 w-16 items-center justify-center rounded-lg bg-bg text-2xl">
             📷
           </span>
         )}
         <div className="min-w-0 flex-1">
-          <p className="text-xs font-bold uppercase tracking-wide text-stone-500">
+          <p className="text-xs font-bold uppercase tracking-wide text-muted">
             {type === "before" ? "Before photo" : "After photo"}
           </p>
-          <p className="text-xs text-stone-400">
+          <p className="text-xs text-muted">
             {type === "before"
               ? "Required for normal jobs before starting work"
               : "Required before completing the job"}
@@ -112,14 +113,17 @@ export default function JobPhotoUpload({
               e.target.value = "";
             }}
           />
-          <button
+          <motion.button
             type="button"
             onClick={() => inputRef.current?.click()}
             disabled={busy}
-            className="mt-2 rounded-lg border border-stone-200 px-3 py-1.5 text-xs font-semibold text-stone-700 transition hover:bg-stone-50 disabled:opacity-60"
+            className="mt-2 rounded-lg border border-divider bg-bg px-3 py-1.5 text-xs font-semibold text-muted transition-colors hover:bg-surface disabled:opacity-60"
+            whileTap={{ scale: 0.95 }}
+            whileHover={{ y: -1 }}
+            transition={{ duration: 0.15, ease: "easeOut" }}
           >
             {busy ? "Uploading…" : currentId || preview ? "Replace photo" : "Add photo"}
-          </button>
+          </motion.button>
         </div>
       </div>
 
@@ -129,10 +133,10 @@ export default function JobPhotoUpload({
         onChange={(e) => setNote(e.target.value)}
         placeholder="Optional note, e.g. Replaced faucet washer"
         aria-label={`${type} photo note`}
-        className="mt-2 w-full rounded-lg border border-stone-200 bg-white px-3 py-2 text-sm outline-none focus:border-[#0e5f44]"
+        className="mt-2 w-full rounded-lg border border-divider bg-bg px-3 py-2 text-sm text-text outline-none focus:border-accent"
       />
 
-      {error && <p className="mt-1 text-xs text-red-600">{error}</p>}
+      {error && <p className="mt-1 text-xs text-warning">{error}</p>}
     </div>
   );
 }

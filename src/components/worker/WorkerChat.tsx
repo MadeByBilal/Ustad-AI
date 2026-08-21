@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
+import { motion } from "framer-motion";
 import { fileToPhotoBase64 } from "@/lib/image";
 import { useJobStream } from "@/lib/useJobStream";
 
@@ -135,25 +136,25 @@ export default function WorkerChat({ jobId }: { jobId: string }) {
     <div className="flex h-80 flex-col">
       <div className="flex-1 space-y-2 overflow-y-auto pr-1">
         {messages.length === 0 ? (
-          <p className="py-8 text-center text-xs text-stone-400">
+          <p className="py-8 text-center text-xs text-muted">
             No messages yet — say salam to get started.
           </p>
         ) : (
           messages.map((m) => (
             <div key={m.id} className="flex flex-col">
               {m.sender_type === "system" ? (
-                <p className="mx-auto rounded-full bg-stone-100 px-3 py-1 text-center text-xs text-stone-500">
+                <p className="mx-auto rounded-full bg-surface px-3 py-1 text-center text-xs text-muted">
                   {m.content}
                 </p>
               ) : (
                 <div
-                  className={`max-w-[80%] rounded-2xl px-3 py-2 text-sm shadow-sm ${
+                  className={`max-w-[80%] rounded-xl px-3 py-2 text-sm shadow-sm ${
                     m.sender_type === "worker"
-                      ? "self-end rounded-br-sm bg-[#0e5f44] text-white"
-                      : "self-start rounded-bl-sm bg-white text-stone-800 ring-1 ring-stone-200"
+                      ? "self-end rounded-br-sm bg-accent text-bg"
+                      : "self-start rounded-bl-sm bg-surface text-text ring-1 ring-divider"
                   }`}
                 >
-                  <p className="mb-0.5 text-[10px] font-semibold uppercase tracking-wide opacity-70">
+                  <p className="mb-0.5 text-xs font-semibold uppercase tracking-wide opacity-70">
                     {m.sender_type === "customer" ? m.sender_name : "You"}
                   </p>
                   {m.content && <p className="whitespace-pre-wrap leading-relaxed">{m.content}</p>}
@@ -171,13 +172,13 @@ export default function WorkerChat({ jobId }: { jobId: string }) {
                       target="_blank"
                       rel="noreferrer"
                       className={`mt-1 flex items-center gap-1 text-xs font-semibold underline ${
-                        m.sender_type === "worker" ? "text-white" : "text-[#0e5f44]"
+                        m.sender_type === "worker" ? "text-bg" : "text-accent"
                       }`}
                     >
                       📍 Shared location — open in maps
                     </a>
                   )}
-                  <p className="mt-1 text-right text-[10px] opacity-60">
+                  <p className="mt-1 text-right text-xs opacity-60">
                     {new Date(m.created_at).toLocaleTimeString("en-GB", {
                       hour: "2-digit",
                       minute: "2-digit",
@@ -191,29 +192,35 @@ export default function WorkerChat({ jobId }: { jobId: string }) {
         <div ref={endRef} />
       </div>
 
-      {error && <p className="mb-1 text-xs text-red-600">{error}</p>}
+      {error && <p className="mb-1 text-xs text-warning">{error}</p>}
 
-      <div className="mt-2 flex items-center gap-2 border-t border-stone-100 pt-2">
-        <button
+      <div className="mt-2 flex items-center gap-2 border-t border-divider pt-2">
+        <motion.button
           type="button"
           onClick={() => fileRef.current?.click()}
           disabled={busy}
           aria-label="Send a photo"
           title="Send a photo"
-          className="shrink-0 rounded-xl border border-stone-200 px-2.5 py-2 text-sm transition hover:bg-stone-50 disabled:opacity-60"
+          className="shrink-0 rounded-xl border border-divider bg-surface px-2.5 py-2 text-sm transition-colors hover:bg-bg disabled:opacity-60"
+          whileTap={{ scale: 0.95 }}
+          whileHover={{ y: -1 }}
+          transition={{ duration: 0.15, ease: "easeOut" }}
         >
           📷
-        </button>
-        <button
+        </motion.button>
+        <motion.button
           type="button"
           onClick={sendLocation}
           disabled={busy}
           aria-label="Share location"
           title="Share location"
-          className="shrink-0 rounded-xl border border-stone-200 px-2.5 py-2 text-sm transition hover:bg-stone-50 disabled:opacity-60"
+          className="shrink-0 rounded-xl border border-divider bg-surface px-2.5 py-2 text-sm transition-colors hover:bg-bg disabled:opacity-60"
+          whileTap={{ scale: 0.95 }}
+          whileHover={{ y: -1 }}
+          transition={{ duration: 0.15, ease: "easeOut" }}
         >
           📍
-        </button>
+        </motion.button>
         <input
           ref={fileRef}
           type="file"
@@ -237,18 +244,21 @@ export default function WorkerChat({ jobId }: { jobId: string }) {
           }}
           placeholder="Type a message…"
           aria-label="Chat message"
-          className="min-w-0 flex-1 rounded-xl border border-stone-200 bg-white px-3 py-2 text-sm outline-none transition focus:border-[#0e5f44]"
+          className="min-w-0 flex-1 rounded-xl border border-divider bg-surface px-3 py-2 text-sm outline-none transition-colors focus:border-accent"
         />
-        <button
+        <motion.button
           type="button"
           onClick={() => {
             if (draft.trim() && !busy) void send({ content: draft.trim() });
           }}
           disabled={busy || !draft.trim()}
-          className="shrink-0 rounded-xl bg-[#0e5f44] px-3 py-2 text-sm font-bold text-white transition hover:bg-[#0b4c37] disabled:opacity-60"
+          className="btn-primary shrink-0 !rounded-xl !px-3 !py-2 text-sm disabled:opacity-60"
+          whileTap={{ scale: 0.95 }}
+          whileHover={{ y: -1 }}
+          transition={{ duration: 0.15, ease: "easeOut" }}
         >
           Send
-        </button>
+        </motion.button>
       </div>
     </div>
   );

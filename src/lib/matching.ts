@@ -422,6 +422,8 @@ export interface WorkerOption {
   ustad_score: number;
   completed_jobs: number;
   average_rating: number;
+  /** % of jobs the worker responds to (0-100). Closest honest signal to "responsiveness". */
+  response_rate?: number;
   skills_match: number;
   final_score: number;
   distance_km?: number | null;
@@ -557,6 +559,7 @@ export async function getWorkerOptions(
       ustad_score: score.ustad_score,
       completed_jobs: doc.completed_jobs,
       average_rating: doc.average_rating,
+      response_rate: doc.response_rate,
       skills_match: score.skill_match_score,
       final_score: score.final_score,
       distance_km: distanceKm,

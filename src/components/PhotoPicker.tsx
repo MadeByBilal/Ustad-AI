@@ -2,6 +2,7 @@
 
 import { useRef, useState } from "react";
 import { fileToPhotoBase64 } from "@/lib/image";
+import { motion } from "framer-motion";
 
 interface PhotoUpload {
   id: string;
@@ -66,14 +67,17 @@ export default function PhotoPicker({ onPhotos }: { onPhotos: (ids: string[]) =>
   return (
     <div>
       <div className="flex flex-wrap items-center gap-3">
-        <button
+        <motion.button
           type="button"
           onClick={() => inputRef.current?.click()}
           disabled={uploading}
+          whileTap={{ scale: 0.95 }}
+          whileHover={{ y: -1 }}
+          transition={{ duration: 0.15, ease: "easeOut" }}
           className="btn btn-outline"
         >
           {uploading ? "⏳ Uploading…" : "📷 Take a photo"}
-        </button>
+        </motion.button>
         <input
           ref={inputRef}
           id="photo-input"
@@ -88,20 +92,23 @@ export default function PhotoPicker({ onPhotos }: { onPhotos: (ids: string[]) =>
             <img
               src={photo.previewUrl}
               alt={`photo-${photo.id}`}
-              className="h-16 w-16 rounded-lg object-cover ring-1 ring-stone-200"
+          className="h-16 w-16 rounded-lg object-cover ring-1 ring-divider"
             />
-            <button
+            <motion.button
               type="button"
               aria-label="Remove photo"
-              className="absolute -right-2 -top-2 rounded-full bg-red-600 px-1.5 text-xs text-white"
+              className="absolute -right-2 -top-2 rounded-full bg-warning px-1.5 text-xs font-bold text-bg"
               onClick={() => remove(photo.id)}
+              whileTap={{ scale: 0.95 }}
+              whileHover={{ y: -1 }}
+              transition={{ duration: 0.15, ease: "easeOut" }}
             >
               ✕
-            </button>
+            </motion.button>
           </span>
         ))}
       </div>
-      {error && <p className="mt-2 text-sm text-red-600">{error}</p>}
+      {error && <p className="mt-2 text-sm text-warning">{error}</p>}
     </div>
   );
 }

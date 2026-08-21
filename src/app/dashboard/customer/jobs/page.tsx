@@ -15,7 +15,7 @@ export default async function CustomerJobsPage() {
   return (
     <div className="page">
       <div className="page-header">
-        <h1 className="text-lg font-bold text-stone-900">My Jobs</h1>
+        <h1 className="font-display text-lg font-bold text-text">My Jobs</h1>
       </div>
       <div className="page-content">
         <CustomerJobsList />

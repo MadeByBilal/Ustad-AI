@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { motion } from "framer-motion";
 
 interface AvailabilityState {
   is_available: boolean;
@@ -49,36 +50,39 @@ export default function WorkerAvailability({
   ];
 
   return (
-    <div className="card">
-      <h3 className="text-lg font-bold text-stone-800">Availability</h3>
-      <p className="mt-0.5 text-sm text-stone-500">Updated in real time</p>
-      {error && <p className="mt-3 rounded-xl bg-red-50 px-4 py-2.5 text-sm text-red-700">{error}</p>}
+    <motion.div className="card" whileHover={{ y: -2 }} transition={{ duration: 0.2, ease: "easeOut" }}>
+      <h3 className="text-lg font-bold text-text">Availability</h3>
+      <p className="mt-0.5 text-sm text-muted">Updated in real time</p>
+      {error && <p className="mt-3 rounded-xl border border-warning/40 bg-warning/10 px-4 py-2.5 text-sm text-warning">{error}</p>}
       <div className="mt-4 space-y-4">
         {rows.map((r) => (
           <div key={r.key} className="flex items-center justify-between gap-4">
             <div className="min-w-0 flex-1">
-              <p className="text-base font-medium text-stone-800">{r.label}</p>
-              <p className="mt-0.5 text-sm text-stone-500">{r.hint}</p>
+              <p className="text-base font-medium text-text">{r.label}</p>
+              <p className="mt-0.5 text-sm text-muted">{r.hint}</p>
             </div>
-            <button
+            <motion.button
               type="button"
               onClick={() => toggle(r.key)}
               disabled={saving}
               aria-pressed={state[r.key]}
               aria-label={r.label}
+              whileTap={{ scale: 0.95 }}
+              whileHover={{ y: -1 }}
+              transition={{ duration: 0.15, ease: "easeOut" }}
               className={`relative h-7 w-12 shrink-0 rounded-full transition-colors disabled:opacity-60 ${
-                state[r.key] ? "bg-[#0e5f44]" : "bg-stone-300"
+                state[r.key] ? "bg-accent" : "bg-divider"
               }`}
             >
               <span
-                className={`absolute top-0.5 h-6 w-6 rounded-full bg-white shadow transition-all ${
+                className={`absolute top-0.5 h-6 w-6 rounded-full bg-text shadow transition-transform ${
                   state[r.key] ? "left-[22px]" : "left-0.5"
                 }`}
               />
-            </button>
+            </motion.button>
           </div>
         ))}
       </div>
-    </div>
+    </motion.div>
   );
 }

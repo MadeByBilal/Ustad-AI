@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { motion } from "framer-motion";
 
 interface Coordinates {
   lat: number;
@@ -79,9 +80,9 @@ export default function LocationUpdater({
   const last = lastUpdated ? new Date(lastUpdated) : null;
 
   return (
-    <div className="card">
-      <h3 className="text-lg font-bold text-stone-800">Location</h3>
-      <p className="mt-0.5 text-sm text-stone-500">
+    <motion.div className="card" whileHover={{ y: -2 }} transition={{ duration: 0.2, ease: "easeOut" }}>
+      <h3 className="text-lg font-bold text-text">Location</h3>
+      <p className="mt-0.5 text-sm text-muted">
         {last
           ? `Last updated ${last.toLocaleTimeString("en-GB", {
               hour: "2-digit",
@@ -91,22 +92,28 @@ export default function LocationUpdater({
       </p>
 
       <div className="mt-4 space-y-3">
-        <button
+        <motion.button
           type="button"
           onClick={useAutomatic}
           disabled={busy}
           className="btn-primary w-full"
+          whileTap={{ scale: 0.95 }}
+          whileHover={{ y: -1 }}
+          transition={{ duration: 0.15, ease: "easeOut" }}
         >
           {busy ? "Updating…" : "Update location"}
-        </button>
+        </motion.button>
         {!manual && (
-          <button
+          <motion.button
             type="button"
             onClick={() => setManual(true)}
             className="btn-secondary w-full"
+            whileTap={{ scale: 0.95 }}
+            whileHover={{ y: -1 }}
+            transition={{ duration: 0.15, ease: "easeOut" }}
           >
             Enter coordinates manually
-          </button>
+          </motion.button>
         )}
       </div>
 
@@ -132,26 +139,29 @@ export default function LocationUpdater({
               className="input"
             />
           </div>
-          <button
+          <motion.button
             type="button"
             onClick={submitManual}
             disabled={busy}
             className="btn-secondary w-full"
+            whileTap={{ scale: 0.95 }}
+            whileHover={{ y: -1 }}
+            transition={{ duration: 0.15, ease: "easeOut" }}
           >
             Save coordinates
-          </button>
+          </motion.button>
         </div>
       )}
 
       {message && (
         <p
           className={`mt-3 rounded-xl px-4 py-2.5 text-sm ${
-            message.ok ? "bg-emerald-50 text-emerald-700" : "bg-red-50 text-red-700"
+            message.ok ? "bg-success/15 text-success-fg" : "bg-warning/10 text-warning"
           }`}
         >
           {message.text}
         </p>
       )}
-    </div>
+    </motion.div>
   );
 }

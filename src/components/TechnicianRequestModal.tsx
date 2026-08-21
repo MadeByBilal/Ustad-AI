@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { motion, AnimatePresence } from "framer-motion";
 import type { WorkerOption } from "@/lib/matching";
 import type { UnderstandResponse } from "@/components/VoiceCapture";
 
@@ -100,48 +101,62 @@ export default function TechnicianRequestModal({
   }
 
   return (
-    <div
-      className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4"
-      role="dialog"
-      aria-modal="true"
-      aria-label={`Send request to ${worker.name}`}
-      onClick={onClose}
-    >
-      <div
-        className="w-full max-w-md rounded-2xl bg-white p-6 shadow-xl"
-        onClick={(e) => e.stopPropagation()}
+    <AnimatePresence mode="wait">
+      <motion.div
+        key="overlay"
+        className="fixed inset-0 z-50 flex items-center justify-center bg-bg/80 p-4"
+        role="dialog"
+        aria-modal="true"
+        aria-label={`Send request to ${worker.name}`}
+        onClick={onClose}
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        exit={{ opacity: 0 }}
+        transition={{ duration: 0.2, ease: "easeOut" }}
       >
+        <motion.div
+          key="panel"
+          className="w-full max-w-md rounded-xl bg-surface p-6 shadow-xl"
+          onClick={(e) => e.stopPropagation()}
+          initial={{ opacity: 0, scale: 0.95 }}
+          animate={{ opacity: 1, scale: 1 }}
+          exit={{ opacity: 0, scale: 0.95 }}
+          transition={{ duration: 0.2, ease: "easeOut" }}
+        >
         <div className="flex items-start justify-between gap-3">
           <div>
-            <h2 className="text-lg font-bold text-stone-900">
+            <h2 className="font-display text-lg font-bold text-text">
               Send request to {worker.name}
             </h2>
-            <p className="text-xs text-stone-500">
+            <p className="text-xs text-muted">
               {CATEGORY_LABELS[worker.category] ?? worker.category} · ⭐{" "}
               {worker.average_rating.toFixed(1)} · {worker.completed_jobs} jobs
               {worker.verified ? " · Verified" : ""}
             </p>
           </div>
-          <button
+          <motion.button
             type="button"
             onClick={onClose}
             aria-label="Close"
-            className="rounded-full p-1 text-stone-400 transition hover:bg-stone-100 hover:text-stone-700"
+            className="rounded-full p-1 text-muted transition-colors hover:bg-bg hover:text-text"
+            whileTap={{ scale: 0.95 }}
+            whileHover={{ y: -1 }}
+            transition={{ duration: 0.15, ease: "easeOut" }}
           >
             ✕
-          </button>
+          </motion.button>
         </div>
 
         <div className="mt-4 space-y-4">
           <div>
             <label
               htmlFor="req-price"
-              className="mb-1 block text-xs font-semibold uppercase tracking-wide text-stone-500"
+              className="mb-1 block text-xs font-semibold uppercase tracking-wide text-muted"
             >
               Your offer (PKR)
             </label>
             <div className="relative">
-              <span className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-sm font-semibold text-stone-400">
+              <span className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-sm font-semibold text-muted">
                 Rs
               </span>
               <input
@@ -150,17 +165,17 @@ export default function TechnicianRequestModal({
                 min={1}
                 value={price}
                 onChange={(e) => setPrice(e.target.value)}
-                className="w-full rounded-xl border border-stone-200 bg-white pl-9 pr-3 py-2 text-sm text-stone-900 outline-none transition focus:border-[#0e5f44] focus:ring-2 focus:ring-[#0e5f44]/20"
+                className="w-full rounded-xl border border-divider bg-surface py-2 pl-9 pr-3 text-sm text-text outline-none transition-colors focus:border-accent focus:ring-2 focus:ring-accent/20"
                 disabled={busy}
               />
             </div>
             {estMin > 0 && estMax > 0 && (
-              <p className="mt-1 text-xs text-stone-500">
+              <p className="mt-1 text-xs text-muted">
                 AI estimate: {currency(estMin)} – {currency(estMax)}
               </p>
             )}
             {worker.predicted_price != null && (
-              <p className="mt-1 text-xs font-semibold text-amber-700">
+              <p className="mt-1 text-xs font-semibold text-warning">
                 Predicted base for this ustad: {currency(worker.predicted_price)}
                 {worker.distance_km != null
                   ? ` (${worker.distance_km.toFixed(1)} km travel included)`
@@ -171,7 +186,7 @@ export default function TechnicianRequestModal({
               </p>
             )}
             {understanding.inspection_fee && understanding.inspection_fee > 0 && (
-              <p className="mt-1 text-xs text-amber-700">
+              <p className="mt-1 text-xs text-warning">
                 Visit &amp; check fee: {currency(understanding.inspection_fee)} paid first
               </p>
             )}
@@ -180,7 +195,7 @@ export default function TechnicianRequestModal({
           <div>
             <label
               htmlFor="req-message"
-              className="mb-1 block text-xs font-semibold uppercase tracking-wide text-stone-500"
+              className="mb-1 block text-xs font-semibold uppercase tracking-wide text-muted"
             >
               Message (optional)
             </label>
@@ -190,37 +205,44 @@ export default function TechnicianRequestModal({
               value={message}
               onChange={(e) => setMessage(e.target.value)}
               placeholder="e.g. Please come as soon as possible"
-              className="w-full rounded-xl border border-stone-200 bg-white px-3 py-2 text-sm text-stone-900 outline-none transition focus:border-[#0e5f44] focus:ring-2 focus:ring-[#0e5f44]/20"
+                className="w-full rounded-xl border border-divider bg-surface px-3 py-2 text-sm text-text outline-none transition-colors focus:border-accent focus:ring-2 focus:ring-accent/20"
               disabled={busy}
             />
           </div>
 
           {error && (
-            <div className="rounded-lg bg-red-50 border border-red-200 p-3">
-              <p className="text-sm text-red-700">{error}</p>
+            <div className="rounded-lg border border-warning/40 bg-warning/10 p-3">
+              <p className="text-sm text-warning">{error}</p>
             </div>
           )}
 
           <div className="flex gap-2 pt-1">
-            <button
+            <motion.button
               type="button"
               onClick={onClose}
               disabled={busy}
-              className="flex-1 rounded-xl border border-stone-300 px-4 py-2.5 text-sm font-semibold text-stone-700 transition hover:bg-stone-50 disabled:opacity-60"
+              className="flex-1 rounded-xl border border-divider bg-surface px-4 py-2.5 text-sm font-semibold text-muted transition-colors hover:bg-bg disabled:opacity-60"
+              whileTap={{ scale: 0.95 }}
+              whileHover={{ y: -1 }}
+              transition={{ duration: 0.15, ease: "easeOut" }}
             >
               Cancel
-            </button>
-            <button
+            </motion.button>
+            <motion.button
               type="button"
               onClick={submit}
               disabled={busy || !price}
-              className="flex-1 rounded-xl bg-[#0e5f44] px-4 py-2.5 text-sm font-bold text-white transition hover:bg-[#0a4632] disabled:opacity-60"
+              className="btn-primary flex-1 !rounded-xl !px-4 !py-2.5 text-sm disabled:opacity-60"
+              whileTap={{ scale: 0.95 }}
+              whileHover={{ y: -1 }}
+              transition={{ duration: 0.15, ease: "easeOut" }}
             >
               {busy ? "Sending…" : "Send Request"}
-            </button>
+            </motion.button>
           </div>
-        </div>
-      </div>
-    </div>
+          </div>
+        </motion.div>
+      </motion.div>
+    </AnimatePresence>
   );
 }

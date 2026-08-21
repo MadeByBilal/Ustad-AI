@@ -1,11 +1,13 @@
 "use client";
 import { useCallback, useRef, useState } from "react";
 import Link from "next/link";
+import { motion, AnimatePresence } from "framer-motion";
 import { parseApiResponse } from "@/lib/api-client";
 import type { AiUnderstandResult } from "@/lib/job/ai";
 import type { WorkerOption } from "@/lib/matching";
 import type { WorkerCategory, UrgencyLevel } from "@/models";
 import TechnicianRequestModal from "./TechnicianRequestModal";
+import MatchResults, { type MatchResultsData } from "./MatchResults";
 
 export interface UnderstandResponse extends AiUnderstandResult {
   transcript?: string;
@@ -15,7 +17,7 @@ export interface UnderstandResponse extends AiUnderstandResult {
 type Status = "idle" | "processing" | "clarifying" | "done" | "error";
 
 export interface VoiceCaptureProps {
-  /** Visual theme. "landing" (dark green, default) or "dashboard" (light). */
+  /** Visual context. Both variants use the shared dark surface palette. */
   variant?: "landing" | "dashboard";
 }
 
@@ -45,25 +47,25 @@ function WorkerCard({
     <div
       className={
         highlight
-          ? "rounded-xl border-2 border-amber-400 bg-amber-50 p-4"
-          : "rounded-xl border border-stone-200 bg-white p-4"
+          ? "rounded-xl border-2 border-accent bg-surface p-4"
+          : "rounded-xl border border-divider bg-surface p-4"
       }
     >
       {highlight && (
-        <span className="badge mb-2 !bg-amber-400 !text-[#0a4632]">
+        <span className="badge mb-2 bg-accent text-bg">
           Best match
         </span>
       )}
       <div className="flex items-center justify-between gap-3">
         <div>
-          <p className="font-semibold text-stone-900">{worker.name}</p>
-          <p className="text-xs text-stone-500">
+          <p className="font-semibold text-text">{worker.name}</p>
+          <p className="text-xs text-muted">
             {CATEGORY_LABELS[worker.category] ?? worker.category} · ⭐{" "}
-            {worker.average_rating.toFixed(1)} · {worker.completed_jobs} jobs ·{" "}
+            <span className="font-mono">{worker.average_rating.toFixed(1)}</span> · {worker.completed_jobs} jobs ·{" "}
             {worker.verified ? "verified" : "unverified"}
           </p>
         </div>
-        <span className="shrink-0 rounded-lg bg-[#0e5f44] px-2 py-1 text-xs font-bold text-white">
+        <span className="shrink-0 rounded-lg bg-accent px-2 py-1 text-xs font-bold text-bg">
           {worker.ustad_score}
         </span>
       </div>
@@ -72,7 +74,7 @@ function WorkerCard({
           {worker.skills.slice(0, 4).map((s) => (
             <span
               key={s}
-              className="rounded-md bg-stone-100 px-2 py-0.5 text-[11px] text-stone-600"
+              className="rounded-md bg-surface px-2 py-0.5 text-xs text-muted"
             >
               {s}
             </span>
@@ -80,19 +82,19 @@ function WorkerCard({
         </div>
       )}
       {(worker.distance_km != null || worker.predicted_price != null) && (
-        <div className="mt-2 flex flex-wrap gap-2 text-xs text-stone-500">
+        <div className="mt-2 flex flex-wrap gap-2 text-xs text-muted">
           {worker.distance_km != null && (
-            <span className="rounded-md bg-stone-100 px-2 py-0.5">
+            <span className="font-mono rounded-md bg-surface px-2 py-0.5">
               {worker.distance_km.toFixed(1)} km away
             </span>
           )}
           {worker.predicted_price != null && (
-            <span className="rounded-md bg-amber-50 px-2 py-0.5 text-amber-800">
+            <span className="font-mono rounded-md bg-warning/10 px-2 py-0.5 text-warning">
               Est. PKR {worker.predicted_price.toLocaleString("en-PK")}
             </span>
           )}
           {worker.travel_cost_pkr != null && worker.travel_cost_pkr > 0 && (
-            <span className="rounded-md bg-stone-100 px-2 py-0.5">
+            <span className="font-mono rounded-md bg-surface px-2 py-0.5">
               Travel PKR {worker.travel_cost_pkr.toLocaleString("en-PK")}
             </span>
           )}
@@ -120,27 +122,34 @@ function ResultPanel({ data, variant, location }: { data: UnderstandResponse; va
       ? `/dashboard/customer/new-work?${nextParams.toString()}`
       : `/login?next=${encodeURIComponent(`/new-work?${nextParams.toString()}`)}`;
 
+  // Landing-only modal state. Dashboard handles its modal inside MatchResults.
   const [selectedWorker, setSelectedWorker] = useState<WorkerOption | null>(null);
   const [submittedJobId, setSubmittedJobId] = useState<string | null>(null);
 
+  // Dashboard uses the rebuilt MatchResults screen (dark surface palette,
+  // Tabler icons, JetBrains Mono numbers, Fraunces headings, copper accent).
+  if (variant === "dashboard") {
+    return <MatchResults data={data as MatchResultsData} location={location} />;
+  }
+
   return (
     <div className="space-y-3">
-      <div className="rounded-xl bg-emerald-50 p-4 text-left">
+      <div className="rounded-xl border border-divider bg-surface p-4 text-left">
         <div className="flex flex-wrap items-center gap-x-3 gap-y-2 text-sm">
-          <span className="font-semibold text-emerald-900">
+          <span className="font-semibold text-text">
             {u.category ? CATEGORY_LABELS[u.category] ?? u.category : "Not sure yet"}
           </span>
-          <span className="rounded-md bg-emerald-100 px-2 py-0.5 text-xs text-emerald-800">
+          <span className="rounded-md bg-surface px-2 py-0.5 text-xs text-muted">
             {URGENCY_LABELS[u.urgency] ?? u.urgency}
           </span>
           {u.confidence > 0 && (
-            <span className="text-xs text-emerald-700">
+            <span className="text-xs text-muted">
               {Math.round(u.confidence * 100)}% confident
             </span>
           )}
         </div>
         {u.description && (
-          <p className="mt-2 text-sm text-emerald-900">
+          <p className="mt-2 text-sm text-text">
             &ldquo;{u.description}&rdquo;
           </p>
         )}
@@ -149,7 +158,7 @@ function ResultPanel({ data, variant, location }: { data: UnderstandResponse; va
             {u.required_skills.map((s) => (
               <span
                 key={s}
-                className="rounded-md bg-emerald-100 px-2 py-0.5 text-[11px] text-emerald-800"
+                className="rounded-md bg-bg px-2 py-0.5 text-xs text-muted"
               >
                 {s}
               </span>
@@ -157,28 +166,28 @@ function ResultPanel({ data, variant, location }: { data: UnderstandResponse; va
           </div>
         )}
         {u.safety_flags.length > 0 && (
-          <p className="mt-2 text-xs font-semibold text-red-700">
+          <p className="mt-2 text-xs font-semibold text-warning">
             ⚠ {u.safety_flags.join(", ")}
           </p>
         )}
       </div>
 
       {u.category && (
-        <div className="rounded-xl border-l-4 border-amber-400 bg-amber-50 p-4 text-left">
-          <p className="text-xs font-semibold uppercase tracking-wide text-amber-700">
+        <div className="rounded-xl border-l-4 border-warning bg-warning/10 p-4 text-left">
+          <p className="text-xs font-semibold uppercase tracking-wide text-warning">
             Price — set automatically
           </p>
-          <p className="text-2xl font-bold text-stone-900">
+          <p className="text-2xl font-bold text-text">
             {currency(u.inspection_fee)} visit fee · then{" "}
             {u.estimate_min > 0
               ? `${currency(u.estimate_min)} – ${currency(u.estimate_max)}`
               : "after checking"}
           </p>
-          <p className="text-xs text-amber-800/80">
+          <p className="text-xs text-warning/80">
             آپ پہلے صرف معائنہ فیس دیتے ہیں — اصل مرمت کی قیمت اُستاد کے معائنے کے بعد طے ہوگی۔
           </p>
           {u.complexity && (
-            <p className="mt-1 text-xs text-amber-800/80">
+            <p className="mt-1 text-xs text-warning/80">
               Complexity: {u.complexity}
             </p>
           )}
@@ -187,83 +196,23 @@ function ResultPanel({ data, variant, location }: { data: UnderstandResponse; va
 
       {/* Submitting feedback */}
       {submittedJobId && (
-        <div className="rounded-xl border border-emerald-200 bg-emerald-50 p-4 text-center">
-          <p className="text-sm font-semibold text-emerald-800">
+        <div className="rounded-xl border border-success/40 bg-success p-4 text-center">
+          <p className="text-sm font-semibold text-success-fg">
             Request sent! Waiting for the technician to respond.
           </p>
         </div>
       )}
 
-      {/* Ranked technicians with Send Request (dashboard) or best+others (landing) */}
+      {/* Ranked technicians — dashboard uses MatchResults above; landing shows best+others inline */}
       {anyWorker ? (
         <div className="space-y-2 text-left">
-          {variant === "dashboard"
-            ? ranked.map((w, i) => (
-                <div key={w.id} className="rounded-xl border border-stone-200 bg-white p-4">
-                  <div className="flex items-center justify-between gap-3">
-                    <div className="min-w-0">
-                      <div className="flex flex-wrap items-center gap-2">
-                        {i === 0 && (
-                          <span className="badge !bg-amber-400 !text-[#0a4632]">Best match</span>
-                        )}
-                        <span className="text-sm font-semibold text-stone-900">{w.name}</span>
-                        <span className="text-xs text-stone-500">
-                          {CATEGORY_LABELS[w.category] ?? w.category} · ⭐ {w.average_rating.toFixed(1)}
-                        </span>
-                        {w.verified && (
-                          <span className="rounded-md bg-blue-50 px-1.5 py-0.5 text-[10px] font-medium text-blue-700">
-                            Verified
-                          </span>
-                        )}
-                      </div>
-                        {w.skills.length > 0 && (
-                        <div className="mt-1.5 flex flex-wrap gap-1">
-                          {w.skills.slice(0, 3).map((s) => (
-                            <span key={s} className="rounded-md bg-stone-100 px-2 py-0.5 text-[11px] text-stone-600">
-                              {s}
-                            </span>
-                          ))}
-                        </div>
-                        )}
-                        {(w.distance_km != null || w.predicted_price != null) && (
-                          <div className="mt-1.5 flex flex-wrap gap-2 text-xs text-stone-500">
-                            {w.distance_km != null && <span>{w.distance_km.toFixed(1)} km away</span>}
-                            {w.predicted_price != null && (
-                              <span className="font-semibold text-amber-700">
-                                Est. PKR {w.predicted_price.toLocaleString("en-PK")}
-                              </span>
-                            )}
-                            {w.travel_cost_pkr != null && w.travel_cost_pkr > 0 && (
-                              <span>Travel PKR {w.travel_cost_pkr.toLocaleString("en-PK")}</span>
-                            )}
-                          </div>
-                        )}
-                    </div>
-                    <span className="shrink-0 rounded-lg bg-[#0e5f44] px-2 py-1 text-xs font-bold text-white">
-                      {w.final_score}
-                    </span>
-                  </div>
-                  {!submittedJobId && (
-                    <button
-                      type="button"
-                      onClick={() => setSelectedWorker(w)}
-                      className="mt-3 w-full rounded-lg bg-[#0a4632] py-2 text-sm font-semibold text-white transition-colors hover:bg-[#0e5f44]"
-                    >
-                      Send Request
-                    </button>
-                  )}
-                </div>
-              ))
-            : <>
-                {data.workers.best && <WorkerCard worker={data.workers.best} highlight />}
-                {data.workers.others.slice(0, 2).map((w) => (
-                  <WorkerCard key={w.id} worker={w} />
-                ))}
-              </>
-          }
+          {data.workers.best && <WorkerCard worker={data.workers.best} highlight />}
+          {data.workers.others.slice(0, 2).map((w) => (
+            <WorkerCard key={w.id} worker={w} />
+          ))}
         </div>
       ) : (
-        <p className="rounded-xl border border-stone-200 bg-white p-4 text-sm text-stone-500">
+        <p className="rounded-xl border border-divider bg-surface p-4 text-sm text-muted">
           No ustads available right now — try again later.
         </p>
       )}
@@ -271,30 +220,33 @@ function ResultPanel({ data, variant, location }: { data: UnderstandResponse; va
       {variant === "landing" && (
         <Link
           href={ctaHref}
-          className="block rounded-xl bg-[#0a4632] py-2.5 text-center text-sm font-semibold text-white transition-colors hover:bg-[#0e5f44]"
+          className="btn-primary block w-full !rounded-xl !py-2.5 text-center text-sm"
         >
           Set price &amp; find workers
         </Link>
       )}
 
-      {/* Technician request modal */}
-      {selectedWorker && (
-        <TechnicianRequestModal
-          worker={selectedWorker}
-          understanding={u}
-          input={{
-            type: data.transcript ? "voice" : "text",
-            original_text: u.description ?? "",
-            transcript: data.transcript,
-          }}
-          location={location}
-          onClose={() => setSelectedWorker(null)}
-          onSubmitted={(result) => {
-            setSelectedWorker(null);
-            setSubmittedJobId(result.job_id);
-          }}
-        />
-      )}
+      {/* Technician request modal — landing path keeps the modal inline; dashboard handles it inside MatchResults */}
+      <AnimatePresence mode="wait">
+        {variant === "landing" && selectedWorker && (
+          <TechnicianRequestModal
+            key={selectedWorker.id}
+            worker={selectedWorker}
+            understanding={u}
+            input={{
+              type: data.transcript ? "voice" : "text",
+              original_text: u.description ?? "",
+              transcript: data.transcript,
+            }}
+            location={location}
+            onClose={() => setSelectedWorker(null)}
+            onSubmitted={(result) => {
+              setSelectedWorker(null);
+              setSubmittedJobId(result.job_id);
+            }}
+          />
+        )}
+      </AnimatePresence>
     </div>
   );
 }
@@ -441,24 +393,27 @@ export default function VoiceCapture({ variant = "landing" }: VoiceCaptureProps)
   return (
     <div className="flex w-full max-w-md flex-col items-center">
       {/* Mic button */}
-      <button
+      <motion.button
         type="button"
         aria-label={recording ? "Stop recording" : "Hold to speak"}
         onPointerDown={() => void startRecording()}
         onPointerUp={stopRecording}
         onPointerLeave={stopRecording}
         onKeyDown={handleVoiceKey}
+        whileTap={{ scale: 0.95 }}
+        whileHover={{ y: -1 }}
+        transition={{ duration: 0.15, ease: "easeOut" }}
         className={`flex h-28 w-28 items-center justify-center rounded-full text-5xl transition-transform select-none active:scale-95 ${
           recording
-            ? "bg-red-500 text-white shadow-lg shadow-red-500/40"
-            : "bg-amber-400 text-[#0a4632] shadow-xl shadow-amber-400/30 hover:bg-amber-300"
+            ? "bg-warning text-bg shadow-lg shadow-warning/40"
+            : "bg-accent text-bg shadow-xl shadow-accent/30 hover:bg-accent/90"
         }`}
       >
         🎙️
-      </button>
+      </motion.button>
       <p
         className={`mt-4 text-sm font-medium ${
-          variant === "dashboard" ? "text-stone-500" : "text-emerald-100"
+          "text-muted"
         }`}
       >
         {recording
@@ -470,8 +425,8 @@ export default function VoiceCapture({ variant = "landing" }: VoiceCaptureProps)
 
       {/* Clarification round */}
       {status === "clarifying" && result?.clarification_question && (
-        <div className="mt-5 w-full space-y-2 rounded-xl border border-amber-300 bg-amber-50 p-4 text-left">
-          <p className="text-sm font-medium text-stone-800">
+        <div className="mt-5 w-full space-y-2 rounded-xl border border-warning bg-warning/10 p-4 text-left">
+          <p className="text-sm font-medium text-text">
             {result.clarification_question}
           </p>
           {result.clarification_options && result.clarification_options.length > 0 && (
@@ -479,7 +434,7 @@ export default function VoiceCapture({ variant = "landing" }: VoiceCaptureProps)
               {result.clarification_options.map((option) => (
                 <label
                   key={option}
-                  className="flex cursor-pointer items-center gap-2 rounded-lg border border-amber-200 bg-white px-3 py-2 text-sm text-stone-700"
+                  className="flex cursor-pointer items-center gap-2 rounded-lg border border-warning/40 bg-surface px-3 py-2 text-sm text-text"
                 >
                   <input
                     type="checkbox"
@@ -491,7 +446,7 @@ export default function VoiceCapture({ variant = "landing" }: VoiceCaptureProps)
                           : current.filter((selected) => selected !== option)
                       );
                     }}
-                    className="h-4 w-4 accent-[#0e5f44]"
+                    className="h-4 w-4 accent-accent"
                   />
                   {option}
                 </label>
@@ -503,9 +458,9 @@ export default function VoiceCapture({ variant = "landing" }: VoiceCaptureProps)
             value={clarificationAnswer}
             onChange={(e) => setClarificationAnswer(e.target.value)}
             placeholder="Your answer, e.g. bijli ka masla hai"
-            className="w-full rounded-lg border border-stone-300 bg-white px-3 py-2 text-sm text-stone-800 outline-none focus:border-[#0e5f44]"
+            className="w-full rounded-lg border border-divider bg-surface px-3 py-2 text-sm text-text outline-none focus:border-accent"
           />
-          <button
+          <motion.button
             type="button"
             onClick={() =>
               void run({
@@ -515,10 +470,13 @@ export default function VoiceCapture({ variant = "landing" }: VoiceCaptureProps)
               })
             }
             disabled={busy || (!clarificationAnswer.trim() && clarificationSelections.length === 0)}
-            className="w-full rounded-lg bg-amber-500 py-2 text-sm font-semibold text-white hover:bg-amber-600 disabled:opacity-50"
+            whileTap={{ scale: 0.95 }}
+            whileHover={{ y: -1 }}
+            transition={{ duration: 0.15, ease: "easeOut" }}
+            className="w-full rounded-lg bg-accent py-2 text-sm font-semibold text-bg hover:bg-accent/90 disabled:opacity-50"
           >
             Continue
-          </button>
+          </motion.button>
         </div>
       )}
 
@@ -527,26 +485,29 @@ export default function VoiceCapture({ variant = "landing" }: VoiceCaptureProps)
         <p
           className={`mt-5 flex items-center gap-2 rounded-full px-4 py-2 text-sm ${
             variant === "dashboard"
-              ? "bg-stone-100 text-stone-600"
-              : "bg-white/10 text-emerald-100"
+              ? "bg-surface text-muted"
+              : "bg-surface text-muted"
           }`}
         >
-          <span className="h-3.5 w-3.5 animate-spin rounded-full border-2 border-amber-400 border-t-transparent" />
+          <span className="h-3.5 w-3.5 animate-spin rounded-full border-2 border-warning border-t-transparent" />
           Transcribing &amp; analyzing…
         </p>
       )}
 
       {/* Error */}
       {status === "error" && error && (
-        <div className="mt-5 w-full space-y-2 rounded-xl border border-red-200 bg-red-50 p-4 text-left">
-          <p className="text-sm text-red-700">{error}</p>
-          <button
+        <div className="mt-5 w-full space-y-2 rounded-xl border border-warning/40 bg-warning/10 p-4 text-left">
+          <p className="text-sm text-warning">{error}</p>
+          <motion.button
             type="button"
             onClick={reset}
-            className="rounded-lg bg-red-600 px-3 py-1.5 text-xs font-semibold text-white hover:bg-red-700"
+            whileTap={{ scale: 0.95 }}
+            whileHover={{ y: -1 }}
+            transition={{ duration: 0.15, ease: "easeOut" }}
+            className="rounded-lg bg-warning px-3 py-1.5 text-xs font-semibold text-bg hover:bg-warning/90"
           >
             Try again
-          </button>
+          </motion.button>
         </div>
       )}
 
@@ -554,17 +515,20 @@ export default function VoiceCapture({ variant = "landing" }: VoiceCaptureProps)
       {status === "done" && result && (
         <div className="mt-6 w-full">
           <ResultPanel data={result} variant={variant} location={customerLocation} />
-          <button
+          <motion.button
             type="button"
             onClick={reset}
+            whileTap={{ scale: 0.95 }}
+            whileHover={{ y: -1 }}
+            transition={{ duration: 0.15, ease: "easeOut" }}
             className={`mt-3 w-full rounded-lg border py-2 text-sm font-semibold transition ${
               variant === "dashboard"
-                ? "border-stone-300 text-stone-600 hover:bg-stone-100"
-                : "border-white/25 text-emerald-100 hover:bg-white/10"
+                ? "border-divider text-muted hover:bg-surface"
+                : "border-divider text-muted hover:bg-surface"
             }`}
           >
             New request
-          </button>
+          </motion.button>
         </div>
       )}
     </div>

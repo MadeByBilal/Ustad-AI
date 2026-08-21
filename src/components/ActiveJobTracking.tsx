@@ -2,17 +2,9 @@
 
 import { useCallback, useEffect, useState, useRef } from "react";
 import Link from "next/link";
-import dynamic from "next/dynamic";
 import ReviewScreen from "./ReviewScreen";
-
-const TrackingMap = dynamic(() => import("@/components/tracking/TrackingMap"), {
-  ssr: false,
-  loading: () => (
-    <div className="flex h-full items-center justify-center bg-stone-100">
-      <div className="h-10 w-10 animate-spin rounded-full border-4 border-stone-200 border-t-[#0e5f44]" />
-    </div>
-  ),
-});
+import { motion } from "framer-motion";
+import TrackingMap from "@/components/tracking/dynamicTrackingMap";
 
 interface ActiveJob {
   job_id: string;
@@ -24,11 +16,11 @@ interface ActiveJob {
 }
 
 const STATUS_LABELS: Record<string, { label: string; color: string }> = {
-  ACCEPTED: { label: "Worker accepted", color: "text-amber-600" },
-  EN_ROUTE: { label: "On the way", color: "text-green-600" },
-  ARRIVED: { label: "Arrived", color: "text-blue-600" },
-  IN_PROGRESS: { label: "Work in progress", color: "text-violet-600" },
-  AWAITING_CUSTOMER_CONFIRMATION: { label: "Needs your approval", color: "text-amber-600" },
+  ACCEPTED: { label: "Worker accepted", color: "text-success-fg" },
+  EN_ROUTE: { label: "On the way", color: "text-accent" },
+  ARRIVED: { label: "Arrived", color: "text-accent" },
+  IN_PROGRESS: { label: "Work in progress", color: "text-accent" },
+  AWAITING_CUSTOMER_CONFIRMATION: { label: "Needs your approval", color: "text-warning" },
 };
 
 export default function ActiveJobTracking() {
@@ -192,15 +184,15 @@ export default function ActiveJobTracking() {
 
   if (!job) {
     return (
-      <div className="flex h-full flex-col items-center justify-center bg-stone-50 px-5">
-        <div className="flex h-20 w-20 items-center justify-center rounded-full bg-stone-200">
-          <svg className="h-10 w-10 text-stone-400" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
+      <div className="flex h-full flex-col items-center justify-center bg-bg px-5">
+        <div className="flex h-20 w-20 items-center justify-center rounded-full bg-surface">
+          <svg className="h-10 w-10 text-muted" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
             <path strokeLinecap="round" strokeLinejoin="round" d="M15 10.5a3 3 0 11-6 0 3 3 0 016 0z" />
             <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 10.5c0 7.142-7.5 11.25-7.5 11.25S4.5 17.642 4.5 10.5a7.5 7.5 0 1115 0z" />
           </svg>
         </div>
-        <p className="mt-5 text-lg font-bold text-stone-700">No active job</p>
-        <p className="mt-1 text-sm text-stone-400">
+        <p className="mt-5 text-lg font-bold text-text">No active job</p>
+        <p className="mt-1 text-sm text-muted">
           Tracking will appear here when a worker is on the way
         </p>
         <Link href="/dashboard/customer" className="btn-primary mt-6">
@@ -210,7 +202,7 @@ export default function ActiveJobTracking() {
     );
   }
 
-  const statusInfo = STATUS_LABELS[job.status] ?? { label: job.status, color: "text-stone-600" };
+  const statusInfo = STATUS_LABELS[job.status] ?? { label: job.status, color: "text-muted" };
   const isApproval = job.status === "AWAITING_CUSTOMER_CONFIRMATION";
 
   // Show review screen after approval
@@ -230,14 +222,14 @@ export default function ActiveJobTracking() {
   // Show completion screen after dispute
   if (message?.ok && message.text === "Dispute submitted") {
     return (
-      <div className="flex h-full flex-col items-center justify-center bg-white px-5">
-        <div className="flex h-20 w-20 items-center justify-center rounded-full bg-amber-100">
-          <svg className="h-10 w-10 text-amber-600" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
+      <div className="flex h-full flex-col items-center justify-center bg-bg px-5">
+        <div className="flex h-20 w-20 items-center justify-center rounded-full bg-warning/10">
+          <svg className="h-10 w-10 text-warning" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
             <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v3.75m9-.75a9 9 0 11-18 0 9 9 0 0118 0zm-9 3.75h.008v.008H12v-.008z" />
           </svg>
         </div>
-        <h1 className="mt-6 text-2xl font-bold text-stone-900">Dispute submitted</h1>
-        <p className="mt-2 text-center text-base text-stone-500">
+        <h1 className="mt-6 font-display text-2xl font-bold text-text">Dispute submitted</h1>
+        <p className="mt-2 text-center text-base text-muted">
           We will review your dispute and get back to you.
         </p>
         <Link href="/dashboard/customer" className="btn-primary mt-8">
@@ -248,25 +240,25 @@ export default function ActiveJobTracking() {
   }
 
   return (
-    <div className="relative flex h-full flex-col overflow-hidden bg-white">
+    <div className="relative flex h-full flex-col overflow-hidden bg-bg">
       {/* Header */}
-      <div className="absolute left-0 right-0 top-0 z-30 flex items-center gap-3 bg-white/95 px-4 py-3 backdrop-blur-lg">
+      <div className="absolute left-0 right-0 top-0 z-30 flex items-center gap-3 bg-surface/95 px-4 py-3 backdrop-blur-lg">
         <Link
           href="/dashboard/customer"
-          className="flex h-10 w-10 items-center justify-center rounded-full hover:bg-stone-100"
+          className="flex h-10 w-10 items-center justify-center rounded-full hover:bg-surface"
         >
-          <svg className="h-5 w-5 text-stone-600" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
+          <svg className="h-5 w-5 text-muted" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
             <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 19.5L8.25 12l7.5-7.5" />
           </svg>
         </Link>
         <div className="min-w-0 flex-1">
-          <p className="text-sm font-bold text-stone-800">{job.worker_name}</p>
+          <p className="text-sm font-bold text-text">{job.worker_name}</p>
           <p className={`text-xs font-medium ${statusInfo.color}`}>{statusInfo.label}</p>
         </div>
         {!isApproval && (
           <Link
             href={`/dashboard/customer/chat/${job.job_id}`}
-            className="flex h-10 w-10 items-center justify-center rounded-full bg-[#0e5f44] text-white"
+            className="flex h-10 w-10 items-center justify-center rounded-full bg-accent text-bg"
           >
             <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" d="M8.625 12a.375.375 0 11-.75 0 .375.375 0 01.75 0zm0 0H8.25m4.125 0a.375.375 0 11-.75 0 .375.375 0 01.75 0zm0 0H12m4.125 0a.375.375 0 11-.75 0 .375.375 0 01.75 0zm0 0h-.375M21 12c0 4.556-4.03 8.25-9 8.25a9.764 9.764 0 01-2.555-.337A5.972 5.972 0 015.41 20.97a5.969 5.969 0 01-.474-.065 4.48 4.48 0 00.978-2.025c.09-.457-.133-.901-.467-1.226C3.93 16.178 3 14.189 3 12c0-4.556 4.03-8.25 9-8.25s9 3.694 9 8.25z" />
@@ -286,30 +278,30 @@ export default function ActiveJobTracking() {
             className="h-full w-full"
           />
         ) : (
-          <div className="flex h-full items-center justify-center bg-stone-100">
-            <div className="h-10 w-10 animate-spin rounded-full border-4 border-stone-200 border-t-[#0e5f44]" />
+          <div className="flex h-full items-center justify-center bg-surface">
+            <div className="h-10 w-10 animate-spin rounded-full border-4 border-divider border-t-accent" />
           </div>
         )}
       </div>
 
       {/* Bottom Panel */}
-      <div className="flex-1 bg-white px-5 pt-4 pb-6">
+      <div className="flex-1 bg-surface px-5 pt-4 pb-6">
         {/* Status + Distance */}
         <div className="flex items-center justify-between">
           <div>
             <p className={`text-lg font-bold ${statusInfo.color}`}>
               {isApproval ? "Work Complete" : statusInfo.label}
             </p>
-            <p className="text-sm text-stone-500">{job.worker_name}</p>
+            <p className="text-sm text-muted">{job.worker_name}</p>
           </div>
           <div className="text-right">
             {distanceKm !== undefined && !isApproval && (
               <>
-                <p className="text-2xl font-bold text-stone-800">
+                <p className="text-2xl font-bold text-text">
                   {distanceKm < 1 ? `${Math.round(distanceKm * 1000)}m` : `${distanceKm.toFixed(1)}km`}
                 </p>
                 {etaMinutes !== null && (
-                  <p className="text-sm text-stone-500">~{etaMinutes} min</p>
+                  <p className="text-sm text-muted">~{etaMinutes} min</p>
                 )}
               </>
             )}
@@ -318,7 +310,7 @@ export default function ActiveJobTracking() {
 
         {/* Message */}
         {message && (
-          <p className={`mt-3 rounded-xl px-4 py-3 text-sm ${message.ok ? "bg-emerald-50 text-emerald-700" : "bg-red-50 text-red-700"}`}>
+          <p className={`mt-3 rounded-xl px-4 py-3 text-sm ${message.ok ? "bg-success/15 text-success-fg" : "bg-warning/10 text-warning"}`}>
             {message.text}
           </p>
         )}
@@ -327,22 +319,28 @@ export default function ActiveJobTracking() {
         <div className="mt-4 flex gap-3">
           {isApproval ? (
             <>
-              <button
+              <motion.button
                 type="button"
                 onClick={() => void handleApprove("approve")}
                 disabled={approving}
-                className="btn-primary flex-1 !bg-emerald-600 hover:!bg-emerald-700 disabled:opacity-60"
+                whileTap={{ scale: 0.95 }}
+                whileHover={{ y: -1 }}
+                transition={{ duration: 0.15, ease: "easeOut" }}
+                className="btn-primary flex-1 disabled:opacity-60"
               >
                 {approving ? "Approving..." : "Approve Work"}
-              </button>
-              <button
+              </motion.button>
+              <motion.button
                 type="button"
                 onClick={() => void handleApprove("dispute")}
                 disabled={approving}
+                whileTap={{ scale: 0.95 }}
+                whileHover={{ y: -1 }}
+                transition={{ duration: 0.15, ease: "easeOut" }}
                 className="btn-danger flex-1 disabled:opacity-60"
               >
                 {approving ? "Submitting..." : "Dispute"}
-              </button>
+              </motion.button>
             </>
           ) : (
             <Link
@@ -358,18 +356,21 @@ export default function ActiveJobTracking() {
         </div>
 
         {!isApproval && (
-          <button
+          <motion.button
             type="button"
             onClick={() => void handleCancel()}
             disabled={cancelling}
-            className="mt-3 w-full rounded-xl border border-red-200 px-4 py-2.5 text-sm font-semibold text-red-600 transition hover:bg-red-50 disabled:opacity-60"
+            whileTap={{ scale: 0.95 }}
+            whileHover={{ y: -1 }}
+            transition={{ duration: 0.15, ease: "easeOut" }}
+            className="mt-3 w-full rounded-xl border border-warning px-4 py-2.5 text-sm font-semibold text-warning transition-colors hover:bg-warning/10 disabled:opacity-60"
           >
             {cancelling ? "Cancelling..." : "Cancel Job"}
-          </button>
+          </motion.button>
         )}
 
         {lastUpdate && (
-          <p className="mt-3 text-center text-xs text-stone-400">
+          <p className="mt-3 text-center text-xs text-muted">
             Updated {lastUpdate.toLocaleTimeString("en-GB", { hour: "2-digit", minute: "2-digit", second: "2-digit" })}
           </p>
         )}

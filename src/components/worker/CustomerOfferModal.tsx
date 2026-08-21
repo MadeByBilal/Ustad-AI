@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { motion, AnimatePresence } from "framer-motion";
 import { validateCustomerOffer } from "@/lib/job/offers";
 
 export default function CustomerOfferModal({
@@ -78,26 +79,41 @@ export default function CustomerOfferModal({
   }
 
   return (
-    <div className="fixed inset-0 flex items-center justify-center bg-black/50 p-4">
-      <div className="rounded-2xl bg-white p-6 shadow-lg max-w-sm w-full">
-        <h2 className="text-xl font-bold text-stone-900">
+    <AnimatePresence mode="wait">
+      <motion.div
+        key="overlay"
+        className="fixed inset-0 flex items-center justify-center bg-bg/80 p-4"
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        exit={{ opacity: 0 }}
+        transition={{ duration: 0.2, ease: "easeOut" }}
+      >
+        <motion.div
+          key="panel"
+          className="w-full max-w-sm rounded-xl bg-surface p-6 shadow-lg"
+          initial={{ opacity: 0, scale: 0.95 }}
+          animate={{ opacity: 1, scale: 1 }}
+          exit={{ opacity: 0, scale: 0.95 }}
+          transition={{ duration: 0.2, ease: "easeOut" }}
+        >
+        <h2 className="font-display text-xl font-bold text-text">
           Offer to {workerName}
         </h2>
 
         <div className="mt-4 space-y-4">
           <div>
-            <label className="block text-sm font-medium text-stone-700 mb-1">
+            <label className="mb-1 block text-sm font-medium text-text">
               Your Offer (PKR)
             </label>
             <input
               type="number"
               value={price}
               onChange={(e) => setPrice(e.target.value)}
-              className="w-full px-3 py-2 border border-stone-300 rounded-lg"
+              className="w-full rounded-lg border border-divider bg-bg px-3 py-2 text-text"
               disabled={busy}
             />
             {estimateMin > 0 && estimateMax > 0 && (
-              <p className="mt-1 text-xs text-stone-500">
+              <p className="mt-1 font-mono text-xs text-muted">
                 Estimate: ₨ {estimateMin.toLocaleString()} - ₨{" "}
                 {estimateMax.toLocaleString()}
               </p>
@@ -105,45 +121,52 @@ export default function CustomerOfferModal({
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-stone-700 mb-1">
+            <label className="mb-1 block text-sm font-medium text-text">
               Message (optional)
             </label>
             <textarea
               value={message}
               onChange={(e) => setMessage(e.target.value)}
               placeholder="e.g., 'Please confirm timeline'"
-              className="w-full px-3 py-2 border border-stone-300 rounded-lg text-sm"
+              className="w-full rounded-lg border border-divider bg-bg px-3 py-2 text-sm text-text"
               rows={3}
               disabled={busy}
             />
           </div>
 
           {error && (
-            <div className="rounded-lg bg-red-50 border border-red-200 p-3">
-              <p className="text-sm text-red-700">{error}</p>
+            <div className="rounded-lg border border-warning/40 bg-warning/10 p-3">
+              <p className="text-sm text-warning">{error}</p>
             </div>
           )}
 
           <div className="flex gap-2 pt-2">
-            <button
+            <motion.button
               type="button"
               onClick={onClose}
-              className="flex-1 px-4 py-2 border border-stone-300 rounded-lg text-stone-700 font-medium hover:bg-stone-50"
+              className="flex-1 rounded-lg border border-divider bg-bg px-4 py-2 font-medium text-muted hover:bg-surface"
               disabled={busy}
+              whileTap={{ scale: 0.95 }}
+              whileHover={{ y: -1 }}
+              transition={{ duration: 0.15, ease: "easeOut" }}
             >
               Cancel
-            </button>
-            <button
+            </motion.button>
+            <motion.button
               type="button"
               onClick={submit}
               disabled={busy}
-              className="flex-1 px-4 py-2 bg-blue-600 text-white rounded-lg font-medium hover:bg-blue-700 disabled:bg-gray-400"
+              className="btn-primary flex-1 !rounded-lg !px-4 !py-2 font-medium disabled:opacity-60"
+              whileTap={{ scale: 0.95 }}
+              whileHover={{ y: -1 }}
+              transition={{ duration: 0.15, ease: "easeOut" }}
             >
               {busy ? "Sending..." : "Send Offer"}
-            </button>
+            </motion.button>
           </div>
-        </div>
-      </div>
-    </div>
+          </div>
+        </motion.div>
+      </motion.div>
+    </AnimatePresence>
   );
 }

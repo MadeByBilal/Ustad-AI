@@ -21,10 +21,10 @@ export default async function CustomerHomePage() {
       {/* Header */}
       <div className="page-header">
         <div className="flex items-center justify-between">
-          <p className="font-urdu text-xl font-bold text-stone-900">
+          <p className="font-urdu text-xl font-bold text-text">
             السلام، {name}
           </p>
-          <span className="flex h-11 w-11 items-center justify-center rounded-full bg-[#0e5f44] text-base font-bold text-white">
+          <span className="flex h-11 w-11 items-center justify-center rounded-full bg-accent text-base font-bold text-bg">
             {name.charAt(0).toUpperCase()}
           </span>
         </div>
@@ -32,10 +32,10 @@ export default async function CustomerHomePage() {
 
       {/* Main Content - Voice Button */}
       <div className="flex flex-1 flex-col items-center justify-center px-5">
-        <p className="font-urdu text-3xl font-bold text-stone-900">
+        <p className="font-urdu text-3xl font-bold text-text">
           کیا خراب ہوا؟
         </p>
-        <p className="mt-3 text-center text-lg text-stone-500">
+        <p className="mt-3 text-center text-lg text-muted">
           Hold the button and describe the problem
         </p>
         <div className="mt-10">

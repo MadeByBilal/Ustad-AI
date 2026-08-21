@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { motion } from "framer-motion";
 import type { DirectRequestView } from "@/lib/worker/dashboard";
 
 async function postJson(url: string, body?: unknown): Promise<void> {
@@ -78,62 +79,62 @@ export default function DirectRequestCard({
   }
 
   return (
-    <div className="rounded-xl border border-stone-200 bg-white p-4">
+    <div className="rounded-xl border border-divider bg-surface p-4">
       <div className="flex items-start justify-between gap-3">
         <div className="min-w-0">
           <div className="flex flex-wrap items-center gap-2">
-            <span className="badge shrink-0 !bg-[#0e5f44] !text-white">
+            <span className="badge shrink-0 bg-accent text-bg">
               {CATEGORY_LABELS[req.category] ?? req.category}
             </span>
             <span className={`badge shrink-0 ${
-              req.urgency === "emergency" ? "!bg-red-600 !text-white" : "!bg-stone-100 !text-stone-600"
+              req.urgency === "emergency" ? "!bg-warning !text-bg" : "!bg-bg !text-muted"
             }`}>
               {req.urgency === "emergency" ? "Emergency" : "Normal"}
             </span>
           </div>
-          <p className="mt-2 font-urdu text-lg font-bold leading-relaxed text-stone-800">
+          <p className="mt-2 font-urdu text-lg font-bold leading-relaxed text-text">
             {req.original_text}
           </p>
         </div>
       </div>
 
-      <p className="mt-1 line-clamp-2 text-sm text-stone-600">{req.description}</p>
+      <p className="mt-1 line-clamp-2 text-sm text-muted">{req.description}</p>
 
       {req.required_skills.length > 0 && (
         <div className="mt-2 flex flex-wrap gap-1.5">
           {req.required_skills.map((skill) => (
-            <span key={skill} className="rounded-full bg-stone-100 px-2.5 py-0.5 text-xs text-stone-600">
+            <span key={skill} className="rounded-full bg-bg px-2.5 py-0.5 text-xs text-muted">
               {skill}
             </span>
           ))}
         </div>
       )}
 
-      <div className="mt-3 grid grid-cols-2 gap-2 text-xs text-stone-500">
-        <div className="rounded-lg bg-stone-50 p-2">
-          <dt className="text-stone-400">Customer offer</dt>
-          <dd className="font-semibold text-stone-800">{currency(req.customer_offer)}</dd>
+      <div className="mt-3 grid grid-cols-2 gap-2 text-xs text-muted">
+        <div className="rounded-lg bg-bg p-2">
+          <dt className="text-muted">Customer offer</dt>
+          <dd className="font-semibold text-text">{currency(req.customer_offer)}</dd>
         </div>
-        <div className="rounded-lg bg-stone-50 p-2">
-          <dt className="text-stone-400">Location</dt>
-          <dd className="truncate font-semibold text-stone-800">{req.address_label || "Not shared"}</dd>
+        <div className="rounded-lg bg-bg p-2">
+          <dt className="text-muted">Location</dt>
+          <dd className="truncate font-semibold text-text">{req.address_label || "Not shared"}</dd>
         </div>
       </div>
 
       {hasPendingCounter && (
-        <p className="mt-3 rounded-lg bg-cyan-50 px-3 py-1.5 text-xs text-cyan-800">
+        <p className="mt-3 rounded-lg bg-surface px-3 py-1.5 text-xs text-muted">
           Your counter: {currency(req.my_counter_price!)} — waiting for customer response.
         </p>
       )}
 
-      {error && <p className="mt-2 text-xs text-red-600">{error}</p>}
+      {error && <p className="mt-2 text-xs text-warning">{error}</p>}
 
-      <div className="mt-3 flex flex-wrap justify-end gap-2 border-t border-stone-100 pt-3">
+      <div className="mt-3 flex flex-wrap justify-end gap-2 border-t border-divider pt-3">
         {hasPendingCounter ? (
-          <span className="badge !bg-cyan-100 !text-cyan-800">Awaiting customer approval</span>
+          <span className="badge bg-surface text-muted">Awaiting customer approval</span>
         ) : (
           <>
-            <button
+            <motion.button
               type="button"
               onClick={() =>
                 void act("accept", async () => {
@@ -142,19 +143,25 @@ export default function DirectRequestCard({
                 })
               }
               disabled={busy !== null}
-              className="rounded-xl bg-[#0e5f44] px-4 py-2 text-sm font-bold text-white transition hover:bg-[#0b4c37] disabled:opacity-60"
+              className="btn-primary !rounded-xl !px-4 !py-2 text-sm disabled:opacity-60"
+              whileTap={{ scale: 0.95 }}
+              whileHover={{ y: -1 }}
+              transition={{ duration: 0.15, ease: "easeOut" }}
             >
               {busy === "accept" ? "Accepting…" : "Accept"}
-            </button>
-            <button
+            </motion.button>
+            <motion.button
               type="button"
               onClick={() => setShowCounter(true)}
               disabled={busy !== null}
-              className="rounded-xl border border-[#0e5f44] px-4 py-2 text-sm font-semibold text-[#0e5f44] transition hover:bg-emerald-50 disabled:opacity-60"
+              className="rounded-xl border border-accent bg-surface px-4 py-2 text-sm font-semibold text-accent transition-colors hover:bg-accent/10 disabled:opacity-60"
+              whileTap={{ scale: 0.95 }}
+              whileHover={{ y: -1 }}
+              transition={{ duration: 0.15, ease: "easeOut" }}
             >
               Counter-offer
-            </button>
-            <button
+            </motion.button>
+            <motion.button
               type="button"
               onClick={() =>
                 void act("decline", () =>
@@ -162,18 +169,21 @@ export default function DirectRequestCard({
                 )
               }
               disabled={busy !== null}
-              className="rounded-xl border border-stone-200 px-4 py-2 text-sm font-semibold text-stone-600 transition hover:bg-stone-50 disabled:opacity-60"
+              className="rounded-xl border border-divider bg-surface px-4 py-2 text-sm font-semibold text-muted transition-colors hover:bg-bg disabled:opacity-60"
+              whileTap={{ scale: 0.95 }}
+              whileHover={{ y: -1 }}
+              transition={{ duration: 0.15, ease: "easeOut" }}
             >
               {busy === "decline" ? "Declining…" : "Decline"}
-            </button>
+            </motion.button>
           </>
         )}
       </div>
 
       {showCounter && (
-        <div className="mt-3 rounded-xl border border-stone-200 bg-stone-50 p-4 space-y-3">
+        <div className="mt-3 space-y-3 rounded-xl border border-divider bg-surface p-4">
           <div>
-            <label htmlFor={`counter-${req.offer_id}`} className="mb-1 block text-xs font-semibold text-stone-500">
+            <label htmlFor={`counter-${req.offer_id}`} className="mb-1 block text-xs font-semibold text-muted">
               Your price (PKR)
             </label>
             <input
@@ -182,12 +192,12 @@ export default function DirectRequestCard({
               min={1}
               value={counterPrice}
               onChange={(e) => setCounterPrice(e.target.value)}
-              className="w-full rounded-lg border border-stone-300 bg-white px-3 py-2 text-sm"
+              className="w-full rounded-lg border border-divider bg-bg px-3 py-2 text-sm text-text"
               disabled={busy !== null}
             />
           </div>
           <div>
-            <label htmlFor={`msg-${req.offer_id}`} className="mb-1 block text-xs font-semibold text-stone-500">
+            <label htmlFor={`msg-${req.offer_id}`} className="mb-1 block text-xs font-semibold text-muted">
               Message (optional)
             </label>
             <input
@@ -196,27 +206,33 @@ export default function DirectRequestCard({
               value={counterMsg}
               onChange={(e) => setCounterMsg(e.target.value)}
               placeholder="e.g. Additional parts needed"
-              className="w-full rounded-lg border border-stone-300 bg-white px-3 py-2 text-sm"
+              className="w-full rounded-lg border border-divider bg-bg px-3 py-2 text-sm text-text"
               disabled={busy !== null}
             />
           </div>
           <div className="flex gap-2">
-            <button
+            <motion.button
               type="button"
               onClick={() => setShowCounter(false)}
               disabled={busy !== null}
-              className="flex-1 rounded-lg border border-stone-300 px-3 py-2 text-sm font-semibold text-stone-600 hover:bg-white"
+              className="flex-1 rounded-lg border border-divider bg-bg px-3 py-2 text-sm font-semibold text-muted hover:bg-surface"
+              whileTap={{ scale: 0.95 }}
+              whileHover={{ y: -1 }}
+              transition={{ duration: 0.15, ease: "easeOut" }}
             >
               Cancel
-            </button>
-            <button
+            </motion.button>
+            <motion.button
               type="button"
               onClick={() => void submitCounter()}
               disabled={busy !== null || !counterPrice}
-              className="flex-1 rounded-lg bg-[#0e5f44] px-3 py-2 text-sm font-bold text-white hover:bg-[#0b4c37] disabled:opacity-60"
+              className="flex-1 rounded-lg bg-accent px-3 py-2 text-sm font-bold text-bg hover:bg-accent/90 disabled:opacity-60"
+              whileTap={{ scale: 0.95 }}
+              whileHover={{ y: -1 }}
+              transition={{ duration: 0.15, ease: "easeOut" }}
             >
               {busy === "counter" ? "Submitting…" : "Submit counter"}
-            </button>
+            </motion.button>
           </div>
         </div>
       )}

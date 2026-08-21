@@ -4,6 +4,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import WorkerChat from "@/components/worker/WorkerChat";
 import JobPhotoUpload from "@/components/worker/JobPhotoUpload";
+import { motion } from "framer-motion";
 
 const NEXT_ACTIONS: Record<string, { label: string; to: string }> = {
   ACCEPTED: { label: "On the way", to: "EN_ROUTE" },
@@ -80,29 +81,32 @@ export default function WorkerChatPageClient({
   return (
     <div className="flex h-screen flex-col">
       {/* Header */}
-      <div className="flex items-center gap-3 border-b border-stone-200 bg-white px-4 py-3">
-        <button
+      <div className="flex items-center gap-3 border-b border-divider bg-surface px-4 py-3">
+        <motion.button
           type="button"
           onClick={() => router.back()}
-          className="flex h-8 w-8 items-center justify-center rounded-full hover:bg-stone-100"
+          whileTap={{ scale: 0.95 }}
+          whileHover={{ y: -1 }}
+          transition={{ duration: 0.15, ease: "easeOut" }}
+          className="flex h-8 w-8 items-center justify-center rounded-full hover:bg-bg"
         >
-          <svg className="h-5 w-5 text-stone-600" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
+          <svg className="h-5 w-5 text-muted" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
             <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 19.5L8.25 12l7.5-7.5" />
           </svg>
-        </button>
+        </motion.button>
         <div className="min-w-0 flex-1">
-          <p className="text-sm font-bold text-stone-800">Customer</p>
-          <p className="truncate text-xs text-stone-500">{originalText}</p>
+          <p className="text-sm font-bold text-text">Customer</p>
+          <p className="truncate text-xs text-muted">{originalText}</p>
         </div>
-        <span className="badge !bg-[#0e5f44] !text-white">
+        <span className="badge bg-accent text-bg">
           {jobStatus.replace(/_/g, " ")}
         </span>
       </div>
 
       {/* Photo uploads + Complete button */}
       {canAttachPhotos && (
-        <div className="border-b border-stone-200 bg-stone-50 px-4 py-3 space-y-3">
-          <p className="text-xs font-bold uppercase tracking-wide text-stone-500">
+        <div className="space-y-3 border-b border-divider bg-surface px-4 py-3">
+          <p className="text-xs font-bold uppercase tracking-wide text-muted">
             Job Photos
           </p>
           <div className="grid gap-3 sm:grid-cols-2">
@@ -123,16 +127,19 @@ export default function WorkerChatPageClient({
           {nextAction && (
             <div className="flex items-center gap-2">
               {advanceError && (
-                <span className="text-xs text-red-600">{advanceError}</span>
+                <span className="text-xs text-warning">{advanceError}</span>
               )}
-              <button
+              <motion.button
                 type="button"
                 onClick={() => void handleAdvance()}
                 disabled={advancing}
-                className="w-full rounded-xl bg-[#0e5f44] px-4 py-2.5 text-sm font-bold text-white transition hover:bg-[#0b4c37] disabled:opacity-60"
+                whileTap={{ scale: 0.95 }}
+                whileHover={{ y: -1 }}
+                transition={{ duration: 0.15, ease: "easeOut" }}
+                className="btn-primary w-full !rounded-xl !px-4 !py-2.5 text-sm disabled:opacity-60"
               >
                 {advancing ? "Updating…" : nextAction.label}
-              </button>
+              </motion.button>
             </div>
           )}
         </div>

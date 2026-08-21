@@ -25,7 +25,7 @@ export default async function WorkerChatPage() {
   return (
     <div className="page">
       <div className="page-header">
-        <h1 className="text-lg font-bold text-stone-900">Chats</h1>
+        <h1 className="font-display text-lg font-bold text-text">Chats</h1>
       </div>
       <div className="page-content">
         <WorkerChatList workerId={String(worker._id)} />

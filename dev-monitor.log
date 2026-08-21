@@ -1,0 +1,31 @@
+[2026-08-21T15:53:51+05:00] monitor starting (PORT=3001, pid=482352)
+[2026-08-21T15:53:51+05:00] starting dev server...
+npm notice run ustad-ai@0.1.0 dev
+npm notice run tsx server.ts
+> Ready on http://localhost:3001
+> Socket.io ready on /api/socketio
+(node:482390) [DEP0169] DeprecationWarning: `url.parse()` behavior is not standardized and prone to errors that have security implications. Use the WHATWG URL API instead. CVEs are not issued for `url.parse()` vulnerabilities.
+(Use `node --trace-deprecation ...` to show where the warning was created)
+ ○ Compiling /api/health ...
+ ✓ Compiled /api/health in 840ms (58 modules)
+ GET /health 200 in 1036ms
+ GET /health 200 in 38ms
+[2026-08-21T15:58:39+05:00] dev server killed by signal 9 (exit=137) after 288s
+[2026-08-21T15:58:39+05:00] restarting in 2s...
+[2026-08-21T15:58:41+05:00] starting dev server...
+npm notice run ustad-ai@0.1.0 dev
+npm notice run tsx server.ts
+> Ready on http://localhost:3001
+> Socket.io ready on /api/socketio
+(node:485522) [DEP0169] DeprecationWarning: `url.parse()` behavior is not standardized and prone to errors that have security implications. Use the WHATWG URL API instead. CVEs are not issued for `url.parse()` vulnerabilities.
+(Use `node --trace-deprecation ...` to show where the warning was created)
+ ○ Compiling /api/health ...
+ ✓ Compiled /api/health in 837ms (58 modules)
+ GET /health 200 in 1015ms
+[2026-08-21T16:03:48+05:00] dev server killed by signal 9 (exit=137) after 307s
+[2026-08-21T16:03:48+05:00] restarting in 2s...
+[2026-08-21T16:03:50+05:00] starting dev server...
+npm notice run ustad-ai@0.1.0 dev
+npm notice run tsx server.ts
+> Ready on http://localhost:3001
+> Socket.io ready on /api/socketio

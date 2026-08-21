@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { motion } from "framer-motion";
 import JobPhotoUpload from "./JobPhotoUpload";
 import LiveTracker from "./LiveTracker";
 
@@ -36,15 +37,15 @@ interface ActiveJob {
 const STATUS_LABELS: Record<string, { label: string; style: string }> = {
   WORKER_RESPONSES: {
     label: "Awaiting customer approval",
-    style: "!bg-cyan-100 !text-cyan-800",
+    style: "bg-surface text-muted",
   },
-  ACCEPTED: { label: "Job accepted", style: "!bg-emerald-100 !text-emerald-800" },
-  EN_ROUTE: { label: "On the way", style: "!bg-emerald-100 !text-emerald-800" },
-  ARRIVED: { label: "Arrived", style: "!bg-emerald-100 !text-emerald-800" },
-  IN_PROGRESS: { label: "Work in progress", style: "!bg-blue-100 !text-blue-800" },
+  ACCEPTED: { label: "Job accepted", style: "bg-success text-success-fg" },
+  EN_ROUTE: { label: "On the way", style: "bg-accent/15 text-accent" },
+  ARRIVED: { label: "Arrived", style: "bg-accent/15 text-accent" },
+  IN_PROGRESS: { label: "Work in progress", style: "bg-accent/15 text-accent" },
   AWAITING_CUSTOMER_CONFIRMATION: {
     label: "Work complete — awaiting confirmation",
-    style: "!bg-violet-100 !text-violet-800",
+    style: "bg-warning/10 text-warning",
   },
 };
 
@@ -79,10 +80,10 @@ export default function ActiveJobPanel({
   if (!job) {
     return (
       <section className="card">
-        <h2 className="text-sm font-bold uppercase tracking-wide text-stone-500">
+        <h2 className="text-sm font-bold uppercase tracking-wide text-muted">
           Active job
         </h2>
-        <p className="mt-3 rounded-xl border border-dashed border-stone-200 p-4 text-sm text-stone-400">
+        <p className="mt-3 rounded-xl border border-dashed border-divider p-4 text-sm text-muted">
           No active job. Accept a job below to start working.
         </p>
       </section>
@@ -93,7 +94,7 @@ export default function ActiveJobPanel({
 
   const statusInfo = STATUS_LABELS[activeJob.status] ?? {
     label: activeJob.status.replace(/_/g, " "),
-    style: "!bg-stone-100 !text-stone-600",
+    style: "bg-surface text-muted",
   };
   const next = NEXT_ACTIONS[activeJob.status];
   const emergency = activeJob.understanding?.urgency === "emergency";
@@ -137,23 +138,23 @@ export default function ActiveJobPanel({
     <section className="card space-y-4">
       <div className="flex items-start justify-between gap-3">
         <div className="min-w-0">
-          <h2 className="text-sm font-bold uppercase tracking-wide text-stone-500">
+          <h2 className="text-sm font-bold uppercase tracking-wide text-muted">
             Active job
           </h2>
-          <p className="mt-1 font-urdu text-lg font-bold leading-relaxed text-stone-800">
+          <p className="mt-1 font-urdu text-lg font-bold leading-relaxed text-text">
             {job.input?.original_text}
           </p>
           {job.understanding?.description && (
-            <p className="mt-1 text-sm text-stone-600">
+            <p className="mt-1 text-sm text-muted">
               {job.understanding.description}
             </p>
           )}
-          <div className="mt-2 flex flex-wrap items-center gap-2 text-xs text-stone-500">
-            <span className="badge !bg-stone-100 !text-stone-600 capitalize">
+          <div className="mt-2 flex flex-wrap items-center gap-2 text-xs text-muted">
+            <span className="badge bg-surface text-muted capitalize">
               {job.understanding?.category?.replace(/_/g, " ")}
             </span>
-            {emergency && <span className="badge !bg-red-600 !text-white">Emergency</span>}
-            <span className="font-semibold text-stone-800">
+            {emergency && <span className="badge bg-warning text-bg">Emergency</span>}
+            <span className="font-mono font-semibold text-text">
               {job.pricing?.currency ?? "Rs"} {price.toLocaleString("en-PK")}
             </span>
             {job.location?.address_label && (
@@ -167,23 +168,26 @@ export default function ActiveJobPanel({
       </div>
 
       {job.status === "WORKER_RESPONSES" && (
-        <p className="rounded-xl bg-cyan-50 px-3 py-2 text-sm text-cyan-800">
+          <p className="rounded-xl bg-surface px-3 py-2 text-sm text-muted">
           Your offer is with the customer — they will confirm or decline shortly.
           The job starts as soon as they approve.
         </p>
       )}
 
       {next && (
-        <div className="flex items-center justify-end gap-2 border-t border-stone-100 pt-3">
-          {error && <span className="text-xs text-red-600">{error}</span>}
-          <button
+        <div className="flex items-center justify-end gap-2 border-t border-divider pt-3">
+          {error && <span className="text-xs text-warning">{error}</span>}
+          <motion.button
             type="button"
             onClick={() => void advance()}
             disabled={busy}
-            className="rounded-xl bg-[#0e5f44] px-4 py-2 text-sm font-bold text-white transition hover:bg-[#0b4c37] disabled:opacity-60"
+            className="btn-primary !rounded-xl !px-4 !py-2 text-sm disabled:opacity-60"
+            whileTap={{ scale: 0.95 }}
+            whileHover={{ y: -1 }}
+            transition={{ duration: 0.15, ease: "easeOut" }}
           >
             {busy ? "Updating…" : next.label}
-          </button>
+          </motion.button>
         </div>
       )}
 
@@ -205,7 +209,7 @@ export default function ActiveJobPanel({
       )}
 
       {completionNote && (
-        <p className="rounded-xl bg-stone-50 px-3 py-2 text-xs text-stone-600">
+        <p className="rounded-xl bg-surface px-3 py-2 text-xs text-muted">
           Work note: {completionNote}
         </p>
       )}
