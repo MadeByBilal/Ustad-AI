@@ -12,7 +12,7 @@ const port = parseInt(process.env.PORT || "3001", 10);
 let shuttingDown = false;
 
 // Synchronous write so the message is never lost when the process exits
-// immediately afterwards (a normal console.error to a pipe can drop the line).
+// immediately afterwards (a normal console.error to a pipe can drop the lines
 function logFatal(label: string, err: unknown): void {
   const stack = err instanceof Error ? (err.stack ?? err.message) : String(err);
   process.stderr.write(`\n[server] ${label}:\n${stack}\n`);
@@ -36,7 +36,9 @@ process.on("uncaughtException", (err) => {
 // Ignore it so the server survives a disconnected terminal. (Use SIGTERM/
 // SIGINT — e.g. Ctrl+C — for a clean shutdown.)
 process.on("SIGHUP", () => {
-  process.stderr.write("\n[server] received SIGHUP, ignoring (detached terminal)\n");
+  process.stderr.write(
+    "\n[server] received SIGHUP, ignoring (detached terminal)\n",
+  );
 });
 
 // If stdout/stderr is a pipe to a now-closed terminal, writes throw EPIPE.
@@ -80,7 +82,7 @@ app
     server.on("error", (err: NodeJS.ErrnoException) => {
       if (err.code === "EADDRINUSE") {
         console.error(
-          `[server] port ${port} is already in use. Set PORT env or stop the other process.`
+          `[server] port ${port} is already in use. Set PORT env or stop the other process.`,
         );
       } else {
         console.error("[server] server error:", err);

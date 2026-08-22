@@ -29,3 +29,35 @@ npm notice run ustad-ai@0.1.0 dev
 npm notice run tsx server.ts
 > Ready on http://localhost:3001
 > Socket.io ready on /api/socketio
+(node:488731) [DEP0169] DeprecationWarning: `url.parse()` behavior is not standardized and prone to errors that have security implications. Use the WHATWG URL API instead. CVEs are not issued for `url.parse()` vulnerabilities.
+(Use `node --trace-deprecation ...` to show where the warning was created)
+ ○ Compiling /api/health ...
+ ✓ Compiled /api/health in 540ms (58 modules)
+ GET /health 200 in 771ms
+[2026-08-21T16:08:54+05:00] dev server killed by signal 9 (exit=137) after 304s
+[2026-08-21T16:08:54+05:00] restarting in 2s...
+[2026-08-21T16:08:56+05:00] starting dev server...
+npm notice run ustad-ai@0.1.0 dev
+npm notice run tsx server.ts
+> Ready on http://localhost:3001
+> Socket.io ready on /api/socketio
+(node:492356) [DEP0169] DeprecationWarning: `url.parse()` behavior is not standardized and prone to errors that have security implications. Use the WHATWG URL API instead. CVEs are not issued for `url.parse()` vulnerabilities.
+(Use `node --trace-deprecation ...` to show where the warning was created)
+ ○ Compiling /api/health ...
+ ✓ Compiled /api/health in 522ms (58 modules)
+ GET /health 200 in 678ms
+[2026-08-21T16:13:59+05:00] dev server killed by signal 9 (exit=137) after 303s
+[2026-08-21T16:13:59+05:00] restarting in 2s...
+[2026-08-21T16:14:01+05:00] starting dev server...
+npm notice run ustad-ai@0.1.0 dev
+npm notice run tsx server.ts
+[server] port 3001 is already in use. Set PORT env or stop the other process.
+
+[server] process exited with code 1
+[2026-08-21T16:14:04+05:00] dev server exited with status 1 after 3s
+[2026-08-21T16:14:04+05:00] restarting in 30s (crash-loop backoff)...
+[2026-08-21T16:14:34+05:00] starting dev server...
+npm notice run ustad-ai@0.1.0 dev
+npm notice run tsx server.ts
+> Ready on http://localhost:3001
+> Socket.io ready on /api/socketio
