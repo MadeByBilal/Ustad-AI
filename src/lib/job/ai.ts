@@ -6,7 +6,8 @@ import {
 } from "@/lib/job/analyze";
 import type { ComplexityLevel } from "@/lib/job/pricing";
 
-export const GEMINI_MODEL = "gemini-2.5-flash";
+export const GEMINI_MODEL =
+  process.env.GEMINI_MODEL?.trim() || "gemini-3.6-flash";
 
 const WORKER_CATEGORIES = [
   "plumber",
@@ -353,6 +354,7 @@ export async function transcribeAudio(
     );
   }
   const text = await transcriptionFromAudio(audio, mime, apiKey);
+  console.log("[AssemblyAI] transcript:", JSON.stringify(text));
   if (!text || text.length < 2) {
     throw new Error(
       "Transcription was empty or too short. The audio may be silent or unclear.",

@@ -120,9 +120,16 @@ export async function POST(req: NextRequest) {
     let transcript: string | undefined;
     if (payload.audio) {
       try {
+        console.log(
+          "[ai/understand] audio received:",
+          payload.audio!.buffer.length,
+          "bytes,",
+          payload.audio!.mime,
+        );
         transcript = await import("@/lib/job/ai").then((m) =>
           m.transcribeAudio(payload.audio!.buffer, payload.audio!.mime)
         );
+        console.log("[ai/understand] transcript:", JSON.stringify(transcript));
       } catch (transcriptionError) {
         // Short audio, network issues, or API errors — fall back to
         // asking the user to type their request instead of 500-ing.

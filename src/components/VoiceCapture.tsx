@@ -264,6 +264,7 @@ export default function VoiceCapture({ variant = "landing" }: VoiceCaptureProps)
   const recorderRef = useRef<{
     recorder: MediaRecorder;
     stream: MediaStream;
+    stopLevelMonitor?: () => void;
   } | null>(null);
 
   const voiceSupported = useCallback(() => {
@@ -315,6 +316,8 @@ export default function VoiceCapture({ variant = "landing" }: VoiceCaptureProps)
             : fetchBody),
         });
         const data = await parseApiResponse<UnderstandResponse>(response);
+        console.log("[VoiceCapture] API response transcript:", data.transcript ?? "(none)");
+        console.log("[VoiceCapture] understanding:", data.understanding);
         setResult(data);
         setClarificationSelections([]);
         setStatus(data.clarification_question || data.manual_fallback ? "clarifying" : "done");
@@ -340,21 +343,64 @@ export default function VoiceCapture({ variant = "landing" }: VoiceCaptureProps)
     }
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      const track = stream.getAudioTracks()[0];
+      console.log("[VoiceCapture] mic granted:", {
+        label: track?.label ?? "unknown",
+        muted: track?.muted,
+        readyState: track?.readyState,
+      });
+
+      // Poll mic input level so you can see in DevTools whether audio is coming in.
+      const audioCtx = new AudioContext();
+      const source = audioCtx.createMediaStreamSource(stream);
+      const analyser = audioCtx.createAnalyser();
+      analyser.fftSize = 256;
+      source.connect(analyser);
+      const levelData = new Uint8Array(analyser.frequencyBinCount);
+      const levelInterval = window.setInterval(() => {
+        analyser.getByteFrequencyData(levelData);
+        const avg =
+          levelData.reduce((sum, v) => sum + v, 0) / levelData.length;
+        console.log("[VoiceCapture] mic level (0–255):", Math.round(avg));
+      }, 500);
+
       const recorder = new MediaRecorder(stream);
       const chunks: Blob[] = [];
       recorder.ondataavailable = (e) => {
-        if (e.data.size > 0) chunks.push(e.data);
+        if (e.data.size > 0) {
+          chunks.push(e.data);
+          console.log("[VoiceCapture] audio chunk:", e.data.size, "bytes");
+        }
       };
       recorder.onstop = () => {
+        window.clearInterval(levelInterval);
+        void audioCtx.close();
         stream.getTracks().forEach((t) => t.stop());
         recorderRef.current = null;
         setRecording(false);
         const blob = new Blob(chunks, { type: recorder.mimeType || "audio/webm" });
+        console.log("[VoiceCapture] recording stopped:", {
+          chunks: chunks.length,
+          totalBytes: blob.size,
+          mimeType: blob.type,
+        });
+        if (blob.size < 1000) {
+          console.warn(
+            "[VoiceCapture] recording is very small — mic may not be picking up audio",
+          );
+        }
         const fd = new FormData();
         fd.append("audio", blob, "voice.webm");
         void run(fd);
       };
-      recorderRef.current = { recorder, stream };
+      recorderRef.current = {
+        recorder,
+        stream,
+        stopLevelMonitor: () => {
+          window.clearInterval(levelInterval);
+          void audioCtx.close();
+        },
+      };
       recorder.start();
       setRecording(true);
     } catch {
