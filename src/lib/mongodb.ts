@@ -1,7 +1,7 @@
 import mongoose from "mongoose";
 
 const MONGODB_URI =
-  process.env.MONGODB_URI ?? "mongodb://localhost:27017/ustad_ai";
+  process.env.MONGODB_URI ?? "mongodb+srv://stackonofficial_db_user:5G1ExjXipDyG4Xma@ustadai.cq2zfu2.mongodb.net/ustad_ai";
 
 interface MongooseCache {
   conn: typeof mongoose | null;

@@ -6,7 +6,8 @@ import {
 } from "@/lib/job/analyze";
 import type { ComplexityLevel } from "@/lib/job/pricing";
 
-export const GEMINI_MODEL = "gemini-2.5-flash";
+export const GEMINI_MODEL =
+  process.env.GEMINI_MODEL?.trim() || "gemini-3.6-flash";
 
 const WORKER_CATEGORIES = [
   "plumber",
@@ -26,6 +27,9 @@ const RETRY_BASE_DELAY_MS = 500;
 const ASSEMBLYAI_POLL_DEADLINE_MS = 20_000;
 /** Interval (ms) between AssemblyAI poll attempts. */
 const ASSEMBLYAI_POLL_INTERVAL_MS = 1_500;
+const ASSEMBLYAI_LANGUAGE_CODE =
+  (process.env.ASSEMBLYAI_LANGUAGE_CODE || "ur").trim().toLowerCase();
+const VALID_ASSEMBLYAI_LANGUAGE_CODES = new Set(["en", "ur"]);
 
 export interface AiImageInput {
   mime: string;
@@ -269,13 +273,14 @@ async function transcriptionFromAudio(
   const auth = { headers: { Authorization: apiKey } };
 
   // Step 1: Upload audio (10s timeout)
+  const uploadBody = new Uint8Array(audio);
   const upload = await fetch("https://api.assemblyai.com/v2/upload", {
     method: "POST",
     headers: {
       "Content-Type": mime || "application/octet-stream",
       ...auth.headers,
     },
-    body: audio,
+    body: uploadBody,
     signal: AbortSignal.timeout(API_TIMEOUT_MS),
   });
   if (!upload.ok) {
@@ -289,14 +294,20 @@ async function transcriptionFromAudio(
     throw new Error("AssemblyAI upload missing upload_url");
   }
 
-  // Step 2: Create transcript job (10s timeout, auto-detect language)
+  // Step 2: Create transcript job with a locked language so it stays in the
+  // supported app languages instead of auto-detecting unrelated speech.
+  const languageCode = VALID_ASSEMBLYAI_LANGUAGE_CODES.has(
+    ASSEMBLYAI_LANGUAGE_CODE,
+  )
+    ? ASSEMBLYAI_LANGUAGE_CODE
+    : "ur";
+
   const created = await fetch("https://api.assemblyai.com/v2/transcript", {
     method: "POST",
     headers: { "Content-Type": "application/json", ...auth.headers },
     body: JSON.stringify({
       audio_url: uploaded.upload_url,
-      // No language_code: let AssemblyAI auto-detect.
-      // This handles Roman Urdu, Urdu, English, and mixed speech.
+      language_code: languageCode,
     }),
     signal: AbortSignal.timeout(API_TIMEOUT_MS),
   });
@@ -353,6 +364,7 @@ export async function transcribeAudio(
     );
   }
   const text = await transcriptionFromAudio(audio, mime, apiKey);
+  console.log("[AssemblyAI] transcript:", JSON.stringify(text));
   if (!text || text.length < 2) {
     throw new Error(
       "Transcription was empty or too short. The audio may be silent or unclear.",
