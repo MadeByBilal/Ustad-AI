@@ -13,7 +13,7 @@ export function initIO(server: HTTPServer): SocketIOServer {
   io = new SocketIOServer(server, {
     path: "/api/socketio",
     cors: {
-      origin: process.env.NEXT_PUBLIC_APP_URL || "*",
+      origin: "*",
       methods: ["GET", "POST"],
     },
     transports: ["websocket", "polling"],

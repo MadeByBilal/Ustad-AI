@@ -1,4 +1,4 @@
-import { cookies } from "next/headers";
+import { cookies, headers } from "next/headers";
 import { connectDB } from "@/lib/mongodb";
 import {
   SESSION_COOKIE_NAME,
@@ -16,9 +16,15 @@ export interface SessionUser {
  * Server-side session lookup shared by pages and API routes.
  * Returns null when the cookie is missing, malformed, expired or the
  * session record no longer exists.
+ *
+ * Supports both cookie-based auth (web) and Bearer token auth (mobile).
  */
 export async function getSessionUser(): Promise<SessionUser | null> {
-  const token = cookies().get(SESSION_COOKIE_NAME)?.value;
+  const hdrs = await headers();
+  const authHeader = hdrs.get("authorization");
+  const token = authHeader?.startsWith("Bearer ")
+    ? authHeader.slice(7)
+    : cookies().get(SESSION_COOKIE_NAME)?.value;
   if (!isSessionTokenValid(token)) {
     return null;
   }

@@ -6,16 +6,11 @@ import Link from "next/link";
 import { CANONICAL_SKILLS } from "@/lib/job/analyze";
 import type { WorkerCategory } from "@/models";
 import { motion } from "framer-motion";
+import { useLang } from "@/lib/i18n/context";
+import LanguageToggle from "@/components/LanguageToggle";
 
 type Mode = "signin" | "signup";
 type Role = "customer" | "worker";
-
-const CATEGORY_LABELS: Record<WorkerCategory, string> = {
-  plumber: "Plumber",
-  electrician: "Electrician",
-  ac_technician: "AC Technician",
-  carpenter: "Carpenter",
-};
 
 function destinationFor(role: string): string {
   if (role === "customer") return "/dashboard/customer";
@@ -27,6 +22,7 @@ function AuthForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const next = searchParams.get("next") ?? "/dashboard";
+  const { t, lang } = useLang();
 
   const [mode, setMode] = useState<Mode>("signin");
   const [role, setRole] = useState<Role>("customer");
@@ -37,6 +33,13 @@ function AuthForm() {
   const [skills, setSkills] = useState<string[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+
+  const CATEGORY_LABELS: Record<WorkerCategory, string> = {
+    plumber: t("plumber"),
+    electrician: t("electrician"),
+    ac_technician: t("acTechnician"),
+    carpenter: t("carpenter"),
+  };
 
   function toggleSkill(skill: string) {
     setSkills((prev) =>
@@ -78,7 +81,7 @@ function AuthForm() {
       router.push(next.startsWith("/dashboard") ? next : dest);
       router.refresh();
     } catch {
-      setError("Network error — is the dev server running?");
+      setError(t("networkError"));
     } finally {
       setLoading(false);
     }
@@ -88,12 +91,15 @@ function AuthForm() {
 
   return (
     <motion.div className="card mx-auto w-full max-w-md" whileHover={{ y: -2 }} transition={{ duration: 0.2, ease: "easeOut" }}>
-      <Link
-        href="/"
-        className="mb-6 inline-flex items-center gap-1.5 text-sm font-semibold text-accent hover:underline"
-      >
-        ← Back
-      </Link>
+      <div className="flex items-center justify-between">
+        <Link
+          href="/"
+          className="mb-6 inline-flex items-center gap-1.5 text-sm font-semibold text-accent hover:underline"
+        >
+          {t("back")}
+        </Link>
+        <LanguageToggle />
+      </div>
 
       {/* Sign in / Sign up tabs */}
       <div className="grid grid-cols-2 gap-2 rounded-xl bg-surface p-1">
@@ -111,18 +117,16 @@ function AuthForm() {
                 : "text-muted hover:text-text"
             }`}
           >
-            {m === "signin" ? "Sign in" : "Sign up"}
+            {m === "signin" ? t("signIn") : t("signUp")}
           </motion.button>
         ))}
       </div>
 
-      <h1 className="mt-5 font-urdu text-2xl font-bold">
-        {mode === "signin" ? "لاگ ان کریں" : "اکاؤنٹ بنائیں"}
+      <h1 className={`mt-5 text-2xl font-bold ${lang === "ur" ? "font-urdu" : ""}`}>
+        {mode === "signin" ? t("signInTitle") : t("signUpTitle")}
       </h1>
       <p className="mt-1 text-sm text-muted">
-        {mode === "signin"
-          ? "Sign in with your email and password"
-          : "Create your account with email and password"}
+        {mode === "signin" ? t("signInDesc") : t("signUpDesc")}
       </p>
 
       {error && (
@@ -149,14 +153,14 @@ function AuthForm() {
                       : "text-muted hover:text-text"
                   }`}
                 >
-                  {r === "customer" ? "Customer" : "Technician"}
+                  {r === "customer" ? t("customer") : t("technician")}
                 </motion.button>
               ))}
             </div>
 
             <div>
               <label htmlFor="name" className="mb-1 block text-sm font-medium text-text">
-                Full name
+                {t("fullName")}
               </label>
               <input
                 id="name"
@@ -174,7 +178,7 @@ function AuthForm() {
 
         <div>
           <label htmlFor="email" className="mb-1 block text-sm font-medium text-text">
-            Email
+            {t("email")}
           </label>
           <input
             id="email"
@@ -190,13 +194,13 @@ function AuthForm() {
 
         <div>
           <label htmlFor="password" className="mb-1 block text-sm font-medium text-text">
-            Password
+            {t("password")}
           </label>
           <input
             id="password"
             type="password"
             autoComplete={mode === "signin" ? "current-password" : "new-password"}
-            placeholder={mode === "signup" ? "8+ characters with a letter and a number" : "Your password"}
+            placeholder={mode === "signup" ? t("passwordPlaceholder") : t("yourPassword")}
             value={password}
             onChange={(e) => setPassword(e.target.value)}
             className="input"
@@ -208,7 +212,7 @@ function AuthForm() {
           <>
             <div>
               <label htmlFor="category" className="mb-1 block text-sm font-medium text-text">
-                Trade
+                {t("category")}
               </label>
               <select
                 id="category"
@@ -228,7 +232,7 @@ function AuthForm() {
             </div>
             <fieldset>
                 <legend className="mb-1 block text-sm font-medium text-text">
-                Skills <span className="font-normal text-muted">(pick at least one)</span>
+                {t("skills")} <span className="font-normal text-muted">({t("pickAtLeastOne")})</span>
               </legend>
               <div className="flex flex-wrap gap-2">
                 {availableSkills.map((skill) => {
@@ -260,13 +264,13 @@ function AuthForm() {
         <motion.button type="submit" disabled={loading} whileTap={{ scale: 0.95 }} whileHover={{ y: -1 }} transition={{ duration: 0.15, ease: "easeOut" }} className="btn-primary w-full disabled:opacity-60">
           {loading
             ? mode === "signin"
-              ? "Signing in…"
-              : "Creating account…"
+              ? t("signingIn")
+              : t("creatingAccount")
             : mode === "signin"
-              ? "Sign in"
+              ? t("signInBtn")
               : role === "worker"
-                ? "Create technician account"
-                : "Create account"}
+                ? t("createTechAccount")
+                : t("createAccount")}
         </motion.button>
       </form>
     </motion.div>

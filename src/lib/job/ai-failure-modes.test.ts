@@ -313,6 +313,21 @@ describe("timeout configuration", () => {
     const [, uploadInit] = fetchMock.mock.calls[0] as [string, RequestInit];
     expect((uploadInit.signal as AbortSignal).aborted).toBe(false);
   });
+
+  it("pins AssemblyAI to Urdu by default to avoid other-language transcription", async () => {
+    process.env.ASSEMBLYAI_API_KEY = "test-key";
+    const fetchMock = vi.fn()
+      .mockResolvedValueOnce(new Response(JSON.stringify({ upload_url: "https://example.com/audio" })))
+      .mockResolvedValueOnce(new Response(JSON.stringify({ id: "t1" })))
+      .mockResolvedValueOnce(new Response(JSON.stringify({ status: "completed", text: "salam bhai" })));
+    vi.stubGlobal("fetch", fetchMock);
+
+    await transcribeAudio(Buffer.from("audio"), "audio/webm");
+
+    const [, transcriptInit] = fetchMock.mock.calls[1] as [string, RequestInit];
+    const requestBody = JSON.parse(transcriptInit.body as string) as { language_code?: string };
+    expect(requestBody.language_code).toBe("ur");
+  });
 });
 
 // ─── normalizeGeminiJob edge cases ──────────────────────────────────
