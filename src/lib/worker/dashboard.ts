@@ -64,7 +64,16 @@ export interface ActiveJobView {
     final_price?: number | null;
     currency?: string;
   };
-  location?: { address_label?: string };
+  location?: {
+    address_label?: string;
+    lat?: number | null;
+    lng?: number | null;
+  };
+  route?: {
+    polyline?: number[][] | null;
+    distance_meters?: number | null;
+    duration_seconds?: number | null;
+  } | null;
   completion?: {
     before_photo_id?: string | null;
     after_photo_id?: string | null;
@@ -101,7 +110,9 @@ export interface WorkerDashboardData {
  * broadcasting jobs this worker can still respond to, sorted by how
  * soon their acceptance window closes.
  */
-export async function getWorkerDashboard(workerId: string): Promise<WorkerDashboardData> {
+export async function getWorkerDashboard(
+  workerId: string,
+): Promise<WorkerDashboardData> {
   await connectDB();
 
   const worker = await Worker.findById(workerId).lean();
@@ -114,35 +125,41 @@ export async function getWorkerDashboard(workerId: string): Promise<WorkerDashbo
       ? worker.location.coordinates
       : [null, null];
 
-  const [activeJob, incomingJobs, openOffers, directRequestOffers] = await Promise.all([
-    worker.active_job_id ? Job.findById(worker.active_job_id).lean() : null,
-    Job.find({
-      status: "BROADCASTING",
-      "matching.acceptance_deadline": { $gte: new Date() },
-      "understanding.category": worker.category,
-      "matching.accepted_worker_ids": { $nin: [worker._id] },
-    })
-      .sort({ "matching.acceptance_deadline": 1 })
-      .limit(10)
-      .lean(),
-    Offer.find({ worker_id: worker._id, status: { $in: ["pending", "declined"] } })
-      .lean(),
-    // Direct customer requests targeting this worker
-    Offer.find({
-      worker_id: worker._id,
-      type: { $in: ["customer_offer", "counter_offer"] },
-      status: "pending",
-    })
-      .sort({ created_at: -1 })
-      .lean(),
-  ]);
+  const [activeJob, incomingJobs, openOffers, directRequestOffers] =
+    await Promise.all([
+      worker.active_job_id ? Job.findById(worker.active_job_id).lean() : null,
+      Job.find({
+        status: "BROADCASTING",
+        "matching.acceptance_deadline": { $gte: new Date() },
+        "understanding.category": worker.category,
+        "matching.accepted_worker_ids": { $nin: [worker._id] },
+      })
+        .sort({ "matching.acceptance_deadline": 1 })
+        .limit(10)
+        .lean(),
+      Offer.find({
+        worker_id: worker._id,
+        status: { $in: ["pending", "declined"] },
+      }).lean(),
+      // Direct customer requests targeting this worker
+      Offer.find({
+        worker_id: worker._id,
+        type: { $in: ["customer_offer", "counter_offer"] },
+        status: "pending",
+      })
+        .sort({ created_at: -1 })
+        .lean(),
+    ]);
 
   const declinedJobIds = new Set(
     openOffers
       .filter((o) => o.status === "declined" && o.type === "decline")
-      .map((o) => String(o.job_id))
+      .map((o) => String(o.job_id)),
   );
-  const offerByJob = new Map<string, { type: string; status: string; counter_price: number | null }>();
+  const offerByJob = new Map<
+    string,
+    { type: string; status: string; counter_price: number | null }
+  >();
   for (const o of openOffers) {
     if (o.status !== "declined") {
       offerByJob.set(String(o.job_id), {
@@ -166,8 +183,15 @@ export async function getWorkerDashboard(workerId: string): Promise<WorkerDashbo
           ? job.location.coordinates
           : [null, null];
       const distance_km =
-        workerLat != null && workerLng != null && jobLat != null && jobLng != null
-          ? Number(haversineDistanceKm(workerLat, workerLng, jobLat, jobLng).toFixed(1))
+        workerLat != null &&
+        workerLng != null &&
+        jobLat != null &&
+        jobLng != null
+          ? Number(
+              haversineDistanceKm(workerLat, workerLng, jobLat, jobLng).toFixed(
+                1,
+              ),
+            )
           : null;
       return {
         id: String(job._id),
@@ -193,17 +217,21 @@ export async function getWorkerDashboard(workerId: string): Promise<WorkerDashbo
   const directJobIds = directRequestOffers
     .filter((o) => o.type === "customer_offer")
     .map((o) => o.job_id);
-  const directJobs = directJobIds.length > 0
-    ? await Job.find({ _id: { $in: directJobIds } }).lean()
-    : [];
+  const directJobs =
+    directJobIds.length > 0
+      ? await Job.find({ _id: { $in: directJobIds } }).lean()
+      : [];
   const directJobMap = new Map(directJobs.map((j) => [String(j._id), j]));
 
   // Latest offer per job (the one the worker needs to respond to)
-  const latestOfferByJob = new Map<string, typeof directRequestOffers[0]>();
+  const latestOfferByJob = new Map<string, (typeof directRequestOffers)[0]>();
   for (const o of directRequestOffers) {
     const jid = String(o.job_id);
     const existing = latestOfferByJob.get(jid);
-    if (!existing || new Date(o.created_at).getTime() > new Date(existing.created_at).getTime()) {
+    if (
+      !existing ||
+      new Date(o.created_at).getTime() > new Date(existing.created_at).getTime()
+    ) {
       latestOfferByJob.set(jid, o);
     }
   }
@@ -221,7 +249,8 @@ export async function getWorkerDashboard(workerId: string): Promise<WorkerDashbo
       required_skills: job.understanding?.required_skills ?? [],
       urgency: job.understanding?.urgency ?? "normal",
       customer_offer: job.pricing?.customer_offer ?? 0,
-      my_counter_price: offer.type === "counter_offer" ? (offer.counter_price ?? null) : null,
+      my_counter_price:
+        offer.type === "counter_offer" ? (offer.counter_price ?? null) : null,
       offer_status: offer.status,
       address_label: job.location?.address_label ?? "",
       created_at: new Date(offer.created_at).toISOString(),
@@ -265,7 +294,8 @@ export async function getWorkerDashboard(workerId: string): Promise<WorkerDashbo
                 category: activeJob.understanding.category ?? undefined,
                 subcategory: activeJob.understanding.subcategory ?? undefined,
                 description: activeJob.understanding.description ?? undefined,
-                required_skills: activeJob.understanding.required_skills ?? undefined,
+                required_skills:
+                  activeJob.understanding.required_skills ?? undefined,
                 urgency: activeJob.understanding.urgency ?? undefined,
               }
             : undefined,
@@ -279,18 +309,31 @@ export async function getWorkerDashboard(workerId: string): Promise<WorkerDashbo
               }
             : undefined,
           location: activeJob.location
-            ? { address_label: activeJob.location.address_label ?? undefined }
+            ? {
+                address_label: activeJob.location.address_label ?? undefined,
+                lat: activeJob.location.coordinates?.[1] ?? null,
+                lng: activeJob.location.coordinates?.[0] ?? null,
+              }
             : undefined,
+          route: activeJob.route
+            ? {
+                polyline: activeJob.route.polyline
+                  ? Array.from(
+                      activeJob.route.polyline as unknown as number[][],
+                    )
+                  : null,
+                distance_meters: activeJob.route.distance_meters ?? null,
+                duration_seconds: activeJob.route.duration_seconds ?? null,
+              }
+            : null,
           completion: activeJob.completion
             ? {
-                before_photo_id:
-                  activeJob.completion.before_photo_id
-                    ? String(activeJob.completion.before_photo_id)
-                    : null,
-                after_photo_id:
-                  activeJob.completion.after_photo_id
-                    ? String(activeJob.completion.after_photo_id)
-                    : null,
+                before_photo_id: activeJob.completion.before_photo_id
+                  ? String(activeJob.completion.before_photo_id)
+                  : null,
+                after_photo_id: activeJob.completion.after_photo_id
+                  ? String(activeJob.completion.after_photo_id)
+                  : null,
                 note: activeJob.completion.note ?? undefined,
               }
             : undefined,

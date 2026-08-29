@@ -1,19 +1,83 @@
 import type { Server } from "socket.io";
 import mongoose from "mongoose";
 import { haversineDistanceKm } from "./geo";
+import type { RouteComputedPayload, RoutePoint } from "./route-types";
 
 const ARRIVAL_THRESHOLD_KM = 0.1; // 100 meters
+
+function isRoutePoint(value: unknown): value is RoutePoint {
+  return (
+    Array.isArray(value) &&
+    value.length === 2 &&
+    typeof value[0] === "number" &&
+    Number.isFinite(value[0]) &&
+    typeof value[1] === "number" &&
+    Number.isFinite(value[1])
+  );
+}
+
+function toRoutePayload(
+  jobId: string,
+  route: unknown,
+): RouteComputedPayload | null {
+  if (!route || typeof route !== "object") return null;
+
+  const storedRoute = route as {
+    polyline?: unknown;
+    distance_meters?: unknown;
+    duration_seconds?: unknown;
+  };
+  const polyline = Array.isArray(storedRoute.polyline)
+    ? storedRoute.polyline.filter(isRoutePoint)
+    : [];
+  if (polyline.length < 2) return null;
+
+  return {
+    jobId,
+    polyline,
+    distanceMeters:
+      typeof storedRoute.distance_meters === "number" &&
+      Number.isFinite(storedRoute.distance_meters)
+        ? storedRoute.distance_meters
+        : null,
+    durationSeconds:
+      typeof storedRoute.duration_seconds === "number" &&
+      Number.isFinite(storedRoute.duration_seconds)
+        ? storedRoute.duration_seconds
+        : null,
+  };
+}
 
 export function registerSocketHandlers(io: Server): void {
   io.on("connection", (socket) => {
     console.log(`[socket] connected: ${socket.id}`);
 
-    socket.on("join-job", (data: { jobId: string; role: string; workerId?: string }) => {
-      const room = `job:${data.jobId}`;
-      socket.join(room);
-      socket.data = { jobId: data.jobId, role: data.role, workerId: data.workerId };
-      console.log(`[socket] ${socket.id} joined room ${room} as ${data.role}`);
-    });
+    socket.on(
+      "join-job",
+      async (data: { jobId: string; role: string; workerId?: string }) => {
+        const room = `job:${data.jobId}`;
+        socket.join(room);
+        socket.data = {
+          jobId: data.jobId,
+          role: data.role,
+          workerId: data.workerId,
+        };
+        console.log(
+          `[socket] ${socket.id} joined room ${room} as ${data.role}`,
+        );
+
+        try {
+          const Job = mongoose.model("Job");
+          const job = (await Job.findOne({ _id: data.jobId })
+            .select("route")
+            .lean()) as { route?: unknown } | null;
+          const route = toRoutePayload(data.jobId, job?.route);
+          if (route) socket.emit("route-computed", route);
+        } catch (error) {
+          console.error("[socket] route lookup error:", error);
+        }
+      },
+    );
 
     socket.on("leave-job", (data: { jobId: string }) => {
       const room = `job:${data.jobId}`;
@@ -37,15 +101,18 @@ export function registerSocketHandlers(io: Server): void {
                 $set: {
                   "location.type": "Point",
                   "location.coordinates": [lng, lat],
-                  "location_updated_at": new Date(),
+                  location_updated_at: new Date(),
                 },
-              }
+              },
             );
           }
 
           // Fetch job to get destination
           const Job = mongoose.model("Job");
-          const job = await Job.findOne({ _id: jobId }).lean() as Record<string, unknown> | null;
+          const job = (await Job.findOne({ _id: jobId }).lean()) as Record<
+            string,
+            unknown
+          > | null;
           if (!job) return;
 
           const location = job.location as Record<string, unknown> | undefined;
@@ -72,16 +139,13 @@ export function registerSocketHandlers(io: Server): void {
           });
 
           // Auto-arrival detection: if within 100m and job is EN_ROUTE
-          if (
-            distanceKm <= ARRIVAL_THRESHOLD_KM &&
-            job.status === "EN_ROUTE"
-          ) {
+          if (distanceKm <= ARRIVAL_THRESHOLD_KM && job.status === "EN_ROUTE") {
             const workerId = socket.data?.workerId;
             if (workerId) {
               // Transition job to ARRIVED
               await Job.findOneAndUpdate(
                 { _id: jobId, status: "EN_ROUTE" },
-                { $set: { status: "ARRIVED" } }
+                { $set: { status: "ARRIVED" } },
               );
 
               // Record job event
@@ -92,7 +156,10 @@ export function registerSocketHandlers(io: Server): void {
                 to_state: "ARRIVED",
                 actor_id: workerId,
                 actor_type: "system",
-                metadata: { reason: "geofence-arrival", distance_meters: distanceMeters },
+                metadata: {
+                  reason: "geofence-arrival",
+                  distance_meters: distanceMeters,
+                },
               });
 
               // Record system message
@@ -112,14 +179,14 @@ export function registerSocketHandlers(io: Server): void {
               });
 
               console.log(
-                `[socket] auto-arrival triggered for job ${jobId} at ${distanceMeters}m`
+                `[socket] auto-arrival triggered for job ${jobId} at ${distanceMeters}m`,
               );
             }
           }
         } catch (err) {
           console.error("[socket] worker-location error:", err);
         }
-      }
+      },
     );
 
     socket.on("disconnect", () => {

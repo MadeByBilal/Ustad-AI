@@ -1,4 +1,3 @@
-import { NextRequest } from "next/server";
 import { requireRole } from "@/lib/auth";
 import { connectDB } from "@/lib/mongodb";
 import { Job, Worker } from "@/models";

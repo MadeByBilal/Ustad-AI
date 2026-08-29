@@ -1,7 +1,7 @@
 "use client";
-import { useCallback, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import Link from "next/link";
-import { motion, AnimatePresence } from "framer-motion";
+import { motion, AnimatePresence, useReducedMotion } from "framer-motion";
 import { parseApiResponse } from "@/lib/api-client";
 import type { AiUnderstandResult } from "@/lib/job/ai";
 import type { WorkerOption } from "@/lib/matching";
@@ -16,6 +16,66 @@ export interface UnderstandResponse extends AiUnderstandResult {
 }
 
 type Status = "idle" | "processing" | "clarifying" | "done" | "error";
+
+type Coordinates = { lat: number; lng: number };
+type RunBody = FormData | { clarification?: string };
+type LocationFailureReason = "unsupported" | "denied" | "unavailable" | "timeout";
+
+type RecordingSession = {
+  recorder: MediaRecorder;
+  stream: MediaStream;
+  generation: number;
+  cancelled: boolean;
+  cleanup: () => void;
+};
+
+const SUPPORTED_AUDIO_MIME_TYPES = [
+  "audio/mp4",
+  "audio/webm;codecs=opus",
+  "audio/webm",
+] as const;
+const ANALYSIS_TIMEOUT_MS = 18_000;
+const LEVEL_SAMPLE_INTERVAL_MS = 100;
+const MIN_AUDIO_BYTES = 1_000;
+const MIN_AVERAGE_RMS = 0.012;
+const MIN_PEAK_RMS = 0.035;
+const MIN_ACTIVE_SAMPLE_RATIO = 0.05;
+
+function getSupportedAudioMimeType(): string | null {
+  if (
+    typeof MediaRecorder === "undefined" ||
+    typeof MediaRecorder.isTypeSupported !== "function"
+  ) {
+    return null;
+  }
+
+  return (
+    SUPPORTED_AUDIO_MIME_TYPES.find((mimeType) => {
+      try {
+        return MediaRecorder.isTypeSupported(mimeType);
+      } catch {
+        return false;
+      }
+    }) ?? null
+  );
+}
+
+function audioFileExtension(mimeType: string): "mp4" | "webm" {
+  return mimeType.toLowerCase().includes("mp4") ? "mp4" : "webm";
+}
+
+function locationFailureMessage(reason: LocationFailureReason): string {
+  switch (reason) {
+    case "denied":
+      return "Location access is blocked. Allow it in your browser settings for nearby matches.";
+    case "timeout":
+      return "We could not get your location in time. Try again for nearby matches.";
+    case "unsupported":
+      return "This browser cannot provide your location. You can continue without distance matching.";
+    default:
+      return "We could not get your location. Try again for nearby matches.";
+  }
+}
 
 export interface VoiceCaptureProps {
   /** Visual context. Both variants use the shared dark surface palette. */
@@ -105,7 +165,7 @@ function WorkerCard({
   );
 }
 
-function ResultPanel({ data, variant, location }: { data: UnderstandResponse; variant: "landing" | "dashboard"; location?: { lat: number; lng: number } | null }) {
+function ResultPanel({ data, variant, location }: { data: UnderstandResponse; variant: "landing" | "dashboard"; location?: Coordinates | null }) {
   const u = data.understanding;
   const ranked = data.workers.ranked ?? [
     ...(data.workers.best ? [data.workers.best] : []),
@@ -255,86 +315,271 @@ function ResultPanel({ data, variant, location }: { data: UnderstandResponse; va
 export default function VoiceCapture({ variant = "landing" }: VoiceCaptureProps) {
   const [status, setStatus] = useState<Status>("idle");
   const [recording, setRecording] = useState(false);
+  const [starting, setStarting] = useState(false);
+  const [micLevel, setMicLevel] = useState(0);
   const [error, setError] = useState("");
   const [result, setResult] = useState<UnderstandResponse | null>(null);
   const [clarificationAnswer, setClarificationAnswer] = useState("");
   const [clarificationSelections, setClarificationSelections] = useState<string[]>([]);
   const [busy, setBusy] = useState(false);
-  const [customerLocation, setCustomerLocation] = useState<{ lat: number; lng: number } | null>(null);
+  const [customerLocation, setCustomerLocation] = useState<Coordinates | null>(null);
+  const [locationFailure, setLocationFailure] = useState<LocationFailureReason | null>(null);
+  const [locationPrompt, setLocationPrompt] = useState(false);
+  const [locationPending, setLocationPending] = useState(false);
 
-  const recorderRef = useRef<{
-    recorder: MediaRecorder;
-    stream: MediaStream;
-    stopLevelMonitor?: () => void;
-  } | null>(null);
+  const recorderRef = useRef<RecordingSession | null>(null);
+  const startInFlightRef = useRef(false);
+  const recordingGenerationRef = useRef(0);
+  const mountedRef = useRef(true);
+  const requestIdRef = useRef(0);
+  const requestAbortRef = useRef<AbortController | null>(null);
+  const pendingBodyRef = useRef<RunBody | null>(null);
+  const locationRef = useRef<Coordinates | null>(null);
+  const locationDecisionRef = useRef<
+    "unresolved" | "available" | "unavailable" | "without"
+  >("unresolved");
+  const locationRequestIdRef = useRef(0);
+  const reduceMotion = useReducedMotion();
 
-  const voiceSupported = useCallback(() => {
-    return typeof window !== "undefined" && "MediaRecorder" in window;
+  useEffect(() => {
+    return () => {
+      mountedRef.current = false;
+      requestIdRef.current += 1;
+      requestAbortRef.current?.abort();
+      requestAbortRef.current = null;
+      recordingGenerationRef.current += 1;
+      locationRequestIdRef.current += 1;
+
+      const session = recorderRef.current;
+      if (!session) return;
+
+      session.cancelled = true;
+      if (session.recorder.state === "recording") {
+        try {
+          session.recorder.stop();
+        } catch {
+          // Cleanup below still releases the stream if the recorder is already inactive.
+        }
+      }
+      session.cleanup();
+    };
   }, []);
 
-  const getLocation = useCallback((): Promise<{ lat: number; lng: number } | null> => {
-    return new Promise((resolve) => {
-      if (typeof navigator === "undefined" || !navigator.geolocation) {
-        resolve(null);
+  const voiceSupported = useCallback(() => {
+    return (
+      typeof window !== "undefined" &&
+      "MediaRecorder" in window &&
+      typeof navigator !== "undefined" &&
+      typeof navigator.mediaDevices?.getUserMedia === "function"
+    );
+  }, []);
+
+  const getLocation = useCallback((): Promise<Coordinates | null> => {
+    if (locationDecisionRef.current !== "unresolved") {
+      return Promise.resolve(locationRef.current);
+    }
+
+    const requestId = locationRequestIdRef.current + 1;
+    locationRequestIdRef.current = requestId;
+
+    const markUnavailable = (reason: LocationFailureReason) => {
+      if (
+        !mountedRef.current ||
+        requestId !== locationRequestIdRef.current
+      ) {
         return;
       }
-      navigator.geolocation.getCurrentPosition(
-        (pos) => resolve({ lat: pos.coords.latitude, lng: pos.coords.longitude }),
-        () => resolve(null),
-        { timeout: 5000, maximumAge: 60000 }
-      );
+      locationDecisionRef.current = "unavailable";
+      locationRef.current = null;
+      setLocationFailure(reason);
+    };
+
+    if (typeof navigator === "undefined" || !navigator.geolocation) {
+      markUnavailable("unsupported");
+      return Promise.resolve(null);
+    }
+
+    locationDecisionRef.current = "unavailable";
+    setLocationPending(true);
+
+    return new Promise<Coordinates | null>((resolve) => {
+      let settled = false;
+
+      const resolveLocation = (location: Coordinates | null) => {
+        if (settled) return;
+        settled = true;
+
+        if (
+          !mountedRef.current ||
+          requestId !== locationRequestIdRef.current
+        ) {
+          resolve(null);
+          return;
+        }
+
+        locationRef.current = location;
+        locationDecisionRef.current = location ? "available" : "unavailable";
+        if (location) setLocationFailure(null);
+        resolve(location);
+      };
+
+      const rejectLocation = (positionError: GeolocationPositionError) => {
+        const reason =
+          positionError.code === 1
+            ? "denied"
+            : positionError.code === 3
+              ? "timeout"
+              : "unavailable";
+        markUnavailable(reason);
+        resolveLocation(null);
+      };
+
+      try {
+        navigator.geolocation.getCurrentPosition(
+          (position) =>
+            resolveLocation({
+              lat: position.coords.latitude,
+              lng: position.coords.longitude,
+            }),
+          rejectLocation,
+          { timeout: 5000, maximumAge: 60000 }
+        );
+      } catch {
+        markUnavailable("unavailable");
+        resolveLocation(null);
+      }
+    }).finally(() => {
+      if (
+        mountedRef.current &&
+        requestId === locationRequestIdRef.current
+      ) {
+        setLocationPending(false);
+      }
     });
   }, []);
 
   const run = useCallback(
-    async (body: FormData | { clarification?: string }) => {
+    async (body: RunBody, options: { skipLocation?: boolean } = {}) => {
+      if (!mountedRef.current) return;
+
+      const requestId = requestIdRef.current + 1;
+      requestIdRef.current = requestId;
+      requestAbortRef.current?.abort();
+
+      const controller = new AbortController();
+      requestAbortRef.current = controller;
+      pendingBodyRef.current = body;
       setError("");
       setBusy(true);
       setStatus("processing");
       setResult(null);
-      try {
-        // Get customer location for finding nearest workers
-        const location = await getLocation();
-        setCustomerLocation(location);
+      setLocationPrompt(false);
 
-        if (body instanceof FormData && location) {
-          body.set("lat", String(location.lat));
-          body.set("lng", String(location.lng));
+      const isCurrentRequest = () =>
+        mountedRef.current && requestId === requestIdRef.current;
+
+      let timeoutId: number | undefined;
+      let timedOut = false;
+
+      try {
+        let location = locationRef.current;
+        if (
+          !options.skipLocation &&
+          locationDecisionRef.current === "unresolved"
+        ) {
+          location = await getLocation();
         }
 
-        const fetchBody = body instanceof FormData ? body : {
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            ...body,
-            ...(location ? { lat: location.lat, lng: location.lng } : {}),
-          }),
+        if (!isCurrentRequest()) return;
+
+        if (
+          !options.skipLocation &&
+          !location &&
+          locationDecisionRef.current === "unavailable"
+        ) {
+          setLocationPrompt(true);
+          setStatus("idle");
+          return;
+        }
+
+        setCustomerLocation(location);
+
+        const requestInit: RequestInit = {
+          method: "POST",
+          signal: controller.signal,
         };
 
-        const response = await fetch("/api/ai/understand", {
-          method: "POST",
-          ...(body instanceof FormData
-            ? { body }
-            : fetchBody),
-        });
-        const data = await parseApiResponse<UnderstandResponse>(response);
-        console.log("[VoiceCapture] API response transcript:", data.transcript ?? "(none)");
-        console.log("[VoiceCapture] understanding:", data.understanding);
+        if (body instanceof FormData) {
+          if (location) {
+            body.set("lat", String(location.lat));
+            body.set("lng", String(location.lng));
+          } else {
+            body.delete("lat");
+            body.delete("lng");
+          }
+          requestInit.body = body;
+        } else {
+          requestInit.headers = { "Content-Type": "application/json" };
+          requestInit.body = JSON.stringify({
+            ...body,
+            ...(location ? { lat: location.lat, lng: location.lng } : {}),
+          });
+        }
+
+        const data = await Promise.race([
+          fetch("/api/ai/understand", requestInit).then((response) =>
+            parseApiResponse<UnderstandResponse>(response)
+          ),
+          new Promise<UnderstandResponse>((_, reject) => {
+            timeoutId = window.setTimeout(() => {
+              timedOut = true;
+              controller.abort();
+              reject(new Error("Understanding request timed out"));
+            }, ANALYSIS_TIMEOUT_MS);
+          }),
+        ]);
+
+        if (!isCurrentRequest()) return;
+
         setResult(data);
         setClarificationSelections([]);
         setStatus(data.clarification_question || data.manual_fallback ? "clarifying" : "done");
+        pendingBodyRef.current = null;
       } catch (err) {
+        if (!isCurrentRequest()) return;
+        if (timedOut) {
+          setStatus("error");
+          setError("Understanding timed out. Please check your connection and try again.");
+          return;
+        }
+        if (controller.signal.aborted || (err instanceof Error && err.name === "AbortError")) {
+          return;
+        }
         setStatus("error");
         setError(
           err instanceof Error ? err.message : "Something went wrong. Please try again."
         );
       } finally {
-        setBusy(false);
+        if (timeoutId !== undefined) window.clearTimeout(timeoutId);
+        if (requestAbortRef.current === controller) {
+          requestAbortRef.current = null;
+        }
+        if (isCurrentRequest()) setBusy(false);
       }
     },
     [getLocation]
   );
 
   const startRecording = useCallback(async () => {
+    if (
+      !mountedRef.current ||
+      recorderRef.current ||
+      startInFlightRef.current ||
+      busy
+    ) {
+      return;
+    }
+
     if (!voiceSupported()) {
       setStatus("error");
       setError(
@@ -342,115 +587,345 @@ export default function VoiceCapture({ variant = "landing" }: VoiceCaptureProps)
       );
       return;
     }
+
+    startInFlightRef.current = true;
+    const generation = recordingGenerationRef.current + 1;
+    recordingGenerationRef.current = generation;
+    setStarting(true);
+    setMicLevel(0);
+    setError("");
+
+    let stream: MediaStream | null = null;
+
     try {
-      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-      const safeStream = stream as MediaStream & {
-        getAudioTracks?: () => MediaStreamTrack[];
-        getTracks?: () => MediaStreamTrack[];
-      };
-      const audioTracks = typeof safeStream.getAudioTracks === "function"
-        ? safeStream.getAudioTracks()
-        : [];
-      const track = audioTracks[0];
-      console.log("[VoiceCapture] mic granted:", {
-        label: track?.label ?? "unknown",
-        muted: track?.muted,
-        readyState: track?.readyState,
-      });
-
-      let audioCtx: AudioContext | null = null;
-      let analyser: AnalyserNode | null = null;
-      let levelInterval: number | undefined;
-      let levelData: Uint8Array | null = null;
-
-      if (typeof window !== "undefined" && "AudioContext" in window) {
-        audioCtx = new AudioContext();
-        const source = audioCtx.createMediaStreamSource(stream as MediaStream);
-        analyser = audioCtx.createAnalyser();
-        analyser.fftSize = 256;
-        source.connect(analyser);
-        levelData = new Uint8Array(analyser.frequencyBinCount);
-        levelInterval = window.setInterval(() => {
-          if (!analyser || !levelData) return;
-          analyser.getByteFrequencyData(levelData);
-          const avg =
-            levelData.reduce((sum, v) => sum + v, 0) / levelData.length;
-          console.log("[VoiceCapture] mic level (0–255):", Math.round(avg));
-        }, 500);
+      stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      if (
+        !mountedRef.current ||
+        generation !== recordingGenerationRef.current
+      ) {
+        stream.getTracks().forEach((track) => track.stop());
+        return;
       }
 
-      const recorder = new MediaRecorder(stream);
+      const mimeType = getSupportedAudioMimeType();
+      if (!mimeType) {
+        throw new Error(
+          "Audio recording is not supported in this browser. Try Chrome or Safari on a newer device."
+        );
+      }
+
+      const activeStream = stream;
+      const recorder = new MediaRecorder(activeStream, { mimeType });
+      const actualMimeType = recorder.mimeType || mimeType;
       const chunks: Blob[] = [];
-      recorder.ondataavailable = (e) => {
-        if (e.data.size > 0) {
-          chunks.push(e.data);
-          console.log("[VoiceCapture] audio chunk:", e.data.size, "bytes");
+
+      let audioCtx: AudioContext | null = null;
+      let source: MediaStreamAudioSourceNode | null = null;
+      let analyser: AnalyserNode | null = null;
+      let levelInterval: number | undefined;
+      let levelSum = 0;
+      let levelSamples = 0;
+      let peakLevel = 0;
+      let activeSamples = 0;
+      let cleanedUp = false;
+      let finalized = false;
+      let session: RecordingSession | null = null;
+
+      const stopLevelMonitor = () => {
+        if (levelInterval !== undefined) {
+          window.clearInterval(levelInterval);
+          levelInterval = undefined;
+        }
+        source?.disconnect();
+        analyser?.disconnect();
+        source = null;
+        analyser = null;
+
+        const context = audioCtx;
+        audioCtx = null;
+        if (context && context.state !== "closed") {
+          void context.close().catch(() => undefined);
         }
       };
-      recorder.onstop = () => {
-        if (levelInterval) window.clearInterval(levelInterval);
-        if (audioCtx) void audioCtx.close();
-        if (typeof safeStream.getTracks === "function") {
-          safeStream.getTracks().forEach((t) => t.stop());
+
+      const cleanup = () => {
+        if (cleanedUp) return;
+        cleanedUp = true;
+        stopLevelMonitor();
+        activeStream.getTracks().forEach((track) => track.stop());
+        if (recorderRef.current?.generation === generation) {
+          recorderRef.current = null;
         }
-        recorderRef.current = null;
-        setRecording(false);
-        const blob = new Blob(chunks, { type: recorder.mimeType || "audio/webm" });
-        console.log("[VoiceCapture] recording stopped:", {
-          chunks: chunks.length,
-          totalBytes: blob.size,
-          mimeType: blob.type,
-        });
-        if (blob.size < 1000) {
-          console.warn(
-            "[VoiceCapture] recording is very small — mic may not be picking up audio",
-          );
+        if (
+          mountedRef.current &&
+          recordingGenerationRef.current === generation
+        ) {
+          setMicLevel(0);
         }
-        const fd = new FormData();
-        fd.append("audio", blob, "voice.webm");
-        void run(fd);
       };
-      recorderRef.current = {
+
+      session = {
         recorder,
-        stream,
-        stopLevelMonitor: () => {
-          if (levelInterval) window.clearInterval(levelInterval);
-          if (audioCtx) void audioCtx.close();
-        },
+        stream: activeStream,
+        generation,
+        cancelled: false,
+        cleanup,
       };
+
+      recorder.ondataavailable = (event) => {
+        if (event.data.size > 0) chunks.push(event.data);
+      };
+
+      recorder.onstop = () => {
+        if (finalized) return;
+        finalized = true;
+        const wasCancelled = session?.cancelled ?? false;
+        const blob = new Blob(chunks, { type: actualMimeType });
+
+        cleanup();
+        if (
+          mountedRef.current &&
+          recordingGenerationRef.current === generation
+        ) {
+          setRecording(false);
+        }
+        chunks.length = 0;
+
+        if (
+          wasCancelled ||
+          !mountedRef.current ||
+          recordingGenerationRef.current !== generation
+        ) {
+          return;
+        }
+
+        const averageLevel = levelSamples > 0 ? levelSum / levelSamples : null;
+        const activeRatio = levelSamples > 0 ? activeSamples / levelSamples : 1;
+        const isSilent =
+          averageLevel !== null &&
+          averageLevel < MIN_AVERAGE_RMS &&
+          (peakLevel < MIN_PEAK_RMS || activeRatio < MIN_ACTIVE_SAMPLE_RATIO);
+
+        if (blob.size < MIN_AUDIO_BYTES || isSilent) {
+          setStatus("error");
+          setError("Didn't catch that - tap and speak again.");
+          return;
+        }
+
+        const formData = new FormData();
+        formData.append(
+          "audio",
+          blob,
+          `voice.${audioFileExtension(actualMimeType)}`
+        );
+        void run(formData);
+      };
+
+      recorder.onerror = () => {
+        if (finalized) return;
+        finalized = true;
+        if (session) session.cancelled = true;
+        cleanup();
+        chunks.length = 0;
+        if (
+          mountedRef.current &&
+          recordingGenerationRef.current === generation
+        ) {
+          setRecording(false);
+          setStatus("error");
+          setError("Recording failed unexpectedly. Please try again.");
+        }
+      };
+
+      recorderRef.current = session;
       recorder.start();
       setRecording(true);
-    } catch {
-      setStatus("error");
-      setError("Could not access your microphone. Please allow mic access and try again.");
+
+      try {
+        const audioContextWindow = window as Window & {
+          webkitAudioContext?: typeof AudioContext;
+        };
+        const AudioContextConstructor =
+          window.AudioContext ?? audioContextWindow.webkitAudioContext;
+
+        if (AudioContextConstructor) {
+          audioCtx = new AudioContextConstructor();
+          if (audioCtx.state === "suspended") {
+            void audioCtx.resume().catch(() => undefined);
+          }
+          source = audioCtx.createMediaStreamSource(activeStream);
+          analyser = audioCtx.createAnalyser();
+          analyser.fftSize = 256;
+          source.connect(analyser);
+          const levelData = new Uint8Array(analyser.fftSize);
+
+          levelInterval = window.setInterval(() => {
+            if (!analyser || finalized) return;
+            analyser.getByteTimeDomainData(levelData);
+
+            let sumSquares = 0;
+            for (let index = 0; index < levelData.length; index += 1) {
+              const sample = levelData[index];
+              const normalized = (sample - 128) / 128;
+              sumSquares += normalized * normalized;
+            }
+            const level = Math.min(
+              1,
+              Math.sqrt(sumSquares / levelData.length)
+            );
+            levelSum += level;
+            levelSamples += 1;
+            peakLevel = Math.max(peakLevel, level);
+            if (level >= MIN_PEAK_RMS) activeSamples += 1;
+
+            if (
+              mountedRef.current &&
+              recordingGenerationRef.current === generation
+            ) {
+              setMicLevel((current) => current * 0.65 + level * 0.35);
+            }
+          }, LEVEL_SAMPLE_INTERVAL_MS);
+        }
+      } catch {
+        stopLevelMonitor();
+      }
+    } catch (err) {
+      const activeSession = recorderRef.current;
+      if (activeSession?.generation === generation) {
+        activeSession.cancelled = true;
+        if (activeSession.recorder.state === "recording") {
+          try {
+            activeSession.recorder.stop();
+          } catch {
+            // The cleanup path below still releases the microphone.
+          }
+        }
+        activeSession.cleanup();
+      } else {
+        stream?.getTracks().forEach((track) => track.stop());
+      }
+
+      if (
+        mountedRef.current &&
+        generation === recordingGenerationRef.current
+      ) {
+        setRecording(false);
+        setStatus("error");
+        if (err instanceof Error && err.message.startsWith("Audio recording")) {
+          setError(err.message);
+        } else if (err instanceof Error && err.name === "NotAllowedError") {
+          setError("Microphone access is blocked. Please allow mic access and try again.");
+        } else if (err instanceof Error && err.name === "NotFoundError") {
+          setError("No microphone was found. Connect a microphone and try again.");
+        } else {
+          setError("Could not access your microphone. Please allow mic access and try again.");
+        }
+      }
+    } finally {
+      startInFlightRef.current = false;
+      if (
+        mountedRef.current &&
+        generation === recordingGenerationRef.current
+      ) {
+        setStarting(false);
+      }
     }
-  }, [run, voiceSupported]);
+  }, [busy, run, voiceSupported]);
 
   const stopRecording = useCallback(() => {
-    if (recorderRef.current) {
-      recorderRef.current.recorder.stop();
+    const session = recorderRef.current;
+    if (!session || session.recorder.state !== "recording") return;
+
+    try {
+      session.recorder.stop();
+    } catch {
+      session.cancelled = true;
+      session.cleanup();
+      if (mountedRef.current) {
+        setRecording(false);
+        setStatus("error");
+        setError("Recording could not be stopped. Please try again.");
+      }
     }
   }, []);
 
-  const handleVoiceKey = useCallback(
-    (e: React.KeyboardEvent) => {
-      if (e.key !== "Enter" && e.key !== " ") return;
-      e.preventDefault();
-      if (recording) {
-        stopRecording();
-      } else {
-        void startRecording();
-      }
-    },
-    [recording, startRecording, stopRecording]
-  );
+  const toggleRecording = useCallback(() => {
+    if (recording) {
+      stopRecording();
+      return;
+    }
+    if (starting || busy || locationPrompt) return;
+    void startRecording();
+  }, [
+    busy,
+    locationPrompt,
+    recording,
+    startRecording,
+    starting,
+    stopRecording,
+  ]);
+
+  const retryLocation = useCallback(() => {
+    const body = pendingBodyRef.current;
+    if (!body || busy) return;
+
+    pendingBodyRef.current = null;
+    locationDecisionRef.current = "unresolved";
+    locationRef.current = null;
+    locationRequestIdRef.current += 1;
+    setLocationFailure(null);
+    setLocationPrompt(false);
+    void run(body);
+  }, [busy, run]);
+
+  const continueWithoutLocation = useCallback(() => {
+    const body = pendingBodyRef.current;
+    if (!body || busy) return;
+
+    pendingBodyRef.current = null;
+    locationDecisionRef.current = "without";
+    locationRef.current = null;
+    setLocationPrompt(false);
+    setLocationPending(false);
+    void run(body, { skipLocation: true });
+  }, [busy, run]);
 
   const reset = useCallback(() => {
+    requestIdRef.current += 1;
+    requestAbortRef.current?.abort();
+    requestAbortRef.current = null;
+    recordingGenerationRef.current += 1;
+    locationRequestIdRef.current += 1;
+
+    const session = recorderRef.current;
+    if (session) {
+      session.cancelled = true;
+      if (session.recorder.state === "recording") {
+        try {
+          session.recorder.stop();
+        } catch {
+          // Cleanup below still releases the microphone.
+        }
+      }
+      session.cleanup();
+    }
+
+    pendingBodyRef.current = null;
+    locationRef.current = null;
+    locationDecisionRef.current = "unresolved";
     setStatus("idle");
     setError("");
     setResult(null);
     setClarificationAnswer("");
     setClarificationSelections([]);
+    setCustomerLocation(null);
+    setLocationFailure(null);
+    setLocationPrompt(false);
+    setLocationPending(false);
+    setMicLevel(0);
+    setRecording(false);
+    setStarting(false);
+    setBusy(false);
   }, []);
 
   return (
@@ -458,31 +933,110 @@ export default function VoiceCapture({ variant = "landing" }: VoiceCaptureProps)
       {/* Mic button */}
       <motion.button
         type="button"
-        aria-label={recording ? "Stop recording" : "Hold to speak"}
-        onPointerDown={() => void startRecording()}
-        onPointerUp={stopRecording}
-        onPointerLeave={stopRecording}
-        onKeyDown={handleVoiceKey}
-        whileTap={{ scale: 0.95 }}
-        whileHover={{ y: -1 }}
-        transition={{ duration: 0.15, ease: "easeOut" }}
-        className={`flex h-28 w-28 items-center justify-center rounded-full text-5xl transition-transform select-none active:scale-95 ${
+        aria-label={
+          starting
+            ? "Starting recording"
+            : recording
+              ? "Stop recording"
+              : "Start recording"
+        }
+        aria-pressed={recording}
+        disabled={busy || starting || locationPrompt}
+        onClick={toggleRecording}
+        animate={{
+          scale: recording && !reduceMotion ? 1 + micLevel * 0.08 : 1,
+        }}
+        whileTap={{ scale: reduceMotion ? 1 : 0.95 }}
+        whileHover={{ y: reduceMotion ? 0 : -1 }}
+        transition={{
+          scale: { type: "spring", stiffness: 420, damping: 30 },
+        }}
+        className={`relative flex h-28 w-28 touch-manipulation items-center justify-center overflow-visible rounded-full text-5xl transition-transform select-none disabled:cursor-not-allowed disabled:opacity-70 ${
           recording
             ? "bg-warning text-bg shadow-lg shadow-warning/40"
             : "bg-accent text-bg shadow-xl shadow-accent/30 hover:bg-accent/90"
         }`}
       >
-        <Mic className="h-10 w-10" />
+        <motion.span
+          aria-hidden="true"
+          className="pointer-events-none absolute -inset-3 rounded-full bg-warning/30 blur-md"
+          animate={{
+            opacity: recording ? 0.15 + micLevel * 0.65 : 0,
+            scale: recording && !reduceMotion ? 0.95 + micLevel * 0.3 : 0.9,
+          }}
+          transition={{ duration: 0.12, ease: "easeOut" }}
+        />
+        <Mic className="relative z-10 h-10 w-10" />
       </motion.button>
-      <p
-        className={`mt-4 text-sm font-medium ${"text-muted"}`}
-      >
-        {recording
-          ? "Listening… release to stop"
-          : status === "processing"
-            ? "Understanding your problem…"
-            : "Hold to speak"}
+      <p className="mt-4 text-sm font-medium text-muted" aria-live="polite">
+        {starting
+          ? "Starting recording…"
+          : recording
+            ? "Listening… tap to stop"
+            : locationPending
+              ? "Checking your location…"
+              : status === "processing"
+                ? "Understanding your problem…"
+                : locationPrompt
+                  ? "Choose how to continue"
+                  : "Tap to speak"}
       </p>
+
+      {locationPrompt && (
+        <div
+          className="mt-5 w-full space-y-3 rounded-xl border border-warning/40 bg-warning/10 p-4 text-left"
+          role="alert"
+          aria-live="assertive"
+        >
+          <div>
+            <p className="text-sm font-semibold text-warning">
+              Couldn&apos;t access your location.
+            </p>
+            <p className="mt-1 text-xs text-warning/80">
+              {locationFailure
+                ? locationFailureMessage(locationFailure)
+                : "Nearby distance information is unavailable."}
+            </p>
+          </div>
+          <div className="flex flex-col gap-2 sm:flex-row">
+            <motion.button
+              type="button"
+              onClick={retryLocation}
+              whileTap={{ scale: 0.95 }}
+              whileHover={{ y: -1 }}
+              transition={{ duration: 0.15, ease: "easeOut" }}
+              className="flex-1 rounded-lg border border-warning/50 bg-surface px-3 py-2 text-xs font-semibold text-warning hover:bg-warning/10 disabled:opacity-50"
+            >
+              Try location again
+            </motion.button>
+            <motion.button
+              type="button"
+              onClick={continueWithoutLocation}
+              whileTap={{ scale: 0.95 }}
+              whileHover={{ y: -1 }}
+              transition={{ duration: 0.15, ease: "easeOut" }}
+              className="flex-1 rounded-lg bg-warning px-3 py-2 text-xs font-semibold text-bg hover:bg-warning/90 disabled:opacity-50"
+            >
+              Continue without location
+            </motion.button>
+          </div>
+        </div>
+      )}
+
+      {locationFailure && !locationPrompt && (
+        <div
+          className="mt-4 w-full space-y-2 rounded-xl border border-warning/40 bg-warning/10 p-3 text-left"
+          role="status"
+          aria-live="polite"
+        >
+          <p className="text-xs font-semibold text-warning">
+            Location unavailable. These matches are not distance-aware.
+          </p>
+          <p className="text-xs text-warning/80">
+            {locationFailureMessage(locationFailure)}
+          </p>
+        </div>
+      )}
 
       {/* Clarification round */}
       {status === "clarifying" && result?.clarification_question && (

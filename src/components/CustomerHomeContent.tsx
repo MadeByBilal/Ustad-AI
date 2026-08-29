@@ -21,7 +21,7 @@ export default function CustomerHomeContent({ name }: CustomerHomeContentProps) 
           {t("whatsBroken")}
         </p>
         <p className="mt-3 text-center text-base text-muted">
-          {t("holdButton")}
+          {t("tapToStart")}
         </p>
         <div className="mt-10">
           <VoiceCapture variant="dashboard" />

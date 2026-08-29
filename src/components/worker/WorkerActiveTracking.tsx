@@ -4,6 +4,7 @@ import { useCallback, useEffect, useState, useRef } from "react";
 import Link from "next/link";
 import { motion } from "framer-motion";
 import TrackingMap from "@/components/tracking/dynamicTrackingMap";
+import type { RouteComputedPayload } from "@/lib/route-types";
 
 interface ActiveJob {
   job_id: string;
@@ -18,7 +19,10 @@ const STATUS_LABELS: Record<string, { label: string; color: string }> = {
   EN_ROUTE: { label: "On the way", color: "text-accent" },
   ARRIVED: { label: "Arrived", color: "text-accent" },
   IN_PROGRESS: { label: "Working", color: "text-accent" },
-  AWAITING_CUSTOMER_CONFIRMATION: { label: "Waiting for confirmation", color: "text-warning" },
+  AWAITING_CUSTOMER_CONFIRMATION: {
+    label: "Waiting for confirmation",
+    color: "text-warning",
+  },
 };
 
 const NEXT_ACTIONS: Record<string, { label: string; to: string }> = {
@@ -28,29 +32,86 @@ const NEXT_ACTIONS: Record<string, { label: string; to: string }> = {
   IN_PROGRESS: { label: "Complete", to: "AWAITING_CUSTOMER_CONFIRMATION" },
 };
 
-export default function WorkerActiveTracking({ workerId }: { workerId: string }) {
+export default function WorkerActiveTracking({
+  workerId,
+}: {
+  workerId: string;
+}) {
   const [job, setJob] = useState<ActiveJob | null>(null);
-  const [workerLocation, setWorkerLocation] = useState<{ lat: number; lng: number } | null>(null);
+  const [workerLocation, setWorkerLocation] = useState<{
+    lat: number;
+    lng: number;
+  } | null>(null);
   const [distanceKm, setDistanceKm] = useState<number | undefined>();
   const [etaMinutes, setEtaMinutes] = useState<number | null>(null);
   const [lastUpdate, setLastUpdate] = useState<Date | null>(null);
   const [advancing, setAdvancing] = useState(false);
   const [cancelling, setCancelling] = useState(false);
-  const [message, setMessage] = useState<{ ok: boolean; text: string } | null>(null);
-  const [mapReady, setMapReady] = useState(false);
-  const [precomputedRoute, setPrecomputedRoute] = useState<[number, number][] | null>(null);
-  const mapContainerRef = useRef<HTMLDivElement>(null);
+  const [message, setMessage] = useState<{ ok: boolean; text: string } | null>(
+    null,
+  );
+  const [precomputedRoute, setPrecomputedRoute] = useState<
+    [number, number][] | null
+  >(null);
+  const activeJobIdRef = useRef<string | null>(null);
 
   const refresh = useCallback(async () => {
     try {
-      const res = await fetch(`/api/workers/${workerId}/dashboard`, { cache: "no-store" });
+      const res = await fetch(`/api/workers/${workerId}/dashboard`, {
+        cache: "no-store",
+      });
       const body = await res.json().catch(() => null);
       if (!body?.success) return;
 
       const activeJob = body.data?.active_job;
       if (!activeJob) {
+        activeJobIdRef.current = null;
         setJob(null);
+        setPrecomputedRoute(null);
         return;
+      }
+
+      const routeFromDashboard =
+        Array.isArray(activeJob.route?.polyline) &&
+        activeJob.route.polyline.length >= 2
+          ? activeJob.route.polyline
+          : null;
+      if (activeJobIdRef.current !== activeJob._id) {
+        activeJobIdRef.current = activeJob._id;
+        setPrecomputedRoute(routeFromDashboard);
+      } else if (routeFromDashboard) {
+        setPrecomputedRoute((current) => current ?? routeFromDashboard);
+      }
+
+      const hasInitialDestination =
+        typeof activeJob.location?.lat === "number" &&
+        Number.isFinite(activeJob.location.lat) &&
+        typeof activeJob.location?.lng === "number" &&
+        Number.isFinite(activeJob.location.lng);
+      setJob({
+        job_id: activeJob._id,
+        status: activeJob.status,
+        category: activeJob.understanding?.category ?? "",
+        original_text: activeJob.input?.original_text ?? "",
+        destination: hasInitialDestination
+          ? {
+              lat: activeJob.location.lat,
+              lng: activeJob.location.lng,
+              label: activeJob.location.address_label ?? "Destination",
+            }
+          : null,
+      });
+
+      if (
+        typeof body.data?.worker?.location_lat === "number" &&
+        Number.isFinite(body.data.worker.location_lat) &&
+        typeof body.data?.worker?.location_lng === "number" &&
+        Number.isFinite(body.data.worker.location_lng)
+      ) {
+        setWorkerLocation({
+          lat: body.data.worker.location_lat,
+          lng: body.data.worker.location_lng,
+        });
       }
 
       // Get destination from tracking API
@@ -69,26 +130,42 @@ export default function WorkerActiveTracking({ workerId }: { workerId: string })
         status: activeJob.status,
         category: activeJob.understanding?.category ?? "",
         original_text: activeJob.input?.original_text ?? "",
-        destination: hasDestination ? {
-          lat: destinationLat,
-          lng: destinationLng,
-          label: trackBody.data.destination_label ?? "Destination",
-        } : null,
+        destination: hasDestination
+          ? {
+              lat: destinationLat,
+              lng: destinationLng,
+              label: trackBody.data.destination_label ?? "Destination",
+            }
+          : null,
       });
 
       // Capture precomputed route from tracking API
-      if (trackBody?.data?.precomputed_route && Array.isArray(trackBody.data.precomputed_route)) {
-        setPrecomputedRoute(trackBody.data.precomputed_route);
+      if (
+        trackBody?.data?.precomputed_route &&
+        Array.isArray(trackBody.data.precomputed_route)
+      ) {
+        setPrecomputedRoute(
+          (current) => current ?? trackBody.data.precomputed_route,
+        );
       }
 
       // Worker's own location — prefer live tracking data, fallback to stored profile location
       if (trackBody?.data?.worker_lat && trackBody?.data?.worker_lng) {
-        setWorkerLocation({ lat: trackBody.data.worker_lat, lng: trackBody.data.worker_lng });
+        setWorkerLocation({
+          lat: trackBody.data.worker_lat,
+          lng: trackBody.data.worker_lng,
+        });
         setDistanceKm(trackBody.data.distance_km);
         setEtaMinutes(trackBody.data.eta_minutes);
         setLastUpdate(new Date());
-      } else if (body.data?.worker?.location_lat && body.data?.worker?.location_lng) {
-        setWorkerLocation({ lat: body.data.worker.location_lat, lng: body.data.worker.location_lng });
+      } else if (
+        body.data?.worker?.location_lat &&
+        body.data?.worker?.location_lng
+      ) {
+        setWorkerLocation({
+          lat: body.data.worker.location_lat,
+          lng: body.data.worker.location_lng,
+        });
         setLastUpdate(new Date());
       }
     } catch {
@@ -107,24 +184,51 @@ export default function WorkerActiveTracking({ workerId }: { workerId: string })
   useEffect(() => {
     if (!activeJobId) return;
     let mounted = true;
+    let cleanup: (() => void) | null = null;
 
     async function connect() {
       try {
         const { connectSocket } = await import("@/lib/socket-client");
+        if (!mounted) return;
         const socket = connectSocket();
-        socket.emit("join-job", { jobId: activeJobId, role: "worker", workerId });
 
-        socket.on("location-update", (data: { lat: number; lng: number; distanceKm: number; etaMinutes: number }) => {
+        const handleLocationUpdate = (data: {
+          lat: number;
+          lng: number;
+          distanceKm: number;
+          etaMinutes: number;
+        }) => {
           if (!mounted) return;
           setWorkerLocation({ lat: data.lat, lng: data.lng });
           setDistanceKm(data.distanceKm);
           setEtaMinutes(data.etaMinutes);
           setLastUpdate(new Date());
+        };
+
+        const handleRouteComputed = (data: RouteComputedPayload) => {
+          if (
+            !mounted ||
+            data.jobId !== activeJobId ||
+            !Array.isArray(data.polyline) ||
+            data.polyline.length < 2
+          ) {
+            return;
+          }
+          setPrecomputedRoute(data.polyline);
+        };
+
+        socket.on("location-update", handleLocationUpdate);
+        socket.on("route-computed", handleRouteComputed);
+        socket.emit("join-job", {
+          jobId: activeJobId,
+          role: "worker",
+          workerId,
         });
 
-        return () => {
+        cleanup = () => {
           socket.emit("leave-job", { jobId: activeJobId });
-          socket.off("location-update");
+          socket.off("location-update", handleLocationUpdate);
+          socket.off("route-computed", handleRouteComputed);
         };
       } catch {
         // Socket not available
@@ -132,7 +236,10 @@ export default function WorkerActiveTracking({ workerId }: { workerId: string })
     }
 
     void connect();
-    return () => { mounted = false; };
+    return () => {
+      mounted = false;
+      cleanup?.();
+    };
   }, [activeJobId, workerId]);
 
   // Advance job status — for "Start work" (ARRIVED→IN_PROGRESS), navigate to chat page
@@ -162,14 +269,18 @@ export default function WorkerActiveTracking({ workerId }: { workerId: string })
       setMessage({ ok: true, text: `${next.label} — done` });
       void refresh();
     } catch (e) {
-      setMessage({ ok: false, text: e instanceof Error ? e.message : "Failed" });
+      setMessage({
+        ok: false,
+        text: e instanceof Error ? e.message : "Failed",
+      });
     } finally {
       setAdvancing(false);
     }
   }
 
   async function handleCancel() {
-    if (!job || !window.confirm("Are you sure you want to cancel this job?")) return;
+    if (!job || !window.confirm("Are you sure you want to cancel this job?"))
+      return;
     setCancelling(true);
     try {
       const res = await fetch(`/api/jobs/${job.job_id}/cancel`, {
@@ -183,24 +294,32 @@ export default function WorkerActiveTracking({ workerId }: { workerId: string })
       }
       setJob(null);
     } catch (e) {
-      setMessage({ ok: false, text: e instanceof Error ? e.message : "Cancel failed" });
+      setMessage({
+        ok: false,
+        text: e instanceof Error ? e.message : "Cancel failed",
+      });
     } finally {
       setCancelling(false);
     }
   }
-
-  useEffect(() => {
-    const timer = setTimeout(() => setMapReady(true), 500);
-    return () => clearTimeout(timer);
-  }, []);
 
   // No active job
   if (!job) {
     return (
       <div className="flex h-full flex-col items-center justify-center bg-bg px-5">
         <div className="flex h-20 w-20 items-center justify-center rounded-full bg-surface">
-          <svg className="h-10 w-10 text-muted" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
-            <path strokeLinecap="round" strokeLinejoin="round" d="M11.42 15.17l-5.1-5.1m5.1 5.1L17.24 8.41a4.24 4.24 0 00-6-6l-5.1 5.1m6 6l-5.1-5.1" />
+          <svg
+            className="h-10 w-10 text-muted"
+            fill="none"
+            viewBox="0 0 24 24"
+            strokeWidth={1.5}
+            stroke="currentColor"
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              d="M11.42 15.17l-5.1-5.1m5.1 5.1L17.24 8.41a4.24 4.24 0 00-6-6l-5.1 5.1m6 6l-5.1-5.1"
+            />
           </svg>
         </div>
         <p className="mt-5 text-lg font-bold text-text">No active job</p>
@@ -214,7 +333,10 @@ export default function WorkerActiveTracking({ workerId }: { workerId: string })
     );
   }
 
-  const statusInfo = STATUS_LABELS[job.status] ?? { label: job.status, color: "text-muted" };
+  const statusInfo = STATUS_LABELS[job.status] ?? {
+    label: job.status,
+    color: "text-muted",
+  };
   const nextAction = NEXT_ACTIONS[job.status];
 
   return (
@@ -225,59 +347,74 @@ export default function WorkerActiveTracking({ workerId }: { workerId: string })
           href="/dashboard/worker"
           className="flex h-10 w-10 items-center justify-center rounded-full hover:bg-surface"
         >
-          <svg className="h-5 w-5 text-muted" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
-            <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 19.5L8.25 12l7.5-7.5" />
+          <svg
+            className="h-5 w-5 text-muted"
+            fill="none"
+            viewBox="0 0 24 24"
+            strokeWidth={2}
+            stroke="currentColor"
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              d="M15.75 19.5L8.25 12l7.5-7.5"
+            />
           </svg>
         </Link>
         <div className="min-w-0 flex-1">
           <p className="text-sm font-bold text-text">Customer</p>
-          <p className={`text-xs font-medium ${statusInfo.color}`}>{statusInfo.label}</p>
+          <p className={`text-xs font-medium ${statusInfo.color}`}>
+            {statusInfo.label}
+          </p>
         </div>
       </div>
 
       {/* Map */}
-      <div ref={mapContainerRef} className="h-[65vh] w-full shrink-0">
-        {mapReady ? (
-          <TrackingMap
-            workerLocation={workerLocation}
-            destination={job.destination}
-            distanceKm={distanceKm}
-            perspective="worker"
-            className="h-full w-full"
-            precomputedRoute={precomputedRoute}
-          />
-        ) : (
-          <div className="flex h-full items-center justify-center bg-surface">
-            <div className="h-10 w-10 animate-spin rounded-full border-4 border-divider border-t-accent" />
-          </div>
-        )}
+      <div className="h-[65vh] w-full shrink-0">
+        <TrackingMap
+          workerLocation={workerLocation}
+          destination={job.destination}
+          distanceKm={distanceKm}
+          perspective="worker"
+          className="h-full w-full"
+          precomputedRoute={precomputedRoute}
+        />
       </div>
 
       {/* Bottom Panel */}
       <div className="flex-1 bg-surface px-5 pt-4 pb-6">
         <div className="flex items-center justify-between">
           <div>
-            <p className={`text-lg font-bold ${statusInfo.color}`}>{statusInfo.label}</p>
+            <p className={`text-lg font-bold ${statusInfo.color}`}>
+              {statusInfo.label}
+            </p>
             <p className="text-sm text-muted">
-              {job.original_text ? job.original_text.slice(0, 50) : "Job in progress"}
+              {job.original_text
+                ? job.original_text.slice(0, 50)
+                : "Job in progress"}
             </p>
           </div>
           <div className="text-right">
-            {distanceKm !== undefined && job.status !== "AWAITING_CUSTOMER_CONFIRMATION" && (
-              <>
-                <p className="text-2xl font-bold text-text">
-                  {distanceKm < 1 ? `${Math.round(distanceKm * 1000)}m` : `${distanceKm.toFixed(1)}km`}
-                </p>
-                {etaMinutes !== null && (
-                  <p className="text-sm text-muted">~{etaMinutes} min</p>
-                )}
-              </>
-            )}
+            {distanceKm !== undefined &&
+              job.status !== "AWAITING_CUSTOMER_CONFIRMATION" && (
+                <>
+                  <p className="text-2xl font-bold text-text">
+                    {distanceKm < 1
+                      ? `${Math.round(distanceKm * 1000)}m`
+                      : `${distanceKm.toFixed(1)}km`}
+                  </p>
+                  {etaMinutes !== null && (
+                    <p className="text-sm text-muted">~{etaMinutes} min</p>
+                  )}
+                </>
+              )}
           </div>
         </div>
 
         {message && (
-          <p className={`mt-3 rounded-xl px-4 py-3 text-sm ${message.ok ? "bg-success/15 text-success-fg" : "bg-warning/10 text-warning"}`}>
+          <p
+            className={`mt-3 rounded-xl px-4 py-3 text-sm ${message.ok ? "bg-success/15 text-success-fg" : "bg-warning/10 text-warning"}`}
+          >
             {message.text}
           </p>
         )}
@@ -318,7 +455,12 @@ export default function WorkerActiveTracking({ workerId }: { workerId: string })
 
         {lastUpdate && (
           <p className="mt-3 text-center text-xs text-muted">
-            Updated {lastUpdate.toLocaleTimeString("en-GB", { hour: "2-digit", minute: "2-digit", second: "2-digit" })}
+            Updated{" "}
+            {lastUpdate.toLocaleTimeString("en-GB", {
+              hour: "2-digit",
+              minute: "2-digit",
+              second: "2-digit",
+            })}
           </p>
         )}
       </div>

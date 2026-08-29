@@ -22,7 +22,19 @@ export async function GET() {
     // Find jobs created by this customer that are in active negotiation states
     const jobs = await Job.find({
       customer_id: sessionUser.user._id,
-      status: { $in: ["BROADCASTING", "ACCEPTED", "CANCELLED", "WORKER_RESPONSES", "EN_ROUTE", "ARRIVED", "IN_PROGRESS", "AWAITING_CUSTOMER_CONFIRMATION", "COMPLETED"] },
+      status: {
+        $in: [
+          "BROADCASTING",
+          "ACCEPTED",
+          "CANCELLED",
+          "WORKER_RESPONSES",
+          "EN_ROUTE",
+          "ARRIVED",
+          "IN_PROGRESS",
+          "AWAITING_CUSTOMER_CONFIRMATION",
+          "COMPLETED",
+        ],
+      },
     })
       .sort({ created_at: -1 })
       .limit(20)
@@ -44,12 +56,22 @@ export async function GET() {
         .lean(),
       workerIds.length > 0
         ? Worker.find({ _id: { $in: workerIds } })
-            .select("name")
+            .select("name location")
             .lean()
         : [],
     ]);
     const workerNameMap = new Map(
-      workers.map((w) => [String(w._id), w.name ?? "Ustad"])
+      workers.map((w) => {
+        const coordinates = w.location?.coordinates;
+        return [
+          String(w._id),
+          {
+            name: w.name ?? "Ustad",
+            lat: coordinates?.[1] ?? null,
+            lng: coordinates?.[0] ?? null,
+          },
+        ];
+      }),
     );
 
     // Group offers by job
@@ -68,6 +90,8 @@ export async function GET() {
       const workerId = job.matching?.selected_worker_id
         ? String(job.matching.selected_worker_id)
         : null;
+      const worker = workerId ? workerNameMap.get(workerId) : null;
+      const destinationCoordinates = job.location?.coordinates;
 
       return {
         job_id: jid,
@@ -80,8 +104,15 @@ export async function GET() {
         worker_counter_price: job.pricing?.worker_counter_offer ?? null,
         final_price: job.pricing?.final_price ?? null,
         address_label: job.location?.address_label ?? "",
+        destination_lat: destinationCoordinates?.[1] ?? null,
+        destination_lng: destinationCoordinates?.[0] ?? null,
+        worker_lat: worker?.lat ?? null,
+        worker_lng: worker?.lng ?? null,
+        precomputed_route: job.route?.polyline ?? null,
+        route_distance_meters: job.route?.distance_meters ?? null,
+        route_duration_seconds: job.route?.duration_seconds ?? null,
         created_at: new Date(job.created_at).toISOString(),
-        worker_name: workerId ? workerNameMap.get(workerId) ?? null : null,
+        worker_name: worker?.name ?? null,
         latest_offer: latestOffer
           ? {
               offer_id: String(latestOffer._id),

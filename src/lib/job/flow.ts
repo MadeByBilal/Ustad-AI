@@ -20,13 +20,14 @@ import {
 } from "./state-machine";
 import { searchEligibleWorkers } from "@/lib/matching";
 import { computeAndStoreRoute } from "./route-precompute";
+import { getIO } from "@/lib/socket";
 import type { UrgencyLevel, WorkerCategory } from "@/models";
 
 export class FlowError extends Error {
   constructor(
     public readonly code: string,
     message: string,
-    public readonly statusCode: number = 409
+    public readonly statusCode: number = 409,
   ) {
     super(message);
     this.name = "FlowError";
@@ -63,7 +64,7 @@ async function recordEvent(
   to_state: JobStatus,
   actor_id: string,
   actor_type: JobActor,
-  metadata: Record<string, unknown> = {}
+  metadata: Record<string, unknown> = {},
 ): Promise<void> {
   await JobEvent.create({
     job_id: jobId,
@@ -79,7 +80,10 @@ async function recordEvent(
  * System message appended to the job chat whenever the lifecycle moves
  * ("Job accepted", "On the way", ...). Both parties see these.
  */
-async function recordSystemMessage(jobId: unknown, content: string): Promise<void> {
+async function recordSystemMessage(
+  jobId: unknown,
+  content: string,
+): Promise<void> {
   await Message.create({
     job_id: jobId,
     sender_id: SYSTEM_SENDER_ID,
@@ -92,9 +96,7 @@ function formatPrice(rs: number): string {
   return `Rs ${Math.round(rs).toLocaleString("en-PK")}`;
 }
 
-async function requireJob(
-  filter: Record<string, unknown>
-): Promise<JobDoc> {
+async function requireJob(filter: Record<string, unknown>): Promise<JobDoc> {
   const job = await Job.findOne(filter);
   if (!job) {
     throw new FlowError("job_not_found", "Job not found", 404);
@@ -102,20 +104,23 @@ async function requireJob(
   return job;
 }
 
-function guardJourney(job: JobDoc, from: JobStatus, to: JobStatus, actor: JobActor): void {
+function guardJourney(
+  job: JobDoc,
+  from: JobStatus,
+  to: JobStatus,
+  actor: JobActor,
+): void {
   if (job.status !== from || !canTransition(job.status, to, actor)) {
     throw new FlowError(
       "invalid_status",
       `Job cannot move from ${job.status} to ${to}`,
-      409
+      409,
     );
   }
 }
 
 function analysisTextFor(input: JobInputPayload): string {
-  return [input.original_text ?? "", input.transcript ?? ""]
-    .join(" ")
-    .trim();
+  return [input.original_text ?? "", input.transcript ?? ""].join(" ").trim();
 }
 
 /**
@@ -124,7 +129,7 @@ function analysisTextFor(input: JobInputPayload): string {
  */
 export async function createAndAnalyzeJob(
   customerId: string,
-  input: JobInputPayload
+  input: JobInputPayload,
 ): Promise<JobDoc> {
   const analysis = analyzeJobInput(analysisTextFor(input), {
     categoryHint: input.category_hint ?? undefined,
@@ -174,13 +179,19 @@ export async function createAndAnalyzeJob(
   const job = await Job.findOneAndUpdate(
     { _id: jobId, status: "DRAFT" },
     { $set: { status: "WAITING_FOR_CUSTOMER" } },
-    { new: true }
+    { new: true },
   );
   if (!job) {
     throw new FlowError("invalid_status", "Job could not be settled", 409);
   }
 
-  await recordEvent(jobId, "ANALYZING", "WAITING_FOR_CUSTOMER", "system", "system");
+  await recordEvent(
+    jobId,
+    "ANALYZING",
+    "WAITING_FOR_CUSTOMER",
+    "system",
+    "system",
+  );
   return job;
 }
 
@@ -191,7 +202,7 @@ export async function createAndAnalyzeJob(
 export async function reanalyzeJob(
   jobId: string,
   customerId: string,
-  input: JobInputPayload
+  input: JobInputPayload,
 ): Promise<JobDoc> {
   const job = await requireJob({ _id: jobId, customer_id: customerId });
   guardJourney(job, "WAITING_FOR_CUSTOMER", "ANALYZING", "customer");
@@ -201,9 +212,16 @@ export async function reanalyzeJob(
     urgencyHint: input.urgency_hint ?? undefined,
   });
 
-  await recordEvent(jobId, "WAITING_FOR_CUSTOMER", "ANALYZING", customerId, "customer", {
-    reason: "customer-edited-details",
-  });
+  await recordEvent(
+    jobId,
+    "WAITING_FOR_CUSTOMER",
+    "ANALYZING",
+    customerId,
+    "customer",
+    {
+      reason: "customer-edited-details",
+    },
+  );
 
   const updated = await Job.findOneAndUpdate(
     { _id: jobId, customer_id: customerId, status: "WAITING_FOR_CUSTOMER" },
@@ -237,34 +255,50 @@ export async function reanalyzeJob(
           : {}),
       },
     },
-    { new: true }
+    { new: true },
   );
 
   if (!updated) {
     throw new FlowError("invalid_status", "Job could not be re-analyzed", 409);
   }
 
-  await recordEvent(jobId, "ANALYZING", "WAITING_FOR_CUSTOMER", "system", "system");
+  await recordEvent(
+    jobId,
+    "ANALYZING",
+    "WAITING_FOR_CUSTOMER",
+    "system",
+    "system",
+  );
   return updated;
 }
 
 /** "Sab theek hai" — customer confirms the summary and the job becomes matchable. */
-export async function confirmJobDetails(jobId: string, customerId: string): Promise<JobDoc> {
+export async function confirmJobDetails(
+  jobId: string,
+  customerId: string,
+): Promise<JobDoc> {
   const job = await requireJob({ _id: jobId, customer_id: customerId });
   guardJourney(job, "WAITING_FOR_CUSTOMER", "READY_TO_MATCH", "customer");
 
   const updated = await Job.findOneAndUpdate(
     { _id: jobId, customer_id: customerId, status: "WAITING_FOR_CUSTOMER" },
     { $set: { status: "READY_TO_MATCH" } },
-    { new: true }
+    { new: true },
   );
   if (!updated) {
     throw new FlowError("invalid_status", "Job could not be confirmed", 409);
   }
 
-  await recordEvent(jobId, "WAITING_FOR_CUSTOMER", "READY_TO_MATCH", customerId, "customer", {
-    source: "summary-confirm",
-  });
+  await recordEvent(
+    jobId,
+    "WAITING_FOR_CUSTOMER",
+    "READY_TO_MATCH",
+    customerId,
+    "customer",
+    {
+      source: "summary-confirm",
+    },
+  );
   return updated;
 }
 
@@ -276,7 +310,7 @@ export async function submitOfferAndBroadcast(
   jobId: string,
   customerId: string,
   offerRs: number | null,
-  now: Date = new Date()
+  now: Date = new Date(),
 ): Promise<BroadcastResult> {
   const job = await requireJob({ _id: jobId, customer_id: customerId });
   guardJourney(job, "READY_TO_MATCH", "BROADCASTING", "customer");
@@ -290,7 +324,7 @@ export async function submitOfferAndBroadcast(
     const check = validateCustomerOffer(
       offerRs,
       job.pricing?.estimate_min ?? 0,
-      job.pricing?.estimate_max ?? 0
+      job.pricing?.estimate_max ?? 0,
     );
     if (!check.valid) {
       throw new FlowError(
@@ -298,7 +332,7 @@ export async function submitOfferAndBroadcast(
         check.reason === "too_high"
           ? `Offer above the Rs ${check.max_allowed} ceiling`
           : `Offer below the Rs ${check.min_allowed} floor`,
-        400
+        400,
       );
     }
   }
@@ -334,17 +368,24 @@ export async function submitOfferAndBroadcast(
         "matching.accepted_worker_ids": [],
       },
     },
-    { new: true }
+    { new: true },
   );
   if (!updated) {
     throw new FlowError("invalid_status", "Job could not be broadcast", 409);
   }
 
-  await recordEvent(jobId, "READY_TO_MATCH", "BROADCASTING", customerId, "customer", {
-    broadcast_id,
-    eligible_workers_count,
-    acceptance_deadline: acceptance_deadline.toISOString(),
-  });
+  await recordEvent(
+    jobId,
+    "READY_TO_MATCH",
+    "BROADCASTING",
+    customerId,
+    "customer",
+    {
+      broadcast_id,
+      eligible_workers_count,
+      acceptance_deadline: acceptance_deadline.toISOString(),
+    },
+  );
 
   return {
     job: updated,
@@ -355,7 +396,12 @@ export async function submitOfferAndBroadcast(
 }
 
 /** Best-effort rollback of a job claim when the worker lock fails. */
-async function rollbackClaim(jobId: string, workerId: string, target: JobStatus, urgency: UrgencyLevel): Promise<void> {
+async function rollbackClaim(
+  jobId: string,
+  workerId: string,
+  target: JobStatus,
+  urgency: UrgencyLevel,
+): Promise<void> {
   const revert: Record<string, unknown> =
     urgency === "emergency"
       ? {
@@ -369,7 +415,7 @@ async function rollbackClaim(jobId: string, workerId: string, target: JobStatus,
   await Job.findOneAndUpdate(
     { _id: jobId, status: target, "matching.accepted_worker_ids": workerId },
     { $set: revert, $pull: { "matching.accepted_worker_ids": workerId } },
-    { new: true }
+    { new: true },
   );
 }
 
@@ -381,18 +427,23 @@ async function rollbackClaim(jobId: string, workerId: string, target: JobStatus,
 export async function workerAcceptJob(
   jobId: string,
   workerId: string,
-  now: Date = new Date()
+  now: Date = new Date(),
 ): Promise<JobDoc> {
   const job = await requireJob({ _id: jobId });
   if (job.status !== "BROADCASTING") {
     throw new FlowError("invalid_status", "Job is not broadcasting", 409);
   }
   if (expireIfDeadlinePassed(job.status, job.matching, now) === "EXPIRED") {
-    throw new FlowError("acceptance_window_closed", "Acceptance window has closed", 410);
+    throw new FlowError(
+      "acceptance_window_closed",
+      "Acceptance window has closed",
+      410,
+    );
   }
 
   const urgency: UrgencyLevel = job.understanding?.urgency ?? "normal";
-  const target: JobStatus = urgency === "emergency" ? "ACCEPTED" : "WORKER_RESPONSES";
+  const target: JobStatus =
+    urgency === "emergency" ? "ACCEPTED" : "WORKER_RESPONSES";
 
   const claimFilter: Record<string, unknown> = {
     _id: jobId,
@@ -417,15 +468,19 @@ export async function workerAcceptJob(
   const claimed = await Job.findOneAndUpdate(
     claimFilter,
     { $set: claimSet, $push: { "matching.accepted_worker_ids": workerId } },
-    { new: true }
+    { new: true },
   );
   if (!claimed) {
-    throw new FlowError("job_already_claimed", "Job was claimed by another worker", 409);
+    throw new FlowError(
+      "job_already_claimed",
+      "Job was claimed by another worker",
+      409,
+    );
   }
 
   const lock = await Worker.updateOne(
     { _id: workerId, active_job_id: null },
-    { $set: { active_job_id: jobId, is_available: false } }
+    { $set: { active_job_id: jobId, is_available: false } },
   );
   if (lock.matchedCount !== 1) {
     await rollbackClaim(jobId, workerId, target, urgency);
@@ -440,7 +495,7 @@ export async function workerAcceptJob(
     jobId,
     urgency === "emergency"
       ? "Emergency job accepted — worker is on the way"
-      : "Job accepted"
+      : "Job accepted",
   );
   return claimed;
 }
@@ -474,14 +529,18 @@ export async function workerOffer(
   jobId: string,
   workerId: string,
   input: WorkerOfferInput,
-  now: Date = new Date()
+  now: Date = new Date(),
 ): Promise<WorkerOfferResult> {
   const job = await requireJob({ _id: jobId });
   if (job.status !== "BROADCASTING") {
     throw new FlowError("invalid_status", "Job is not broadcasting", 409);
   }
   if (expireIfDeadlinePassed(job.status, job.matching, now) === "EXPIRED") {
-    throw new FlowError("acceptance_window_closed", "Acceptance window has closed", 410);
+    throw new FlowError(
+      "acceptance_window_closed",
+      "Acceptance window has closed",
+      410,
+    );
   }
 
   const urgency: UrgencyLevel = job.understanding?.urgency ?? "normal";
@@ -497,7 +556,7 @@ export async function workerOffer(
         check.reason === "too_low"
           ? `Counter offer must be at least ${check.min_allowed}`
           : `Counter offer cannot exceed ${check.max_allowed}`,
-        400
+        400,
       );
     }
   }
@@ -516,7 +575,11 @@ export async function workerOffer(
 
   const emergency = urgency === "emergency";
   if (emergency) {
-    throw new FlowError("invalid_status", "Emergency jobs only accept a direct claim", 409);
+    throw new FlowError(
+      "invalid_status",
+      "Emergency jobs only accept a direct claim",
+      409,
+    );
   }
 
   const offerExpiry = resolveSelectionDeadline(now);
@@ -536,15 +599,19 @@ export async function workerOffer(
       "matching.acceptance_deadline": { $gte: now },
     },
     { $set: claimSet, $push: { "matching.accepted_worker_ids": workerId } },
-    { new: true }
+    { new: true },
   );
   if (!claimed) {
-    throw new FlowError("job_already_claimed", "Job was claimed by another worker", 409);
+    throw new FlowError(
+      "job_already_claimed",
+      "Job was claimed by another worker",
+      409,
+    );
   }
 
   const lock = await Worker.updateOne(
     { _id: workerId, active_job_id: null },
-    { $set: { active_job_id: jobId, is_available: false } }
+    { $set: { active_job_id: jobId, is_available: false } },
   );
   if (lock.matchedCount !== 1) {
     await rollbackClaim(jobId, workerId, "WORKER_RESPONSES", urgency);
@@ -563,16 +630,24 @@ export async function workerOffer(
       : {}),
   });
 
-  await recordEvent(jobId, "BROADCASTING", "WORKER_RESPONSES", workerId, "worker", {
-    reason: input.type === "counter_offer" ? "counter-offer" : "accepted-offer",
-    urgency,
-    broadcast_id: job.matching?.broadcast_id ?? null,
-  });
+  await recordEvent(
+    jobId,
+    "BROADCASTING",
+    "WORKER_RESPONSES",
+    workerId,
+    "worker",
+    {
+      reason:
+        input.type === "counter_offer" ? "counter-offer" : "accepted-offer",
+      urgency,
+      broadcast_id: job.matching?.broadcast_id ?? null,
+    },
+  );
   await recordSystemMessage(
     jobId,
     input.type === "counter_offer"
       ? `Counter-offer submitted: ${formatPrice(input.counter_price ?? 0)} — waiting for the customer`
-      : `Offer submitted: ${formatPrice(customerOffer)} — waiting for the customer`
+      : `Offer submitted: ${formatPrice(customerOffer)} — waiting for the customer`,
   );
 
   return { job: claimed, offer };
@@ -599,7 +674,7 @@ export async function workerUpdateJobStatus(
   jobId: string,
   workerId: string,
   status: JobStatus,
-  note?: string
+  note?: string,
 ): Promise<JobDoc> {
   const job = await requireJob({
     _id: jobId,
@@ -616,27 +691,41 @@ export async function workerUpdateJobStatus(
     throw new FlowError(
       "before_photo_required",
       "Upload a before photo before starting work",
-      400
+      400,
     );
   }
-  if (status === "AWAITING_CUSTOMER_CONFIRMATION" && !job.completion?.after_photo_id) {
+  if (
+    status === "AWAITING_CUSTOMER_CONFIRMATION" &&
+    !job.completion?.after_photo_id
+  ) {
     throw new FlowError(
       "after_photo_required",
       "Upload an after photo before completing the job",
-      400
+      400,
     );
   }
 
   const updated = await Job.findOneAndUpdate(
     { _id: jobId, status: job.status },
     { $set: { status } },
-    { new: true }
+    { new: true },
   );
   if (!updated) {
-    throw new FlowError("invalid_status", "Job status changed concurrently", 409);
+    throw new FlowError(
+      "invalid_status",
+      "Job status changed concurrently",
+      409,
+    );
   }
 
-  await recordEvent(jobId, job.status, status, workerId, "worker", note ? { note } : {});
+  await recordEvent(
+    jobId,
+    job.status,
+    status,
+    workerId,
+    "worker",
+    note ? { note } : {},
+  );
   const systemMessage = STATUS_SYSTEM_MESSAGES[status];
   if (systemMessage) {
     await recordSystemMessage(jobId, systemMessage);
@@ -657,16 +746,24 @@ export async function workerUpdateJobStatus(
     ) {
       const [workerLng, workerLat] = worker.location.coordinates;
       const [destLng, destLat] = destCoords;
-      computeAndStoreRoute(jobId, workerLat, workerLng, destLat, destLng).catch(
-        (err) => console.error("[flow] pre-route failed:", err)
-      );
+      computeAndStoreRoute(jobId, workerLat, workerLng, destLat, destLng)
+        .then((route) => {
+          if (!route) return;
+          getIO()
+            ?.to(`job:${jobId}`)
+            .emit("route-computed", {
+              jobId,
+              ...route,
+            });
+        })
+        .catch((err) => console.error("[flow] pre-route failed:", err));
     }
   }
 
   if (status === "AWAITING_CUSTOMER_CONFIRMATION") {
     await Worker.updateOne(
       { _id: workerId, active_job_id: jobId },
-      { $set: { active_job_id: null, is_available: true } }
+      { $set: { active_job_id: null, is_available: true } },
     );
   }
   return updated;
@@ -686,15 +783,24 @@ export interface AttachPhotoInput {
 export async function workerAttachPhoto(
   jobId: string,
   workerId: string,
-  input: AttachPhotoInput
+  input: AttachPhotoInput,
 ): Promise<JobDoc> {
   const job = await requireJob({
     _id: jobId,
     "matching.selected_worker_id": workerId,
   });
-  const activeStatuses: JobStatus[] = ["ACCEPTED", "EN_ROUTE", "ARRIVED", "IN_PROGRESS"];
+  const activeStatuses: JobStatus[] = [
+    "ACCEPTED",
+    "EN_ROUTE",
+    "ARRIVED",
+    "IN_PROGRESS",
+  ];
   if (!activeStatuses.includes(job.status)) {
-    throw new FlowError("invalid_status", "Photos can only be attached to an active job", 409);
+    throw new FlowError(
+      "invalid_status",
+      "Photos can only be attached to an active job",
+      409,
+    );
   }
 
   const field =
@@ -709,7 +815,7 @@ export async function workerAttachPhoto(
         ...(input.note ? { "completion.note": input.note } : {}),
       },
     },
-    { new: true }
+    { new: true },
   );
   if (!updated) {
     throw new FlowError("invalid_status", "Job changed concurrently", 409);
@@ -731,19 +837,30 @@ export async function customerSelectWorker(
   jobId: string,
   customerId: string,
   workerId: string,
-  now: Date = new Date()
+  now: Date = new Date(),
 ): Promise<JobDoc> {
   const job = await requireJob({ _id: jobId, customer_id: customerId });
-  if (job.status !== "WORKER_RESPONSES" && job.status !== "CUSTOMER_SELECTING") {
+  if (
+    job.status !== "WORKER_RESPONSES" &&
+    job.status !== "CUSTOMER_SELECTING"
+  ) {
     throw new FlowError("invalid_status", "Job is not awaiting selection", 409);
   }
   if (expireIfDeadlinePassed(job.status, job.matching, now) === "EXPIRED") {
-    throw new FlowError("selection_window_closed", "Selection window has closed", 410);
+    throw new FlowError(
+      "selection_window_closed",
+      "Selection window has closed",
+      410,
+    );
   }
 
   const responders = (job.matching?.accepted_worker_ids ?? []).map(String);
   if (!responders.includes(workerId)) {
-    throw new FlowError("worker_not_responding", "Worker did not respond to this job", 403);
+    throw new FlowError(
+      "worker_not_responding",
+      "Worker did not respond to this job",
+      403,
+    );
   }
 
   const pendingOffer = await Offer.findOne({
@@ -757,9 +874,16 @@ export async function customerSelectWorker(
       : (pendingOffer?.offered_price ?? job.pricing?.customer_offer ?? 0);
 
   if (job.status === "WORKER_RESPONSES") {
-    await recordEvent(jobId, "WORKER_RESPONSES", "CUSTOMER_SELECTING", "system", "system", {
-      reason: "customer-selecting",
-    });
+    await recordEvent(
+      jobId,
+      "WORKER_RESPONSES",
+      "CUSTOMER_SELECTING",
+      "system",
+      "system",
+      {
+        reason: "customer-selecting",
+      },
+    );
   }
 
   const selected = await Job.findOneAndUpdate(
@@ -786,7 +910,7 @@ export async function customerSelectWorker(
         },
       },
     },
-    { new: true }
+    { new: true },
   );
   if (!selected) {
     throw new FlowError("invalid_status", "Job could not be accepted", 409);
@@ -794,54 +918,70 @@ export async function customerSelectWorker(
 
   const lock = await Worker.updateOne(
     { _id: workerId, active_job_id: jobId },
-    { $set: { is_available: false } }
+    { $set: { is_available: false } },
   );
   if (lock.matchedCount !== 1) {
     // Roll back the job: revert from ACCEPTED back to WORKER_RESPONSES,
     // clear the selected worker, and restore the selection deadline.
     const previousStatus = job.status;
     await Job.findOneAndUpdate(
-      { _id: jobId, status: "ACCEPTED", "matching.selected_worker_id": workerId },
+      {
+        _id: jobId,
+        status: "ACCEPTED",
+        "matching.selected_worker_id": workerId,
+      },
       {
         $set: {
           status: previousStatus,
           "matching.selected_worker_id": null,
-          "matching.selection_deadline": job.matching?.selection_deadline ?? resolveSelectionDeadline(now),
+          "matching.selection_deadline":
+            job.matching?.selection_deadline ?? resolveSelectionDeadline(now),
         },
       },
-      { new: true }
+      { new: true },
     );
-    throw new FlowError("worker_not_available", "Worker is no longer available", 409);
+    throw new FlowError(
+      "worker_not_available",
+      "Worker is no longer available",
+      409,
+    );
   }
 
   const others = responders.filter((id) => id !== workerId);
   if (others.length > 0) {
     await Worker.updateMany(
       { _id: { $in: others }, active_job_id: jobId },
-      { $set: { active_job_id: null, is_available: true } }
+      { $set: { active_job_id: null, is_available: true } },
     );
   }
 
   if (pendingOffer) {
     await Offer.updateOne(
       { job_id: jobId, worker_id: workerId, status: "pending" },
-      { $set: { status: "selected", expires_at: null } }
+      { $set: { status: "selected", expires_at: null } },
     );
   }
   if (others.length > 0) {
     await Offer.updateMany(
       { job_id: jobId, worker_id: { $in: others }, status: "pending" },
-      { $set: { status: "declined", expires_at: null } }
+      { $set: { status: "declined", expires_at: null } },
     );
   }
 
-  await recordEvent(jobId, "CUSTOMER_SELECTING", "ACCEPTED", customerId, "customer", {
-    worker_id: workerId,
-    final_price: agreedPrice,
-  });
+  await recordEvent(
+    jobId,
+    "CUSTOMER_SELECTING",
+    "ACCEPTED",
+    customerId,
+    "customer",
+    {
+      worker_id: workerId,
+      final_price: agreedPrice,
+    },
+  );
   await recordSystemMessage(
     jobId,
-    `Worker selected — job confirmed at ${formatPrice(agreedPrice)}`
+    `Worker selected — job confirmed at ${formatPrice(agreedPrice)}`,
   );
   return selected;
 }
@@ -856,22 +996,34 @@ export async function customerRejectWorker(
   customerId: string,
   workerId: string,
   action: "close" | "rebroadcast" = "close",
-  now: Date = new Date()
+  now: Date = new Date(),
 ): Promise<JobDoc> {
   const job = await requireJob({ _id: jobId, customer_id: customerId });
-  if (job.status !== "WORKER_RESPONSES" && job.status !== "CUSTOMER_SELECTING") {
+  if (
+    job.status !== "WORKER_RESPONSES" &&
+    job.status !== "CUSTOMER_SELECTING"
+  ) {
     throw new FlowError("invalid_status", "Job is not awaiting selection", 409);
   }
   if (expireIfDeadlinePassed(job.status, job.matching, now) === "EXPIRED") {
-    throw new FlowError("selection_window_closed", "Selection window has closed", 410);
+    throw new FlowError(
+      "selection_window_closed",
+      "Selection window has closed",
+      410,
+    );
   }
 
   const responders = (job.matching?.accepted_worker_ids ?? []).map(String);
   if (!responders.includes(workerId)) {
-    throw new FlowError("worker_not_responding", "Worker did not respond to this job", 403);
+    throw new FlowError(
+      "worker_not_responding",
+      "Worker did not respond to this job",
+      403,
+    );
   }
 
-  const target: JobStatus = action === "rebroadcast" ? "READY_TO_MATCH" : "CANCELLED";
+  const target: JobStatus =
+    action === "rebroadcast" ? "READY_TO_MATCH" : "CANCELLED";
   guardJourney(job, job.status, target, "customer");
 
   const update: Record<string, unknown> =
@@ -888,7 +1040,7 @@ export async function customerRejectWorker(
   const updated = await Job.findOneAndUpdate(
     { _id: jobId, customer_id: customerId, status: job.status },
     { $set: update },
-    { new: true }
+    { new: true },
   );
   if (!updated) {
     throw new FlowError("invalid_status", "Job changed concurrently", 409);
@@ -896,22 +1048,25 @@ export async function customerRejectWorker(
 
   await Offer.updateOne(
     { job_id: jobId, worker_id: workerId, status: "pending" },
-    { $set: { status: "declined", expires_at: null } }
+    { $set: { status: "declined", expires_at: null } },
   );
   await Worker.updateOne(
     { _id: workerId, active_job_id: jobId },
-    { $set: { active_job_id: null, is_available: true } }
+    { $set: { active_job_id: null, is_available: true } },
   );
 
   await recordEvent(jobId, job.status, target, customerId, "customer", {
     worker_id: workerId,
-    reason: action === "rebroadcast" ? "offer-rejected-rebroadcast" : "offer-rejected-close",
+    reason:
+      action === "rebroadcast"
+        ? "offer-rejected-rebroadcast"
+        : "offer-rejected-close",
   });
   await recordSystemMessage(
     jobId,
     action === "rebroadcast"
       ? "Counter-offer rejected — re-broadcasting to more ustads"
-      : "Counter-offer rejected — job closed"
+      : "Counter-offer rejected — job closed",
   );
   return updated;
 }
@@ -924,15 +1079,23 @@ export async function customerRejectWorker(
 export async function workerCancelJob(
   jobId: string,
   workerId: string,
-  note?: string
+  note?: string,
 ): Promise<JobDoc> {
-  const job = await requireJob({ _id: jobId, "matching.selected_worker_id": workerId });
-  const cancellable: JobStatus[] = ["ACCEPTED", "EN_ROUTE", "ARRIVED", "IN_PROGRESS"];
+  const job = await requireJob({
+    _id: jobId,
+    "matching.selected_worker_id": workerId,
+  });
+  const cancellable: JobStatus[] = [
+    "ACCEPTED",
+    "EN_ROUTE",
+    "ARRIVED",
+    "IN_PROGRESS",
+  ];
   if (!cancellable.includes(job.status)) {
     throw new FlowError(
       "invalid_status",
       `Job cannot be cancelled from ${job.status}`,
-      409
+      409,
     );
   }
   guardJourney(job, job.status, "CANCELLED", "worker");
@@ -940,7 +1103,7 @@ export async function workerCancelJob(
   const updated = await Job.findOneAndUpdate(
     { _id: jobId, status: job.status, "matching.selected_worker_id": workerId },
     { $set: { status: "CANCELLED" } },
-    { new: true }
+    { new: true },
   );
   if (!updated) {
     throw new FlowError("invalid_status", "Job changed concurrently", 409);
@@ -956,11 +1119,11 @@ export async function workerCancelJob(
       },
       $min: { cancellation_rate: 100 },
       $max: { ustad_score: 0 },
-    }
+    },
   );
   await Offer.updateMany(
     { job_id: jobId, worker_id: workerId, status: "pending" },
-    { $set: { status: "declined", expires_at: null } }
+    { $set: { status: "declined", expires_at: null } },
   );
 
   await recordEvent(jobId, job.status, "CANCELLED", workerId, "worker", {
@@ -978,19 +1141,28 @@ export async function workerCancelJob(
 export async function customerCancelJob(
   jobId: string,
   customerId: string,
-  note?: string
+  note?: string,
 ): Promise<JobDoc> {
   const job = await requireJob({ _id: jobId, customer_id: customerId });
-  const cancellable: JobStatus[] = ["ACCEPTED", "EN_ROUTE", "ARRIVED", "IN_PROGRESS"];
+  const cancellable: JobStatus[] = [
+    "ACCEPTED",
+    "EN_ROUTE",
+    "ARRIVED",
+    "IN_PROGRESS",
+  ];
   if (!cancellable.includes(job.status)) {
-    throw new FlowError("invalid_status", `Job cannot be cancelled from ${job.status}`, 409);
+    throw new FlowError(
+      "invalid_status",
+      `Job cannot be cancelled from ${job.status}`,
+      409,
+    );
   }
   guardJourney(job, job.status, "CANCELLED", "customer");
 
   const updated = await Job.findOneAndUpdate(
     { _id: jobId, status: job.status, customer_id: customerId },
     { $set: { status: "CANCELLED" } },
-    { new: true }
+    { new: true },
   );
   if (!updated) {
     throw new FlowError("invalid_status", "Job changed concurrently", 409);
@@ -1008,7 +1180,7 @@ export async function customerCancelJob(
         },
         $min: { cancellation_rate: 100 },
         $max: { ustad_score: 0 },
-      }
+      },
     );
   }
 
@@ -1024,7 +1196,10 @@ export async function customerCancelJob(
  * Lazy deadline enforcement: marks a job EXPIRED when its acceptance or
  * selection window has passed and releases any locked workers.
  */
-export async function markExpired(jobId: string, now: Date = new Date()): Promise<JobDoc | null> {
+export async function markExpired(
+  jobId: string,
+  now: Date = new Date(),
+): Promise<JobDoc | null> {
   const job = await requireJob({ _id: jobId });
   const target = expireIfDeadlinePassed(job.status, job.matching, now);
   if (!target) {
@@ -1040,7 +1215,7 @@ export async function markExpired(jobId: string, now: Date = new Date()): Promis
         "matching.selection_deadline": null,
       },
     },
-    { new: true }
+    { new: true },
   );
   if (!updated) {
     throw new FlowError("invalid_status", "Job could not be expired", 409);
@@ -1050,7 +1225,7 @@ export async function markExpired(jobId: string, now: Date = new Date()): Promis
   if (responders.length > 0) {
     await Worker.updateMany(
       { _id: { $in: responders }, active_job_id: jobId },
-      { $set: { active_job_id: null, is_available: true } }
+      { $set: { active_job_id: null, is_available: true } },
     );
   }
 

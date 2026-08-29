@@ -29,16 +29,16 @@ const MAX_REFRESH_INTERVAL_MS = 15_000;
 const MIN_REFRESH_INTERVAL_MS = 5_000;
 
 function hasValidCoordinate(
-  point: { lat: number; lng: number } | null
+  point: { lat: number; lng: number } | null,
 ): point is { lat: number; lng: number } {
   return Boolean(
     point &&
-      Number.isFinite(point.lat) &&
-      Number.isFinite(point.lng) &&
-      point.lat >= -90 &&
-      point.lat <= 90 &&
-      point.lng >= -180 &&
-      point.lng <= 180
+    Number.isFinite(point.lat) &&
+    Number.isFinite(point.lng) &&
+    point.lat >= -90 &&
+    point.lat <= 90 &&
+    point.lng >= -180 &&
+    point.lng <= 180,
   );
 }
 
@@ -60,7 +60,7 @@ function perpendicularDistanceToSegment(
   ax: number,
   ay: number,
   bx: number,
-  by: number
+  by: number,
 ): number {
   const dx = bx - ax;
   const dy = by - ay;
@@ -77,7 +77,7 @@ function perpendicularDistanceToSegment(
 function distanceFromPolyline(
   px: number,
   py: number,
-  polyline: [number, number][]
+  polyline: [number, number][],
 ): number {
   if (polyline.length < 2) return Infinity;
   let min = Infinity;
@@ -104,13 +104,13 @@ export default function TrackingMap({
   const workerMarkerRef = useRef<L.Marker | null>(null);
   const destMarkerRef = useRef<L.Marker | null>(null);
   const arrivalCircleRef = useRef<L.Circle | null>(null);
-  const fallbackPolylineRef = useRef<L.Polyline | null>(null);
   const roadPolylineRef = useRef<L.Polyline | null>(null);
   const routeRequestIdRef = useRef(0);
   const lastRouteOriginRef = useRef<[number, number] | null>(null);
   const lastRouteDestinationRef = useRef<[number, number] | null>(null);
   const lastRefreshTimeRef = useRef(0);
   const currentRouteRef = useRef<[number, number][] | null>(null);
+  const lastPrecomputedRouteRef = useRef<[number, number][] | null>(null);
   const workerAnimationFrameRef = useRef<number | null>(null);
   const [leaflet, setLeaflet] = useState<typeof L | null>(null);
   const hasCenteredMapRef = useRef(false);
@@ -123,11 +123,15 @@ export default function TrackingMap({
       const L = await import("leaflet");
 
       // Fix default marker icons (webpack/next.js issue)
-      delete (L.Icon.Default.prototype as unknown as Record<string, unknown>)._getIconUrl;
+      delete (L.Icon.Default.prototype as unknown as Record<string, unknown>)
+        ._getIconUrl;
       L.Icon.Default.mergeOptions({
-        iconRetinaUrl: "https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/marker-icon-2x.png",
-        iconUrl: "https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/marker-icon.png",
-        shadowUrl: "https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/marker-shadow.png",
+        iconRetinaUrl:
+          "https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/marker-icon-2x.png",
+        iconUrl:
+          "https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/marker-icon.png",
+        shadowUrl:
+          "https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/marker-shadow.png",
       });
 
       setLeaflet(L);
@@ -146,12 +150,15 @@ export default function TrackingMap({
     });
 
     leaflet
-      .tileLayer("https://tiles.stadiamaps.com/tiles/alidade_smooth/{z}/{x}/{y}{r}.png", {
-        attribution:
-          '&copy; <a href="https://stadiamaps.com/">Stadia Maps</a>, &copy; <a href="https://openmaptiles.org/">OpenMapTiles</a>, &copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
-        maxZoom: 20,
-        minZoom: 2,
-      })
+      .tileLayer(
+        "https://tiles.stadiamaps.com/tiles/alidade_smooth/{z}/{x}/{y}{r}.png",
+        {
+          attribution:
+            '&copy; <a href="https://stadiamaps.com/">Stadia Maps</a>, &copy; <a href="https://openmaptiles.org/">OpenMapTiles</a>, &copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
+          maxZoom: 20,
+          minZoom: 2,
+        },
+      )
       .addTo(map);
 
     leaflet.control.zoom({ position: "bottomright" }).addTo(map);
@@ -218,7 +225,7 @@ export default function TrackingMap({
         iconAnchor: isCustomerPerspective ? [16, 16] : [12, 12],
       });
     },
-    [perspective]
+    [perspective],
   );
 
   const getDestIcon = useCallback(
@@ -257,7 +264,7 @@ export default function TrackingMap({
         iconAnchor: [16, 40],
       });
     },
-    [perspective]
+    [perspective],
   );
 
   // Update markers
@@ -269,13 +276,12 @@ export default function TrackingMap({
     const hasWorker = hasValidCoordinate(workerLocation);
 
     if (!hasDest || !hasWorker) {
-      fallbackPolylineRef.current?.remove();
-      fallbackPolylineRef.current = null;
       roadPolylineRef.current?.remove();
       roadPolylineRef.current = null;
       lastRouteOriginRef.current = null;
       lastRouteDestinationRef.current = null;
       currentRouteRef.current = null;
+      lastPrecomputedRouteRef.current = null;
     }
 
     // Destination marker — only when valid coordinates exist
@@ -306,7 +312,10 @@ export default function TrackingMap({
     // Arrival zone circle
     if (showArrivalZone && hasDest) {
       if (arrivalCircleRef.current) {
-        arrivalCircleRef.current.setLatLng([destination!.lat, destination!.lng]);
+        arrivalCircleRef.current.setLatLng([
+          destination!.lat,
+          destination!.lng,
+        ]);
       } else {
         arrivalCircleRef.current = leaflet
           .circle([destination!.lat, destination!.lng], {
@@ -363,26 +372,6 @@ export default function TrackingMap({
           .addTo(map);
       }
 
-      // Draw a direct fallback until the road route is available.
-      if (hasDest) {
-        const points: [number, number][] = [
-          latlng,
-          [destination!.lat, destination!.lng],
-        ];
-        if (!roadPolylineRef.current && fallbackPolylineRef.current) {
-          fallbackPolylineRef.current.setLatLngs(points);
-        } else if (!roadPolylineRef.current) {
-          fallbackPolylineRef.current = leaflet
-            .polyline(points, {
-              color: "#C97A3D",
-              weight: 3,
-              opacity: 0.7,
-              dashArray: "8 6",
-            })
-            .addTo(map);
-        }
-      }
-
       // Only fit the map once when the view is first established.
       // Repeated re-fit calls cause the map to jump around as the worker updates.
       const bounds = leaflet.latLngBounds([latlng]);
@@ -405,7 +394,14 @@ export default function TrackingMap({
         workerAnimationFrameRef.current = null;
       }
     };
-  }, [leaflet, workerLocation, destination, getWorkerIcon, getDestIcon, showArrivalZone]);
+  }, [
+    leaflet,
+    workerLocation,
+    destination,
+    getWorkerIcon,
+    getDestIcon,
+    showArrivalZone,
+  ]);
 
   // Render a road-following route. Uses precomputed route from DB first,
   // then client-side cache, then live OSRM fetch with adaptive refresh.
@@ -435,22 +431,34 @@ export default function TrackingMap({
         })
         .addTo(routingMap)
         .bringToFront();
-      fallbackPolylineRef.current?.remove();
-      fallbackPolylineRef.current = null;
       currentRouteRef.current = points;
     }
 
+    const hasPrecomputedRoute =
+      precomputedRoute && precomputedRoute.length >= 2
+        ? precomputedRoute
+        : null;
+
     // --- Layer 1: Pre-computed route from DB (instant) ---
-    if (precomputedRoute && precomputedRoute.length >= 2) {
-      renderRoadRoute(precomputedRoute);
-      lastRouteOriginRef.current = origin;
-      lastRouteDestinationRef.current = target;
-      lastRefreshTimeRef.current = Date.now();
-      return;
+    if (hasPrecomputedRoute) {
+      const isNewPrecomputedRoute =
+        lastPrecomputedRouteRef.current !== hasPrecomputedRoute;
+      if (isNewPrecomputedRoute || !roadPolylineRef.current) {
+        renderRoadRoute(hasPrecomputedRoute);
+        lastPrecomputedRouteRef.current = hasPrecomputedRoute;
+        lastRouteOriginRef.current = origin;
+        lastRouteDestinationRef.current = target;
+        lastRefreshTimeRef.current = Date.now();
+        return;
+      }
+    } else {
+      lastPrecomputedRouteRef.current = null;
     }
 
     // --- Layer 2: Client-side SessionStorage cache ---
-    const cached = getCachedRoute(origin[0], origin[1], target[0], target[1]);
+    const cached = hasPrecomputedRoute
+      ? null
+      : getCachedRoute(origin[0], origin[1], target[0], target[1]);
     if (cached && cached.coordinates.length >= 2) {
       renderRoadRoute(cached.coordinates);
       lastRouteOriginRef.current = origin;
@@ -471,7 +479,14 @@ export default function TrackingMap({
     const routeOrigin = lastRouteOriginRef.current;
     const workerMovedEnough =
       !routeOrigin ||
-      haversineDistanceKm(origin[0], origin[1], routeOrigin[0], routeOrigin[1]) * 1000 > 35;
+      haversineDistanceKm(
+        origin[0],
+        origin[1],
+        routeOrigin[0],
+        routeOrigin[1],
+      ) *
+        1000 >
+        35;
 
     // Deviation: worker is off the current route polyline
     const isOffRoute =
@@ -485,42 +500,21 @@ export default function TrackingMap({
       timeSinceLastRefresh >= MAX_REFRESH_INTERVAL_MS;
 
     // Minimum interval guard: don't spam OSRM
-    const minIntervalPassed =
-      timeSinceLastRefresh >= MIN_REFRESH_INTERVAL_MS;
+    const minIntervalPassed = timeSinceLastRefresh >= MIN_REFRESH_INTERVAL_MS;
 
     const shouldRefresh =
       !cached &&
       minIntervalPassed &&
-      (destinationChanged || workerMovedEnough || isOffRoute || refreshIntervalExceeded);
+      (destinationChanged ||
+        workerMovedEnough ||
+        isOffRoute ||
+        refreshIntervalExceeded);
 
     if (!shouldRefresh) return;
 
     lastRouteOriginRef.current = origin;
     lastRouteDestinationRef.current = target;
     lastRefreshTimeRef.current = now;
-    roadPolylineRef.current?.remove();
-    roadPolylineRef.current = null;
-
-    // Show dashed fallback while loading
-    const directPoints: [number, number][] = [origin, target];
-    if (fallbackPolylineRef.current) {
-      fallbackPolylineRef.current.setLatLngs(directPoints);
-      fallbackPolylineRef.current.setStyle({
-        color: "#C97A3D",
-        weight: 3,
-        opacity: 0.7,
-        dashArray: "8 6",
-      });
-    } else {
-      fallbackPolylineRef.current = routingLeaflet
-        .polyline(directPoints, {
-          color: "#C97A3D",
-          weight: 3,
-          opacity: 0.7,
-          dashArray: "8 6",
-        })
-        .addTo(map);
-    }
 
     const requestId = ++routeRequestIdRef.current;
     const controller = new AbortController();
@@ -548,7 +542,9 @@ export default function TrackingMap({
         }
 
         const routePoints = coordinates
-          .filter((point: unknown): point is [number, number] => isRouteCoordinate(point))
+          .filter((point: unknown): point is [number, number] =>
+            isRouteCoordinate(point),
+          )
           .map(([lng, lat]) => [lat, lng] as [number, number]);
         if (routePoints.length < 2) return;
 
@@ -562,7 +558,7 @@ export default function TrackingMap({
           duration_seconds: body?.data?.duration_seconds ?? null,
         });
       } catch {
-        // Keep the direct fallback line when routing is unavailable.
+        // Keep the current road route; show no line if routing is unavailable.
       }
     }
 
@@ -574,7 +570,11 @@ export default function TrackingMap({
     <div
       className={`relative overflow-hidden rounded-[28px] border border-divider bg-[rgb(var(--surface))] shadow-[0_18px_50px_rgba(40,31,25,0.08)] ${className}`}
     >
-      <div ref={mapRef} className="h-full w-full" style={{ minHeight: "320px" }} />
+      <div
+        ref={mapRef}
+        className="h-full w-full"
+        style={{ minHeight: "320px" }}
+      />
 
       {distanceKm !== undefined && (
         <div className="absolute left-3 top-3 z-[1000] rounded-xl bg-[rgb(var(--surface))]/95 px-3 py-2 shadow-lg backdrop-blur-sm ring-1 ring-divider">

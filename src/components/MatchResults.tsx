@@ -89,7 +89,11 @@ export default function MatchResults({ data, location, onRequestSent }: MatchRes
       <header className="flex flex-col gap-1">
         <p className="font-urdu text-sm text-muted">اُستاد کی تلاش</p>
         <h2 className="font-display text-3xl font-semibold leading-tight text-text">
-          {categoryLabel ? `Best matches for ${categoryLabel.toLowerCase()} work` : "Best matches near you"}
+          {categoryLabel
+            ? `Best matches for ${categoryLabel.toLowerCase()} work`
+            : location
+              ? "Best matches near you"
+              : "Available ustads"}
         </h2>
       </header>
 
