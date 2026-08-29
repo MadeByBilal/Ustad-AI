@@ -33,7 +33,7 @@ export default function RootLayout({
         <link href={FONTS_URL} rel="stylesheet" />
         <link
           rel="stylesheet"
-          href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css"
+          href="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.css"
         />
       </head>
       <body className="antialiased">

@@ -3,6 +3,7 @@
 import { useRouter } from "next/navigation";
 import WorkerChat from "@/components/worker/WorkerChat";
 import { motion } from "framer-motion";
+import { useLang } from "@/lib/i18n/context";
 
 export default function CustomerChatPageClient({
   jobId,
@@ -12,6 +13,7 @@ export default function CustomerChatPageClient({
   originalText: string;
 }) {
   const router = useRouter();
+  const { t } = useLang();
 
   return (
     <div className="flex h-screen flex-col">
@@ -30,7 +32,7 @@ export default function CustomerChatPageClient({
           </svg>
         </motion.button>
         <div className="min-w-0 flex-1">
-          <p className="text-base font-bold text-text">Worker</p>
+          <p className="text-base font-bold text-text">{t("worker")}</p>
           <p className="truncate text-sm text-muted">{originalText}</p>
         </div>
       </div>

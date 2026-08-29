@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { motion } from "framer-motion";
+import { useLang } from "@/lib/i18n/context";
 
 interface ReviewScreenProps {
   jobId: string;
@@ -10,6 +11,7 @@ interface ReviewScreenProps {
 }
 
 export default function ReviewScreen({ jobId, workerName, onDone }: ReviewScreenProps) {
+  const { t } = useLang();
   const [rating, setRating] = useState(0);
   const [hoveredStar, setHoveredStar] = useState(0);
   const [text, setText] = useState("");
@@ -19,7 +21,7 @@ export default function ReviewScreen({ jobId, workerName, onDone }: ReviewScreen
 
   async function handleSubmit() {
     if (rating === 0) {
-      setError("Please select a rating");
+      setError(t("selectRating"));
       return;
     }
 
@@ -33,11 +35,11 @@ export default function ReviewScreen({ jobId, workerName, onDone }: ReviewScreen
       });
       const body = await res.json().catch(() => null);
       if (!res.ok || !body?.success) {
-        throw new Error(body?.error ?? "Failed to submit review");
+        throw new Error(body?.error ?? t("actionFailed"));
       }
       setSubmitted(true);
     } catch (e) {
-      setError(e instanceof Error ? e.message : "Failed to submit review");
+      setError(e instanceof Error ? e.message : t("actionFailed"));
     } finally {
       setBusy(false);
     }
@@ -51,12 +53,12 @@ export default function ReviewScreen({ jobId, workerName, onDone }: ReviewScreen
             <path strokeLinecap="round" strokeLinejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
           </svg>
         </div>
-        <h1 className="mt-6 font-display text-2xl font-bold text-text">Thank you!</h1>
+        <h1 className="mt-6 font-display text-2xl font-bold text-text">{t("thankYou")}</h1>
         <p className="mt-2 text-center text-base text-muted">
-          Your review helps other customers find the best workers.
+          {t("reviewHelpsMsg")}
         </p>
         <motion.button type="button" onClick={onDone} whileTap={{ scale: 0.95 }} whileHover={{ y: -1 }} transition={{ duration: 0.15, ease: "easeOut" }} className="btn-primary mt-8">
-          Done
+          {t("done")}
         </motion.button>
       </div>
     );
@@ -71,8 +73,8 @@ export default function ReviewScreen({ jobId, workerName, onDone }: ReviewScreen
         </span>
       </div>
 
-      <h1 className="mt-6 font-display text-2xl font-bold text-text">Rate your experience</h1>
-      <p className="mt-2 text-base text-muted">How was {workerName}?</p>
+      <h1 className="mt-6 font-display text-2xl font-bold text-text">{t("rateExperience")}</h1>
+      <p className="mt-2 text-base text-muted">{t("howWas").replace("{name}", workerName)}</p>
 
       {/* Star Rating */}
       <div className="mt-8 flex gap-3">
@@ -105,19 +107,19 @@ export default function ReviewScreen({ jobId, workerName, onDone }: ReviewScreen
 
       {/* Rating Text */}
       <p className="mt-4 text-sm text-muted">
-        {rating === 0 && "Tap a star to rate"}
-        {rating === 1 && "Poor"}
-        {rating === 2 && "Fair"}
-        {rating === 3 && "Good"}
-        {rating === 4 && "Very Good"}
-        {rating === 5 && "Excellent"}
+        {rating === 0 && t("tapStarToRate")}
+        {rating === 1 && t("poor")}
+        {rating === 2 && t("fair")}
+        {rating === 3 && t("good")}
+        {rating === 4 && t("veryGood")}
+        {rating === 5 && t("excellent")}
       </p>
 
       {/* Review Text */}
       <textarea
         value={text}
         onChange={(e) => setText(e.target.value)}
-        placeholder="Tell others about your experience (optional)"
+        placeholder={t("reviewPlaceholder")}
         rows={3}
         className="input mt-8 resize-none"
       />
@@ -137,7 +139,7 @@ export default function ReviewScreen({ jobId, workerName, onDone }: ReviewScreen
         transition={{ duration: 0.15, ease: "easeOut" }}
         className="btn-primary mt-6 w-full disabled:opacity-50"
       >
-        {busy ? "Submitting..." : "Submit Review"}
+        {busy ? t("submitting") : t("submitReview")}
       </motion.button>
 
       <motion.button
@@ -148,7 +150,7 @@ export default function ReviewScreen({ jobId, workerName, onDone }: ReviewScreen
         transition={{ duration: 0.15, ease: "easeOut" }}
         className="mt-3 text-sm font-medium text-muted"
       >
-        Skip for now
+        {t("skipForNow")}
       </motion.button>
     </div>
   );

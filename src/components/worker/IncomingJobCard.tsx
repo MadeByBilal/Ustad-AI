@@ -5,11 +5,12 @@ import { useRouter } from "next/navigation";
 import type { IncomingJobView } from "@/lib/worker/dashboard";
 import { motion, AnimatePresence } from "framer-motion";
 import CounterOfferModal from "./CounterOfferModal";
+import { useLang } from "@/lib/i18n/context";
 
-function timeLeft(deadline: string | null, now: number): string | null {
+function timeLeft(deadline: string | null, now: number, expiredLabel: string): string | null {
   if (!deadline) return null;
   const ms = new Date(deadline).getTime() - now;
-  if (ms <= 0) return "Expired";
+  if (ms <= 0) return expiredLabel;
   const m = Math.floor(ms / 60000);
   const s = Math.floor((ms % 60000) / 1000);
   return `${m}:${String(s).padStart(2, "0")}`;
@@ -30,11 +31,6 @@ async function postJson(url: string, body?: unknown): Promise<void> {
   }
 }
 
-/**
- * Incoming job card: full broadcast details with the response actions
- * (accept / counter-offer / decline / ask clarification) and a live
- * countdown to the acceptance deadline.
- */
 export default function IncomingJobCard({
   job,
   now,
@@ -45,14 +41,15 @@ export default function IncomingJobCard({
   onChanged: () => void;
 }) {
   const router = useRouter();
+  const { t } = useLang();
   const [busy, setBusy] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [showCounter, setShowCounter] = useState(false);
   const [clarifying, setClarifying] = useState(false);
   const [question, setQuestion] = useState("");
 
-  const left = timeLeft(job.acceptance_deadline, now);
-  const expired = left === "Expired";
+  const left = timeLeft(job.acceptance_deadline, now, t("expired"));
+  const expired = left === t("expired");
   const emergency = job.urgency === "emergency";
   const pendingCounter = job.my_offer?.status === "pending" && job.my_offer.type === "counter_offer";
 
@@ -63,7 +60,7 @@ export default function IncomingJobCard({
       await fn();
       onChanged();
     } catch (e) {
-      setError(e instanceof Error ? e.message : "Something went wrong");
+      setError(e instanceof Error ? e.message : t("error"));
     } finally {
       setBusy(null);
     }
@@ -97,7 +94,7 @@ export default function IncomingJobCard({
                 emergency ? "!bg-warning !text-bg" : "!bg-bg !text-muted"
               }`}
             >
-              {emergency ? "Emergency" : "Normal"}
+              {emergency ? t("emergency") : t("normal")}
             </span>
           </div>
           <p className="mt-2 font-urdu text-lg font-bold leading-relaxed text-text">
@@ -113,7 +110,7 @@ export default function IncomingJobCard({
                  : "!bg-bg !text-muted"
           }`}
         >
-          {expired ? "Expired" : left ? `⏱ ${left}` : "No deadline"}
+          {expired ? t("expired") : left ? `⏱ ${left}` : t("noDeadline")}
         </span>
       </div>
 
@@ -147,29 +144,28 @@ export default function IncomingJobCard({
 
       <div className="mt-3 grid grid-cols-2 gap-2 text-xs text-muted sm:grid-cols-4">
         <div className="rounded-lg bg-bg p-2">
-          <dt className="text-muted">Customer offer</dt>
+          <dt className="text-muted">{t("customerOffer")}</dt>
           <dd className="font-mono font-semibold text-text">
             Rs {job.customer_offer.toLocaleString("en-PK")}
           </dd>
         </div>
         <div className="rounded-lg bg-bg p-2">
-          <dt className="text-muted">Distance</dt>
+          <dt className="text-muted">{t("distance")}</dt>
           <dd className="font-semibold text-text">
-            {job.distance_km != null ? `~${job.distance_km} km` : "Unknown"}
+            {job.distance_km != null ? `~${job.distance_km} km` : t("unknown")}
           </dd>
         </div>
         <div className="rounded-lg bg-bg p-2 sm:col-span-2">
-          <dt className="text-muted">Location</dt>
+          <dt className="text-muted">{t("location")}</dt>
           <dd className="truncate font-semibold text-text">
-            {job.address_label || "Area not shared"}
+            {job.address_label || t("areaNotShared")}
           </dd>
         </div>
       </div>
 
       {pendingCounter && (
         <p className="mt-3 rounded-lg bg-surface px-3 py-1.5 text-xs text-muted">
-          Counter-offer submitted (<span className="font-mono">Rs {job.my_offer?.counter_price?.toLocaleString("en-PK")}</span>) —
-          waiting for the customer to approve.
+          {t("counterOfferSubmitted")}
         </p>
       )}
 
@@ -179,7 +175,7 @@ export default function IncomingJobCard({
             type="text"
             value={question}
             onChange={(e) => setQuestion(e.target.value)}
-            placeholder="Ask the customer a question…"
+            placeholder={t("askQuestionPlaceholder")}
             aria-label="Clarification question"
             className="w-full rounded-xl border border-divider bg-surface px-3 py-2 text-sm outline-none focus:border-accent"
           />
@@ -192,7 +188,7 @@ export default function IncomingJobCard({
             whileHover={{ y: -1 }}
             transition={{ duration: 0.15, ease: "easeOut" }}
           >
-            Send
+            {t("send")}
           </motion.button>
         </div>
       )}
@@ -201,7 +197,7 @@ export default function IncomingJobCard({
 
       <div className="mt-3 flex flex-wrap justify-end gap-2 border-t border-divider pt-3">
         {pendingCounter ? (
-          <span className="badge bg-surface text-muted">Awaiting customer approval</span>
+          <span className="badge bg-surface text-muted">{t("awaitingCustomerApproval")}</span>
         ) : (
           <>
             {!expired && (
@@ -220,7 +216,7 @@ export default function IncomingJobCard({
                   whileHover={{ y: -1 }}
                   transition={{ duration: 0.15, ease: "easeOut" }}
                 >
-                  {busy === "accept" ? "Accepting…" : "Accept offer"}
+                  {busy === "accept" ? `${t("acceptOffer")}…` : t("acceptOffer")}
                 </motion.button>
                 <motion.button
                   type="button"
@@ -231,7 +227,7 @@ export default function IncomingJobCard({
                   whileHover={{ y: -1 }}
                   transition={{ duration: 0.15, ease: "easeOut" }}
                 >
-                  Counter-offer
+                  {t("counterOffer")}
                 </motion.button>
               </>
             )}
@@ -248,7 +244,7 @@ export default function IncomingJobCard({
               whileHover={{ y: -1 }}
               transition={{ duration: 0.15, ease: "easeOut" }}
             >
-              {busy === "decline" ? "Declining…" : "Decline"}
+              {busy === "decline" ? `${t("decline")}…` : t("decline")}
             </motion.button>
             <motion.button
               type="button"
@@ -259,7 +255,7 @@ export default function IncomingJobCard({
               whileHover={{ y: -1 }}
               transition={{ duration: 0.15, ease: "easeOut" }}
             >
-              Ask clarification
+              {t("askClarification")}
             </motion.button>
           </>
         )}

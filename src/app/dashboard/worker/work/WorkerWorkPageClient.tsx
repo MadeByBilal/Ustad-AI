@@ -5,23 +5,7 @@ import Link from "next/link";
 import JobPhotoUpload from "@/components/worker/JobPhotoUpload";
 import { useJobStream } from "@/lib/useJobStream";
 import { motion } from "framer-motion";
-
-const NEXT_ACTIONS: Record<string, { label: string; to: string }> = {
-  ACCEPTED: { label: "On the way", to: "EN_ROUTE" },
-  EN_ROUTE: { label: "Arrived", to: "ARRIVED" },
-  ARRIVED: { label: "Start work", to: "IN_PROGRESS" },
-  IN_PROGRESS: { label: "Complete", to: "AWAITING_CUSTOMER_CONFIRMATION" },
-};
-
-const STATUS_LABELS: Record<string, { label: string; color: string }> = {
-  ACCEPTED: { label: "Ready to go", color: "text-accent" },
-  EN_ROUTE: { label: "On the way", color: "text-accent" },
-  ARRIVED: { label: "Arrived", color: "text-accent" },
-  IN_PROGRESS: { label: "Working", color: "text-accent" },
-  AWAITING_CUSTOMER_CONFIRMATION: { label: "Waiting for confirmation", color: "text-warning" },
-  COMPLETED: { label: "Completed", color: "text-success-fg" },
-  CANCELLED: { label: "Cancelled", color: "text-warning" },
-};
+import { useLang } from "@/lib/i18n/context";
 
 export default function WorkerWorkPageClient({
   jobId,
@@ -38,12 +22,30 @@ export default function WorkerWorkPageClient({
     note?: string | null;
   } | null;
 }) {
+  const { t } = useLang();
   const [jobStatus, setJobStatus] = useState(initialStatus);
   const [completion, setCompletion] = useState(initialCompletion);
   const [advancing, setAdvancing] = useState(false);
   const [advanceError, setAdvanceError] = useState<string | null>(null);
   const [advanceSuccess, setAdvanceSuccess] = useState<string | null>(null);
   const [cancelling, setCancelling] = useState(false);
+
+  const NEXT_ACTIONS: Record<string, { label: string; to: string }> = {
+    ACCEPTED: { label: t("onTheWay"), to: "EN_ROUTE" },
+    EN_ROUTE: { label: t("arrived"), to: "ARRIVED" },
+    ARRIVED: { label: t("startWork"), to: "IN_PROGRESS" },
+    IN_PROGRESS: { label: t("completed"), to: "AWAITING_CUSTOMER_CONFIRMATION" },
+  };
+
+  const STATUS_LABELS: Record<string, { label: string; color: string }> = {
+    ACCEPTED: { label: t("readyToGo"), color: "text-accent" },
+    EN_ROUTE: { label: t("onTheWay"), color: "text-accent" },
+    ARRIVED: { label: t("arrived"), color: "text-accent" },
+    IN_PROGRESS: { label: t("inProgress"), color: "text-accent" },
+    AWAITING_CUSTOMER_CONFIRMATION: { label: t("waitingForConfirmation"), color: "text-warning" },
+    COMPLETED: { label: t("completed"), color: "text-success-fg" },
+    CANCELLED: { label: t("cancelled"), color: "text-warning" },
+  };
 
   const refresh = useCallback(async () => {
     try {
@@ -111,22 +113,22 @@ export default function WorkerWorkPageClient({
   }
 
   async function handleCancel() {
-    if (!confirm("Are you sure you want to cancel this job?")) return;
+    if (!confirm(t("confirmCancelWorker"))) return;
     setCancelling(true);
     setAdvanceError(null);
     try {
       const res = await fetch(`/api/jobs/${jobId}/cancel`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ reason: "Cancelled by worker" }),
+        body: JSON.stringify({ reason: t("cancelledByWorker") }),
       });
       const body = await res.json().catch(() => null);
       if (!res.ok || !body?.success) {
-        throw new Error(body?.error ?? "Cancel failed");
+        throw new Error(body?.error ?? t("cancelFailed"));
       }
       setJobStatus("CANCELLED");
     } catch (e) {
-      setAdvanceError(e instanceof Error ? e.message : "Cancel failed");
+      setAdvanceError(e instanceof Error ? e.message : t("cancelFailed"));
     } finally {
       setCancelling(false);
     }
@@ -142,14 +144,14 @@ export default function WorkerWorkPageClient({
           </svg>
         </div>
         <div>
-          <p className="text-lg font-bold text-text">Job Completed!</p>
-          <p className="mt-1 text-sm text-muted">The customer has confirmed the work.</p>
+          <p className="text-lg font-bold text-text">{t("jobCompleted")}</p>
+          <p className="mt-1 text-sm text-muted">{t("customerConfirmed")}</p>
         </div>
         <Link
           href="/dashboard/worker"
           className="btn-primary !rounded-xl !px-6 !py-2.5 text-sm"
         >
-          Back to Dashboard
+          {t("backToDashboard")}
         </Link>
       </motion.div>
     );
@@ -165,14 +167,14 @@ export default function WorkerWorkPageClient({
           </svg>
         </div>
         <div>
-          <p className="text-lg font-bold text-text">Job Cancelled</p>
-          <p className="mt-1 text-sm text-muted">This job has been cancelled.</p>
+          <p className="text-lg font-bold text-text">{t("jobCancelled")}</p>
+          <p className="mt-1 text-sm text-muted">{t("jobCancelledMsg")}</p>
         </div>
         <Link
           href="/dashboard/worker"
           className="btn-primary !rounded-xl !px-6 !py-2.5 text-sm"
         >
-          Back to Dashboard
+          {t("backToDashboard")}
         </Link>
       </motion.div>
     );
@@ -186,7 +188,7 @@ export default function WorkerWorkPageClient({
           <div className="min-w-0">
             <p className={`text-sm font-bold ${statusInfo.color}`}>{statusInfo.label}</p>
             <p className="mt-1 font-urdu text-sm text-text">
-              {originalText || "Job in progress"}
+              {originalText || t("jobInProgress")}
             </p>
           </div>
           <Link
@@ -204,7 +206,7 @@ export default function WorkerWorkPageClient({
       {canAttachPhotos && (
         <motion.div className="card space-y-3" whileHover={{ y: -2 }} transition={{ duration: 0.2, ease: "easeOut" }}>
           <p className="text-xs font-bold uppercase tracking-wide text-muted">
-            Job Photos
+            {t("jobPhotos")}
           </p>
           <div className="grid gap-3 sm:grid-cols-2">
             <JobPhotoUpload
@@ -246,7 +248,7 @@ export default function WorkerWorkPageClient({
           transition={{ duration: 0.15, ease: "easeOut" }}
           className="btn-primary w-full !rounded-xl !px-4 !py-3 text-sm disabled:opacity-60"
         >
-          {advancing ? "Updating…" : nextAction.label}
+          {advancing ? t("loading") : nextAction.label}
         </motion.button>
       )}
 
@@ -260,7 +262,7 @@ export default function WorkerWorkPageClient({
         transition={{ duration: 0.15, ease: "easeOut" }}
         className="w-full rounded-xl border border-warning px-4 py-3 text-sm font-semibold text-warning transition-colors hover:bg-warning/10 disabled:opacity-60"
       >
-        {cancelling ? "Cancelling…" : "Cancel Job"}
+        {cancelling ? t("cancelling") : t("cancelJob")}
       </motion.button>
     </div>
   );

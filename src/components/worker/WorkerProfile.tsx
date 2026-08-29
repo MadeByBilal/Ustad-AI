@@ -5,10 +5,12 @@ import { motion } from "framer-motion";
 import type { WorkerDashboardData } from "@/lib/worker/dashboard";
 import WorkerAvailability from "@/components/WorkerAvailability";
 import LocationUpdater from "./LocationUpdater";
+import { useLang } from "@/lib/i18n/context";
 
 const POLL_MS = 15000;
 
 export default function WorkerProfile({ workerId }: { workerId: string }) {
+  const { t } = useLang();
   const [data, setData] = useState<WorkerDashboardData | null>(null);
 
   const refresh = useCallback(async () => {
@@ -68,23 +70,23 @@ export default function WorkerProfile({ workerId }: { workerId: string }) {
 
       {/* Stats */}
       <motion.div className="card" whileHover={{ y: -2 }} transition={{ duration: 0.2, ease: "easeOut" }}>
-        <h3 className="mb-3 text-sm font-bold text-text">Performance</h3>
+        <h3 className="mb-3 text-sm font-bold text-text">{t("performance")}</h3>
         <div className="grid grid-cols-2 gap-3">
           <div className="rounded-xl bg-bg p-3 text-center">
             <p className="text-xl font-bold text-accent">{w.ustad_score}</p>
-            <p className="text-xs text-muted">Ustad Score</p>
+            <p className="text-xs text-muted">{t("ustadScore")}</p>
           </div>
           <div className="rounded-xl bg-bg p-3 text-center">
             <p className="text-xl font-bold text-text">{w.completed_jobs}</p>
-            <p className="text-xs text-muted">Jobs Done</p>
+            <p className="text-xs text-muted">{t("jobsCompleted")}</p>
           </div>
           <div className="rounded-xl bg-bg p-3 text-center">
             <p className="font-mono text-xl font-bold text-warning">{w.average_rating.toFixed(1)}</p>
-            <p className="text-xs text-muted">Rating</p>
+            <p className="text-xs text-muted">{t("rating")}</p>
           </div>
           <div className="rounded-xl bg-bg p-3 text-center">
             <p className="font-mono text-xl font-bold text-text">{w.response_rate}%</p>
-            <p className="text-xs text-muted">Response Rate</p>
+            <p className="text-xs text-muted">{t("responseRate")}</p>
           </div>
         </div>
       </motion.div>
@@ -93,11 +95,11 @@ export default function WorkerProfile({ workerId }: { workerId: string }) {
       <motion.div className="card" whileHover={{ y: -2 }} transition={{ duration: 0.2, ease: "easeOut" }}>
         <div className="flex items-center justify-between">
           <div>
-            <h3 className="text-sm font-bold text-text">Verification</h3>
+            <h3 className="text-sm font-bold text-text">{t("verification")}</h3>
             <p className="text-xs text-muted">
               {w.verification_level === "documents_verified"
-                ? "Documents verified"
-                : "Identity reviewed"}
+                ? t("documentsVerified")
+                : t("identityReviewed")}
             </p>
           </div>
           <span
@@ -107,7 +109,7 @@ export default function WorkerProfile({ workerId }: { workerId: string }) {
                 : "bg-warning/10 text-warning"
             }`}
           >
-            {w.verification_level === "documents_verified" ? "✓ Verified" : "⏳ Pending"}
+            {w.verification_level === "documents_verified" ? `✓ ${t("verified")}` : `⏳ ${t("pending")}`}
           </span>
         </div>
       </motion.div>
@@ -138,7 +140,7 @@ export default function WorkerProfile({ workerId }: { workerId: string }) {
             whileHover={{ y: -1 }}
             transition={{ duration: 0.15, ease: "easeOut" }}
           >
-            Sign out
+            {t("signOut")}
           </motion.button>
         </form>
       </div>

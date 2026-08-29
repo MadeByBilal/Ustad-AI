@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { motion } from "framer-motion";
+import { useLang } from "@/lib/i18n/context";
 import PhotoPicker from "./PhotoPicker";
 import WorkerResults from "./WorkerResults";
 
@@ -63,7 +64,7 @@ interface BroadcastInfo {
   acceptance_deadline: string;
 }
 
-const STEPS = ["Describe", "Summary", "Offer", "Done"];
+const STEPS = ["describeStep", "summaryStep", "offerStep", "doneStep"] as const;
 
 const inputStyles =
   "w-full rounded-xl border border-divider bg-surface px-3 py-2 text-sm text-text outline-none transition-colors focus:border-accent focus:ring-2 focus:ring-accent/20";
@@ -97,6 +98,7 @@ function requestLocation(): Promise<Coords | null> {
 }
 
 export default function NewWorkWizard() {
+  const { t } = useLang();
   const [step, setStep] = useState(1);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -261,10 +263,10 @@ export default function NewWorkWizard() {
   return (
     <div className="mx-auto max-w-2xl space-y-6">
       <div className="flex items-center justify-between">
-        <h1 className="font-urdu text-2xl font-bold">نیا کام بنائیں</h1>
+        <h1 className="font-urdu text-2xl font-bold">{t("createNewWork")}</h1>
         <div className="flex items-center gap-2">
-          {STEPS.map((label, i) => (
-            <div key={label} className="flex items-center gap-2">
+          {STEPS.map((key, i) => (
+            <div key={key} className="flex items-center gap-2">
               <span
                 className={`flex h-7 w-7 items-center justify-center rounded-full text-xs font-bold ${
                   step > i + 1
@@ -281,7 +283,7 @@ export default function NewWorkWizard() {
                     step === i + 1 ? "text-text" : "text-muted"
                 }`}
               >
-                {label}
+                {t(key)}
               </span>
             </div>
           ))}
@@ -311,7 +313,7 @@ export default function NewWorkWizard() {
           {method === "photo" && <PhotoPicker onPhotos={setPhotoIds} />}
           <div>
             <label htmlFor="problem" className={labelStyles}>
-              What needs fixing?
+              {t("whatNeedsFixing")}
             </label>
             <textarea
               id="problem"
@@ -326,7 +328,7 @@ export default function NewWorkWizard() {
           <div className="grid gap-4 sm:grid-cols-2">
             <div>
               <label htmlFor="category" className={labelStyles}>
-                Category (optional)
+                {t("categoryOptional")}
               </label>
               <select
                 id="category"
@@ -334,7 +336,7 @@ export default function NewWorkWizard() {
                 onChange={(e) => patch("category_hint", e.target.value)}
                 className={inputStyles}
               >
-                <option value="">Let AI decide</option>
+                <option value="">{t("letAiDecide")}</option>
                 {CATEGORY_OPTIONS.map((c) => (
                   <option key={c} value={c}>
                     {humanize(c)}
@@ -344,7 +346,7 @@ export default function NewWorkWizard() {
             </div>
             <div>
               <label htmlFor="urgency" className={labelStyles}>
-                Urgency (optional)
+                {t("urgencyOptional")}
               </label>
               <select
                 id="urgency"
@@ -352,7 +354,7 @@ export default function NewWorkWizard() {
                 onChange={(e) => patch("urgency_hint", e.target.value)}
                 className={inputStyles}
               >
-                <option value="">Normal</option>
+                <option value="">{t("normal")}</option>
                 {URGENCY_OPTIONS.map((u) => (
                   <option key={u} value={u}>
                     {humanize(u)}
@@ -363,8 +365,8 @@ export default function NewWorkWizard() {
           </div>
 
           <div>
-            <label htmlFor="address" className={labelStyles}>
-              Area / address
+              <label htmlFor="address" className={labelStyles}>
+                {t("areaAddress")}
             </label>
             <input
               id="address"
@@ -379,7 +381,7 @@ export default function NewWorkWizard() {
           <div className="grid gap-4 sm:grid-cols-2">
             <div>
               <label htmlFor="radius" className={labelStyles}>
-                Search radius
+                {t("searchRadius")}
               </label>
               <select
                 id="radius"
@@ -417,7 +419,7 @@ export default function NewWorkWizard() {
                     </span>
                   </span>
                 ) : (
-                  "Use my location"
+                  t("useMyLocation")
                 )}
               </motion.button>
             </div>
@@ -432,7 +434,7 @@ export default function NewWorkWizard() {
             whileHover={{ y: -1 }}
             transition={{ duration: 0.15, ease: "easeOut" }}
           >
-            {busy ? "Analyzing…" : "Analyze & see summary"}
+            {busy ? t("analyzing") : t("analyzeSummary")}
           </motion.button>
         </motion.div>
       )}
@@ -444,16 +446,16 @@ export default function NewWorkWizard() {
               {humanize(job.understanding?.category ?? "uncategorized")}
             </span>
             {isEmergency && (
-              <span className="badge bg-warning text-bg">Emergency</span>
+              <span className="badge bg-warning text-bg">{t("emergency")}</span>
             )}
             <span className="badge bg-surface text-muted">
-              Confidence in AI summary
+              {t("confidenceInAi")}
             </span>
           </div>
 
           <div>
             <h2 className="text-sm font-bold uppercase tracking-wide text-muted">
-              What the AI understood
+              {t("whatAiUnderstood")}
             </h2>
             <p className="mt-1 text-text">
               {job.understanding?.description || input.original_text}
@@ -475,7 +477,7 @@ export default function NewWorkWizard() {
 
           <div className="rounded-xl bg-surface p-4 text-center">
             <p className="text-xs uppercase tracking-wide text-muted">
-              Estimated price
+              {t("estimatedPrice")}
             </p>
             <p className="mt-1 font-mono text-3xl font-extrabold text-accent">
               ₨ {estimateMin.toLocaleString("en-PK")}
@@ -511,7 +513,7 @@ export default function NewWorkWizard() {
               whileHover={{ y: -1 }}
               transition={{ duration: 0.15, ease: "easeOut" }}
             >
-              {busy ? "Confirming…" : "Sab theek hai — confirm"}
+              {busy ? "Confirming…" : t("confirmAndSend")}
             </motion.button>
             <motion.button
               type="button"
@@ -522,7 +524,7 @@ export default function NewWorkWizard() {
               whileHover={{ y: -1 }}
               transition={{ duration: 0.15, ease: "easeOut" }}
             >
-              Edit details
+              {t("editDetails")}
             </motion.button>
           </div>
         </motion.div>
@@ -545,10 +547,10 @@ export default function NewWorkWizard() {
         <motion.div className="card space-y-4" whileHover={{ y: -2 }} transition={{ duration: 0.2, ease: "easeOut" }}>
           <div className="rounded-xl border border-success/40 bg-success p-4 text-center">
             <p className="text-2xl font-extrabold text-success-fg">
-              {broadcast.eligible_workers_count} workers notified 🎉
+              {broadcast.eligible_workers_count} {t("workersNotified")} 🎉
             </p>
             <p className="mt-1 text-sm text-success-fg">
-              Workers nearby can accept until{" "}
+              {t("workersNearbyMsg")}{" "}
               {new Date(broadcast.acceptance_deadline).toLocaleTimeString("en-GB", {
                 hour: "2-digit",
                 minute: "2-digit",
@@ -574,10 +576,10 @@ export default function NewWorkWizard() {
               whileHover={{ y: -1 }}
               transition={{ duration: 0.15, ease: "easeOut" }}
             >
-              {busy ? "Restarting…" : "Edit job & restart"}
+              {busy ? "Restarting…" : t("editJobRestart")}
             </motion.button>
             <Link href="/dashboard" className="btn-primary block w-full text-center">
-              Back to dashboard
+              {t("backToDashboard")}
             </Link>
           </div>
         </motion.div>
@@ -605,13 +607,14 @@ function OfferStep({
   onBroadcast: (offer: string) => void;
   onBack: () => void;
 }) {
+  const { t } = useLang();
   const [offer, setOffer] = useState(defaultOffer);
 
   return (
     <motion.div className="card space-y-4" whileHover={{ y: -2 }} transition={{ duration: 0.2, ease: "easeOut" }}>
       <div>
         <h2 className="text-sm font-bold uppercase tracking-wide text-muted">
-          Your offer
+          {t("yourOffer")}
         </h2>
         <p className="mt-1 font-mono text-sm text-muted">
           AI estimate: ₨ {estimateMin.toLocaleString("en-PK")}
@@ -633,7 +636,7 @@ function OfferStep({
 
       <div>
         <label htmlFor="offer" className={labelStyles}>
-          Offer in PKR
+          {t("offerInPkr")}
         </label>
         <div className="relative">
           <span className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-sm font-semibold text-muted">
@@ -645,7 +648,7 @@ function OfferStep({
             min={0}
             value={offer}
             onChange={(e) => setOffer(e.target.value)}
-            placeholder={isEmergency ? "Optional" : "Your offer"}
+            placeholder={isEmergency ? t("optional") : t("yourOffer")}
             className={`${inputStyles} pl-8`}
           />
         </div>
@@ -661,7 +664,7 @@ function OfferStep({
           whileHover={{ y: -1 }}
           transition={{ duration: 0.15, ease: "easeOut" }}
         >
-          {busy ? "Broadcasting…" : "Broadcast to workers"}
+          {busy ? t("broadcasting") : t("broadcastToWorkers")}
         </motion.button>
         <motion.button
           type="button"
@@ -672,7 +675,7 @@ function OfferStep({
           whileHover={{ y: -1 }}
           transition={{ duration: 0.15, ease: "easeOut" }}
         >
-          Back
+          {t("back")}
         </motion.button>
       </div>
     </motion.div>

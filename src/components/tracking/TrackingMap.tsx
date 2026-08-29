@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState, useCallback } from "react";
-import type L from "leaflet";
+import * as maplibregl from "maplibre-gl";
 import { haversineDistanceKm } from "@/lib/geo";
 
 export interface TrackingMarker {
@@ -23,6 +23,75 @@ interface TrackingMapProps {
 
 const ARRIVAL_ZONE_RADIUS = 100; // meters
 const ROUTE_REFRESH_DISTANCE_KM = 0.15;
+
+// All styles below are 100% free — no API key, no registration, no limits.
+const MAP_STYLES = {
+  positron: {
+    name: "Light (Positron)",
+    style: "https://tiles.openfreemap.org/styles/positron",
+  },
+  bright: {
+    name: "Bright",
+    style: "https://tiles.openfreemap.org/styles/bright",
+  },
+  liberty: {
+    name: "Colorful (Liberty)",
+    style: "https://tiles.openfreemap.org/styles/liberty",
+  },
+  osm: {
+    name: "OpenStreetMap",
+    style: {
+      version: 8 as const,
+      sources: {
+        osm: {
+          type: "raster" as const,
+          tiles: ["https://tile.openstreetmap.org/{z}/{x}/{y}.png"],
+          tileSize: 256,
+          attribution: "© OpenStreetMap contributors",
+        },
+      },
+      layers: [
+        {
+          id: "osm",
+          type: "raster" as const,
+          source: "osm",
+          minzoom: 0,
+          maxzoom: 19,
+        },
+      ],
+    },
+  },
+  topo: {
+    name: "Topographic",
+    style: {
+      version: 8 as const,
+      sources: {
+        topo: {
+          type: "raster" as const,
+          tiles: [
+            "https://a.tile.opentopomap.org/{z}/{x}/{y}.png",
+            "https://b.tile.opentopomap.org/{z}/{x}/{y}.png",
+          ],
+          tileSize: 256,
+          attribution: "© OpenStreetMap contributors, © OpenTopoMap",
+        },
+      },
+      layers: [
+        {
+          id: "topo",
+          type: "raster" as const,
+          source: "topo",
+          minzoom: 0,
+          maxzoom: 17,
+        },
+      ],
+    },
+  },
+} as const;
+
+type StyleKey = keyof typeof MAP_STYLES;
+
+const PAKISTAN_CENTER: [number, number] = [69.3451, 30.3753]; // roughly center of Pakistan
 
 function hasValidCoordinate(
   point: { lat: number; lng: number } | null
@@ -57,197 +126,203 @@ export default function TrackingMap({
   className = "",
   perspective = "worker",
 }: TrackingMapProps) {
-  const mapRef = useRef<HTMLDivElement>(null);
-  const mapInstanceRef = useRef<L.Map | null>(null);
-  const workerMarkerRef = useRef<L.Marker | null>(null);
-  const destMarkerRef = useRef<L.Marker | null>(null);
-  const arrivalCircleRef = useRef<L.Circle | null>(null);
-  const fallbackPolylineRef = useRef<L.Polyline | null>(null);
-  const roadPolylineRef = useRef<L.Polyline | null>(null);
+  const mapContainer = useRef<HTMLDivElement>(null);
+  const mapRef = useRef<maplibregl.Map | null>(null);
+  const workerMarkerRef = useRef<maplibregl.Marker | null>(null);
+  const destMarkerRef = useRef<maplibregl.Marker | null>(null);
   const routeRequestIdRef = useRef(0);
   const lastRouteOriginRef = useRef<[number, number] | null>(null);
   const lastRouteDestinationRef = useRef<[number, number] | null>(null);
-  const workerAnimationFrameRef = useRef<number | null>(null);
-  const [leaflet, setLeaflet] = useState<typeof L | null>(null);
+  const [mapLoaded, setMapLoaded] = useState(false);
+  const [mapStyle, setMapStyle] = useState<StyleKey>("osm");
+  const [showStylePicker, setShowStylePicker] = useState(false);
 
-  // Load Leaflet dynamically (client-side only)
-  useEffect(() => {
-    if (typeof window === "undefined") return;
+  const createWorkerMarkerHtml = useCallback(() => {
+    const isCustomerPerspective = perspective === "customer";
+    const size = isCustomerPerspective ? 32 : 24;
 
-    async function loadLeaflet() {
-      const L = await import("leaflet");
+    return `
+      <div style="
+        width: ${size}px; height: ${size}px;
+        display: flex; align-items: center; justify-content: center;
+        background: #C97A3D;
+        border: 3px solid #F5EDE0;
+        border-radius: 50%;
+        box-shadow: 0 0 0 3px rgba(201,122,61,0.25), 0 2px 8px rgba(0,0,0,0.3);
+        animation: pulse 1.8s infinite;
+      ">
+        ${isCustomerPerspective ? `
+          <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="#1A1410" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M5 17h14"/><path d="M6 17l1.2-5h9.6l1.2 5"/><path d="M8 12l1-3h6l1 3"/><circle cx="8" cy="17" r="1.5" fill="#1A1410"/><circle cx="16" cy="17" r="1.5" fill="#1A1410"/>
+          </svg>
+        ` : ""}
+      </div>
+      <style>
+        @keyframes pulse {
+          0%, 100% { box-shadow: 0 0 0 3px rgba(201,122,61,0.25), 0 2px 8px rgba(0,0,0,0.3); }
+          50% { box-shadow: 0 0 0 9px rgba(201,122,61,0.12), 0 2px 8px rgba(0,0,0,0.3); }
+        }
+      </style>
+    `;
+  }, [perspective]);
 
-      // Fix default marker icons (webpack/next.js issue)
-      delete (L.Icon.Default.prototype as unknown as Record<string, unknown>)._getIconUrl;
-      L.Icon.Default.mergeOptions({
-        iconRetinaUrl: "https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/marker-icon-2x.png",
-        iconUrl: "https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/marker-icon.png",
-        shadowUrl: "https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/marker-shadow.png",
-      });
-
-      setLeaflet(L);
+  const createDestMarkerHtml = useCallback(() => {
+    if (perspective === "customer") {
+      return `
+        <div style="
+          width: 24px; height: 24px;
+          background: #E8A93C;
+          border: 4px solid #F5EDE0;
+          border-radius: 50%;
+          box-shadow: 0 0 0 3px rgba(232,169,60,0.3), 0 2px 8px rgba(0,0,0,0.3);
+        "></div>
+      `;
     }
 
-    void loadLeaflet();
-  }, []);
+    return `
+      <div style="width: 32px; height: 40px; position: relative;">
+        <svg viewBox="0 0 24 36" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <path d="M12 0C5.4 0 0 5.4 0 12c0 9 12 24 12 24s12-15 12-24C24 5.4 18.6 0 12 0z" fill="#E8A93C"/>
+          <circle cx="12" cy="12" r="5" fill="#F5EDE0"/>
+        </svg>
+      </div>
+    `;
+  }, [perspective]);
 
   // Initialize map
   useEffect(() => {
-    if (!leaflet || !mapRef.current || mapInstanceRef.current) return;
+    if (!mapContainer.current || mapRef.current) return;
 
-    const map = leaflet.map(mapRef.current, {
-      zoomControl: false,
+    const styleConfig = MAP_STYLES[mapStyle].style;
+    const map = new maplibregl.Map({
+      container: mapContainer.current,
+      style: typeof styleConfig === "string" ? styleConfig : styleConfig,
+      center: PAKISTAN_CENTER,
+      zoom: 6,
       attributionControl: false,
     });
 
-    leaflet
-      .tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
-        attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>',
-        maxZoom: 19,
-      })
-      .addTo(map);
+    map.addControl(new maplibregl.NavigationControl(), "bottom-right");
+    map.addControl(new maplibregl.AttributionControl({ compact: true }), "bottom-left");
 
-    leaflet.control.zoom({ position: "bottomright" }).addTo(map);
+    map.on("load", () => {
+      setMapLoaded(true);
+      addMapLayers(map);
+      // Force re-render tiles after load
+      setTimeout(() => map.resize(), 100);
+    });
 
-    // Invalidate size after a short delay to ensure container is fully rendered
-    setTimeout(() => map.invalidateSize(), 100);
+    map.on("error", (e) => {
+      console.error("[MapLibre]", e.error);
+    });
 
-    mapInstanceRef.current = map;
+    mapRef.current = map;
 
     return () => {
-      if (workerAnimationFrameRef.current !== null) {
-        cancelAnimationFrame(workerAnimationFrameRef.current);
-      }
       map.remove();
-      mapInstanceRef.current = null;
+      mapRef.current = null;
     };
-  }, [leaflet]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
-  // Create custom icons
-  const getWorkerIcon = useCallback(
-    (L: typeof import("leaflet")) => {
-      const isCustomerPerspective = perspective === "customer";
-      return L.divIcon({
-        html: isCustomerPerspective
-          ? `
-          <div style="
-            width: 32px; height: 32px;
-            display: flex; align-items: center; justify-content: center;
-             background: #C97A3D;
-             border: 3px solid #F5EDE0;
-             border-radius: 50%;
-             box-shadow: 0 0 0 3px rgba(201,122,61,0.25), 0 2px 8px rgba(0,0,0,0.3);
-            animation: moving-worker-pulse 1.8s infinite;
-          ">
-             <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="#1A1410" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-               <path d="M5 17h14"/><path d="M6 17l1.2-5h9.6l1.2 5"/><path d="M8 12l1-3h6l1 3"/><circle cx="8" cy="17" r="1.5" fill="#1A1410"/><circle cx="16" cy="17" r="1.5" fill="#1A1410"/>
-            </svg>
-          </div>
-          <style>
-            @keyframes moving-worker-pulse {
-               0%, 100% { box-shadow: 0 0 0 3px rgba(201,122,61,0.25), 0 2px 8px rgba(0,0,0,0.3); }
-               50% { box-shadow: 0 0 0 9px rgba(201,122,61,0.12), 0 2px 8px rgba(0,0,0,0.3); }
-            }
-          </style>
-        `
-          : `
-          <div style="
-            width: 24px; height: 24px;
-             background: #C97A3D;
-             border: 3px solid #F5EDE0;
-             border-radius: 50%;
-             box-shadow: 0 0 0 2px #C97A3D, 0 2px 8px rgba(0,0,0,0.3);
-            animation: pulse 2s infinite;
-          "></div>
-          <style>
-            @keyframes pulse {
-               0%, 100% { box-shadow: 0 0 0 2px #C97A3D, 0 2px 8px rgba(0,0,0,0.3); }
-               50% { box-shadow: 0 0 0 8px rgba(201,122,61,0.2), 0 2px 8px rgba(0,0,0,0.3); }
-            }
-          </style>
-        `,
-        className: "",
-        iconSize: isCustomerPerspective ? [32, 32] : [24, 24],
-        iconAnchor: isCustomerPerspective ? [16, 16] : [12, 12],
+  // Switch map style without re-creating the map
+  const switchStyle = useCallback((key: StyleKey) => {
+    const map = mapRef.current;
+    if (!map) return;
+
+    const styleConfig = MAP_STYLES[key].style;
+    map.setStyle(typeof styleConfig === "string" ? styleConfig : styleConfig);
+    setMapStyle(key);
+    setShowStylePicker(false);
+
+    // Re-add GeoJSON sources after style change (needed for all styles)
+    map.once("style.load", () => {
+      addMapLayers(map);
+      setTimeout(() => map.resize(), 50);
+    });
+  }, []);
+
+  // Recenter button - fits to show both markers, or centers on whichever is available
+  const handleRecenter = useCallback(() => {
+    const map = mapRef.current;
+    if (!map) return;
+
+    const hasWorker = hasValidCoordinate(workerLocation);
+    const hasDest = hasValidCoordinate(destination);
+
+    if (hasWorker && hasDest) {
+      const bounds = new maplibregl.LngLatBounds();
+      bounds.extend([workerLocation.lng, workerLocation.lat]);
+      bounds.extend([destination!.lng, destination!.lat]);
+      map.fitBounds(bounds, { padding: 60, maxZoom: 16 });
+    } else if (hasWorker) {
+      map.flyTo({
+        center: [workerLocation.lng, workerLocation.lat],
+        zoom: 15,
       });
-    },
-    [perspective]
-  );
-
-  const getDestIcon = useCallback(
-    (L: typeof import("leaflet")) => {
-      if (perspective === "customer") {
-        return L.divIcon({
-          html: `
-            <div style="
-              width: 24px; height: 24px;
-               background: #E8A93C;
-               border: 4px solid #F5EDE0;
-               border-radius: 50%;
-               box-shadow: 0 0 0 3px rgba(232,169,60,0.3), 0 2px 8px rgba(0,0,0,0.3);
-            "></div>
-          `,
-          className: "",
-          iconSize: [24, 24],
-          iconAnchor: [12, 12],
-        });
-      }
-
-      return L.divIcon({
-        html: `
-          <div style="
-            width: 32px; height: 40px;
-            position: relative;
-          ">
-            <svg viewBox="0 0 24 36" fill="none" xmlns="http://www.w3.org/2000/svg">
-              <path d="M12 0C5.4 0 0 5.4 0 12c0 9 12 24 12 24s12-15 12-24C24 5.4 18.6 0 12 0z" fill="#E8A93C"/>
-              <circle cx="12" cy="12" r="5" fill="#F5EDE0"/>
-            </svg>
-          </div>
-        `,
-        className: "",
-        iconSize: [32, 40],
-        iconAnchor: [16, 40],
+    } else if (hasDest) {
+      map.flyTo({
+        center: [destination!.lng, destination!.lat],
+        zoom: 15,
       });
-    },
-    [perspective]
-  );
+    } else {
+      map.flyTo({ center: PAKISTAN_CENTER, zoom: 6 });
+    }
+  }, [workerLocation, destination]);
 
-  // Update markers
+  // Update markers — NO auto-zoom
   useEffect(() => {
-    if (!leaflet || !mapInstanceRef.current) return;
-    const map = mapInstanceRef.current;
+    if (!mapLoaded || !mapRef.current) return;
+    const map = mapRef.current;
 
     const hasDest = hasValidCoordinate(destination);
     const hasWorker = hasValidCoordinate(workerLocation);
 
     if (!hasDest || !hasWorker) {
-      fallbackPolylineRef.current?.remove();
-      fallbackPolylineRef.current = null;
-      roadPolylineRef.current?.remove();
-      roadPolylineRef.current = null;
+      map.getSource("fallback-route")?.setData({
+        type: "FeatureCollection",
+        features: [],
+      });
+      map.getSource("route")?.setData({
+        type: "FeatureCollection",
+        features: [],
+      });
       lastRouteOriginRef.current = null;
       lastRouteDestinationRef.current = null;
     }
 
-    // Destination marker — only when valid coordinates exist
+    // Destination marker
     if (hasDest) {
       if (destMarkerRef.current) {
-        destMarkerRef.current.setLatLng([destination!.lat, destination!.lng]);
-        destMarkerRef.current.setIcon(getDestIcon(leaflet));
+        destMarkerRef.current.setLngLat([destination!.lng, destination!.lat]);
       } else {
-        destMarkerRef.current = leaflet
-          .marker([destination!.lat, destination!.lng], {
-            icon: getDestIcon(leaflet),
-          })
+        const el = document.createElement("div");
+        el.innerHTML = createDestMarkerHtml();
+
+        destMarkerRef.current = new maplibregl.Marker({ element: el })
+          .setLngLat([destination!.lng, destination!.lat])
           .addTo(map);
+
         if (destination!.label) {
-          destMarkerRef.current.bindTooltip(destination!.label, {
-            permanent: true,
-            direction: "top",
-            offset: [0, -40],
-            className: "dest-tooltip",
-          });
+          const popup = new maplibregl.Popup({
+            offset: 25,
+            closeButton: false,
+            className: "dest-popup",
+          }).setHTML(`
+            <div style="
+              background: #241C15;
+              color: #F5EDE0;
+              padding: 4px 8px;
+              border-radius: 8px;
+              font-size: 11px;
+              font-weight: 600;
+              box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+            ">
+              ${destination!.label}
+            </div>
+          `);
+          destMarkerRef.current.setPopup(popup);
+          popup.addTo(map);
         }
       }
     } else if (destMarkerRef.current) {
@@ -255,120 +330,75 @@ export default function TrackingMap({
       destMarkerRef.current = null;
     }
 
-    // Arrival zone circle
+    // Arrival zone
     if (showArrivalZone && hasDest) {
-      if (arrivalCircleRef.current) {
-        arrivalCircleRef.current.setLatLng([destination!.lat, destination!.lng]);
-      } else {
-        arrivalCircleRef.current = leaflet
-          .circle([destination!.lat, destination!.lng], {
-            radius: ARRIVAL_ZONE_RADIUS,
-            color: "#C97A3D",
-            fillColor: "#C97A3D",
-            fillOpacity: 0.08,
-            weight: 2,
-            dashArray: "6 4",
-          })
-          .addTo(map);
-      }
-    } else if (arrivalCircleRef.current) {
-      arrivalCircleRef.current.remove();
-      arrivalCircleRef.current = null;
+      const radiusInKm = ARRIVAL_ZONE_RADIUS / 1000;
+      const center = [destination!.lng, destination!.lat] as [number, number];
+      map.getSource("arrival-zone")?.setData({
+        type: "FeatureCollection",
+        features: [
+          {
+            type: "Feature",
+            geometry: createCircleGeometry(center, radiusInKm),
+            properties: {},
+          },
+        ],
+      });
+    } else {
+      map.getSource("arrival-zone")?.setData({
+        type: "FeatureCollection",
+        features: [],
+      });
     }
 
-    // Worker marker
+    // Worker marker — just update position, no camera movement
     if (hasWorker) {
-      const latlng: [number, number] = [workerLocation.lat, workerLocation.lng];
+      const lngLat: [number, number] = [workerLocation.lng, workerLocation.lat];
 
       if (workerMarkerRef.current) {
-        workerMarkerRef.current.setIcon(getWorkerIcon(leaflet));
-        const marker = workerMarkerRef.current;
-        const current = marker.getLatLng();
-        if (current.lat === latlng[0] && current.lng === latlng[1]) {
-          marker.setLatLng(latlng);
-        } else {
-          if (workerAnimationFrameRef.current !== null) {
-            cancelAnimationFrame(workerAnimationFrameRef.current);
-          }
-          const startedAt = performance.now();
-          const startLat = current.lat;
-          const startLng = current.lng;
-          const duration = 900;
-          const animate = (now: number) => {
-            const progress = Math.min((now - startedAt) / duration, 1);
-            const eased = 1 - (1 - progress) ** 3;
-            marker.setLatLng([
-              startLat + (latlng[0] - startLat) * eased,
-              startLng + (latlng[1] - startLng) * eased,
-            ]);
-            if (progress < 1) {
-              workerAnimationFrameRef.current = requestAnimationFrame(animate);
-            } else {
-              workerAnimationFrameRef.current = null;
-            }
-          };
-          workerAnimationFrameRef.current = requestAnimationFrame(animate);
-        }
+        workerMarkerRef.current.setLngLat(lngLat);
       } else {
-        workerMarkerRef.current = leaflet
-          .marker(latlng, { icon: getWorkerIcon(leaflet) })
+        const el = document.createElement("div");
+        el.innerHTML = createWorkerMarkerHtml();
+
+        workerMarkerRef.current = new maplibregl.Marker({ element: el })
+          .setLngLat(lngLat)
           .addTo(map);
       }
 
-      // Draw a direct fallback until the road route is available.
+      // Draw fallback route (straight line)
       if (hasDest) {
-        const points: [number, number][] = [
-          latlng,
-          [destination!.lat, destination!.lng],
-        ];
-        if (!roadPolylineRef.current && fallbackPolylineRef.current) {
-          fallbackPolylineRef.current.setLatLngs(points);
-        } else if (!roadPolylineRef.current) {
-          fallbackPolylineRef.current = leaflet
-            .polyline(points, {
-              color: "#C97A3D",
-              weight: 3,
-              opacity: 0.7,
-              dashArray: "8 6",
-            })
-            .addTo(map);
-        }
+        map.getSource("fallback-route")?.setData({
+          type: "FeatureCollection",
+          features: [
+            {
+              type: "Feature",
+              geometry: {
+                type: "LineString",
+                coordinates: [
+                  [workerLocation.lng, workerLocation.lat],
+                  [destination!.lng, destination!.lat],
+                ],
+              },
+              properties: {},
+            },
+          ],
+        });
       }
-
-      // Fit bounds to show both markers
-      const bounds = leaflet.latLngBounds([latlng]);
-      if (hasDest) {
-        bounds.extend([destination!.lat, destination!.lng]);
-      }
-      map.fitBounds(bounds, { padding: [60, 60], maxZoom: 16 });
-    } else if (hasDest) {
-      // No worker location yet — center on destination
-        map.setView([destination!.lat, destination!.lng], 15);
+      // NO fitBounds here — user controls camera
     }
+  }, [mapLoaded, workerLocation, destination, showArrivalZone, createWorkerMarkerHtml, createDestMarkerHtml]);
 
-    return () => {
-      if (workerAnimationFrameRef.current !== null) {
-        cancelAnimationFrame(workerAnimationFrameRef.current);
-        workerAnimationFrameRef.current = null;
-      }
-    };
-  }, [leaflet, workerLocation, destination, getWorkerIcon, getDestIcon, showArrivalZone]);
-
-  // Fetch a road-following route. The direct line above remains visible while
-  // routing loads or if the public routing service is unavailable.
+  // Fetch road route
   useEffect(() => {
-    const map = mapInstanceRef.current;
-    const leafletModule = leaflet;
-    if (!leafletModule || !map) return;
-    const routingLeaflet = leafletModule;
-    const routingMap = map;
+    if (!mapLoaded || !mapRef.current) return;
 
     const hasDest = hasValidCoordinate(destination);
     const hasWorker = hasValidCoordinate(workerLocation);
     if (!hasDest || !hasWorker) return;
 
-    const origin: [number, number] = [workerLocation.lat, workerLocation.lng];
-    const target: [number, number] = [destination.lat, destination.lng];
+    const origin: [number, number] = [workerLocation.lng, workerLocation.lat];
+    const target: [number, number] = [destination.lng, destination.lat];
     const previousOrigin = lastRouteOriginRef.current;
     const previousTarget = lastRouteDestinationRef.current;
     const movedEnough =
@@ -388,36 +418,14 @@ export default function TrackingMap({
 
     lastRouteOriginRef.current = origin;
     lastRouteDestinationRef.current = target;
-    roadPolylineRef.current?.remove();
-    roadPolylineRef.current = null;
-
-    const directPoints: [number, number][] = [origin, target];
-    if (fallbackPolylineRef.current) {
-      fallbackPolylineRef.current.setLatLngs(directPoints);
-      fallbackPolylineRef.current.setStyle({
-        color: "#C97A3D",
-        weight: 3,
-        opacity: 0.7,
-        dashArray: "8 6",
-      });
-    } else {
-      fallbackPolylineRef.current = routingLeaflet
-        .polyline(directPoints, {
-          color: "#C97A3D",
-          weight: 3,
-          opacity: 0.7,
-          dashArray: "8 6",
-        })
-        .addTo(map);
-    }
 
     const requestId = ++routeRequestIdRef.current;
     const controller = new AbortController();
     const query = new URLSearchParams({
-      fromLat: String(origin[0]),
-      fromLng: String(origin[1]),
-      toLat: String(target[0]),
-      toLng: String(target[1]),
+      fromLat: String(workerLocation.lat),
+      fromLng: String(workerLocation.lng),
+      toLat: String(destination.lat),
+      toLng: String(destination.lng),
     });
 
     async function loadRoute() {
@@ -438,33 +446,42 @@ export default function TrackingMap({
 
         const routePoints = coordinates
           .filter((point: unknown): point is [number, number] => isRouteCoordinate(point))
-          .map(([lng, lat]) => [lat, lng] as [number, number]);
+          .map(([lng, lat]: [number, number]) => [lng, lat] as [number, number]);
+
         if (routePoints.length < 2) return;
 
-        roadPolylineRef.current = routingLeaflet
-          .polyline(routePoints, {
-          color: "#C97A3D",
-          weight: 5,
-          opacity: 0.9,
-          dashArray: "",
-          })
-          .addTo(routingMap)
-          .bringToFront();
-        fallbackPolylineRef.current?.remove();
-        fallbackPolylineRef.current = null;
+        mapRef.current?.getSource("route")?.setData({
+          type: "FeatureCollection",
+          features: [
+            {
+              type: "Feature",
+              geometry: { type: "LineString", coordinates: routePoints },
+              properties: {},
+            },
+          ],
+        });
+        mapRef.current?.getSource("fallback-route")?.setData({
+          type: "FeatureCollection",
+          features: [],
+        });
       } catch {
-        // Keep the direct fallback line when routing is unavailable.
+        // Keep the fallback route
       }
     }
 
     void loadRoute();
     return () => controller.abort();
-  }, [leaflet, workerLocation, destination]);
+  }, [mapLoaded, workerLocation, destination]);
 
   return (
     <div className={`relative overflow-hidden rounded-xl ${className}`}>
-      <div ref={mapRef} className="h-full w-full" style={{ minHeight: "300px" }} />
+      <div
+        ref={mapContainer}
+        className="absolute inset-0 h-full w-full"
+        style={{ minHeight: "300px" }}
+      />
 
+      {/* Distance badge */}
       {distanceKm !== undefined && (
         <div className="absolute left-3 top-3 z-[1000] rounded-xl bg-surface/95 px-3 py-2 shadow-lg backdrop-blur-sm">
           <p className="text-xs font-bold text-text">
@@ -476,21 +493,133 @@ export default function TrackingMap({
         </div>
       )}
 
-      <style>{`
-        .dest-tooltip {
-          background: #241C15 !important;
-          border: none !important;
-          box-shadow: 0 2px 8px rgba(0,0,0,0.15) !important;
-          border-radius: 8px !important;
-          padding: 4px 8px !important;
-          font-size: 11px !important;
-          font-weight: 600 !important;
-          color: #F5EDE0 !important;
-        }
-        .dest-tooltip::before {
-          border-top-color: #241C15 !important;
-        }
-      `}</style>
+      {/* Recenter button */}
+      <button
+        type="button"
+        onClick={handleRecenter}
+        className="absolute right-3 bottom-16 z-[1000] flex h-9 w-9 items-center justify-center rounded-lg bg-surface/95 shadow-lg backdrop-blur-sm transition-colors hover:bg-surface"
+        title="Recenter map"
+      >
+        <svg className="h-4 w-4 text-text" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
+          <path strokeLinecap="round" strokeLinejoin="round" d="M15 10.5a3 3 0 11-6 0 3 3 0 016 0z" />
+          <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 10.5c0 7.142-7.5 11.25-7.5 11.25S4.5 17.642 4.5 10.5a7.5 7.5 0 1115 0z" />
+        </svg>
+      </button>
+
+      {/* Style picker */}
+      <div className="absolute right-3 bottom-28 z-[1000]">
+        <button
+          type="button"
+          onClick={() => setShowStylePicker(!showStylePicker)}
+          className="flex h-9 w-9 items-center justify-center rounded-lg bg-surface/95 shadow-lg backdrop-blur-sm transition-colors hover:bg-surface"
+          title="Map style"
+        >
+          <svg className="h-4 w-4 text-text" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" d="M9.53 16.122a3 3 0 00-5.78 1.128 2.25 2.25 0 01-2.4 2.245 4.5 4.5 0 008.4-2.245c0-.399-.078-.78-.22-1.128zm0 0a15.998 15.998 0 003.388-1.62m-5.043-.025a15.994 15.994 0 011.622-3.395m3.42 3.42a15.995 15.995 0 004.764-4.648l3.876-5.814a1.151 1.151 0 00-1.597-1.597L14.146 6.32a15.996 15.996 0 00-4.649 4.763m3.42 3.42a6.776 6.776 0 00-3.42-3.42" />
+          </svg>
+        </button>
+
+        {showStylePicker && (
+          <div className="absolute bottom-11 right-0 w-44 rounded-xl border border-divider bg-surface p-1.5 shadow-xl">
+            {(Object.keys(MAP_STYLES) as StyleKey[]).map((key) => (
+              <button
+                key={key}
+                type="button"
+                onClick={() => switchStyle(key)}
+                className={`w-full rounded-lg px-3 py-2 text-left text-xs font-medium transition-colors ${
+                  mapStyle === key
+                    ? "bg-accent text-bg"
+                    : "text-text hover:bg-bg"
+                }`}
+              >
+                {MAP_STYLES[key].name}
+              </button>
+            ))}
+          </div>
+        )}
+      </div>
     </div>
   );
+}
+
+function addMapLayers(map: maplibregl.Map) {
+  if (!map.getSource("arrival-zone")) {
+    map.addSource("arrival-zone", {
+      type: "geojson",
+      data: { type: "FeatureCollection", features: [] },
+    });
+    map.addLayer({
+      id: "arrival-zone-fill",
+      type: "fill",
+      source: "arrival-zone",
+      paint: { "fill-color": "#C97A3D", "fill-opacity": 0.08 },
+    });
+    map.addLayer({
+      id: "arrival-zone-border",
+      type: "line",
+      source: "arrival-zone",
+      paint: {
+        "line-color": "#C97A3D",
+        "line-width": 2,
+        "line-dasharray": [6, 4],
+      },
+    });
+  }
+
+  if (!map.getSource("route")) {
+    map.addSource("route", {
+      type: "geojson",
+      data: { type: "FeatureCollection", features: [] },
+    });
+    map.addLayer({
+      id: "route-line",
+      type: "line",
+      source: "route",
+      paint: { "line-color": "#C97A3D", "line-width": 5, "line-opacity": 0.9 },
+    });
+  }
+
+  if (!map.getSource("fallback-route")) {
+    map.addSource("fallback-route", {
+      type: "geojson",
+      data: { type: "FeatureCollection", features: [] },
+    });
+    map.addLayer({
+      id: "fallback-route-line",
+      type: "line",
+      source: "fallback-route",
+      paint: {
+        "line-color": "#C97A3D",
+        "line-width": 3,
+        "line-opacity": 0.7,
+        "line-dasharray": [8, 6],
+      },
+    });
+  }
+}
+
+function createCircleGeometry(
+  center: [number, number],
+  radiusKm: number,
+  points = 64
+): GeoJSON.Polygon {
+  const coords: [number, number][] = [];
+  const [lng, lat] = center;
+
+  for (let i = 0; i <= points; i++) {
+    const angle = (i * 360) / points;
+    const rad = (angle * Math.PI) / 180;
+    const dx = radiusKm * Math.cos(rad);
+    const dy = radiusKm * Math.sin(rad);
+
+    const newLng = lng + (dx / (111.32 * Math.cos((lat * Math.PI) / 180))) * 57.2958;
+    const newLat = lat + dy * 0.89932;
+
+    coords.push([newLng, newLat]);
+  }
+
+  return {
+    type: "Polygon",
+    coordinates: [coords],
+  };
 }

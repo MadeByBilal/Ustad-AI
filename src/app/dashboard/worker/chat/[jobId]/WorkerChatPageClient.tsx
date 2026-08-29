@@ -5,13 +5,7 @@ import { useRouter } from "next/navigation";
 import WorkerChat from "@/components/worker/WorkerChat";
 import JobPhotoUpload from "@/components/worker/JobPhotoUpload";
 import { motion } from "framer-motion";
-
-const NEXT_ACTIONS: Record<string, { label: string; to: string }> = {
-  ACCEPTED: { label: "On the way", to: "EN_ROUTE" },
-  EN_ROUTE: { label: "Arrived", to: "ARRIVED" },
-  ARRIVED: { label: "Start work", to: "IN_PROGRESS" },
-  IN_PROGRESS: { label: "Complete", to: "AWAITING_CUSTOMER_CONFIRMATION" },
-};
+import { useLang } from "@/lib/i18n/context";
 
 export default function WorkerChatPageClient({
   jobId,
@@ -29,10 +23,18 @@ export default function WorkerChatPageClient({
   } | null;
 }) {
   const router = useRouter();
+  const { t } = useLang();
   const [jobStatus, setJobStatus] = useState(initialStatus);
   const [completion, setCompletion] = useState(initialCompletion);
   const [advancing, setAdvancing] = useState(false);
   const [advanceError, setAdvanceError] = useState<string | null>(null);
+
+  const NEXT_ACTIONS: Record<string, { label: string; to: string }> = {
+    ACCEPTED: { label: t("onTheWay"), to: "EN_ROUTE" },
+    EN_ROUTE: { label: t("arrived"), to: "ARRIVED" },
+    ARRIVED: { label: t("startWork"), to: "IN_PROGRESS" },
+    IN_PROGRESS: { label: t("completed"), to: "AWAITING_CUSTOMER_CONFIRMATION" },
+  };
 
   const nextAction = NEXT_ACTIONS[jobStatus];
   const canAttachPhotos = ["ACCEPTED", "EN_ROUTE", "ARRIVED", "IN_PROGRESS"].includes(jobStatus);
@@ -95,7 +97,7 @@ export default function WorkerChatPageClient({
           </svg>
         </motion.button>
         <div className="min-w-0 flex-1">
-          <p className="text-sm font-bold text-text">Customer</p>
+          <p className="text-sm font-bold text-text">{t("customerLabel")}</p>
           <p className="truncate text-xs text-muted">{originalText}</p>
         </div>
         <span className="badge bg-accent text-bg">
@@ -107,7 +109,7 @@ export default function WorkerChatPageClient({
       {canAttachPhotos && (
         <div className="space-y-3 border-b border-divider bg-surface px-4 py-3">
           <p className="text-xs font-bold uppercase tracking-wide text-muted">
-            Job Photos
+            {t("jobPhotos")}
           </p>
           <div className="grid gap-3 sm:grid-cols-2">
             <JobPhotoUpload
@@ -138,7 +140,7 @@ export default function WorkerChatPageClient({
                 transition={{ duration: 0.15, ease: "easeOut" }}
                 className="btn-primary w-full !rounded-xl !px-4 !py-2.5 text-sm disabled:opacity-60"
               >
-                {advancing ? "Updating…" : nextAction.label}
+                {advancing ? t("loading") : nextAction.label}
               </motion.button>
             </div>
           )}

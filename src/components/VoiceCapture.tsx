@@ -3,9 +3,9 @@ import { useCallback, useRef, useState } from "react";
 import Link from "next/link";
 import { motion, AnimatePresence } from "framer-motion";
 import { parseApiResponse } from "@/lib/api-client";
+import { useLang } from "@/lib/i18n/context";
 import type { AiUnderstandResult } from "@/lib/job/ai";
 import type { WorkerOption } from "@/lib/matching";
-import type { WorkerCategory, UrgencyLevel } from "@/models";
 import TechnicianRequestModal from "./TechnicianRequestModal";
 import MatchResults, { type MatchResultsData } from "./MatchResults";
 
@@ -21,27 +21,16 @@ export interface VoiceCaptureProps {
   variant?: "landing" | "dashboard";
 }
 
-const CATEGORY_LABELS: Record<WorkerCategory, string> = {
-  plumber: "Plumber",
-  electrician: "Electrician",
-  ac_technician: "AC Technician",
-  carpenter: "Carpenter",
-};
-
-const URGENCY_LABELS: Record<UrgencyLevel, string> = {
-  normal: "Normal",
-  potentially_urgent: "Potentially urgent",
-  emergency: "Emergency",
-};
-
 const currency = (n: number) => `PKR ${n.toLocaleString("en-PK")}`;
 
 function WorkerCard({
   worker,
   highlight,
+  t,
 }: {
   worker: WorkerOption;
   highlight?: boolean;
+  t: (key: any) => string;
 }) {
   return (
     <div
@@ -53,16 +42,16 @@ function WorkerCard({
     >
       {highlight && (
         <span className="badge mb-2 bg-accent text-bg">
-          Best match
+          {t("bestMatch")}
         </span>
       )}
       <div className="flex items-center justify-between gap-3">
         <div>
           <p className="font-semibold text-text">{worker.name}</p>
           <p className="text-xs text-muted">
-            {CATEGORY_LABELS[worker.category] ?? worker.category} · ⭐{" "}
+            {t(worker.category as any)} · ⭐{" "}
             <span className="font-mono">{worker.average_rating.toFixed(1)}</span> · {worker.completed_jobs} jobs ·{" "}
-            {worker.verified ? "verified" : "unverified"}
+            {worker.verified ? t("verified") : t("notVerified")}
           </p>
         </div>
         <span className="shrink-0 rounded-lg bg-accent px-2 py-1 text-xs font-bold text-bg">
@@ -104,7 +93,7 @@ function WorkerCard({
   );
 }
 
-function ResultPanel({ data, variant, location }: { data: UnderstandResponse; variant: "landing" | "dashboard"; location?: { lat: number; lng: number } | null }) {
+function ResultPanel({ data, variant, location, t }: { data: UnderstandResponse; variant: "landing" | "dashboard"; location?: { lat: number; lng: number } | null; t: (key: any) => string }) {
   const u = data.understanding;
   const ranked = data.workers.ranked ?? [
     ...(data.workers.best ? [data.workers.best] : []),
@@ -137,10 +126,10 @@ function ResultPanel({ data, variant, location }: { data: UnderstandResponse; va
       <div className="rounded-xl border border-divider bg-surface p-4 text-left">
         <div className="flex flex-wrap items-center gap-x-3 gap-y-2 text-sm">
           <span className="font-semibold text-text">
-            {u.category ? CATEGORY_LABELS[u.category] ?? u.category : "Not sure yet"}
+            {u.category ? t(u.category as any) : "Not sure yet"}
           </span>
           <span className="rounded-md bg-surface px-2 py-0.5 text-xs text-muted">
-            {URGENCY_LABELS[u.urgency] ?? u.urgency}
+            {u.urgency === "normal" ? t("normal") : u.urgency === "emergency" ? t("emergency") : "Potentially urgent"}
           </span>
           {u.confidence > 0 && (
             <span className="text-xs text-muted">
@@ -206,9 +195,9 @@ function ResultPanel({ data, variant, location }: { data: UnderstandResponse; va
       {/* Ranked technicians — dashboard uses MatchResults above; landing shows best+others inline */}
       {anyWorker ? (
         <div className="space-y-2 text-left">
-          {data.workers.best && <WorkerCard worker={data.workers.best} highlight />}
+          {data.workers.best && <WorkerCard worker={data.workers.best} highlight t={t} />}
           {data.workers.others.slice(0, 2).map((w) => (
-            <WorkerCard key={w.id} worker={w} />
+            <WorkerCard key={w.id} worker={w} t={t} />
           ))}
         </div>
       ) : (
@@ -252,6 +241,7 @@ function ResultPanel({ data, variant, location }: { data: UnderstandResponse; va
 }
 
 export default function VoiceCapture({ variant = "landing" }: VoiceCaptureProps) {
+  const { t } = useLang();
   const [status, setStatus] = useState<Status>("idle");
   const [recording, setRecording] = useState(false);
   const [error, setError] = useState("");
@@ -324,7 +314,7 @@ export default function VoiceCapture({ variant = "landing" }: VoiceCaptureProps)
       } catch (err) {
         setStatus("error");
         setError(
-          err instanceof Error ? err.message : "Something went wrong. Please try again."
+          err instanceof Error ? err.message : t("error")
         );
       } finally {
         setBusy(false);
@@ -463,10 +453,10 @@ export default function VoiceCapture({ variant = "landing" }: VoiceCaptureProps)
         }`}
       >
         {recording
-          ? "Listening… release to stop"
+          ? t("listening")
           : status === "processing"
-            ? "Understanding your problem…"
-            : "دبائیں اور بتائیں · Hold, speak, done"}
+            ? t("processing")
+            : t("holdButton")}
       </p>
 
       {/* Clarification round */}
@@ -536,7 +526,7 @@ export default function VoiceCapture({ variant = "landing" }: VoiceCaptureProps)
           }`}
         >
           <span className="h-3.5 w-3.5 animate-spin rounded-full border-2 border-warning border-t-transparent" />
-          Transcribing &amp; analyzing…
+          {t("processing")}
         </p>
       )}
 
@@ -552,7 +542,7 @@ export default function VoiceCapture({ variant = "landing" }: VoiceCaptureProps)
             transition={{ duration: 0.15, ease: "easeOut" }}
             className="rounded-lg bg-warning px-3 py-1.5 text-xs font-semibold text-bg hover:bg-warning/90"
           >
-            Try again
+            {t("tryAgain")}
           </motion.button>
         </div>
       )}
@@ -560,7 +550,7 @@ export default function VoiceCapture({ variant = "landing" }: VoiceCaptureProps)
       {/* Result */}
       {status === "done" && result && (
         <div className="mt-6 w-full">
-          <ResultPanel data={result} variant={variant} location={customerLocation} />
+          <ResultPanel data={result} variant={variant} location={customerLocation} t={t} />
           <motion.button
             type="button"
             onClick={reset}

@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
 import { motion } from "framer-motion";
+import { useLang } from "@/lib/i18n/context";
 
 const POLL_MS = 5000;
 
@@ -17,6 +18,7 @@ interface TrackingJob {
 }
 
 export default function TrackingJobsList() {
+  const { t } = useLang();
   const [jobs, setJobs] = useState<TrackingJob[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -77,8 +79,8 @@ export default function TrackingJobsList() {
             <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 10.5c0 7.142-7.5 11.25-7.5 11.25S4.5 17.642 4.5 10.5a7.5 7.5 0 1115 0z" />
           </svg>
         </div>
-        <p className="text-sm font-medium text-muted">No active tracking</p>
-        <p className="text-xs text-muted">Tracking will appear when a worker is on the way</p>
+        <p className="text-sm font-medium text-muted">{t("noActiveTracking")}</p>
+        <p className="text-xs text-muted">{t("trackingWillAppearList")}</p>
       </motion.div>
     );
   }
@@ -105,7 +107,7 @@ export default function TrackingJobsList() {
                     <span className="relative inline-flex h-2 w-2 rounded-full bg-accent"></span>
                   </span>
                   <span className="text-xs font-bold text-accent">
-                    {job.status === "ACCEPTED" ? "Accepted" : job.status === "EN_ROUTE" ? "On the way" : "Arrived"}
+                    {job.status === "ACCEPTED" ? t("accepted") : job.status === "EN_ROUTE" ? t("onTheWay") : t("arrived")}
                   </span>
                 </div>
                 <p className="mt-1 font-urdu text-sm font-bold text-text">
@@ -123,7 +125,7 @@ export default function TrackingJobsList() {
                 <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 10.5c0 7.142-7.5 11.25-7.5 11.25S4.5 17.642 4.5 10.5a7.5 7.5 0 1115 0z" />
               </svg>
               <span className="text-sm font-semibold text-accent">
-                Open live map
+                {t("openLiveMap")}
               </span>
               <svg className="h-4 w-4 text-muted" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" d="M8.25 4.5l7.5 7.5-7.5 7.5" />

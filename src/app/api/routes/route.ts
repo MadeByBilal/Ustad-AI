@@ -1,4 +1,4 @@
-import { NextRequest, NextResponse } from "next/server";
+import { NextRequest } from "next/server";
 import { z } from "zod";
 import { authError, fail, ok } from "@/lib/api";
 import { requireRole } from "@/lib/auth";

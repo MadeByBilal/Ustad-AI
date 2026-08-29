@@ -2,6 +2,18 @@
 
 import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
+import { useLang } from "@/lib/i18n/context";
+import {
+  Search,
+  MessageSquare,
+  CheckCircle2,
+  Car,
+  MapPin,
+  Wrench,
+  Clock,
+  ChevronRight,
+} from "lucide-react";
+import type { LucideIcon } from "lucide-react";
 
 const POLL_MS = 5000;
 
@@ -13,17 +25,56 @@ interface ActiveJob {
   worker_name: string;
 }
 
-const STATUS_CONFIG: Record<string, { label: string; color: string; icon: string }> = {
-  BROADCASTING: { label: "Looking for worker", color: "bg-warning", icon: "🔍" },
-  WORKER_RESPONSES: { label: "Waiting for response", color: "bg-muted", icon: "💬" },
-  ACCEPTED: { label: "Worker confirmed", color: "bg-success", icon: "✅" },
-  EN_ROUTE: { label: "On the way", color: "bg-accent", icon: "🚗" },
-  ARRIVED: { label: "Worker arrived", color: "bg-accent", icon: "📍" },
-  IN_PROGRESS: { label: "Work in progress", color: "bg-accent", icon: "🔧" },
-  AWAITING_CUSTOMER_CONFIRMATION: { label: "Needs your approval", color: "bg-warning", icon: "⏳" },
+const STATUS_CONFIG: Record<
+  string,
+  { label: string; color: string; Icon: LucideIcon; ping: boolean }
+> = {
+  BROADCASTING: {
+    label: "lookingForWorker",
+    color: "bg-warning",
+    Icon: Search,
+    ping: false,
+  },
+  WORKER_RESPONSES: {
+    label: "waitingForResponse",
+    color: "bg-muted",
+    Icon: MessageSquare,
+    ping: false,
+  },
+  ACCEPTED: {
+    label: "workerConfirmed",
+    color: "bg-success",
+    Icon: CheckCircle2,
+    ping: false,
+  },
+  EN_ROUTE: {
+    label: "onTheWay",
+    color: "bg-accent",
+    Icon: Car,
+    ping: true,
+  },
+  ARRIVED: {
+    label: "workerArrived",
+    color: "bg-accent",
+    Icon: MapPin,
+    ping: true,
+  },
+  IN_PROGRESS: {
+    label: "workInProgress",
+    color: "bg-accent",
+    Icon: Wrench,
+    ping: false,
+  },
+  AWAITING_CUSTOMER_CONFIRMATION: {
+    label: "needsApproval",
+    color: "bg-warning",
+    Icon: Clock,
+    ping: true,
+  },
 };
 
 export default function ActiveJobStatusBar() {
+  const { t } = useLang();
   const [job, setJob] = useState<ActiveJob | null>(null);
   const [loading, setLoading] = useState(true);
 
@@ -33,8 +84,17 @@ export default function ActiveJobStatusBar() {
       const body = await res.json().catch(() => null);
       if (!body?.success) return;
 
-      const active = (body.data?.requests ?? []).find((r: { status: string }) =>
-        ["BROADCASTING", "WORKER_RESPONSES", "ACCEPTED", "EN_ROUTE", "ARRIVED", "IN_PROGRESS", "AWAITING_CUSTOMER_CONFIRMATION"].includes(r.status)
+      const active = (body.data?.requests ?? []).find(
+        (r: { status: string }) =>
+          [
+            "BROADCASTING",
+            "WORKER_RESPONSES",
+            "ACCEPTED",
+            "EN_ROUTE",
+            "ARRIVED",
+            "IN_PROGRESS",
+            "AWAITING_CUSTOMER_CONFIRMATION",
+          ].includes(r.status)
       );
 
       if (active) {
@@ -43,7 +103,7 @@ export default function ActiveJobStatusBar() {
           status: active.status,
           category: active.category,
           original_text: active.original_text,
-          worker_name: active.worker_name ?? "Worker",
+          worker_name: active.worker_name ?? t("worker"),
         });
       } else {
         setJob(null);
@@ -53,7 +113,7 @@ export default function ActiveJobStatusBar() {
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [t]);
 
   useEffect(() => {
     void refresh();
@@ -64,36 +124,33 @@ export default function ActiveJobStatusBar() {
   if (loading || !job) return null;
 
   const config = STATUS_CONFIG[job.status] ?? {
-    label: job.status.replace(/_/g, " "),
+    label: "status",
     color: "bg-muted",
-    icon: "📋",
+    Icon: Search,
+    ping: false,
   };
 
+  const { Icon, ping } = config;
   const isTracking = ["EN_ROUTE", "ARRIVED"].includes(job.status);
   const isApproval = job.status === "AWAITING_CUSTOMER_CONFIRMATION";
 
-  // Determine where to link
   let href = "/dashboard/customer/jobs";
   if (isTracking) href = "/dashboard/customer/active";
   if (isApproval) href = "/dashboard/customer/active";
 
   return (
-    <Link href={href}>
-      <div className="border-t border-divider bg-surface px-5 py-4 transition-transform active:scale-[0.99]">
+    <Link href={href} className="block">
+      <div className="border-t border-divider bg-surface px-5 py-4 transition-colors hover:bg-surface/80 active:scale-[0.99]">
         <div className="flex items-center gap-3">
-          {/* Status dot */}
-          <div className="relative">
-            <span className={`block h-3 w-3 rounded-full ${config.color}`} />
-            {(isTracking || isApproval) && (
-              <span className={`absolute inset-0 h-3 w-3 animate-ping rounded-full ${config.color} opacity-75`} />
+          <div className="relative flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-accent/15">
+            <Icon className="h-5 w-5 text-accent" />
+            {ping && (
+              <span className="absolute inset-0 animate-ping rounded-full bg-accent/20" />
             )}
           </div>
 
-          {/* Info */}
           <div className="min-w-0 flex-1">
-            <p className="text-sm font-bold text-text">
-              {config.icon} {config.label}
-            </p>
+            <p className="text-sm font-bold text-text">{t(config.label)}</p>
             {job.worker_name && job.status !== "BROADCASTING" && (
               <p className="truncate text-xs text-muted">
                 {job.worker_name}
@@ -102,10 +159,7 @@ export default function ActiveJobStatusBar() {
             )}
           </div>
 
-          {/* Arrow */}
-          <svg className="h-5 w-5 shrink-0 text-muted" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
-            <path strokeLinecap="round" strokeLinejoin="round" d="M8.25 4.5l7.5 7.5-7.5 7.5" />
-          </svg>
+          <ChevronRight className="h-5 w-5 shrink-0 text-muted" />
         </div>
       </div>
     </Link>

@@ -4,6 +4,7 @@ import { useEffect, useState, useCallback } from "react";
 import Link from "next/link";
 import { motion } from "framer-motion";
 import TrackingMap from "@/components/tracking/dynamicTrackingMap";
+import { ArrowLeft, MapPin, CheckCircle2, Truck } from "lucide-react";
 
 interface TrackingPageClientProps {
   jobId: string;
@@ -163,9 +164,7 @@ export default function TrackingPageClient({
           href="/dashboard/customer"
           className="flex items-center gap-1 text-sm font-medium text-muted hover:text-accent"
         >
-          <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
-            <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 19.5L8.25 12l7.5-7.5" />
-          </svg>
+          <ArrowLeft className="h-4 w-4" />
           Back
         </Link>
         <span
@@ -190,18 +189,11 @@ export default function TrackingPageClient({
             }`}
           >
             {isArrived ? (
-              <svg className="h-6 w-6 text-accent" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" d="M15 10.5a3 3 0 11-6 0 3 3 0 016 0z" />
-                <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 10.5c0 7.142-7.5 11.25-7.5 11.25S4.5 17.642 4.5 10.5a7.5 7.5 0 1115 0z" />
-              </svg>
+              <MapPin className="h-6 w-6 text-accent" />
             ) : isAccepted ? (
-              <svg className="h-6 w-6 text-success-fg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-              </svg>
+              <CheckCircle2 className="h-6 w-6 text-success-fg" />
             ) : (
-              <svg className="h-6 w-6 text-accent" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" d="M8.25 18.75a1.5 1.5 0 01-3 0m3 0a1.5 1.5 0 00-3 0m3 0h6m-9 0H3.375a1.125 1.125 0 01-1.125-1.125V14.25m17.25 4.5a1.5 1.5 0 01-3 0m3 0a1.5 1.5 0 00-3 0m3 0h1.125c.621 0 1.129-.504 1.09-1.124a17.902 17.902 0 00-3.213-9.193 2.056 2.056 0 00-1.58-.86H14.25M16.5 18.75h-2.25m0-11.177v-.958c0-.568-.422-1.048-.987-1.106a48.554 48.554 0 00-10.026 0 1.106 1.106 0 00-.987 1.106v7.635m12-6.677v6.677m0 4.5v-4.5m0 0h-12" />
-              </svg>
+              <Truck className="h-6 w-6 text-accent" />
             )}
           </div>
           <div className="min-w-0 flex-1">
@@ -268,10 +260,7 @@ export default function TrackingPageClient({
         <p className="mt-2 font-urdu text-sm text-text">{originalText}</p>
         {destination?.label && (
           <p className="mt-2 flex items-center gap-1 text-xs text-muted">
-            <svg className="h-3 w-3" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" d="M15 10.5a3 3 0 11-6 0 3 3 0 016 0z" />
-              <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 10.5c0 7.142-7.5 11.25-7.5 11.25S4.5 17.642 4.5 10.5a7.5 7.5 0 1115 0z" />
-            </svg>
+            <MapPin className="h-3 w-3" />
             {destination.label}
           </p>
         )}

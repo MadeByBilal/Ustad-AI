@@ -22,7 +22,6 @@
 }
 
 html {
-  direction: ltr;
   scroll-behavior: smooth;
   -webkit-overflow-scrolling: touch;
 }
@@ -52,37 +51,25 @@ option {
 
 .font-urdu {
   font-family: "Noto Nastaliq Urdu", serif;
-  direction: rtl;
-  text-align: right;
   line-height: 2.2;
-  unicode-bidi: isolate;
 }
 
 .urdu-heading {
   font-family: "Noto Nastaliq Urdu", serif;
-  direction: rtl;
-  text-align: right;
   line-height: 1.8;
   font-weight: 700;
-  unicode-bidi: isolate;
 }
 
 .urdu-body {
   font-family: "Noto Nastaliq Urdu", serif;
-  direction: rtl;
-  text-align: right;
   line-height: 2.2;
-  unicode-bidi: isolate;
 }
 
 .urdu-paragraph {
   font-family: "Noto Nastaliq Urdu", serif;
-  direction: rtl;
-  text-align: right;
   line-height: 2.2;
   margin: 0;
   padding: 0;
-  unicode-bidi: isolate;
 }
 
 .no-scrollbar::-webkit-scrollbar {
@@ -95,16 +82,16 @@ option {
 
 @layer components {
   .btn-primary {
-    @apply inline-flex items-center justify-center rounded-xl bg-accent px-6 py-4 text-base font-semibold text-bg shadow-lg transition-colors hover:bg-accent/90 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent active:scale-[0.97];
+    @apply inline-flex items-center justify-center rounded-xl bg-accent px-6 py-3.5 text-sm font-semibold text-bg shadow-lg transition-all hover:bg-accent/90 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent active:scale-[0.97];
   }
   .btn-secondary {
-    @apply inline-flex items-center justify-center rounded-xl border border-divider bg-surface px-6 py-4 text-base font-semibold text-text shadow-sm transition-colors hover:bg-bg focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-muted active:scale-[0.97];
+    @apply inline-flex items-center justify-center rounded-xl border border-divider bg-surface px-6 py-3.5 text-sm font-semibold text-text shadow-sm transition-all hover:bg-bg focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-muted active:scale-[0.97];
   }
   .btn-danger {
-    @apply inline-flex items-center justify-center rounded-xl border-2 border-warning bg-surface px-6 py-4 text-base font-semibold text-warning shadow-sm transition-colors hover:bg-warning/10 active:scale-[0.97];
+    @apply inline-flex items-center justify-center rounded-xl border-2 border-warning bg-surface px-6 py-3.5 text-sm font-semibold text-warning shadow-sm transition-all hover:bg-warning/10 active:scale-[0.97];
   }
   .btn {
-    @apply inline-flex items-center justify-center rounded-xl px-5 py-3 text-base font-semibold transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent active:scale-[0.97];
+    @apply inline-flex items-center justify-center rounded-xl px-5 py-3 text-sm font-semibold transition-all focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent active:scale-[0.97];
   }
   .btn-outline {
     @apply btn-secondary;
@@ -113,39 +100,58 @@ option {
     @apply rounded-xl border border-divider bg-surface p-4 shadow-sm;
   }
   .card-lg {
-    @apply rounded-xl border border-divider bg-surface p-4 shadow-sm;
+    @apply rounded-xl border border-divider bg-surface p-5 shadow-sm;
   }
   .input {
-    @apply w-full rounded-xl border border-divider bg-surface px-5 py-4 text-base text-text placeholder:text-muted focus:border-accent focus:outline-none focus:ring-2 focus:ring-accent/20;
+    @apply w-full rounded-xl border border-divider bg-surface px-4 py-3 text-sm text-text placeholder:text-muted focus:border-accent focus:outline-none focus:ring-2 focus:ring-accent/20;
   }
   .badge {
-    @apply inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-sm font-medium;
+    @apply inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-medium;
   }
 
+  /* Mobile bottom nav */
   .bottom-nav {
-    @apply fixed bottom-0 left-0 right-0 z-50 border-t border-divider bg-surface/95 backdrop-blur-lg safe-area-bottom;
+    @apply fixed bottom-0 left-0 right-0 z-50 border-t border-divider bg-surface/95 backdrop-blur-lg;
+    padding-bottom: env(safe-area-inset-bottom, 0px);
   }
   .bottom-nav-item {
-    @apply flex flex-1 flex-col items-center gap-1 py-3 text-xs font-medium text-muted transition-colors;
+    @apply flex flex-1 flex-col items-center gap-1 py-3 text-[10px] font-medium text-muted transition-colors;
   }
   .bottom-nav-item.active {
     @apply text-accent;
   }
-  .bottom-nav-item svg {
-    @apply h-6 w-6;
+
+  /* Desktop top nav */
+  .desktop-nav {
+    @apply fixed top-0 left-0 right-0 z-50 hidden border-b border-divider bg-surface/95 backdrop-blur-lg md:block;
+  }
+  .desktop-nav-inner {
+    @apply mx-auto flex h-14 max-w-6xl items-center gap-6 px-6;
+  }
+  .desktop-nav-brand {
+    @apply flex items-center gap-2.5;
+  }
+  .desktop-nav-links {
+    @apply flex items-center gap-1;
+  }
+  .desktop-nav-item {
+    @apply flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium text-muted transition-colors hover:bg-bg hover:text-text;
+  }
+  .desktop-nav-item.active {
+    @apply bg-accent/10 text-accent;
   }
 
-  .safe-area-bottom {
-    padding-bottom: env(safe-area-inset-bottom, 0px);
-  }
-
+  /* Layout: mobile = bottom nav + pb-20, desktop = top nav + pt-14 */
   .page {
-    @apply min-h-screen bg-bg pb-28;
+    @apply min-h-screen bg-bg pb-20 md:pb-0 md:pt-14;
+  }
+  .page-main {
+    @apply mx-auto w-full max-w-5xl;
   }
   .page-header {
-    @apply sticky top-0 z-40 border-b border-divider bg-surface/95 px-5 py-4 backdrop-blur-lg;
+    @apply sticky top-0 z-40 border-b border-divider bg-surface/95 px-5 py-4 backdrop-blur-lg md:static md:border-b-0 md:bg-transparent md:py-0;
   }
   .page-content {
-    @apply px-5 py-5;
+    @apply px-4 py-4 sm:px-5 sm:py-5 md:px-8 md:py-6;
   }
 }

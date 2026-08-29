@@ -3,6 +3,7 @@ import { requireRole } from "@/lib/auth";
 import { connectDB } from "@/lib/mongodb";
 import { Worker } from "@/models";
 import WorkerJobsList from "@/components/worker/WorkerJobsList";
+import { T } from "@/components/ui/T";
 
 export const dynamic = "force-dynamic";
 
@@ -23,13 +24,13 @@ export default async function WorkerJobsPage() {
   }
 
   return (
-    <div className="page">
+    <>
       <div className="page-header">
-        <h1 className="font-display text-lg font-bold text-text">Available Jobs</h1>
+        <h1 className="font-display text-lg font-bold text-text"><T k="availableJobs" /></h1>
       </div>
       <div className="page-content">
         <WorkerJobsList workerId={String(worker._id)} />
       </div>
-    </div>
+    </>
   );
 }
