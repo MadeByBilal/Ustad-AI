@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState, useCallback } from "react";
 import type L from "leaflet";
 import { haversineDistanceKm } from "@/lib/geo";
+import { getCachedRoute, setCachedRoute } from "@/lib/route-cache";
 
 export interface TrackingMarker {
   id: string;
@@ -19,10 +20,13 @@ interface TrackingMapProps {
   showArrivalZone?: boolean;
   className?: string;
   perspective?: "customer" | "worker";
+  precomputedRoute?: [number, number][] | null;
 }
 
 const ARRIVAL_ZONE_RADIUS = 100; // meters
-const ROUTE_REFRESH_DISTANCE_KM = 0.15;
+const DEVIATION_THRESHOLD_METERS = 30;
+const MAX_REFRESH_INTERVAL_MS = 15_000;
+const MIN_REFRESH_INTERVAL_MS = 5_000;
 
 function hasValidCoordinate(
   point: { lat: number; lng: number } | null
@@ -49,6 +53,43 @@ function isRouteCoordinate(value: unknown): value is [number, number] {
   );
 }
 
+/** Perpendicular distance from a point to a line segment (in meters). */
+function perpendicularDistanceToSegment(
+  px: number,
+  py: number,
+  ax: number,
+  ay: number,
+  bx: number,
+  by: number
+): number {
+  const dx = bx - ax;
+  const dy = by - ay;
+  const lenSq = dx * dx + dy * dy;
+  if (lenSq === 0) return haversineDistanceKm(px, py, ax, ay) * 1000;
+  let t = ((px - ax) * dx + (py - ay) * dy) / lenSq;
+  t = Math.max(0, Math.min(1, t));
+  const projX = ax + t * dx;
+  const projY = ay + t * dy;
+  return haversineDistanceKm(px, py, projX, projY) * 1000;
+}
+
+/** Minimum distance from a point to a polyline (in meters). */
+function distanceFromPolyline(
+  px: number,
+  py: number,
+  polyline: [number, number][]
+): number {
+  if (polyline.length < 2) return Infinity;
+  let min = Infinity;
+  for (let i = 0; i < polyline.length - 1; i++) {
+    const [ax, ay] = polyline[i];
+    const [bx, by] = polyline[i + 1];
+    const d = perpendicularDistanceToSegment(px, py, ax, ay, bx, by);
+    if (d < min) min = d;
+  }
+  return min;
+}
+
 export default function TrackingMap({
   workerLocation,
   destination,
@@ -56,6 +97,7 @@ export default function TrackingMap({
   showArrivalZone = true,
   className = "",
   perspective = "worker",
+  precomputedRoute = null,
 }: TrackingMapProps) {
   const mapRef = useRef<HTMLDivElement>(null);
   const mapInstanceRef = useRef<L.Map | null>(null);
@@ -67,6 +109,8 @@ export default function TrackingMap({
   const routeRequestIdRef = useRef(0);
   const lastRouteOriginRef = useRef<[number, number] | null>(null);
   const lastRouteDestinationRef = useRef<[number, number] | null>(null);
+  const lastRefreshTimeRef = useRef(0);
+  const currentRouteRef = useRef<[number, number][] | null>(null);
   const workerAnimationFrameRef = useRef<number | null>(null);
   const [leaflet, setLeaflet] = useState<typeof L | null>(null);
 
@@ -228,6 +272,7 @@ export default function TrackingMap({
       roadPolylineRef.current = null;
       lastRouteOriginRef.current = null;
       lastRouteDestinationRef.current = null;
+      currentRouteRef.current = null;
     }
 
     // Destination marker — only when valid coordinates exist
@@ -354,8 +399,8 @@ export default function TrackingMap({
     };
   }, [leaflet, workerLocation, destination, getWorkerIcon, getDestIcon, showArrivalZone]);
 
-  // Fetch a road-following route. The direct line above remains visible while
-  // routing loads or if the public routing service is unavailable.
+  // Render a road-following route. Uses precomputed route from DB first,
+  // then client-side cache, then live OSRM fetch with adaptive refresh.
   useEffect(() => {
     const map = mapInstanceRef.current;
     const leafletModule = leaflet;
@@ -369,28 +414,81 @@ export default function TrackingMap({
 
     const origin: [number, number] = [workerLocation.lat, workerLocation.lng];
     const target: [number, number] = [destination.lat, destination.lng];
-    const previousOrigin = lastRouteOriginRef.current;
+
+    // Helper: render a solid road polyline
+    function renderRoadRoute(points: [number, number][]) {
+      roadPolylineRef.current?.remove();
+      roadPolylineRef.current = routingLeaflet
+        .polyline(points, {
+          color: "#C97A3D",
+          weight: 5,
+          opacity: 0.9,
+          dashArray: "",
+        })
+        .addTo(routingMap)
+        .bringToFront();
+      fallbackPolylineRef.current?.remove();
+      fallbackPolylineRef.current = null;
+      currentRouteRef.current = points;
+    }
+
+    // --- Layer 1: Pre-computed route from DB (instant) ---
+    if (precomputedRoute && precomputedRoute.length >= 2) {
+      renderRoadRoute(precomputedRoute);
+      lastRouteOriginRef.current = origin;
+      lastRouteDestinationRef.current = target;
+      lastRefreshTimeRef.current = Date.now();
+      return;
+    }
+
+    // --- Layer 2: Client-side SessionStorage cache ---
+    const cached = getCachedRoute(origin[0], origin[1], target[0], target[1]);
+    if (cached && cached.coordinates.length >= 2) {
+      renderRoadRoute(cached.coordinates);
+      lastRouteOriginRef.current = origin;
+      lastRouteDestinationRef.current = target;
+      lastRefreshTimeRef.current = Date.now();
+      // Still check for refresh below if needed
+    }
+
+    // --- Adaptive refresh: check if we need to re-fetch ---
     const previousTarget = lastRouteDestinationRef.current;
-    const movedEnough =
-      !previousOrigin ||
-      haversineDistanceKm(
-        previousOrigin[0],
-        previousOrigin[1],
-        origin[0],
-        origin[1]
-      ) >= ROUTE_REFRESH_DISTANCE_KM;
+    const now = Date.now();
+
     const destinationChanged =
       !previousTarget ||
       previousTarget[0] !== target[0] ||
       previousTarget[1] !== target[1];
 
-    if (!movedEnough && !destinationChanged) return;
+    // Deviation: worker is off the current route polyline
+    const isOffRoute =
+      currentRouteRef.current &&
+      distanceFromPolyline(origin[0], origin[1], currentRouteRef.current) >
+        DEVIATION_THRESHOLD_METERS;
+
+    // Time-based: enough time has passed since last refresh
+    const timeSinceLastRefresh = now - lastRefreshTimeRef.current;
+    const refreshIntervalExceeded =
+      timeSinceLastRefresh >= MAX_REFRESH_INTERVAL_MS;
+
+    // Minimum interval guard: don't spam OSRM
+    const minIntervalPassed =
+      timeSinceLastRefresh >= MIN_REFRESH_INTERVAL_MS;
+
+    const shouldRefresh =
+      !cached &&
+      minIntervalPassed &&
+      (destinationChanged || isOffRoute || refreshIntervalExceeded);
+
+    if (!shouldRefresh) return;
 
     lastRouteOriginRef.current = origin;
     lastRouteDestinationRef.current = target;
+    lastRefreshTimeRef.current = now;
     roadPolylineRef.current?.remove();
     roadPolylineRef.current = null;
 
+    // Show dashed fallback while loading
     const directPoints: [number, number][] = [origin, target];
     if (fallbackPolylineRef.current) {
       fallbackPolylineRef.current.setLatLngs(directPoints);
@@ -441,17 +539,15 @@ export default function TrackingMap({
           .map(([lng, lat]) => [lat, lng] as [number, number]);
         if (routePoints.length < 2) return;
 
-        roadPolylineRef.current = routingLeaflet
-          .polyline(routePoints, {
-          color: "#C97A3D",
-          weight: 5,
-          opacity: 0.9,
-          dashArray: "",
-          })
-          .addTo(routingMap)
-          .bringToFront();
-        fallbackPolylineRef.current?.remove();
-        fallbackPolylineRef.current = null;
+        // Render the road route
+        renderRoadRoute(routePoints);
+
+        // Store in client-side cache
+        setCachedRoute(origin[0], origin[1], target[0], target[1], {
+          coordinates: routePoints,
+          distance_meters: body?.data?.distance_meters ?? null,
+          duration_seconds: body?.data?.duration_seconds ?? null,
+        });
       } catch {
         // Keep the direct fallback line when routing is unavailable.
       }
@@ -459,7 +555,7 @@ export default function TrackingMap({
 
     void loadRoute();
     return () => controller.abort();
-  }, [leaflet, workerLocation, destination]);
+  }, [leaflet, workerLocation, destination, precomputedRoute]);
 
   return (
     <div className={`relative overflow-hidden rounded-xl ${className}`}>

@@ -118,6 +118,12 @@ const jobSchema = new Schema(
       ai_work_confirmation: { type: String, default: null },
       customer_confirmed: { type: Boolean, default: false },
     },
+    route: {
+      polyline: { type: [[Number]], default: null },
+      distance_meters: { type: Number, default: null },
+      duration_seconds: { type: Number, default: null },
+      computed_at: { type: Date, default: null },
+    },
   },
   {
     timestamps: { createdAt: "created_at", updatedAt: "updated_at" },

@@ -90,7 +90,7 @@ export default function LiveTracker({
       () => {
         setError("Could not read your location");
       },
-      { enableHighAccuracy: true, timeout: 10000, maximumAge: 5000 }
+      { enableHighAccuracy: true, timeout: 5000, maximumAge: 2000 }
     );
 
     watchIdRef.current = navigator.geolocation.watchPosition(
@@ -104,7 +104,7 @@ export default function LiveTracker({
           setError("Location permission denied");
         }
       },
-      { enableHighAccuracy: true, timeout: 10000, maximumAge: 5000 }
+      { enableHighAccuracy: true, timeout: 5000, maximumAge: 2000 }
     );
   }, [sendLocation]);
 

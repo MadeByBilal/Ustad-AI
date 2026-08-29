@@ -34,6 +34,7 @@ export default function ActiveJobTracking() {
   const [message, setMessage] = useState<{ ok: boolean; text: string } | null>(null);
   const [showReview, setShowReview] = useState(false);
   const [mapReady, setMapReady] = useState(false);
+  const [precomputedRoute, setPrecomputedRoute] = useState<[number, number][] | null>(null);
   const mapContainerRef = useRef<HTMLDivElement>(null);
 
   // Fetch active job
@@ -65,6 +66,11 @@ export default function ActiveJobTracking() {
           } : null,
         });
 
+        // Capture precomputed route from tracking API
+        if (jobBody?.data?.precomputed_route && Array.isArray(jobBody.data.precomputed_route)) {
+          setPrecomputedRoute(jobBody.data.precomputed_route);
+        }
+
         if (jobBody?.data?.worker_lat && jobBody?.data?.worker_lng) {
           setWorkerLocation({ lat: jobBody.data.worker_lat, lng: jobBody.data.worker_lng });
           setDistanceKm(jobBody.data.distance_km);
@@ -79,7 +85,7 @@ export default function ActiveJobTracking() {
 
   useEffect(() => {
     void refresh();
-    const poll = setInterval(() => void refresh(), 3000);
+    const poll = setInterval(() => void refresh(), 10_000);
     return () => clearInterval(poll);
   }, [refresh]);
 
@@ -276,6 +282,7 @@ export default function ActiveJobTracking() {
             distanceKm={distanceKm}
             perspective="customer"
             className="h-full w-full"
+            precomputedRoute={precomputedRoute}
           />
         ) : (
           <div className="flex h-full items-center justify-center bg-surface">

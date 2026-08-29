@@ -38,6 +38,7 @@ export default function WorkerActiveTracking({ workerId }: { workerId: string })
   const [cancelling, setCancelling] = useState(false);
   const [message, setMessage] = useState<{ ok: boolean; text: string } | null>(null);
   const [mapReady, setMapReady] = useState(false);
+  const [precomputedRoute, setPrecomputedRoute] = useState<[number, number][] | null>(null);
   const mapContainerRef = useRef<HTMLDivElement>(null);
 
   const refresh = useCallback(async () => {
@@ -75,6 +76,11 @@ export default function WorkerActiveTracking({ workerId }: { workerId: string })
         } : null,
       });
 
+      // Capture precomputed route from tracking API
+      if (trackBody?.data?.precomputed_route && Array.isArray(trackBody.data.precomputed_route)) {
+        setPrecomputedRoute(trackBody.data.precomputed_route);
+      }
+
       // Worker's own location — prefer live tracking data, fallback to stored profile location
       if (trackBody?.data?.worker_lat && trackBody?.data?.worker_lng) {
         setWorkerLocation({ lat: trackBody.data.worker_lat, lng: trackBody.data.worker_lng });
@@ -92,7 +98,7 @@ export default function WorkerActiveTracking({ workerId }: { workerId: string })
 
   useEffect(() => {
     void refresh();
-    const poll = setInterval(() => void refresh(), 5000);
+    const poll = setInterval(() => void refresh(), 2_000);
     return () => clearInterval(poll);
   }, [refresh]);
 
@@ -238,6 +244,7 @@ export default function WorkerActiveTracking({ workerId }: { workerId: string })
             distanceKm={distanceKm}
             perspective="worker"
             className="h-full w-full"
+            precomputedRoute={precomputedRoute}
           />
         ) : (
           <div className="flex h-full items-center justify-center bg-surface">

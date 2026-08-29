@@ -69,6 +69,9 @@ export async function GET(
         before_photo_id: job.completion?.before_photo_id ?? null,
         after_photo_id: job.completion?.after_photo_id ?? null,
         note: job.completion?.note ?? null,
+        precomputed_route: job.route?.polyline ?? null,
+        route_distance_meters: job.route?.distance_meters ?? null,
+        route_duration_seconds: job.route?.duration_seconds ?? null,
       });
     }
 
@@ -98,6 +101,9 @@ export async function GET(
       before_photo_id: job.completion?.before_photo_id ?? null,
       after_photo_id: job.completion?.after_photo_id ?? null,
       note: job.completion?.note ?? null,
+      precomputed_route: job.route?.polyline ?? null,
+      route_distance_meters: job.route?.distance_meters ?? null,
+      route_duration_seconds: job.route?.duration_seconds ?? null,
     });
   } catch (error) {
     console.error("[tracking] error:", error);

@@ -32,6 +32,7 @@ export default function TrackingPageClient({
   const [arrived, setArrived] = useState(initialStatus === "ARRIVED");
   const [lastUpdate, setLastUpdate] = useState<Date | null>(null);
   const [cancelling, setCancelling] = useState(false);
+  const [precomputedRoute, setPrecomputedRoute] = useState<[number, number][] | null>(null);
 
   const handleLocationUpdate = useCallback(
     (data: { lat: number; lng: number; distanceKm: number; etaMinutes: number }) => {
@@ -117,6 +118,10 @@ export default function TrackingPageClient({
           }
           if (body.data.eta_minutes !== undefined) {
             setEtaMinutes(body.data.eta_minutes);
+          }
+          // Capture precomputed route from tracking API
+          if (body.data.precomputed_route && Array.isArray(body.data.precomputed_route)) {
+            setPrecomputedRoute(body.data.precomputed_route);
           }
           setLastUpdate(new Date());
         }
@@ -251,6 +256,7 @@ export default function TrackingPageClient({
           distanceKm={distanceKm}
           perspective="customer"
           className="h-[400px]"
+          precomputedRoute={precomputedRoute}
         />
       ) : (
         <div className="flex h-[300px] items-center justify-center rounded-xl bg-surface">

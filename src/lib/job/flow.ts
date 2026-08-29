@@ -19,6 +19,7 @@ import {
   type JobActor,
 } from "./state-machine";
 import { searchEligibleWorkers } from "@/lib/matching";
+import { computeAndStoreRoute } from "./route-precompute";
 import type { UrgencyLevel, WorkerCategory } from "@/models";
 
 export class FlowError extends Error {
@@ -639,6 +640,27 @@ export async function workerUpdateJobStatus(
   const systemMessage = STATUS_SYSTEM_MESSAGES[status];
   if (systemMessage) {
     await recordSystemMessage(jobId, systemMessage);
+  }
+
+  // Fire-and-forget: pre-compute the OSRM route when worker starts en route.
+  // The result is stored on the Job document so the customer's map loads instantly.
+  if (status === "EN_ROUTE") {
+    const worker = await Worker.findOne({ _id: workerId })
+      .select("location")
+      .lean();
+    const destCoords = job.location?.coordinates as number[] | undefined;
+    if (
+      worker?.location?.coordinates &&
+      worker.location.coordinates.length === 2 &&
+      destCoords &&
+      destCoords.length === 2
+    ) {
+      const [workerLng, workerLat] = worker.location.coordinates;
+      const [destLng, destLat] = destCoords;
+      computeAndStoreRoute(jobId, workerLat, workerLng, destLat, destLng).catch(
+        (err) => console.error("[flow] pre-route failed:", err)
+      );
+    }
   }
 
   if (status === "AWAITING_CUSTOMER_CONFIRMATION") {
