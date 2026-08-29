@@ -161,7 +161,7 @@ export default function TrackingPageClient({
   const isCancelled = jobStatus === "CANCELLED";
 
   return (
-    <div className="mx-auto max-w-2xl space-y-4 p-4">
+    <div className="mx-auto w-full max-w-5xl space-y-4 p-3 sm:p-4 md:p-5">
       {/* Header */}
       <div className="flex items-center justify-between">
         <Link

@@ -4,37 +4,66 @@ import Link from "next/link";
 import VoiceCapture from "@/components/VoiceCapture";
 import LanguageToggle from "@/components/LanguageToggle";
 import { useLang } from "@/lib/i18n/context";
+import { Droplets, Zap, Wrench, Hammer, ArrowRight } from "lucide-react";
 
 export default function HomePage() {
   const { t } = useLang();
 
   return (
-    <main className="relative flex min-h-screen flex-col overflow-hidden bg-bg text-text">
-      <div className="pointer-events-none absolute -right-24 -top-24 h-96 w-96 rounded-full bg-accent/10 blur-3xl" />
-      <div className="pointer-events-none absolute -bottom-32 -left-16 h-80 w-80 rounded-full bg-warning/10 blur-3xl" />
+    <main className="relative min-h-screen overflow-hidden bg-bg text-text">
+      <div className="pointer-events-none absolute -right-20 -top-20 h-72 w-72 rounded-full bg-accent/15 blur-3xl" />
+      <div className="pointer-events-none absolute -bottom-24 -left-10 h-64 w-64 rounded-full bg-warning/15 blur-3xl" />
 
-      <nav className="relative mx-auto flex w-full max-w-6xl items-center justify-between px-5 py-5">
-        <div className="flex items-center gap-2">
-          <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-accent text-lg font-bold text-bg">
+      <nav className="relative z-10 flex w-full items-center justify-between border-b border-divider bg-[rgb(var(--bg))]/95 px-4 py-4 backdrop-blur-xl md:px-8">
+        <div className="flex items-center gap-3">
+          <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-accent text-sm font-bold text-[rgb(var(--surface))]">
             ا
           </span>
-          <span className="text-lg font-bold tracking-tight">
+          <span className="text-lg font-bold tracking-tight text-text">
             Ustad <span className="text-accent">AI</span>
           </span>
         </div>
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-2">
           <LanguageToggle />
-          <Link
-            href="/login"
-            className="rounded-xl border border-divider px-4 py-2 text-sm font-semibold transition-colors hover:bg-surface"
-          >
+          <Link href="/login" className="btn-primary px-4 py-2 text-xs">
             {t("signIn")}
           </Link>
         </div>
       </nav>
 
-      <section className="relative flex flex-1 flex-col items-center justify-center px-5 pb-16">
-        <VoiceCapture />
+      <section className="relative z-10 mx-auto flex w-full max-w-6xl flex-1 flex-col items-center justify-center gap-10 px-4 pb-12 pt-8 md:flex-row md:gap-16 md:px-8 md:pb-0 md:pt-12">
+        <div className="max-w-lg text-center md:text-left">
+          <h1 className="text-4xl font-bold tracking-tight text-text md:text-6xl">
+            {t("heroTitle")}
+          </h1>
+          <p className="mt-4 text-base text-muted md:text-lg">
+            {t("heroDesc")}
+          </p>
+          <div className="mt-8 flex justify-center md:justify-start">
+            <VoiceCapture />
+          </div>
+        </div>
+
+        <div className="w-full max-w-sm rounded-[2rem] border border-divider bg-[rgb(var(--surface))] p-4 shadow-[0_18px_30px_rgba(42,33,28,0.08)] md:max-w-md">
+          <div className="grid gap-3">
+            {[
+              { icon: Droplets, label: t("plumber") },
+              { icon: Zap, label: t("electrician") },
+              { icon: Wrench, label: t("acTechnician") },
+              { icon: Hammer, label: t("carpenter") },
+            ].map((item) => (
+              <div
+                key={item.label}
+                className="flex items-center gap-3 rounded-2xl border border-divider bg-[rgb(var(--surface))] px-4 py-3"
+              >
+                <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-accent/10">
+                  <item.icon className="h-5 w-5 text-accent" />
+                </div>
+                <span className="text-sm font-semibold text-text">{item.label}</span>
+              </div>
+            ))}
+          </div>
+        </div>
       </section>
     </main>
   );

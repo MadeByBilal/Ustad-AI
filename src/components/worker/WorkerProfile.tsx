@@ -5,6 +5,7 @@ import { motion } from "framer-motion";
 import type { WorkerDashboardData } from "@/lib/worker/dashboard";
 import WorkerAvailability from "@/components/WorkerAvailability";
 import LocationUpdater from "./LocationUpdater";
+import { Check, Clock } from "lucide-react";
 
 const POLL_MS = 15000;
 
@@ -107,7 +108,7 @@ export default function WorkerProfile({ workerId }: { workerId: string }) {
                 : "bg-warning/10 text-warning"
             }`}
           >
-            {w.verification_level === "documents_verified" ? "✓ Verified" : "⏳ Pending"}
+            {w.verification_level === "documents_verified" ? <><Check className="h-3.5 w-3.5 inline" /> Verified</> : <><Clock className="h-3.5 w-3.5 inline" /> Pending</>}
           </span>
         </div>
       </motion.div>

@@ -23,13 +23,13 @@ export default async function WorkerDashboardPage() {
   }
 
   return (
-    <div className="page">
+    <>
       <div className="page-header">
-        <h1 className="font-display text-lg font-bold text-text">Ustad AI</h1>
+        <h1 className="text-lg font-bold text-text">Ustad AI</h1>
       </div>
       <div className="page-content">
         <WorkerHome workerId={String(worker._id)} />
       </div>
-    </div>
+    </>
   );
 }

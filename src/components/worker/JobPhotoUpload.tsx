@@ -3,6 +3,7 @@
 import { useRef, useState } from "react";
 import { motion } from "framer-motion";
 import { fileToPhotoBase64 } from "@/lib/image";
+import { Camera } from "lucide-react";
 
 /**
  * Before/after photo upload for an active job. The image is compressed in
@@ -88,8 +89,8 @@ export default function JobPhotoUpload({
             className="h-16 w-16 rounded-lg object-cover ring-1 ring-divider"
           />
         ) : (
-          <span className="flex h-16 w-16 items-center justify-center rounded-lg bg-bg text-2xl">
-            📷
+          <span className="flex h-16 w-16 items-center justify-center rounded-lg bg-bg text-muted">
+            <Camera className="h-6 w-6" />
           </span>
         )}
         <div className="min-w-0 flex-1">

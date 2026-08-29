@@ -5,6 +5,7 @@ import Link from "next/link";
 import { motion } from "framer-motion";
 import PhotoPicker from "./PhotoPicker";
 import WorkerResults from "./WorkerResults";
+import { MapPin } from "lucide-react";
 
 const DEMO_COORDS = { lat: 24.8607, lng: 67.0011 };
 
@@ -410,7 +411,7 @@ export default function NewWorkWizard() {
                     <span>
                       {location.approximate
                         ? "Approximate (Karachi demo)"
-                        : `📍 ${location.lat.toFixed(4)}, ${location.lng.toFixed(4)}`}
+                        : <><MapPin className="h-3.5 w-3.5 inline" /> {location.lat.toFixed(4)}, {location.lng.toFixed(4)}</>}
                     </span>
                     <span className="text-xs font-semibold uppercase text-accent">
                       Change
@@ -497,7 +498,7 @@ export default function NewWorkWizard() {
 
           {job.location?.address_label && (
             <p className="text-xs text-muted">
-              📍 {job.location.address_label}
+              <MapPin className="h-3.5 w-3.5 inline" /> {job.location.address_label}
             </p>
           )}
 
@@ -545,7 +546,7 @@ export default function NewWorkWizard() {
         <motion.div className="card space-y-4" whileHover={{ y: -2 }} transition={{ duration: 0.2, ease: "easeOut" }}>
           <div className="rounded-xl border border-success/40 bg-success p-4 text-center">
             <p className="text-2xl font-extrabold text-success-fg">
-              {broadcast.eligible_workers_count} workers notified 🎉
+              {broadcast.eligible_workers_count} workers notified
             </p>
             <p className="mt-1 text-sm text-success-fg">
               Workers nearby can accept until{" "}

@@ -113,6 +113,7 @@ export default function TrackingMap({
   const currentRouteRef = useRef<[number, number][] | null>(null);
   const workerAnimationFrameRef = useRef<number | null>(null);
   const [leaflet, setLeaflet] = useState<typeof L | null>(null);
+  const hasCenteredMapRef = useRef(false);
 
   // Load Leaflet dynamically (client-side only)
   useEffect(() => {
@@ -145,9 +146,11 @@ export default function TrackingMap({
     });
 
     leaflet
-      .tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
-        attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>',
-        maxZoom: 19,
+      .tileLayer("https://tiles.stadiamaps.com/tiles/alidade_smooth/{z}/{x}/{y}{r}.png", {
+        attribution:
+          '&copy; <a href="https://stadiamaps.com/">Stadia Maps</a>, &copy; <a href="https://openmaptiles.org/">OpenMapTiles</a>, &copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
+        maxZoom: 20,
+        minZoom: 2,
       })
       .addTo(map);
 
@@ -380,15 +383,20 @@ export default function TrackingMap({
         }
       }
 
-      // Fit bounds to show both markers
+      // Only fit the map once when the view is first established.
+      // Repeated re-fit calls cause the map to jump around as the worker updates.
       const bounds = leaflet.latLngBounds([latlng]);
       if (hasDest) {
         bounds.extend([destination!.lat, destination!.lng]);
       }
-      map.fitBounds(bounds, { padding: [60, 60], maxZoom: 16 });
-    } else if (hasDest) {
+      if (!hasCenteredMapRef.current) {
+        map.fitBounds(bounds, { padding: [60, 60], maxZoom: 16 });
+        hasCenteredMapRef.current = true;
+      }
+    } else if (hasDest && !hasCenteredMapRef.current) {
       // No worker location yet — center on destination
-        map.setView([destination!.lat, destination!.lng], 15);
+      map.setView([destination!.lat, destination!.lng], 15);
+      hasCenteredMapRef.current = true;
     }
 
     return () => {
@@ -460,6 +468,11 @@ export default function TrackingMap({
       previousTarget[0] !== target[0] ||
       previousTarget[1] !== target[1];
 
+    const routeOrigin = lastRouteOriginRef.current;
+    const workerMovedEnough =
+      !routeOrigin ||
+      haversineDistanceKm(origin[0], origin[1], routeOrigin[0], routeOrigin[1]) * 1000 > 35;
+
     // Deviation: worker is off the current route polyline
     const isOffRoute =
       currentRouteRef.current &&
@@ -478,7 +491,7 @@ export default function TrackingMap({
     const shouldRefresh =
       !cached &&
       minIntervalPassed &&
-      (destinationChanged || isOffRoute || refreshIntervalExceeded);
+      (destinationChanged || workerMovedEnough || isOffRoute || refreshIntervalExceeded);
 
     if (!shouldRefresh) return;
 
@@ -558,11 +571,13 @@ export default function TrackingMap({
   }, [leaflet, workerLocation, destination, precomputedRoute]);
 
   return (
-    <div className={`relative overflow-hidden rounded-xl ${className}`}>
-      <div ref={mapRef} className="h-full w-full" style={{ minHeight: "300px" }} />
+    <div
+      className={`relative overflow-hidden rounded-[28px] border border-divider bg-[rgb(var(--surface))] shadow-[0_18px_50px_rgba(40,31,25,0.08)] ${className}`}
+    >
+      <div ref={mapRef} className="h-full w-full" style={{ minHeight: "320px" }} />
 
       {distanceKm !== undefined && (
-        <div className="absolute left-3 top-3 z-[1000] rounded-xl bg-surface/95 px-3 py-2 shadow-lg backdrop-blur-sm">
+        <div className="absolute left-3 top-3 z-[1000] rounded-xl bg-[rgb(var(--surface))]/95 px-3 py-2 shadow-lg backdrop-blur-sm ring-1 ring-divider">
           <p className="text-xs font-bold text-text">
             {distanceKm < 1
               ? `${Math.round(distanceKm * 1000)} m`
@@ -573,18 +588,40 @@ export default function TrackingMap({
       )}
 
       <style>{`
-        .dest-tooltip {
-          background: #241C15 !important;
+        .leaflet-container {
+          background: #f5f3ef;
+          font: inherit;
+        }
+        .leaflet-control-zoom {
           border: none !important;
-          box-shadow: 0 2px 8px rgba(0,0,0,0.15) !important;
-          border-radius: 8px !important;
-          padding: 4px 8px !important;
+          box-shadow: 0 8px 18px rgba(17, 18, 19, 0.12) !important;
+          border-radius: 14px !important;
+          overflow: hidden;
+        }
+        .leaflet-control-zoom a {
+          background: rgba(255, 255, 255, 0.94) !important;
+          color: #26211f !important;
+          border-bottom-color: rgba(30, 28, 26, 0.12) !important;
+          line-height: 28px !important;
+          width: 30px !important;
+          height: 30px !important;
+          font-weight: 700 !important;
+        }
+        .leaflet-control-zoom a:hover {
+          background: rgba(255, 255, 255, 1) !important;
+        }
+        .dest-tooltip {
+          background: rgba(36, 28, 21, 0.94) !important;
+          border: none !important;
+          box-shadow: 0 8px 18px rgba(0,0,0,0.12) !important;
+          border-radius: 10px !important;
+          padding: 5px 9px !important;
           font-size: 11px !important;
           font-weight: 600 !important;
           color: #F5EDE0 !important;
         }
         .dest-tooltip::before {
-          border-top-color: #241C15 !important;
+          border-top-color: rgba(36, 28, 21, 0.94) !important;
         }
       `}</style>
     </div>

@@ -9,6 +9,7 @@ import LocationUpdater from "./LocationUpdater";
 import IncomingJobCard from "./IncomingJobCard";
 import DirectRequestCard from "./DirectRequestCard";
 import ActiveJobPanel from "./ActiveJobPanel";
+import { Star, Check } from "lucide-react";
 
 const POLL_MS = 15000;
 
@@ -70,7 +71,7 @@ export default function WorkerDashboard({ workerId }: { workerId: string }) {
         </div>
         <div className="flex flex-wrap items-center gap-2">
           <span className="font-mono badge bg-surface text-muted">
-            ⭐ {w.average_rating.toFixed(1)}
+            <Star className="h-3.5 w-3.5 inline text-warning" /> {w.average_rating.toFixed(1)}
           </span>
           <span className="badge bg-surface text-muted">
             {w.completed_jobs} jobs
@@ -82,7 +83,7 @@ export default function WorkerDashboard({ workerId }: { workerId: string }) {
                 : "bg-warning/10 text-warning"
             }`}
           >
-            ✓ {w.verification_level.replace("_", " ")}
+            <Check className="h-3.5 w-3.5 inline" /> {w.verification_level.replace("_", " ")}
           </span>
         </div>
       </section>
@@ -109,7 +110,7 @@ export default function WorkerDashboard({ workerId }: { workerId: string }) {
               <div className="rounded-lg bg-bg p-2">
                 <dt className="text-muted">Average rating</dt>
                 <dd className="font-semibold text-text">
-                  {w.average_rating.toFixed(1)} ⭐
+                  {w.average_rating.toFixed(1)} <Star className="h-3.5 w-3.5 inline text-warning" />
                 </dd>
               </div>
               <div className="rounded-lg bg-bg p-2">

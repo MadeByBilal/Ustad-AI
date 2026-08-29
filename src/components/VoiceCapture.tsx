@@ -8,6 +8,7 @@ import type { WorkerOption } from "@/lib/matching";
 import type { WorkerCategory, UrgencyLevel } from "@/models";
 import TechnicianRequestModal from "./TechnicianRequestModal";
 import MatchResults, { type MatchResultsData } from "./MatchResults";
+import { Star, AlertTriangle, Mic } from "lucide-react";
 
 export interface UnderstandResponse extends AiUnderstandResult {
   transcript?: string;
@@ -60,7 +61,7 @@ function WorkerCard({
         <div>
           <p className="font-semibold text-text">{worker.name}</p>
           <p className="text-xs text-muted">
-            {CATEGORY_LABELS[worker.category] ?? worker.category} · ⭐{" "}
+            {CATEGORY_LABELS[worker.category] ?? worker.category} · <Star className="h-3.5 w-3.5 text-warning inline" />{" "}
             <span className="font-mono">{worker.average_rating.toFixed(1)}</span> · {worker.completed_jobs} jobs ·{" "}
             {worker.verified ? "verified" : "unverified"}
           </p>
@@ -167,7 +168,7 @@ function ResultPanel({ data, variant, location }: { data: UnderstandResponse; va
         )}
         {u.safety_flags.length > 0 && (
           <p className="mt-2 text-xs font-semibold text-warning">
-            ⚠ {u.safety_flags.join(", ")}
+            <AlertTriangle className="h-3.5 w-3.5 inline" /> {u.safety_flags.join(", ")}
           </p>
         )}
       </div>
@@ -343,26 +344,40 @@ export default function VoiceCapture({ variant = "landing" }: VoiceCaptureProps)
     }
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-      const track = stream.getAudioTracks()[0];
+      const safeStream = stream as MediaStream & {
+        getAudioTracks?: () => MediaStreamTrack[];
+        getTracks?: () => MediaStreamTrack[];
+      };
+      const audioTracks = typeof safeStream.getAudioTracks === "function"
+        ? safeStream.getAudioTracks()
+        : [];
+      const track = audioTracks[0];
       console.log("[VoiceCapture] mic granted:", {
         label: track?.label ?? "unknown",
         muted: track?.muted,
         readyState: track?.readyState,
       });
 
-      // Poll mic input level so you can see in DevTools whether audio is coming in.
-      const audioCtx = new AudioContext();
-      const source = audioCtx.createMediaStreamSource(stream);
-      const analyser = audioCtx.createAnalyser();
-      analyser.fftSize = 256;
-      source.connect(analyser);
-      const levelData = new Uint8Array(analyser.frequencyBinCount);
-      const levelInterval = window.setInterval(() => {
-        analyser.getByteFrequencyData(levelData);
-        const avg =
-          levelData.reduce((sum, v) => sum + v, 0) / levelData.length;
-        console.log("[VoiceCapture] mic level (0–255):", Math.round(avg));
-      }, 500);
+      let audioCtx: AudioContext | null = null;
+      let analyser: AnalyserNode | null = null;
+      let levelInterval: number | undefined;
+      let levelData: Uint8Array | null = null;
+
+      if (typeof window !== "undefined" && "AudioContext" in window) {
+        audioCtx = new AudioContext();
+        const source = audioCtx.createMediaStreamSource(stream as MediaStream);
+        analyser = audioCtx.createAnalyser();
+        analyser.fftSize = 256;
+        source.connect(analyser);
+        levelData = new Uint8Array(analyser.frequencyBinCount);
+        levelInterval = window.setInterval(() => {
+          if (!analyser || !levelData) return;
+          analyser.getByteFrequencyData(levelData);
+          const avg =
+            levelData.reduce((sum, v) => sum + v, 0) / levelData.length;
+          console.log("[VoiceCapture] mic level (0–255):", Math.round(avg));
+        }, 500);
+      }
 
       const recorder = new MediaRecorder(stream);
       const chunks: Blob[] = [];
@@ -373,9 +388,11 @@ export default function VoiceCapture({ variant = "landing" }: VoiceCaptureProps)
         }
       };
       recorder.onstop = () => {
-        window.clearInterval(levelInterval);
-        void audioCtx.close();
-        stream.getTracks().forEach((t) => t.stop());
+        if (levelInterval) window.clearInterval(levelInterval);
+        if (audioCtx) void audioCtx.close();
+        if (typeof safeStream.getTracks === "function") {
+          safeStream.getTracks().forEach((t) => t.stop());
+        }
         recorderRef.current = null;
         setRecording(false);
         const blob = new Blob(chunks, { type: recorder.mimeType || "audio/webm" });
@@ -397,8 +414,8 @@ export default function VoiceCapture({ variant = "landing" }: VoiceCaptureProps)
         recorder,
         stream,
         stopLevelMonitor: () => {
-          window.clearInterval(levelInterval);
-          void audioCtx.close();
+          if (levelInterval) window.clearInterval(levelInterval);
+          if (audioCtx) void audioCtx.close();
         },
       };
       recorder.start();
@@ -455,18 +472,16 @@ export default function VoiceCapture({ variant = "landing" }: VoiceCaptureProps)
             : "bg-accent text-bg shadow-xl shadow-accent/30 hover:bg-accent/90"
         }`}
       >
-        🎙️
+        <Mic className="h-10 w-10" />
       </motion.button>
       <p
-        className={`mt-4 text-sm font-medium ${
-          "text-muted"
-        }`}
+        className={`mt-4 text-sm font-medium ${"text-muted"}`}
       >
         {recording
           ? "Listening… release to stop"
           : status === "processing"
             ? "Understanding your problem…"
-            : "دبائیں اور بتائیں · Hold, speak, done"}
+            : "Hold to speak"}
       </p>
 
       {/* Clarification round */}

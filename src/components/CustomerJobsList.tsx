@@ -4,21 +4,23 @@ import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
 import { motion } from "framer-motion";
 import { parseApiResponse } from "@/lib/api-client";
+import type { LucideIcon } from "lucide-react";
+import { Search, MessageSquare, Hand, Car, MapPin, Wrench, Clock, CheckCircle2, XCircle, Timer, ClipboardList } from "lucide-react";
 
 const POLL_MS = 10000;
 
-const STATUS_LABELS: Record<string, { label: string; color: string; icon: string }> = {
-  BROADCASTING: { label: "Looking for worker", color: "bg-warning/10 text-warning", icon: "🔍" },
-  WORKER_RESPONSES: { label: "Negotiating", color: "bg-surface text-muted", icon: "💬" },
-  CUSTOMER_SELECTING: { label: "Choose worker", color: "bg-surface text-accent", icon: "👆" },
-  ACCEPTED: { label: "Confirmed", color: "bg-success text-success-fg", icon: "✅" },
-  EN_ROUTE: { label: "Worker on the way", color: "bg-accent/15 text-accent", icon: "🚗" },
-  ARRIVED: { label: "Worker arrived", color: "bg-accent/15 text-accent", icon: "📍" },
-  IN_PROGRESS: { label: "Work in progress", color: "bg-accent/15 text-accent", icon: "🔧" },
-  AWAITING_CUSTOMER_CONFIRMATION: { label: "Confirm completion", color: "bg-warning/10 text-warning", icon: "⏳" },
-  COMPLETED: { label: "Completed", color: "bg-success text-success-fg", icon: "✅" },
-  CANCELLED: { label: "Cancelled", color: "bg-warning/10 text-warning", icon: "❌" },
-  EXPIRED: { label: "Expired", color: "bg-surface text-muted", icon: "⏰" },
+const STATUS_LABELS: Record<string, { label: string; color: string; icon: LucideIcon }> = {
+  BROADCASTING: { label: "Looking for worker", color: "bg-warning/10 text-warning", icon: Search },
+  WORKER_RESPONSES: { label: "Negotiating", color: "bg-surface text-muted", icon: MessageSquare },
+  CUSTOMER_SELECTING: { label: "Choose worker", color: "bg-surface text-accent", icon: Hand },
+  ACCEPTED: { label: "Confirmed", color: "bg-success text-success-fg", icon: CheckCircle2 },
+  EN_ROUTE: { label: "Worker on the way", color: "bg-accent/15 text-accent", icon: Car },
+  ARRIVED: { label: "Worker arrived", color: "bg-accent/15 text-accent", icon: MapPin },
+  IN_PROGRESS: { label: "Work in progress", color: "bg-accent/15 text-accent", icon: Wrench },
+  AWAITING_CUSTOMER_CONFIRMATION: { label: "Confirm completion", color: "bg-warning/10 text-warning", icon: Clock },
+  COMPLETED: { label: "Completed", color: "bg-success text-success-fg", icon: CheckCircle2 },
+  CANCELLED: { label: "Cancelled", color: "bg-warning/10 text-warning", icon: XCircle },
+  EXPIRED: { label: "Expired", color: "bg-surface text-muted", icon: Timer },
 };
 
 interface JobItem {
@@ -92,7 +94,7 @@ export default function CustomerJobsList() {
         const status = STATUS_LABELS[job.status] ?? {
           label: job.status.replace(/_/g, " "),
           color: "bg-surface text-muted",
-          icon: "📋",
+          icon: ClipboardList,
         };
         const price = job.final_price ?? job.customer_offer;
         const isTracking = ["EN_ROUTE", "ARRIVED", "IN_PROGRESS"].includes(job.status);
@@ -110,7 +112,7 @@ export default function CustomerJobsList() {
             <motion.div className="card transition-all active:scale-[0.98]" whileHover={{ y: -2 }} transition={{ duration: 0.2, ease: "easeOut" }}>
               <div className="flex items-start justify-between gap-3">
                 <div className="flex items-center gap-3">
-                  <span className="text-xl">{status.icon}</span>
+                  <status.icon className="h-5 w-5 text-muted" />
                   <div className="min-w-0">
                     <p className="font-urdu line-clamp-1 text-sm font-bold text-text">
                       {job.original_text}

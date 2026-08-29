@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { parseApiResponse } from "@/lib/api-client";
+import { Star } from "lucide-react";
 import CustomerOfferModal from "@/components/worker/CustomerOfferModal";
 
 const POLL_INTERVAL_MS = 3000;
@@ -147,7 +148,7 @@ export default function WorkerResults({
     return (
       <div className="rounded-xl border border-success/40 bg-success p-6 text-center">
         <p className="text-lg font-semibold text-success-fg">
-          {urgency === "emergency" ? `${hired.name} arrived` : `Hired ${hired.name} 🎉`}
+          {urgency === "emergency" ? `${hired.name} arrived` : `Hired ${hired.name}`}
         </p>
         {finalPrice !== null && (
           <p className="mt-2 text-success-fg">Final price: {formatRs(finalPrice)}</p>
@@ -218,7 +219,7 @@ export default function WorkerResults({
                 </span>
               )}
               <span className="text-sm font-semibold">{worker.name}</span>
-              <span className="font-mono text-sm text-muted">⭐ {worker.average_rating}</span>
+              <span className="font-mono text-sm text-muted"><Star className="h-3.5 w-3.5 text-warning inline" /> {worker.average_rating}</span>
               {responder.distance_km !== null && (
                 <span className="font-mono text-sm text-muted">{responder.distance_km.toFixed(1)} km</span>
               )}

@@ -4,6 +4,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { motion } from "framer-motion";
 import { fileToPhotoBase64 } from "@/lib/image";
 import { useJobStream } from "@/lib/useJobStream";
+import { MapPin, Camera } from "lucide-react";
 
 interface ChatMessage {
   id: string;
@@ -175,7 +176,7 @@ export default function WorkerChat({ jobId }: { jobId: string }) {
                         m.sender_type === "worker" ? "text-bg" : "text-accent"
                       }`}
                     >
-                      📍 Shared location — open in maps
+                      <MapPin className="h-3.5 w-3.5 inline" /> Shared location — open in maps
                     </a>
                   )}
                   <p className="mt-1 text-right text-xs opacity-60">
@@ -206,7 +207,7 @@ export default function WorkerChat({ jobId }: { jobId: string }) {
           whileHover={{ y: -1 }}
           transition={{ duration: 0.15, ease: "easeOut" }}
         >
-          📷
+          <Camera className="h-4 w-4" />
         </motion.button>
         <motion.button
           type="button"
@@ -219,7 +220,7 @@ export default function WorkerChat({ jobId }: { jobId: string }) {
           whileHover={{ y: -1 }}
           transition={{ duration: 0.15, ease: "easeOut" }}
         >
-          📍
+          <MapPin className="h-4 w-4" />
         </motion.button>
         <input
           ref={fileRef}

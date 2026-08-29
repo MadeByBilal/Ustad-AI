@@ -6,7 +6,7 @@ import { registerSocketHandlers } from "./src/lib/socket-handlers";
 import { disconnectDB } from "./src/lib/mongodb";
 
 const dev = process.env.NODE_ENV !== "production";
-const hostname = "localhost";
+const hostname = "0.0.0.0";
 const port = parseInt(process.env.PORT || "3001", 10);
 
 let shuttingDown = false;

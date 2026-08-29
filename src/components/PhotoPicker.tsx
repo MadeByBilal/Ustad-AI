@@ -3,6 +3,7 @@
 import { useRef, useState } from "react";
 import { fileToPhotoBase64 } from "@/lib/image";
 import { motion } from "framer-motion";
+import { Loader2, Camera, X } from "lucide-react";
 
 interface PhotoUpload {
   id: string;
@@ -76,7 +77,7 @@ export default function PhotoPicker({ onPhotos }: { onPhotos: (ids: string[]) =>
           transition={{ duration: 0.15, ease: "easeOut" }}
           className="btn btn-outline"
         >
-          {uploading ? "⏳ Uploading…" : "📷 Take a photo"}
+          {uploading ? <><Loader2 className="h-4 w-4 inline mr-1 animate-spin" /> Uploading…</> : <><Camera className="h-4 w-4 inline mr-1" /> Take a photo</>}
         </motion.button>
         <input
           ref={inputRef}
@@ -103,7 +104,7 @@ export default function PhotoPicker({ onPhotos }: { onPhotos: (ids: string[]) =>
               whileHover={{ y: -1 }}
               transition={{ duration: 0.15, ease: "easeOut" }}
             >
-              ✕
+              <X className="h-3 w-3" />
             </motion.button>
           </span>
         ))}

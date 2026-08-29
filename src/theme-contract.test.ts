@@ -23,15 +23,15 @@ describe("global theme contract", () => {
   it("defines the exact shared palette", () => {
     const css = readFileSync(join(SOURCE_ROOT, "app/globals.css"), "utf8");
 
-    expect(css).toContain("--bg: 26 20 16;");
-    expect(css).toContain("--surface: 36 28 21;");
-    expect(css).toContain("--text: 245 237 224;");
-    expect(css).toContain("--accent: 201 122 61;");
-    expect(css).toContain("--muted: 139 111 71;");
-    expect(css).toContain("--warning: 232 169 60;");
-    expect(css).toContain("--success: 61 90 76;");
-    expect(css).toContain("--success-fg: 192 221 151;");
-    expect(css).toContain("--divider: 61 52 43;");
+    expect(css).toContain("--bg: 246 240 232;");
+    expect(css).toContain("--surface: 255 255 255;");
+    expect(css).toContain("--text: 32 29 27;");
+    expect(css).toContain("--accent: 236 154 92;");
+    expect(css).toContain("--muted: 118 109 101;");
+    expect(css).toContain("--warning: 224 164 97;");
+    expect(css).toContain("--success: 110 157 117;");
+    expect(css).toContain("--success-fg: 32 64 49;");
+    expect(css).toContain("--divider: 227 216 206;");
   });
 
   it("contains no legacy light or semantic color utilities in production UI code", () => {

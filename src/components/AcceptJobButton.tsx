@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { motion } from "framer-motion";
+import { Check } from "lucide-react";
 
 export default function AcceptJobButton({ jobId }: { jobId: string }) {
   const [busy, setBusy] = useState(false);
@@ -31,7 +32,7 @@ export default function AcceptJobButton({ jobId }: { jobId: string }) {
   if (accepted) {
     return (
       <span className="badge shrink-0 bg-success text-success-fg">
-        ✓ Accepted
+        <Check className="h-3.5 w-3.5 inline mr-1" /> Accepted
       </span>
     );
   }

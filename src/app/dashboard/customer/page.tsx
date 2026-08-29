@@ -1,7 +1,6 @@
 import { redirect } from "next/navigation";
 import { requireRole } from "@/lib/auth";
-import VoiceCapture from "@/components/VoiceCapture";
-import ActiveJobStatusBar from "@/components/ActiveJobStatusBar";
+import CustomerHomeContent from "@/components/CustomerHomeContent";
 
 export const dynamic = "force-dynamic";
 
@@ -16,35 +15,5 @@ export default async function CustomerHomePage() {
 
   const name = session.user.name ?? "Guest";
 
-  return (
-    <div className="flex min-h-screen flex-col">
-      {/* Header */}
-      <div className="page-header">
-        <div className="flex items-center justify-between">
-          <p className="font-urdu text-xl font-bold text-text">
-            السلام، {name}
-          </p>
-          <span className="flex h-11 w-11 items-center justify-center rounded-full bg-accent text-base font-bold text-bg">
-            {name.charAt(0).toUpperCase()}
-          </span>
-        </div>
-      </div>
-
-      {/* Main Content - Voice Button */}
-      <div className="flex flex-1 flex-col items-center justify-center px-5">
-        <p className="font-urdu text-3xl font-bold text-text">
-          کیا خراب ہوا؟
-        </p>
-        <p className="mt-3 text-center text-lg text-muted">
-          Hold the button and describe the problem
-        </p>
-        <div className="mt-10">
-          <VoiceCapture variant="dashboard" />
-        </div>
-      </div>
-
-      {/* Bottom Status Bar */}
-      <ActiveJobStatusBar />
-    </div>
-  );
+  return <CustomerHomeContent name={name} />;
 }

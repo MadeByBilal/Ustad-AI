@@ -42,10 +42,10 @@ export const translations = {
 
     // Greetings
     greeting: "Hi, {name}",
-    peace: "Hello, {name}!",
+    peace: "Hello {name}",
 
     // Customer Home
-    whatsBroken: "What's broken?",
+    whatsBroken: "What's broken",
     holdButton: "Hold the button and describe the problem",
 
     // Worker Home
@@ -220,10 +220,10 @@ export const translations = {
 
     // Greetings
     greeting: "ہیلو، {name}",
-    peace: " السلام، {name}!",
+    peace: "السلام {name}",
 
     // Customer Home
-    whatsBroken: "کیا خراب ہوا؟",
+    whatsBroken: "کیا خراب ہوا",
     holdButton: "बٹن دبائیں اور مسئلہ بتائیں",
 
     // Worker Home

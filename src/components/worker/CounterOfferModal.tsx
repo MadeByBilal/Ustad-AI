@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import type { IncomingJobView } from "@/lib/worker/dashboard";
+import { X } from "lucide-react";
 
 /**
  * Counter-offer dialog: worker enters their price plus an optional note
@@ -99,7 +100,7 @@ export default function CounterOfferModal({
             whileHover={{ y: -1 }}
             transition={{ duration: 0.15, ease: "easeOut" }}
           >
-            ✕
+            <X className="h-4 w-4" />
           </motion.button>
         </div>
 

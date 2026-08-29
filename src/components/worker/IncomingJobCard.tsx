@@ -4,6 +4,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import type { IncomingJobView } from "@/lib/worker/dashboard";
 import { motion, AnimatePresence } from "framer-motion";
+import { Timer } from "lucide-react";
 import CounterOfferModal from "./CounterOfferModal";
 
 function timeLeft(deadline: string | null, now: number): string | null {
@@ -113,7 +114,7 @@ export default function IncomingJobCard({
                  : "!bg-bg !text-muted"
           }`}
         >
-          {expired ? "Expired" : left ? `⏱ ${left}` : "No deadline"}
+          {expired ? "Expired" : left ? <><Timer className="h-3.5 w-3.5 inline mr-1" />{left}</> : "No deadline"}
         </span>
       </div>
 

@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
+import { Star, X } from "lucide-react";
 import type { WorkerOption } from "@/lib/matching";
 import type { UnderstandResponse } from "@/components/VoiceCapture";
 
@@ -129,7 +130,7 @@ export default function TechnicianRequestModal({
               Send request to {worker.name}
             </h2>
             <p className="text-xs text-muted">
-              {CATEGORY_LABELS[worker.category] ?? worker.category} · ⭐{" "}
+              {CATEGORY_LABELS[worker.category] ?? worker.category} · <Star className="h-3.5 w-3.5 text-warning inline" />{" "}
               {worker.average_rating.toFixed(1)} · {worker.completed_jobs} jobs
               {worker.verified ? " · Verified" : ""}
             </p>
@@ -143,7 +144,7 @@ export default function TechnicianRequestModal({
             whileHover={{ y: -1 }}
             transition={{ duration: 0.15, ease: "easeOut" }}
           >
-            ✕
+            <X className="h-4 w-4" />
           </motion.button>
         </div>
 
