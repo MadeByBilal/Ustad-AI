@@ -4,6 +4,7 @@ import { useCallback, useEffect, useState } from "react";
 import type { WorkerDashboardData } from "@/lib/worker/dashboard";
 import { useJobStream } from "@/lib/useJobStream";
 import { motion } from "framer-motion";
+import { useLang } from "@/lib/i18n/context";
 import WorkerAvailability from "@/components/WorkerAvailability";
 import LocationUpdater from "./LocationUpdater";
 import IncomingJobCard from "./IncomingJobCard";
@@ -14,6 +15,7 @@ import { Star, Check } from "lucide-react";
 const POLL_MS = 15000;
 
 export default function WorkerDashboard({ workerId }: { workerId: string }) {
+  const { t } = useLang();
   const [data, setData] = useState<WorkerDashboardData | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [now, setNow] = useState(() => Date.now());
@@ -53,7 +55,7 @@ export default function WorkerDashboard({ workerId }: { workerId: string }) {
   if (!data) {
     return (
       <motion.div className="card text-center text-sm text-muted" whileHover={{ y: -2 }} transition={{ duration: 0.2, ease: "easeOut" }}>
-        {error ?? "Loading dashboard…"}
+        {error ?? t("loading")}
       </motion.div>
     );
   }
@@ -74,7 +76,7 @@ export default function WorkerDashboard({ workerId }: { workerId: string }) {
             <Star className="h-3.5 w-3.5 inline text-warning" /> {w.average_rating.toFixed(1)}
           </span>
           <span className="badge bg-surface text-muted">
-            {w.completed_jobs} jobs
+            {w.completed_jobs} {t("jobsDone")}
           </span>
           <span
             className={`badge ${
@@ -91,7 +93,7 @@ export default function WorkerDashboard({ workerId }: { workerId: string }) {
       <section className="grid gap-8 lg:grid-cols-3">
         <div className="space-y-4 lg:col-span-1">
           <motion.div className="card" whileHover={{ y: -2 }} transition={{ duration: 0.2, ease: "easeOut" }}>
-            <h3 className="text-sm font-bold text-text">Ustad Score</h3>
+            <h3 className="text-sm font-bold text-text">{t("ustadScore")}</h3>
             <p className="mt-2 text-4xl font-extrabold tracking-tight text-accent">
               {w.ustad_score}
               <span className="text-base font-semibold text-muted">/100</span>
@@ -104,21 +106,21 @@ export default function WorkerDashboard({ workerId }: { workerId: string }) {
             </div>
             <dl className="mt-4 grid grid-cols-2 gap-2 text-xs">
               <div className="rounded-lg bg-bg p-2">
-                <dt className="text-muted">Completed jobs</dt>
+                <dt className="text-muted">{t("completedJobs")}</dt>
                 <dd className="font-semibold text-text">{w.completed_jobs}</dd>
               </div>
               <div className="rounded-lg bg-bg p-2">
-                <dt className="text-muted">Average rating</dt>
+                <dt className="text-muted">{t("rating")}</dt>
                 <dd className="font-semibold text-text">
                   {w.average_rating.toFixed(1)} <Star className="h-3.5 w-3.5 inline text-warning" />
                 </dd>
               </div>
               <div className="rounded-lg bg-bg p-2">
-                <dt className="text-muted">Response rate</dt>
+                <dt className="text-muted">{t("responseRate")}</dt>
                 <dd className="font-mono font-semibold text-text">{w.response_rate}%</dd>
               </div>
               <div className="rounded-lg bg-bg p-2">
-                <dt className="text-muted">Cancellation</dt>
+                <dt className="text-muted">{t("cancelRate")}</dt>
                 <dd className="font-semibold text-text">{w.cancellation_rate}%</dd>
               </div>
             </dl>
@@ -144,11 +146,11 @@ export default function WorkerDashboard({ workerId }: { workerId: string }) {
 
           <section className="card">
             <h2 className="text-sm font-bold uppercase tracking-wide text-muted">
-              Jobs near you
+              {t("jobsNearYou")}
             </h2>
             {data.incoming_jobs.length === 0 ? (
               <p className="mt-3 rounded-xl border border-dashed border-divider p-4 text-sm text-muted">
-                Nothing broadcasting right now — check back soon.
+                {t("noData")}
               </p>
             ) : (
               <div className="mt-3 space-y-3">
@@ -167,7 +169,7 @@ export default function WorkerDashboard({ workerId }: { workerId: string }) {
           {data.direct_requests.length > 0 && (
             <section className="card">
               <h2 className="text-sm font-bold uppercase tracking-wide text-muted">
-                Direct Requests from Customers
+                {t("directRequestsFromCustomers")}
               </h2>
               <div className="mt-3 space-y-3">
                 {data.direct_requests.map((req) => (

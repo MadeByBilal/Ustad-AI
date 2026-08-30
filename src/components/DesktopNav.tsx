@@ -32,7 +32,7 @@ export default function DesktopNav({
   userName: string;
 }) {
   const pathname = usePathname();
-  const { t } = useLang();
+  const { t, lang } = useLang();
   const [open, setOpen] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
 
@@ -67,7 +67,7 @@ export default function DesktopNav({
           <span className="flex h-8 w-8 items-center justify-center rounded-xl bg-accent text-xs font-bold text-[rgb(var(--surface))]">
             ا
           </span>
-          <span className="text-base font-bold text-text">Ustad AI</span>
+          <span className={`text-base font-bold text-text ${lang === "ur" ? "font-urdu" : ""}`}>Ustad AI</span>
         </Link>
 
         <div className="desktop-nav-links">
@@ -84,7 +84,7 @@ export default function DesktopNav({
                 className={`desktop-nav-item ${isActive ? "active" : ""}`}
               >
                 <item.icon className="h-3.5 w-3.5" />
-                <span>{item.label}</span>
+                <span className={lang === "ur" ? "font-urdu" : ""}>{item.label}</span>
               </Link>
             );
           })}
@@ -110,7 +110,7 @@ export default function DesktopNav({
               <div className="absolute right-0 top-full z-50 mt-2 w-48 overflow-hidden rounded-2xl border border-divider bg-surface shadow-xl">
                 <div className="border-b border-divider px-3 py-2">
                   <p className="text-xs font-bold text-text">{userName}</p>
-                  <p className="text-[10px] capitalize text-muted">{role}</p>
+                  <p className="text-[10px] capitalize text-muted">{role === "customer" ? t("customer") : t("technician")}</p>
                 </div>
                 <div className="py-1">
                   <Link

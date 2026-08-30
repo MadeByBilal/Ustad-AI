@@ -3,6 +3,7 @@ import { requireRole } from "@/lib/auth";
 import { connectDB } from "@/lib/mongodb";
 import { Worker, Job } from "@/models";
 import WorkerWorkPageClient from "./WorkerWorkPageClient";
+import TranslatedHeading from "@/components/TranslatedHeading";
 
 export const dynamic = "force-dynamic";
 
@@ -28,11 +29,11 @@ export default async function WorkerWorkPage() {
 
   if (!activeJob) {
     return (
-      <div className="page relative overflow-hidden">
+      <div className="relative">
         <div className="pointer-events-none absolute -right-20 -top-20 h-64 w-64 rounded-full bg-accent/8 blur-3xl" />
         <div className="pointer-events-none absolute -bottom-24 -left-12 h-56 w-56 rounded-full bg-warning/6 blur-3xl" />
         <div className="page-header">
-          <h1 className="font-display text-lg font-bold text-text">Work</h1>
+          <TranslatedHeading translationKey="work" />
         </div>
         <div className="page-content">
           <div className="card flex flex-col items-center gap-3 py-12 text-center">
@@ -52,12 +53,12 @@ export default async function WorkerWorkPage() {
   const status = activeJob.status as string;
 
   return (
-    <div className="page relative overflow-hidden">
+    <div className="relative">
       <div className="pointer-events-none absolute -right-20 -top-20 h-64 w-64 rounded-full bg-accent/8 blur-3xl" />
       <div className="pointer-events-none absolute -bottom-24 -left-12 h-56 w-56 rounded-full bg-warning/6 blur-3xl" />
       <div className="page-header">
-<h1 className="font-display text-lg font-bold text-text">Work</h1>
-        </div>
+        <TranslatedHeading translationKey="work" />
+      </div>
         <div className="page-content">
         <WorkerWorkPageClient
           jobId={String(activeJob._id)}

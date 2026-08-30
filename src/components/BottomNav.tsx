@@ -21,7 +21,7 @@ interface NavItem {
 
 export default function BottomNav({ role }: { role: "customer" | "worker" }) {
   const pathname = usePathname();
-  const { t } = useLang();
+  const { t, lang } = useLang();
 
   const customerNav: NavItem[] = [
     { href: "/dashboard/customer", label: t("home"), icon: Home },
@@ -54,7 +54,7 @@ export default function BottomNav({ role }: { role: "customer" | "worker" }) {
               className={`bottom-nav-item ${isActive ? "active" : ""}`}
             >
               <item.icon className="h-5 w-5" />
-              <span className="text-[10px]">{item.label}</span>
+              <span className={`text-[10px] ${lang === "ur" ? "font-urdu" : ""}`}>{item.label}</span>
             </Link>
           );
         })}

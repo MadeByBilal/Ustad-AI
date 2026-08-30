@@ -13,7 +13,7 @@ export default async function ActiveJobPage() {
   }
 
   return (
-    <div className="h-screen">
+    <div className="h-full">
       <ActiveJobTracking />
     </div>
   );

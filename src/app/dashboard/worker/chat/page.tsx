@@ -3,6 +3,7 @@ import { requireRole } from "@/lib/auth";
 import { connectDB } from "@/lib/mongodb";
 import { Worker } from "@/models";
 import WorkerChatList from "@/components/worker/WorkerChatList";
+import TranslatedHeading from "@/components/TranslatedHeading";
 
 export const dynamic = "force-dynamic";
 
@@ -23,9 +24,9 @@ export default async function WorkerChatPage() {
   }
 
   return (
-    <div className="page">
+    <div>
       <div className="page-header">
-        <h1 className="font-display text-lg font-bold text-text">Chats</h1>
+        <TranslatedHeading translationKey="chats" />
       </div>
       <div className="page-content">
         <WorkerChatList workerId={String(worker._id)} />

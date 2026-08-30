@@ -1,6 +1,7 @@
 import { redirect } from "next/navigation";
 import { requireRole } from "@/lib/auth";
 import TrackingJobsList from "@/components/tracking/TrackingJobsList";
+import TranslatedHeading from "@/components/TranslatedHeading";
 
 export const dynamic = "force-dynamic";
 
@@ -13,9 +14,9 @@ export default async function CustomerTrackPage() {
   }
 
   return (
-    <div className="page">
+    <div>
       <div className="page-header">
-        <h1 className="font-display text-lg font-bold text-text">Live Tracking</h1>
+        <TranslatedHeading translationKey="liveTracking" />
       </div>
       <div className="page-content">
         <TrackingJobsList />

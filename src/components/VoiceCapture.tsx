@@ -342,6 +342,7 @@ export default function VoiceCapture({ variant = "landing" }: VoiceCaptureProps)
   const reduceMotion = useReducedMotion();
 
   useEffect(() => {
+    mountedRef.current = true;
     return () => {
       mountedRef.current = false;
       requestIdRef.current += 1;

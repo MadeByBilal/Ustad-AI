@@ -4,13 +4,13 @@ import Link from "next/link";
 import VoiceCapture from "@/components/VoiceCapture";
 import LanguageToggle from "@/components/LanguageToggle";
 import { useLang } from "@/lib/i18n/context";
-import { Droplets, Zap, Wrench, Hammer, ArrowRight } from "lucide-react";
+import { Droplets, Zap, Wrench, Hammer } from "lucide-react";
 
 export default function HomePage() {
-  const { t } = useLang();
+  const { t, lang } = useLang();
 
   return (
-    <main className="relative min-h-screen overflow-hidden bg-bg text-text">
+    <main className="relative flex h-screen flex-col overflow-hidden bg-bg text-text">
       <div className="pointer-events-none absolute -right-20 -top-20 h-72 w-72 rounded-full bg-accent/15 blur-3xl" />
       <div className="pointer-events-none absolute -bottom-24 -left-10 h-64 w-64 rounded-full bg-warning/15 blur-3xl" />
 
@@ -19,7 +19,7 @@ export default function HomePage() {
           <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-accent text-sm font-bold text-[rgb(var(--surface))]">
             ا
           </span>
-          <span className="text-lg font-bold tracking-tight text-text">
+          <span className={`text-lg font-bold tracking-tight text-text ${lang === "ur" ? "font-urdu" : ""}`}>
             Ustad <span className="text-accent">AI</span>
           </span>
         </div>

@@ -279,7 +279,7 @@ function AuthForm() {
 
 export default function LoginPage() {
   return (
-    <main className="flex min-h-screen items-center justify-center bg-bg px-4 py-10">
+    <main className="flex h-screen items-center justify-center overflow-y-auto bg-bg px-4 py-10">
       <Suspense fallback={<motion.div className="card" whileHover={{ y: -2 }} transition={{ duration: 0.2, ease: "easeOut" }}>Loading…</motion.div>}>
         <AuthForm />
       </Suspense>

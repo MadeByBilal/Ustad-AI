@@ -23,7 +23,7 @@ export default async function WorkerActivePage() {
   }
 
   return (
-    <div className="h-screen">
+    <div className="h-full">
       <WorkerActiveTracking workerId={String(worker._id)} />
     </div>
   );

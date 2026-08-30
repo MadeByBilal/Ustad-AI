@@ -3,12 +3,14 @@
 import { useCallback, useEffect, useState } from "react";
 import { motion } from "framer-motion";
 import type { WorkerDashboardData } from "@/lib/worker/dashboard";
+import { useLang } from "@/lib/i18n/context";
 import IncomingJobCard from "./IncomingJobCard";
 import DirectRequestCard from "./DirectRequestCard";
 
 const POLL_MS = 15000;
 
 export default function WorkerJobsList({ workerId }: { workerId: string }) {
+  const { t } = useLang();
   const [data, setData] = useState<WorkerDashboardData | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [now, setNow] = useState(() => Date.now());
@@ -22,13 +24,13 @@ export default function WorkerJobsList({ workerId }: { workerId: string }) {
         success?: boolean;
         data?: WorkerDashboardData;
       } | null;
-      if (!res.ok || !body?.success) throw new Error("Failed to load");
+      if (!res.ok || !body?.success) throw new Error(t("error"));
       setData(body.data ?? null);
       setError(null);
     } catch (e) {
-      setError(e instanceof Error ? e.message : "Failed to load");
+      setError(e instanceof Error ? e.message : t("error"));
     }
-  }, [workerId]);
+  }, [workerId, t]);
 
   useEffect(() => {
     void refresh();
@@ -54,8 +56,8 @@ export default function WorkerJobsList({ workerId }: { workerId: string }) {
             </svg>
           </div>
           <div>
-            <p className="text-sm font-medium text-muted">No jobs available</p>
-            <p className="text-xs text-muted">Make sure you&apos;re online and available</p>
+            <p className="text-sm font-medium text-muted">{t("noJobs")}</p>
+            <p className="text-xs text-muted">{t("available")}</p>
           </div>
         </motion.div>
       ) : (
@@ -63,7 +65,7 @@ export default function WorkerJobsList({ workerId }: { workerId: string }) {
           {incomingJobs.length > 0 && (
             <section>
               <h2 className="mb-3 text-sm font-bold uppercase tracking-wide text-muted">
-                Nearby jobs
+                {t("nearbyJobs")}
               </h2>
               <div className="space-y-3">
                 {incomingJobs.map((job) => (
@@ -81,7 +83,7 @@ export default function WorkerJobsList({ workerId }: { workerId: string }) {
           {directRequests.length > 0 && (
             <section>
               <h2 className="mb-3 text-sm font-bold uppercase tracking-wide text-muted">
-                Direct requests
+                {t("directRequests")}
               </h2>
               <div className="space-y-3">
                 {directRequests.map((req) => (

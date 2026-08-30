@@ -3,6 +3,7 @@ import { requireRole } from "@/lib/auth";
 import { connectDB } from "@/lib/mongodb";
 import { Worker } from "@/models";
 import WorkerHome from "@/components/worker/WorkerHome";
+import TranslatedHeading from "@/components/TranslatedHeading";
 
 export const dynamic = "force-dynamic";
 
@@ -25,7 +26,7 @@ export default async function WorkerDashboardPage() {
   return (
     <>
       <div className="page-header">
-        <h1 className="text-lg font-bold text-text">Ustad AI</h1>
+        <TranslatedHeading translationKey="home" />
       </div>
       <div className="page-content">
         <WorkerHome workerId={String(worker._id)} />
