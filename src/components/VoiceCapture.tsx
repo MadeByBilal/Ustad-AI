@@ -324,7 +324,6 @@ export default function VoiceCapture({ variant = "landing" }: VoiceCaptureProps)
   const [busy, setBusy] = useState(false);
   const [customerLocation, setCustomerLocation] = useState<Coordinates | null>(null);
   const [locationFailure, setLocationFailure] = useState<LocationFailureReason | null>(null);
-  const [locationPrompt, setLocationPrompt] = useState(false);
   const [locationPending, setLocationPending] = useState(false);
 
   const recorderRef = useRef<RecordingSession | null>(null);
@@ -336,9 +335,10 @@ export default function VoiceCapture({ variant = "landing" }: VoiceCaptureProps)
   const pendingBodyRef = useRef<RunBody | null>(null);
   const locationRef = useRef<Coordinates | null>(null);
   const locationDecisionRef = useRef<
-    "unresolved" | "available" | "unavailable" | "without"
+    "unresolved" | "pending" | "available" | "unavailable" | "without"
   >("unresolved");
   const locationRequestIdRef = useRef(0);
+  const locationPromiseRef = useRef<Promise<Coordinates | null> | null>(null);
   const reduceMotion = useReducedMotion();
 
   useEffect(() => {
@@ -377,7 +377,7 @@ export default function VoiceCapture({ variant = "landing" }: VoiceCaptureProps)
 
   const getLocation = useCallback((): Promise<Coordinates | null> => {
     if (locationDecisionRef.current !== "unresolved") {
-      return Promise.resolve(locationRef.current);
+      return locationPromiseRef.current ?? Promise.resolve(locationRef.current);
     }
 
     const requestId = locationRequestIdRef.current + 1;
@@ -400,10 +400,10 @@ export default function VoiceCapture({ variant = "landing" }: VoiceCaptureProps)
       return Promise.resolve(null);
     }
 
-    locationDecisionRef.current = "unavailable";
+    locationDecisionRef.current = "pending";
     setLocationPending(true);
 
-    return new Promise<Coordinates | null>((resolve) => {
+    const promise = new Promise<Coordinates | null>((resolve) => {
       let settled = false;
 
       const resolveLocation = (location: Coordinates | null) => {
@@ -443,7 +443,7 @@ export default function VoiceCapture({ variant = "landing" }: VoiceCaptureProps)
               lng: position.coords.longitude,
             }),
           rejectLocation,
-          { timeout: 5000, maximumAge: 60000 }
+          { enableHighAccuracy: true, timeout: 15000, maximumAge: 30000 }
         );
       } catch {
         markUnavailable("unavailable");
@@ -455,8 +455,12 @@ export default function VoiceCapture({ variant = "landing" }: VoiceCaptureProps)
         requestId === locationRequestIdRef.current
       ) {
         setLocationPending(false);
+        locationPromiseRef.current = null;
       }
     });
+
+    locationPromiseRef.current = promise;
+    return promise;
   }, []);
 
   const run = useCallback(
@@ -474,7 +478,6 @@ export default function VoiceCapture({ variant = "landing" }: VoiceCaptureProps)
       setBusy(true);
       setStatus("processing");
       setResult(null);
-      setLocationPrompt(false);
 
       const isCurrentRequest = () =>
         mountedRef.current && requestId === requestIdRef.current;
@@ -486,7 +489,8 @@ export default function VoiceCapture({ variant = "landing" }: VoiceCaptureProps)
         let location = locationRef.current;
         if (
           !options.skipLocation &&
-          locationDecisionRef.current === "unresolved"
+          (locationDecisionRef.current === "unresolved" ||
+            locationDecisionRef.current === "pending")
         ) {
           location = await getLocation();
         }
@@ -498,9 +502,7 @@ export default function VoiceCapture({ variant = "landing" }: VoiceCaptureProps)
           !location &&
           locationDecisionRef.current === "unavailable"
         ) {
-          setLocationPrompt(true);
-          setStatus("idle");
-          return;
+          setLocationFailure((prev) => prev ?? "unavailable");
         }
 
         setCustomerLocation(location);
@@ -606,6 +608,12 @@ export default function VoiceCapture({ variant = "landing" }: VoiceCaptureProps)
       ) {
         stream.getTracks().forEach((track) => track.stop());
         return;
+      }
+
+      // Request location upfront so it's ready by the time recording stops.
+      // Fire-and-forget: if it fails, run() will handle it gracefully.
+      if (locationDecisionRef.current === "unresolved") {
+        void getLocation();
       }
 
       const mimeType = getSupportedAudioMimeType();
@@ -855,41 +863,15 @@ export default function VoiceCapture({ variant = "landing" }: VoiceCaptureProps)
       stopRecording();
       return;
     }
-    if (starting || busy || locationPrompt) return;
+    if (starting || busy) return;
     void startRecording();
   }, [
     busy,
-    locationPrompt,
     recording,
     startRecording,
     starting,
     stopRecording,
   ]);
-
-  const retryLocation = useCallback(() => {
-    const body = pendingBodyRef.current;
-    if (!body || busy) return;
-
-    pendingBodyRef.current = null;
-    locationDecisionRef.current = "unresolved";
-    locationRef.current = null;
-    locationRequestIdRef.current += 1;
-    setLocationFailure(null);
-    setLocationPrompt(false);
-    void run(body);
-  }, [busy, run]);
-
-  const continueWithoutLocation = useCallback(() => {
-    const body = pendingBodyRef.current;
-    if (!body || busy) return;
-
-    pendingBodyRef.current = null;
-    locationDecisionRef.current = "without";
-    locationRef.current = null;
-    setLocationPrompt(false);
-    setLocationPending(false);
-    void run(body, { skipLocation: true });
-  }, [busy, run]);
 
   const reset = useCallback(() => {
     requestIdRef.current += 1;
@@ -897,6 +879,7 @@ export default function VoiceCapture({ variant = "landing" }: VoiceCaptureProps)
     requestAbortRef.current = null;
     recordingGenerationRef.current += 1;
     locationRequestIdRef.current += 1;
+    locationPromiseRef.current = null;
 
     const session = recorderRef.current;
     if (session) {
@@ -921,7 +904,6 @@ export default function VoiceCapture({ variant = "landing" }: VoiceCaptureProps)
     setClarificationSelections([]);
     setCustomerLocation(null);
     setLocationFailure(null);
-    setLocationPrompt(false);
     setLocationPending(false);
     setMicLevel(0);
     setRecording(false);
@@ -942,7 +924,7 @@ export default function VoiceCapture({ variant = "landing" }: VoiceCaptureProps)
               : "Start recording"
         }
         aria-pressed={recording}
-        disabled={busy || starting || locationPrompt}
+        disabled={busy || starting}
         onClick={toggleRecording}
         animate={{
           scale: recording && !reduceMotion ? 1 + micLevel * 0.08 : 1,
@@ -978,53 +960,10 @@ export default function VoiceCapture({ variant = "landing" }: VoiceCaptureProps)
               ? "Checking your location…"
               : status === "processing"
                 ? "Understanding your problem…"
-                : locationPrompt
-                  ? "Choose how to continue"
-                  : "Tap to speak"}
+                : "Tap to speak"}
       </p>
 
-      {locationPrompt && (
-        <div
-          className="mt-5 w-full space-y-3 rounded-xl border border-warning/40 bg-warning/10 p-4 text-left"
-          role="alert"
-          aria-live="assertive"
-        >
-          <div>
-            <p className="text-sm font-semibold text-warning">
-              Couldn&apos;t access your location.
-            </p>
-            <p className="mt-1 text-xs text-warning/80">
-              {locationFailure
-                ? locationFailureMessage(locationFailure)
-                : "Nearby distance information is unavailable."}
-            </p>
-          </div>
-          <div className="flex flex-col gap-2 sm:flex-row">
-            <motion.button
-              type="button"
-              onClick={retryLocation}
-              whileTap={{ scale: 0.95 }}
-              whileHover={{ y: -1 }}
-              transition={{ duration: 0.15, ease: "easeOut" }}
-              className="flex-1 rounded-lg border border-warning/50 bg-surface px-3 py-2 text-xs font-semibold text-warning hover:bg-warning/10 disabled:opacity-50"
-            >
-              Try location again
-            </motion.button>
-            <motion.button
-              type="button"
-              onClick={continueWithoutLocation}
-              whileTap={{ scale: 0.95 }}
-              whileHover={{ y: -1 }}
-              transition={{ duration: 0.15, ease: "easeOut" }}
-              className="flex-1 rounded-lg bg-warning px-3 py-2 text-xs font-semibold text-bg hover:bg-warning/90 disabled:opacity-50"
-            >
-              Continue without location
-            </motion.button>
-          </div>
-        </div>
-      )}
-
-      {locationFailure && !locationPrompt && (
+      {locationFailure && status === "done" && (
         <div
           className="mt-4 w-full space-y-2 rounded-xl border border-warning/40 bg-warning/10 p-3 text-left"
           role="status"

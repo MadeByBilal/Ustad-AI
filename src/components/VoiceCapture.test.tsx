@@ -400,7 +400,7 @@ describe("VoiceCapture", () => {
     await user.click(screen.getByRole("button", { name: "Stop recording" }));
   });
 
-  it("shows an explicit location fallback before continuing without location", async () => {
+  it("shows a non-blocking location notification when location fails and continues with results", async () => {
     stubRecorderGlobals();
     const getCurrentPosition = vi.fn(
       (_success: (position: unknown) => void, failure: (error: unknown) => void) =>
@@ -420,10 +420,9 @@ describe("VoiceCapture", () => {
 
     await tapToRecord(user);
 
-    expect(await screen.findByText(/couldn't access your location/i)).toBeInTheDocument();
-    expect(fetchMock).not.toHaveBeenCalled();
-    await user.click(screen.getByRole("button", { name: /continue without location/i }));
     expect(await screen.findByText("Electrician")).toBeInTheDocument();
+    expect(fetchMock).toHaveBeenCalled();
+    expect(screen.getByText(/location unavailable/i)).toBeInTheDocument();
   });
 
   it("aborts a hung understanding request and shows the retryable error", async () => {
