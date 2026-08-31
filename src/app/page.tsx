@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import Link from "next/link";
 import VoiceCapture from "@/client/components/VoiceCapture";
 import LanguageToggle from "@/client/components/LanguageToggle";
@@ -8,6 +9,9 @@ import { Droplets, Zap, Wrench, Hammer } from "lucide-react";
 
 export default function HomePage() {
   const { t, lang } = useLang();
+  const [voiceStatus, setVoiceStatus] = useState<"idle" | "recording" | "processing" | "clarifying" | "done" | "error">("idle");
+
+  const isActive = voiceStatus === "recording" || voiceStatus === "processing";
 
   return (
     <main className="relative flex h-screen flex-col overflow-hidden bg-bg text-text">
@@ -31,20 +35,22 @@ export default function HomePage() {
         </div>
       </nav>
 
-      <section className="relative z-10 mx-auto flex w-full max-w-6xl flex-1 flex-col items-center justify-center gap-10 px-4 pb-12 pt-8 md:flex-row md:gap-16 md:px-8 md:pb-0 md:pt-12">
+      <section className="relative z-10 mx-auto flex w-full max-w-6xl flex-1 flex-col items-center justify-center gap-6 overflow-y-auto px-4 pb-8 pt-4 sm:gap-10 sm:pb-12 sm:pt-8 md:flex-row md:gap-16 md:px-8 md:pb-0 md:pt-12">
         <div className="max-w-lg text-center md:text-left">
-          <h1 className="text-4xl font-bold tracking-tight text-text md:text-6xl">
-            {t("heroTitle")}
-          </h1>
-          <p className="mt-4 text-base text-muted md:text-lg">
-            {t("heroDesc")}
-          </p>
+          <div className={`transition-all duration-500 ${isActive ? "opacity-0 -translate-y-8 pointer-events-none" : "opacity-100 translate-y-0"}`}>
+            <h1 className="text-4xl font-bold tracking-tight text-text md:text-6xl">
+              {t("heroTitle")}
+            </h1>
+            <p className="mt-4 text-base text-muted md:text-lg">
+              {t("heroDesc")}
+            </p>
+          </div>
           <div className="mt-8 flex justify-center md:justify-start">
-            <VoiceCapture />
+            <VoiceCapture onStatusChange={setVoiceStatus} />
           </div>
         </div>
 
-        <div className="w-full max-w-sm rounded-[2rem] border border-divider bg-[rgb(var(--surface))] p-4 shadow-[0_18px_30px_rgba(42,33,28,0.08)] md:max-w-md">
+        <div className={`transition-all duration-500 w-full max-w-sm rounded-[2rem] border border-divider bg-[rgb(var(--surface))] p-4 shadow-[0_18px_30px_rgba(42,33,28,0.08)] md:max-w-md ${isActive ? "opacity-0 translate-x-12 pointer-events-none" : "opacity-100 translate-x-0"}`}>
           <div className="grid gap-3">
             {[
               { icon: Droplets, label: t("plumber") },

@@ -22,6 +22,7 @@ const MAX_TEXT_LENGTH = 2000;
  * results with zero manual steps.
  */
 export async function POST(req: NextRequest) {
+  console.log("[api/understand] Request received");
   let payload: {
     text?: string;
     clarification?: string;
@@ -106,6 +107,8 @@ export async function POST(req: NextRequest) {
     return fail("Send text, audio, or an image", 400);
   }
 
+  console.log("[api/understand] Payload:", { hasText: !!payload.text, hasAudio: !!payload.audio, audioSize: payload.audio?.buffer.length, hasImage: !!payload.image, text: payload.text?.substring(0, 80) });
+
   if (payload.text && payload.text.length > MAX_TEXT_LENGTH) {
     return fail("Text is too long", 400);
   }
@@ -120,10 +123,13 @@ export async function POST(req: NextRequest) {
     let transcript: string | undefined;
     if (payload.audio) {
       try {
+        console.log("[api/understand] Starting transcription. Audio size:", payload.audio.buffer.length, "MIME:", payload.audio.mime);
         transcript = await import("@/server/lib/job/ai").then((m) =>
           m.transcribeAudio(payload.audio!.buffer, payload.audio!.mime)
         );
-      } catch {
+        console.log("[api/understand] Transcription complete:", transcript?.substring(0, 100));
+      } catch (err) {
+        console.error("[api/understand] Transcription FAILED:", err);
         // Short audio, network issues, or API errors — fall back to
         // asking the user to type their request instead of 500-ing.
         return fail(
@@ -138,11 +144,13 @@ export async function POST(req: NextRequest) {
       return fail("Sorry, I could not hear anything. Please try again.", 422);
     }
 
+    console.log("[api/understand] Starting AI understanding. Text:", text.substring(0, 100));
     const understood = await understandJobInput({
       text,
       image: payload.image,
       clarification: payload.clarification,
     });
+    console.log("[api/understand] AI understanding complete. Source:", understood.source, "Category:", understood.understanding.category);
 
     const category = understood.understanding.category as WorkerCategory | null;
     const workers = await getWorkerOptions({

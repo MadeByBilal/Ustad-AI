@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
+import { motion } from "framer-motion";
 import { ArrowLeft } from "lucide-react";
 import MatchResults from "@/client/components/MatchResults";
 import type { MatchResultsData } from "@/client/components/MatchResults";
@@ -29,7 +30,7 @@ export default function ResultPageClient() {
 
   if (!stored) {
     return (
-      <div className="relative">
+      <div className="relative overflow-hidden">
         <div className="pointer-events-none absolute -right-20 -top-20 h-64 w-64 rounded-full bg-accent/8 blur-3xl" />
         <div className="pointer-events-none absolute -bottom-24 -left-12 h-56 w-56 rounded-full bg-warning/6 blur-3xl" />
         <div className="page-header">
@@ -42,7 +43,12 @@ export default function ResultPageClient() {
           </Link>
         </div>
         <div className="page-content">
-          <div className="flex flex-col items-center justify-center py-20">
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ type: "spring", stiffness: 260, damping: 20 }}
+            className="flex flex-col items-center justify-center py-20"
+          >
             <p className="text-center text-muted">
               No results found. Try recording again.
             </p>
@@ -52,14 +58,14 @@ export default function ResultPageClient() {
             >
               Go back
             </Link>
-          </div>
+          </motion.div>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="relative">
+    <div className="relative overflow-hidden">
       <div className="pointer-events-none absolute -right-20 -top-20 h-64 w-64 rounded-full bg-accent/8 blur-3xl" />
       <div className="pointer-events-none absolute -bottom-24 -left-12 h-56 w-56 rounded-full bg-warning/6 blur-3xl" />
       <div className="page-header">

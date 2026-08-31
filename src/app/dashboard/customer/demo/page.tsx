@@ -78,7 +78,7 @@ const mockData: MatchResultsData = {
 
 export default function DemoPage() {
   return (
-    <div className="min-h-screen bg-bg p-4 sm:p-6 md:p-8">
+    <div className="page-content bg-bg">
       <div className="mx-auto max-w-lg">
         <MatchResults data={mockData} />
       </div>

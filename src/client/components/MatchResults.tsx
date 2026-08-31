@@ -5,6 +5,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import {
   IconStarFilled,
   IconMapPin,
+  IconMicrophone,
 } from "@tabler/icons-react";
 import type { WorkerCategory } from "@/server/models";
 import type { WorkerOption } from "@/server/lib/matching";
@@ -38,6 +39,32 @@ export interface MatchResultsProps {
   location?: { lat: number; lng: number } | null;
   onRequestSent?: (jobId: string) => void;
 }
+
+const listContainer = {
+  hidden: { opacity: 0 },
+  show: {
+    opacity: 1,
+    transition: {
+      staggerChildren: 0.12,
+      delayChildren: 0.3,
+    },
+  },
+};
+
+const cardItem = {
+  hidden: { opacity: 0, y: 60, scale: 0.95 },
+  show: {
+    opacity: 1,
+    y: 0,
+    scale: 1,
+    transition: {
+      type: "spring" as const,
+      stiffness: 300,
+      damping: 24,
+      mass: 0.8,
+    },
+  },
+};
 
 export default function MatchResults({ data, location, onRequestSent }: MatchResultsProps) {
   const u = data.understanding;
@@ -81,27 +108,59 @@ export default function MatchResults({ data, location, onRequestSent }: MatchRes
         />
       </header>
 
+      {/* Transcription */}
+      {data.transcript && (
+        <motion.div
+          initial={{ opacity: 0, y: 20, scale: 0.97 }}
+          animate={{ opacity: 1, y: 0, scale: 1 }}
+          transition={{ type: "spring", stiffness: 260, damping: 20, delay: 0.15 }}
+          className="flex items-start gap-3 rounded-2xl border border-accent/20 bg-accent/5 px-4 py-3"
+        >
+          <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-accent/15">
+            <IconMicrophone size={16} className="text-accent" />
+          </div>
+          <div className="min-w-0 flex-1">
+            <p className="text-xs font-semibold uppercase tracking-wide text-accent">
+              You said
+            </p>
+            <p className="mt-0.5 text-sm leading-relaxed text-text">
+              {data.transcript}
+            </p>
+          </div>
+        </motion.div>
+      )}
+
       {/* Worker list */}
       <section className="flex flex-col gap-3">
         {anyWorker ? (
-          <ul className="flex flex-col gap-3">
+          <motion.ul
+            className="flex flex-col gap-3"
+            variants={listContainer}
+            initial="hidden"
+            animate="show"
+          >
             {ranked.map((w, i) => (
-              <li key={w.id}>
+              <motion.li key={w.id} variants={cardItem}>
                 <WorkerMatchCard
                   worker={w}
                   rank={i + 1}
                   selected={selectedId === w.id}
                   onSelect={() => setSelectedId(selectedId === w.id ? null : w.id)}
                 />
-              </li>
+              </motion.li>
             ))}
-          </ul>
+          </motion.ul>
         ) : (
-          <div className="rounded-xl border border-divider bg-surface p-6 text-center">
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ type: "spring", stiffness: 260, damping: 20, delay: 0.3 }}
+            className="rounded-xl border border-divider bg-surface p-6 text-center"
+          >
             <p className="text-sm text-muted">
               No ustads available right now — try again in a few minutes.
             </p>
-          </div>
+          </motion.div>
         )}
       </section>
 

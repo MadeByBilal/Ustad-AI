@@ -202,6 +202,7 @@ export async function geminiUnderstand(
 
   for (let attempt = 0; attempt <= GEMINI_MAX_RETRIES; attempt++) {
     try {
+      console.log(`[gemini] Attempt ${attempt + 1}/${GEMINI_MAX_RETRIES + 1}. Calling API...`);
       const response = await fetch(geminiEndpoint(apiKey), {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -218,6 +219,7 @@ export async function geminiUnderstand(
 
       if (!response.ok) {
         const errorText = await response.text().catch(() => "");
+        console.error("[gemini] API error:", response.status, errorText.substring(0, 200));
         const err = new Error(
           `Gemini API ${response.status}: ${errorText}`,
         );
@@ -237,9 +239,11 @@ export async function geminiUnderstand(
       };
       const modelText = data.candidates?.[0]?.content?.parts?.[0]?.text;
       if (!modelText) {
+        console.error("[gemini] No candidates returned. Raw:", JSON.stringify(data).substring(0, 300));
         throw new Error("Gemini returned no candidates");
       }
 
+      console.log("[gemini] Raw response:", modelText.substring(0, 200));
       let parsed: unknown;
       try {
         parsed = JSON.parse(modelText);
@@ -271,9 +275,11 @@ async function transcriptionFromAudio(
   apiKey: string,
 ): Promise<string> {
   const auth = { headers: { Authorization: apiKey } };
+  console.log("[assemblyai] Starting transcription. Audio size:", audio.length, "bytes, MIME:", mime);
 
   // Step 1: Upload audio (10s timeout)
   const uploadBody = new Uint8Array(audio);
+  console.log("[assemblyai] Uploading audio to AssemblyAI...");
   const upload = await fetch("https://api.assemblyai.com/v2/upload", {
     method: "POST",
     headers: {
@@ -285,6 +291,7 @@ async function transcriptionFromAudio(
   });
   if (!upload.ok) {
     const errorText = await upload.text().catch(() => "");
+    console.error("[assemblyai] Upload FAILED:", upload.status, errorText);
     throw new Error(
       `AssemblyAI upload ${upload.status}: ${upload.statusText}${errorText ? ` - ${errorText}` : ""}`,
     );
@@ -293,6 +300,7 @@ async function transcriptionFromAudio(
   if (!uploaded.upload_url) {
     throw new Error("AssemblyAI upload missing upload_url");
   }
+  console.log("[assemblyai] Upload successful. Creating transcript job...");
 
   // Step 2: Create transcript job with a locked language so it stays in the
   // supported app languages instead of auto-detecting unrelated speech.
@@ -312,6 +320,8 @@ async function transcriptionFromAudio(
     signal: AbortSignal.timeout(API_TIMEOUT_MS),
   });
   if (!created.ok) {
+    const errText = await created.text().catch(() => "");
+    console.error("[assemblyai] Transcript create FAILED:", created.status, errText);
     throw new Error(`AssemblyAI transcript create ${created.status}`);
   }
   const createdData = (await created.json()) as { id?: string };
@@ -319,14 +329,18 @@ async function transcriptionFromAudio(
   if (!transcriptId) {
     throw new Error("AssemblyAI transcript missing id");
   }
+  console.log("[assemblyai] Transcript job created. ID:", transcriptId, "Polling...");
 
   // Step 3: Poll for completion (20s total deadline, 10s per poll)
   const pollDeadline = Date.now() + ASSEMBLYAI_POLL_DEADLINE_MS;
+  let pollCount = 0;
   for (;;) {
     if (Date.now() > pollDeadline) {
+      console.error("[assemblyai] Polling timed out after", ASSEMBLYAI_POLL_DEADLINE_MS, "ms");
       throw new Error("AssemblyAI transcription timed out");
     }
     await sleep(ASSEMBLYAI_POLL_INTERVAL_MS);
+    pollCount += 1;
     const status = await fetch(
       `https://api.assemblyai.com/v2/transcript/${transcriptId}`,
       {
@@ -335,6 +349,8 @@ async function transcriptionFromAudio(
       },
     );
     if (!status.ok) {
+      const errText = await status.text().catch(() => "");
+      console.error("[assemblyai] Poll status FAILED:", status.status, errText);
       throw new Error(`AssemblyAI status ${status.status}`);
     }
     const state = (await status.json()) as {
@@ -342,10 +358,13 @@ async function transcriptionFromAudio(
       text?: string;
       error?: string;
     };
+    console.log(`[assemblyai] Poll #${pollCount}: status=${state.status}`);
     if (state.status === "completed") {
+      console.log("[assemblyai] Transcription complete:", (state.text ?? "").substring(0, 100));
       return (state.text ?? "").trim();
     }
     if (state.status === "error" || state.error) {
+      console.error("[assemblyai] Transcription error:", state.error ?? state.status);
       throw new Error(
         `AssemblyAI transcription error: ${state.error ?? state.status}`,
       );
@@ -359,11 +378,14 @@ export async function transcribeAudio(
 ): Promise<string> {
   const apiKey = process.env.ASSEMBLYAI_API_KEY;
   if (!apiKey || apiKey.trim().length === 0) {
+    console.error("[assemblyai] ASSEMBLYAI_API_KEY is not set!");
     throw new Error(
       "ASSEMBLYAI_API_KEY is not configured. Please set it in your environment variables.",
     );
   }
+  console.log("[assemblyai] API key found. Starting transcription...");
   const text = await transcriptionFromAudio(audio, mime, apiKey);
+  console.log("[assemblyai] Final transcript:", text.substring(0, 120));
   if (!text || text.length < 2) {
     throw new Error(
       "Transcription was empty or too short. The audio may be silent or unclear.",
@@ -385,10 +407,12 @@ export async function understandJobInput(
     .join("\n");
 
   if (!apiKey || (!combined && !opts.image)) {
+    console.log("[ai] No Gemini API key or empty input, using fallback engine");
     return fallbackResult(text);
   }
 
   try {
+    console.log("[ai] Calling Gemini understand. Text:", combined.substring(0, 100), "Has image:", !!opts.image);
     const normalized = await geminiUnderstand(
       combined || "About the attached photo.",
       opts.image,
@@ -397,6 +421,7 @@ export async function understandJobInput(
 
     if (opts.clarification) {
       // Round two: commit whatever came back, but flag manual fallback if still unclear.
+      console.log("[ai] Clarification round. Category:", normalized.category, "clarification_required:", normalized.clarification_required);
       return {
         source: "gemini",
         understanding: normalized,
@@ -411,6 +436,7 @@ export async function understandJobInput(
     }
 
     if (normalized.clarification_required) {
+      console.log("[ai] Clarification needed. Question:", normalized.clarification_question);
       return {
         source: "gemini",
         understanding: normalized,
@@ -420,6 +446,7 @@ export async function understandJobInput(
       };
     }
 
+    console.log("[ai] Gemini success. Category:", normalized.category, "Confidence:", normalized.confidence);
     return { source: "gemini", understanding: normalized };
   } catch (error) {
     console.error(

@@ -10,13 +10,14 @@ import type { WorkerCategory, UrgencyLevel } from "@/server/models";
 import TechnicianRequestModal from "./TechnicianRequestModal";
 import TextType from "./TextType";
 import { Star, AlertTriangle, Mic } from "lucide-react";
+import MicVisualizer from "./MicVisualizer";
 
 export interface UnderstandResponse extends AiUnderstandResult {
   transcript?: string;
   workers: { best: WorkerOption | null; others: WorkerOption[]; ranked?: WorkerOption[] };
 }
 
-type Status = "idle" | "processing" | "clarifying" | "done" | "error";
+type Status = "idle" | "recording" | "processing" | "clarifying" | "done" | "error";
 
 type Coordinates = { lat: number; lng: number };
 type RunBody = FormData | { clarification?: string };
@@ -35,7 +36,7 @@ const SUPPORTED_AUDIO_MIME_TYPES = [
   "audio/webm;codecs=opus",
   "audio/webm",
 ] as const;
-const ANALYSIS_TIMEOUT_MS = 18_000;
+const ANALYSIS_TIMEOUT_MS = 60_000;
 const LEVEL_SAMPLE_INTERVAL_MS = 100;
 const MIN_AUDIO_BYTES = 1_000;
 const MIN_AVERAGE_RMS = 0.012;
@@ -81,6 +82,8 @@ function locationFailureMessage(reason: LocationFailureReason): string {
 export interface VoiceCaptureProps {
   /** Visual context. Both variants use the shared dark surface palette. */
   variant?: "landing" | "dashboard";
+  /** Callback to notify parent when status changes */
+  onStatusChange?: (status: Status) => void;
 }
 
 const CATEGORY_LABELS: Record<WorkerCategory, string> = {
@@ -101,12 +104,23 @@ const currency = (n: number) => `PKR ${n.toLocaleString("en-PK")}`;
 function WorkerCard({
   worker,
   highlight,
+  index = 0,
 }: {
   worker: WorkerOption;
   highlight?: boolean;
+  index?: number;
 }) {
   return (
-    <div
+    <motion.div
+      initial={{ opacity: 0, y: 50, scale: 0.96 }}
+      animate={{ opacity: 1, y: 0, scale: 1 }}
+      transition={{
+        type: "spring",
+        stiffness: 320,
+        damping: 24,
+        mass: 0.8,
+        delay: index * 0.1,
+      }}
       className={
         highlight
           ? "rounded-xl border-2 border-accent bg-surface p-4"
@@ -162,7 +176,7 @@ function WorkerCard({
           )}
         </div>
       )}
-    </div>
+    </motion.div>
   );
 }
 
@@ -186,7 +200,12 @@ function ResultPanel({ data, location }: { data: UnderstandResponse; location?: 
   const [submittedJobId, setSubmittedJobId] = useState<string | null>(null);
 
   return (
-    <div className="space-y-3">
+    <motion.div
+      initial={{ opacity: 0, y: 30 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
+      className="space-y-3"
+    >
       <div className="rounded-xl border border-divider bg-surface p-4 text-left">
         <div className="flex flex-wrap items-center gap-x-3 gap-y-2 text-sm">
           <span className="font-semibold text-text">
@@ -225,6 +244,21 @@ function ResultPanel({ data, location }: { data: UnderstandResponse; location?: 
         )}
       </div>
 
+      {data.transcript && (
+        <motion.div
+          initial={{ opacity: 0, y: 15 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.4, ease: [0.22, 1, 0.36, 1], delay: 0.1 }}
+          className="flex items-start gap-3 rounded-xl border border-accent/20 bg-accent/5 p-3 text-left"
+        >
+          <Mic className="mt-0.5 h-4 w-4 shrink-0 text-accent" />
+          <div className="min-w-0">
+            <p className="text-[10px] font-semibold uppercase tracking-wide text-accent">You said</p>
+            <p className="mt-0.5 text-xs leading-relaxed text-text">{data.transcript}</p>
+          </div>
+        </motion.div>
+      )}
+
       {u.category && (
         <div className="rounded-xl border-l-4 border-warning bg-warning/10 p-4 text-left">
           <p className="text-xs font-semibold uppercase tracking-wide text-warning">
@@ -247,7 +281,6 @@ function ResultPanel({ data, location }: { data: UnderstandResponse; location?: 
         </div>
       )}
 
-      {/* Submitting feedback */}
       {submittedJobId && (
         <div className="rounded-xl border border-success/40 bg-success p-4 text-center">
           <p className="text-sm font-semibold text-success-fg">
@@ -256,12 +289,11 @@ function ResultPanel({ data, location }: { data: UnderstandResponse; location?: 
         </div>
       )}
 
-      {/* Ranked technicians — dashboard uses MatchResults above; landing shows best+others inline */}
       {anyWorker ? (
         <div className="space-y-2 text-left">
-          {data.workers.best && <WorkerCard worker={data.workers.best} highlight />}
-          {data.workers.others.slice(0, 2).map((w) => (
-            <WorkerCard key={w.id} worker={w} />
+          {data.workers.best && <WorkerCard worker={data.workers.best} highlight index={0} />}
+          {data.workers.others.slice(0, 2).map((w, i) => (
+            <WorkerCard key={w.id} worker={w} index={i + 1} />
           ))}
         </div>
       ) : (
@@ -277,7 +309,6 @@ function ResultPanel({ data, location }: { data: UnderstandResponse; location?: 
         Set price &amp; find workers
       </Link>
 
-      {/* Technician request modal */}
       <AnimatePresence mode="wait">
         {selectedWorker && (
           <TechnicianRequestModal
@@ -298,11 +329,11 @@ function ResultPanel({ data, location }: { data: UnderstandResponse; location?: 
           />
         )}
       </AnimatePresence>
-    </div>
+    </motion.div>
   );
 }
 
-export default function VoiceCapture({ variant = "landing" }: VoiceCaptureProps) {
+export default function VoiceCapture({ variant = "landing", onStatusChange }: VoiceCaptureProps) {
   const router = useRouter();
   const [status, setStatus] = useState<Status>("idle");
   const [recording, setRecording] = useState(false);
@@ -331,6 +362,12 @@ export default function VoiceCapture({ variant = "landing" }: VoiceCaptureProps)
   const locationRequestIdRef = useRef(0);
   const locationPromiseRef = useRef<Promise<Coordinates | null> | null>(null);
   const reduceMotion = useReducedMotion();
+
+  const derivedStatus: Status = recording ? "recording" : status;
+
+  useEffect(() => {
+    onStatusChange?.(derivedStatus);
+  }, [derivedStatus, onStatusChange]);
 
   useEffect(() => {
     mountedRef.current = true;
@@ -520,10 +557,12 @@ export default function VoiceCapture({ variant = "landing" }: VoiceCaptureProps)
           });
         }
 
+        console.log("[run] Starting API call to /api/ai/understand. Type:", body instanceof FormData ? "FormData(audio)" : "JSON");
         const data = await Promise.race([
-          fetch("/api/ai/understand", requestInit).then((response) =>
-            parseApiResponse<UnderstandResponse>(response)
-          ),
+          fetch("/api/ai/understand", requestInit).then((response) => {
+            console.log("[run] API response status:", response.status);
+            return parseApiResponse<UnderstandResponse>(response);
+          }),
           new Promise<UnderstandResponse>((_, reject) => {
             timeoutId = window.setTimeout(() => {
               timedOut = true;
@@ -535,6 +574,7 @@ export default function VoiceCapture({ variant = "landing" }: VoiceCaptureProps)
 
         if (!isCurrentRequest()) return;
 
+        console.log("[run] API response received. Source:", data.source, "Transcript:", data.transcript?.substring(0, 80), "Workers:", data.workers?.best?.name ?? "none");
         setResult(data);
         setClarificationSelections([]);
         if (data.clarification_question || data.manual_fallback) {
@@ -554,7 +594,9 @@ export default function VoiceCapture({ variant = "landing" }: VoiceCaptureProps)
           }
         }
         pendingBodyRef.current = null;
-      } catch (err) {
+    } catch (err) {
+      console.error("[mic] startRecording failed:", err);
+        console.error("[run] API call failed:", err);
         if (!isCurrentRequest()) return;
         if (timedOut) {
           setStatus("error");
@@ -608,6 +650,7 @@ export default function VoiceCapture({ variant = "landing" }: VoiceCaptureProps)
 
     try {
       stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      console.log("[mic] getUserMedia success. Tracks:", stream.getTracks().map(t => `${t.kind}:${t.label}`).join(", "));
       if (
         !mountedRef.current ||
         generation !== recordingGenerationRef.current
@@ -696,6 +739,7 @@ export default function VoiceCapture({ variant = "landing" }: VoiceCaptureProps)
         finalized = true;
         const wasCancelled = session?.cancelled ?? false;
         const blob = new Blob(chunks, { type: actualMimeType });
+        console.log("[mic] Recording stopped. Blob size:", blob.size, "bytes, MIME:", actualMimeType, "wasCancelled:", wasCancelled);
 
         cleanup();
         if (
@@ -722,11 +766,13 @@ export default function VoiceCapture({ variant = "landing" }: VoiceCaptureProps)
           (peakLevel < MIN_PEAK_RMS || activeRatio < MIN_ACTIVE_SAMPLE_RATIO);
 
         if (blob.size < MIN_AUDIO_BYTES || isSilent) {
+          console.warn("[mic] Recording rejected: blob.size =", blob.size, "isSilent =", isSilent, "avgLevel =", averageLevel, "peakLevel =", peakLevel, "activeRatio =", activeRatio);
           setStatus("error");
           setError("Didn't catch that - hold and speak again.");
           return;
         }
 
+        console.log("[mic] Sending audio to /api/ai/understand. Blob size:", blob.size, "bytes");
         const formData = new FormData();
         formData.append(
           "audio",
@@ -755,6 +801,7 @@ export default function VoiceCapture({ variant = "landing" }: VoiceCaptureProps)
       recorderRef.current = session;
       recorder.start();
       setRecording(true);
+      console.log("[mic] Recording started. MIME:", actualMimeType, "Stream tracks:", activeStream.getTracks().map(t => t.kind).join(","));
 
       try {
         const audioContextWindow = window as Window & {
@@ -765,6 +812,7 @@ export default function VoiceCapture({ variant = "landing" }: VoiceCaptureProps)
 
         if (AudioContextConstructor) {
           audioCtx = new AudioContextConstructor();
+          console.log("[mic] AudioContext created. State:", audioCtx.state);
           if (audioCtx.state === "suspended") {
             void audioCtx.resume().catch(() => undefined);
           }
@@ -774,6 +822,7 @@ export default function VoiceCapture({ variant = "landing" }: VoiceCaptureProps)
           source.connect(analyser);
           const levelData = new Uint8Array(analyser.fftSize);
 
+          let logCounter = 0;
           levelInterval = window.setInterval(() => {
             if (!analyser || finalized) return;
             analyser.getByteTimeDomainData(levelData);
@@ -792,6 +841,11 @@ export default function VoiceCapture({ variant = "landing" }: VoiceCaptureProps)
             levelSamples += 1;
             peakLevel = Math.max(peakLevel, level);
             if (level >= MIN_PEAK_RMS) activeSamples += 1;
+
+            logCounter += 1;
+            if (logCounter % 10 === 0) {
+              console.log(`[mic] level=${level.toFixed(4)} peak=${peakLevel.toFixed(4)} samples=${levelSamples} avgRMS=${(levelSum / levelSamples).toFixed(4)}`);
+            }
 
             if (
               mountedRef.current &&
@@ -921,61 +975,114 @@ export default function VoiceCapture({ variant = "landing" }: VoiceCaptureProps)
     setBusy(false);
   }, []);
 
+  const isCentered = recording || status === "processing";
+
   return (
     <div className="flex w-full max-w-md flex-col items-center">
-      {/* Mic button */}
-      <motion.button
-        ref={buttonRef}
-        type="button"
-        aria-label={
-          starting
-            ? "Starting recording"
-            : recording
-              ? "Release to stop recording"
-              : "Hold to start recording"
-        }
-        aria-pressed={recording}
-        disabled={busy || starting}
-        onPointerDown={handleMicPointerDown}
-        onLostPointerCapture={handleMicLostPointerCapture}
-        onContextMenu={(e) => e.preventDefault()}
-        style={{ touchAction: "none" }}
+      {/* Animated layout wrapper */}
+      <motion.div
+        className="flex w-full flex-col items-center"
         animate={{
-          scale: recording && !reduceMotion ? 1 + micLevel * 0.08 : 1,
+          y: isCentered ? -20 : 0,
         }}
-        whileHover={{ y: reduceMotion ? 0 : -1 }}
-        transition={{
-          scale: { type: "spring", stiffness: 420, damping: 30 },
-        }}
-        className={`mic-btn relative flex h-28 w-28 items-center justify-center overflow-visible rounded-full text-5xl select-none disabled:cursor-not-allowed disabled:opacity-70 ${
-          recording
-            ? "bg-warning text-bg shadow-lg shadow-warning/40"
-            : "bg-accent text-bg shadow-xl shadow-accent/30 hover:bg-accent/90"
-        }`}
+        transition={{ duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
       >
-        <motion.span
-          aria-hidden="true"
-          className="pointer-events-none absolute -inset-3 rounded-full bg-warning/30 blur-md"
+        {/* Mic button with circular visualizer */}
+        <motion.div
+          className="relative flex items-center justify-center"
           animate={{
-            opacity: recording ? 0.15 + micLevel * 0.65 : 0,
-            scale: recording && !reduceMotion ? 0.95 + micLevel * 0.3 : 0.9,
+            scale: isCentered ? 1.15 : 1,
           }}
-          transition={{ duration: 0.12, ease: "easeOut" }}
-        />
-        <Mic className="relative z-10 h-10 w-10" />
-      </motion.button>
-      <p className="mt-4 text-sm font-medium text-muted" aria-live="polite">
-        {starting
-          ? "Starting recording…"
-          : recording
-            ? "Listening… release to stop"
-            : locationPending
-              ? "Checking your location…"
-              : status === "processing"
-                ? "Understanding your problem…"
-                : "Hold to speak"}
-      </p>
+          transition={{ duration: 0.6, ease: [0.22, 1, 0.36, 1] }}
+        >
+          <MicVisualizer micLevel={micLevel} active={recording} />
 
+          <motion.button
+            ref={buttonRef}
+            type="button"
+            aria-label={
+              starting
+                ? "Starting recording"
+                : recording
+                  ? "Release to stop recording"
+                  : "Hold to start recording"
+            }
+            aria-pressed={recording}
+            disabled={busy || starting}
+            onPointerDown={handleMicPointerDown}
+            onLostPointerCapture={handleMicLostPointerCapture}
+            onContextMenu={(e) => e.preventDefault()}
+            style={{ touchAction: "none" }}
+            animate={{
+              scale: recording && !reduceMotion ? 1 + micLevel * 0.08 : 1,
+            }}
+            whileHover={{ y: reduceMotion ? 0 : -1 }}
+            transition={{
+              scale: { type: "spring", stiffness: 420, damping: 30 },
+            }}
+            className={`mic-btn relative flex h-28 w-28 items-center justify-center overflow-visible rounded-full text-5xl select-none disabled:cursor-not-allowed disabled:opacity-70 ${
+              recording
+                ? "bg-warning text-bg shadow-lg shadow-warning/40"
+                : status === "processing"
+                  ? "bg-accent/60 text-bg shadow-lg shadow-accent/20"
+                  : "bg-accent text-bg shadow-xl shadow-accent/30 hover:bg-accent/90"
+            }`}
+          >
+            <motion.span
+              aria-hidden="true"
+              className="pointer-events-none absolute -inset-3 rounded-full bg-warning/30 blur-md"
+              animate={{
+                opacity: recording ? 0.15 + micLevel * 0.65 : 0,
+                scale: recording && !reduceMotion ? 0.95 + micLevel * 0.3 : 0.9,
+              }}
+              transition={{ duration: 0.12, ease: "easeOut" }}
+            />
+            <Mic className="relative z-10 h-10 w-10" />
+          </motion.button>
+        </motion.div>
+
+        {/* Status text — only show when idle or starting */}
+        <AnimatePresence mode="wait">
+          {!recording && status === "idle" && (
+            <motion.p
+              key="hold"
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -20 }}
+              transition={{ duration: 0.3 }}
+              className="mt-4 text-sm font-medium text-muted"
+              aria-live="polite"
+            >
+              {starting ? "Starting recording…" : "Hold to speak"}
+            </motion.p>
+          )}
+        </AnimatePresence>
+      </motion.div>
+
+      {/* Recording status — flows up when recording */}
+      <AnimatePresence>
+        {recording && (
+          <motion.div
+            key="recording-status"
+            initial={{ opacity: 0, y: 30, scale: 0.95 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            exit={{ opacity: 0, y: -20, scale: 0.95 }}
+            transition={{ type: "spring", stiffness: 300, damping: 25 }}
+            className="mt-6 flex flex-col items-center gap-2"
+          >
+            <div className="flex items-center gap-2">
+              <span className="relative flex h-2.5 w-2.5">
+                <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-warning opacity-75" />
+                <span className="relative inline-flex h-2.5 w-2.5 rounded-full bg-warning" />
+              </span>
+              <p className="text-sm font-medium text-warning">Listening…</p>
+            </div>
+            <p className="text-xs text-muted">Release to stop</p>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* Location failure */}
       {locationFailure && status === "done" && (
         <div
           className="mt-4 w-full space-y-2 rounded-xl border border-warning/40 bg-warning/10 p-3 text-left"
@@ -991,116 +1098,169 @@ export default function VoiceCapture({ variant = "landing" }: VoiceCaptureProps)
         </div>
       )}
 
-      {/* Clarification round */}
-      {status === "clarifying" && result?.clarification_question && (
-        <div className="mt-5 w-full space-y-2 rounded-xl border border-warning bg-warning/10 p-4 text-left">
-          <p className="text-sm font-medium text-text">
-            {result.clarification_question}
-          </p>
-          {result.clarification_options && result.clarification_options.length > 0 && (
-            <div className="space-y-2">
-              {result.clarification_options.map((option) => (
-                <label
-                  key={option}
-                  className="flex cursor-pointer items-center gap-2 rounded-lg border border-warning/40 bg-surface px-3 py-2 text-sm text-text"
-                >
-                  <input
-                    type="checkbox"
-                    checked={clarificationSelections.includes(option)}
-                    onChange={(event) => {
-                      setClarificationSelections((current) =>
-                        event.target.checked
-                          ? [...current, option]
-                          : current.filter((selected) => selected !== option)
-                      );
-                    }}
-                    className="h-4 w-4 accent-accent"
-                  />
-                  {option}
-                </label>
+      {/* Processing overlay — animated text in center */}
+      <AnimatePresence>
+        {status === "processing" && (
+          <motion.div
+            key="processing"
+            initial={{ opacity: 0, scale: 0.85, y: 20 }}
+            animate={{ opacity: 1, scale: 1, y: 0 }}
+            exit={{ opacity: 0, scale: 0.9, y: -30 }}
+            transition={{ type: "spring", stiffness: 260, damping: 20 }}
+            className="mt-8 flex flex-col items-center gap-3"
+          >
+            <div className="flex items-center gap-2">
+              {[0, 1, 2].map((i) => (
+                <motion.span
+                  key={i}
+                  className="h-2 w-2 rounded-full bg-accent"
+                  animate={{ y: [0, -8, 0] }}
+                  transition={{
+                    duration: 0.6,
+                    repeat: Infinity,
+                    delay: i * 0.15,
+                    ease: "easeInOut",
+                  }}
+                />
               ))}
             </div>
-          )}
-          <input
-            type="text"
-            value={clarificationAnswer}
-            onChange={(e) => setClarificationAnswer(e.target.value)}
-            placeholder="Your answer, e.g. bijli ka masla hai"
-            className="w-full rounded-lg border border-divider bg-surface px-3 py-2 text-sm text-text outline-none focus:border-accent"
-          />
-          <motion.button
-            type="button"
-            onClick={() =>
-              void run({
-                clarification: [...clarificationSelections, clarificationAnswer.trim()]
-                  .filter(Boolean)
-                  .join(", "),
-              })
-            }
-            disabled={busy || (!clarificationAnswer.trim() && clarificationSelections.length === 0)}
-            whileTap={{ scale: 0.95 }}
-            whileHover={{ y: -1 }}
-            transition={{ duration: 0.15, ease: "easeOut" }}
-            className="w-full rounded-lg bg-accent py-2 text-sm font-semibold text-bg hover:bg-accent/90 disabled:opacity-50"
-          >
-            Continue
-          </motion.button>
-        </div>
-      )}
+            <TextType
+              text={[
+                "Ustad is understanding your problem…",
+                "Finding nearest workers…",
+                "Analyzing your requirements…",
+                "Almost ready…",
+              ]}
+              typingSpeed={40}
+              pauseDuration={1500}
+              deletingSpeed={25}
+              loop={true}
+              showCursor={true}
+              cursorCharacter="|"
+            />
+          </motion.div>
+        )}
+      </AnimatePresence>
 
-      {/* Processing */}
-      {status === "processing" && (
-        <div className="mt-5 flex items-center gap-2 rounded-full bg-surface px-4 py-2 text-sm text-muted">
-          <TextType
-            text={[
-              "Ustad is understanding your problem…",
-              "Finding nearest workers…",
-              "Analyzing your requirements…",
-              "Almost ready…",
-            ]}
-            typingSpeed={40}
-            pauseDuration={1500}
-            deletingSpeed={25}
-            loop={true}
-            showCursor={true}
-            cursorCharacter="|"
-          />
-        </div>
-      )}
+      {/* Clarification round */}
+      <AnimatePresence>
+        {status === "clarifying" && result?.clarification_question && (
+          <motion.div
+            key="clarifying"
+            initial={{ opacity: 0, y: 50, scale: 0.96 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            exit={{ opacity: 0, y: -20, scale: 0.97 }}
+            transition={{ type: "spring", stiffness: 280, damping: 22 }}
+            className="mt-6 w-full space-y-2 rounded-xl border border-warning bg-warning/10 p-4 text-left"
+          >
+            <p className="text-sm font-medium text-text">
+              {result.clarification_question}
+            </p>
+            {result.clarification_options && result.clarification_options.length > 0 && (
+              <div className="space-y-2">
+                {result.clarification_options.map((option) => (
+                  <label
+                    key={option}
+                    className="flex cursor-pointer items-center gap-2 rounded-lg border border-warning/40 bg-surface px-3 py-2 text-sm text-text"
+                  >
+                    <input
+                      type="checkbox"
+                      checked={clarificationSelections.includes(option)}
+                      onChange={(event) => {
+                        setClarificationSelections((current) =>
+                          event.target.checked
+                            ? [...current, option]
+                            : current.filter((selected) => selected !== option)
+                        );
+                      }}
+                      className="h-4 w-4 accent-accent"
+                    />
+                    {option}
+                  </label>
+                ))}
+              </div>
+            )}
+            <input
+              type="text"
+              value={clarificationAnswer}
+              onChange={(e) => setClarificationAnswer(e.target.value)}
+              placeholder="Your answer, e.g. bijli ka masla hai"
+              className="w-full rounded-lg border border-divider bg-surface px-3 py-2 text-sm text-text outline-none focus:border-accent"
+            />
+            <motion.button
+              type="button"
+              onClick={() =>
+                void run({
+                  clarification: [...clarificationSelections, clarificationAnswer.trim()]
+                    .filter(Boolean)
+                    .join(", "),
+                })
+              }
+              disabled={busy || (!clarificationAnswer.trim() && clarificationSelections.length === 0)}
+              whileTap={{ scale: 0.95 }}
+              whileHover={{ y: -1 }}
+              transition={{ duration: 0.15, ease: "easeOut" }}
+              className="w-full rounded-lg bg-accent py-2 text-sm font-semibold text-bg hover:bg-accent/90 disabled:opacity-50"
+            >
+              Continue
+            </motion.button>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       {/* Error */}
-      {status === "error" && error && (
-        <div className="mt-5 w-full space-y-2 rounded-xl border border-warning/40 bg-warning/10 p-4 text-left">
-          <p className="text-sm text-warning">{error}</p>
-          <motion.button
-            type="button"
-            onClick={reset}
-            whileTap={{ scale: 0.95 }}
-            whileHover={{ y: -1 }}
-            transition={{ duration: 0.15, ease: "easeOut" }}
-            className="rounded-lg bg-warning px-3 py-1.5 text-xs font-semibold text-bg hover:bg-warning/90"
+      <AnimatePresence>
+        {status === "error" && error && (
+          <motion.div
+            key="error"
+            initial={{ opacity: 0, y: 40, scale: 0.96 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            exit={{ opacity: 0, y: -20, scale: 0.97 }}
+            transition={{ type: "spring", stiffness: 300, damping: 24 }}
+            className="mt-5 w-full space-y-2 rounded-xl border border-warning/40 bg-warning/10 p-4 text-left"
           >
-            Try again
-          </motion.button>
-        </div>
-      )}
+            <p className="text-sm text-warning">{error}</p>
+            <motion.button
+              type="button"
+              onClick={reset}
+              whileTap={{ scale: 0.95 }}
+              whileHover={{ y: -1 }}
+              transition={{ duration: 0.15, ease: "easeOut" }}
+              className="rounded-lg bg-warning px-3 py-1.5 text-xs font-semibold text-bg hover:bg-warning/90"
+            >
+              Try again
+            </motion.button>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       {/* Result — only shown for landing variant; dashboard navigates to result page */}
-      {status === "done" && result && variant !== "dashboard" && (
-        <div className="mt-6 w-full">
-          <ResultPanel data={result} location={customerLocation} />
-          <motion.button
-            type="button"
-            onClick={reset}
-            whileTap={{ scale: 0.95 }}
-            whileHover={{ y: -1 }}
-            transition={{ duration: 0.15, ease: "easeOut" }}
-            className="mt-3 w-full rounded-lg border border-divider py-2 text-sm font-semibold text-muted transition hover:bg-surface"
+      <AnimatePresence>
+        {status === "done" && result && variant !== "dashboard" && (
+          <motion.div
+            key="result"
+            initial={{ opacity: 0, y: 60, scale: 0.97 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            exit={{ opacity: 0, y: -30, scale: 0.98 }}
+            transition={{ type: "spring", stiffness: 260, damping: 22, mass: 0.9 }}
+            className="mt-6 w-full"
           >
-            New request
-          </motion.button>
-        </div>
-      )}
+            <ResultPanel data={result} location={customerLocation} />
+            <motion.button
+              type="button"
+              onClick={reset}
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ delay: 0.3 }}
+              whileTap={{ scale: 0.95 }}
+              whileHover={{ y: -1 }}
+              className="mt-3 w-full rounded-lg border border-divider py-2 text-sm font-semibold text-muted transition hover:bg-surface"
+            >
+              New request
+            </motion.button>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }

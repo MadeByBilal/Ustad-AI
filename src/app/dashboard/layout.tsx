@@ -20,7 +20,7 @@ export default async function DashboardLayout({
   return (
     <div className="page">
       <DesktopNav role={role} userName={userName} />
-      <div className="page-scroll md:pt-0">
+      <div className="page-scroll md:pt-0 overflow-x-hidden">
         <main className="flex min-h-0 flex-1 flex-col pb-16 md:pb-0">{children}</main>
       </div>
       <BottomNav role={role} />
