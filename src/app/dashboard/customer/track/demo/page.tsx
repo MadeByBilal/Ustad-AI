@@ -2,7 +2,6 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { motion } from "framer-motion";
 import TrackingMap from "@/client/components/tracking/dynamicTrackingMap";
 
 const MOCK_WORKER = {

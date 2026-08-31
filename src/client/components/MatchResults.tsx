@@ -48,7 +48,6 @@ export default function MatchResults({ data, location, onRequestSent }: MatchRes
   const anyWorker = ranked.length > 0;
 
   const [selectedId, setSelectedId] = useState<string | null>(null);
-  const [sentJobId, setSentJobId] = useState<string | null>(null);
   const [offerFor, setOfferFor] = useState<string | null>(null);
 
   const selectedWorker = ranked.find((w) => w.id === selectedId) ?? null;
@@ -147,7 +146,6 @@ export default function MatchResults({ data, location, onRequestSent }: MatchRes
             onSubmitted={(result) => {
               setOfferFor(null);
               setSelectedId(null);
-              setSentJobId(result.job_id);
               onRequestSent?.(result.job_id);
             }}
           />
