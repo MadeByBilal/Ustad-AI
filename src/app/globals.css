@@ -129,6 +129,10 @@ option {
     @apply text-accent;
   }
 
+  .mic-btn:active {
+    transform: scale(0.95);
+  }
+
   .desktop-nav {
     @apply fixed inset-x-0 top-0 z-50 hidden md:block;
     padding: 0;
@@ -160,7 +164,7 @@ option {
     @apply sticky top-0 z-40 border-b border-divider bg-[rgb(var(--surface))]/95 px-4 py-3 backdrop-blur-xl md:static md:border-b-0 md:bg-transparent md:px-6 md:py-4;
   }
   .page-scroll {
-    @apply flex flex-col flex-1 overflow-y-auto;
+    @apply flex flex-col flex-1 overflow-y-scroll;
     -webkit-overflow-scrolling: touch;
     min-height: 0;
   }

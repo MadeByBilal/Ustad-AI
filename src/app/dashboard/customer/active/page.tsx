@@ -1,6 +1,6 @@
 import { redirect } from "next/navigation";
-import { requireRole } from "@/lib/auth";
-import ActiveJobTracking from "@/components/ActiveJobTracking";
+import { requireRole } from "@/server/lib/auth";
+import ActiveJobTracking from "@/client/components/ActiveJobTracking";
 
 export const dynamic = "force-dynamic";
 

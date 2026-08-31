@@ -3,8 +3,8 @@
 import { useEffect, useState, useCallback } from "react";
 import Link from "next/link";
 import { motion } from "framer-motion";
-import TrackingMap from "@/components/tracking/dynamicTrackingMap";
-import type { RouteComputedPayload } from "@/lib/route-types";
+import TrackingMap from "@/client/components/tracking/dynamicTrackingMap";
+import type { RouteComputedPayload } from "@/client/lib/route-types";
 
 interface TrackingPageClientProps {
   jobId: string;
@@ -70,7 +70,7 @@ export default function TrackingPageClient({
 
     async function connect() {
       try {
-        const { connectSocket } = await import("@/lib/socket-client");
+        const { connectSocket } = await import("@/client/lib/socket-client");
         if (!mounted) return;
         const socket = connectSocket();
 

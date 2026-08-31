@@ -1,14 +1,14 @@
 import { describe, expect, it, vi, beforeEach } from "vitest";
 import { NextRequest } from "next/server";
 
-vi.mock("@/lib/auth", () => ({ requireRole: vi.fn() }));
-vi.mock("@/lib/mongodb", () => ({ connectDB: vi.fn().mockResolvedValue(undefined) }));
-vi.mock("@/models", () => ({
+vi.mock("@/server/lib/auth", () => ({ requireRole: vi.fn() }));
+vi.mock("@/server/lib/mongodb", () => ({ connectDB: vi.fn().mockResolvedValue(undefined) }));
+vi.mock("@/server/models", () => ({
   Upload: { create: vi.fn() },
 }));
 
-import { requireRole } from "@/lib/auth";
-import { Upload } from "@/models";
+import { requireRole } from "@/server/lib/auth";
+import { Upload } from "@/server/models";
 import { POST } from "./route";
 
 const CUSTOMER_SESSION = {

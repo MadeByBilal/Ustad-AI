@@ -1,10 +1,10 @@
 import { NextRequest } from "next/server";
-import { connectDB } from "@/lib/mongodb";
-import { authError, fail } from "@/lib/api";
-import { requireRole } from "@/lib/auth";
-import { FlowError } from "@/lib/job/flow";
-import { createJobStream } from "@/lib/job/stream";
-import { Worker } from "@/models";
+import { connectDB } from "@/server/lib/mongodb";
+import { authError, fail } from "@/server/lib/api";
+import { requireRole } from "@/server/lib/auth";
+import { FlowError } from "@/server/lib/job/flow";
+import { createJobStream } from "@/server/lib/job/stream";
+import { Worker } from "@/server/models";
 
 export const dynamic = "force-dynamic";
 

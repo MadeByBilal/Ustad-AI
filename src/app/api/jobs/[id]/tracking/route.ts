@@ -1,8 +1,8 @@
-import { requireRole } from "@/lib/auth";
-import { connectDB } from "@/lib/mongodb";
-import { Job, Worker } from "@/models";
-import { haversineDistanceKm, estimateETAMinutes } from "@/lib/geo";
-import { authError, fail, ok } from "@/lib/api";
+import { requireRole } from "@/server/lib/auth";
+import { connectDB } from "@/server/lib/mongodb";
+import { Job, Worker } from "@/server/models";
+import { haversineDistanceKm, estimateETAMinutes } from "@/client/lib/geo";
+import { authError, fail, ok } from "@/server/lib/api";
 
 export async function GET(
   _request: Request,

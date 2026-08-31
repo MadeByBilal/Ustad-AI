@@ -1,15 +1,15 @@
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
-import { connectDB } from "@/lib/mongodb";
-import { fail, ok } from "@/lib/api";
-import { hashPassword, validatePasswordStrength } from "@/lib/auth/password";
+import { connectDB } from "@/server/lib/mongodb";
+import { fail, ok } from "@/server/lib/api";
+import { hashPassword, validatePasswordStrength } from "@/server/lib/auth/password";
 import {
   SESSION_COOKIE_NAME,
   SESSION_TTL_DAYS,
   createSessionToken,
-} from "@/lib/auth/session";
-import { fingerprint } from "@/lib/auth/fingerprint";
-import { Session, User, Worker, WORKER_CATEGORIES } from "@/models";
+} from "@/server/lib/auth/session";
+import { fingerprint } from "@/server/lib/auth/fingerprint";
+import { Session, User, Worker, WORKER_CATEGORIES } from "@/server/models";
 
 export const dynamic = "force-dynamic";
 

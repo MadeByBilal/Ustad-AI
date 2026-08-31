@@ -1,6 +1,6 @@
 import { z } from "zod";
-import { authError, fail, ok } from "@/lib/api";
-import { requireRole } from "@/lib/auth";
+import { authError, fail, ok } from "@/server/lib/api";
+import { requireRole } from "@/server/lib/auth";
 
 export const dynamic = "force-dynamic";
 

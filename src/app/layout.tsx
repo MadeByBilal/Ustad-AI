@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import "./globals.css";
-import { LanguageProvider } from "@/lib/i18n/context";
+import { LanguageProvider } from "@/client/lib/i18n/context";
 
 export const metadata: Metadata = {
   title: "Ustad AI — اپنے قریبی اُستاد تلاش کریں",

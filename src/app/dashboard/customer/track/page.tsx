@@ -1,7 +1,7 @@
 import { redirect } from "next/navigation";
-import { requireRole } from "@/lib/auth";
-import TrackingJobsList from "@/components/tracking/TrackingJobsList";
-import TranslatedHeading from "@/components/TranslatedHeading";
+import { requireRole } from "@/server/lib/auth";
+import TrackingJobsList from "@/client/components/tracking/TrackingJobsList";
+import TranslatedHeading from "@/client/components/TranslatedHeading";
 
 export const dynamic = "force-dynamic";
 

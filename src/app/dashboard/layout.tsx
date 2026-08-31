@@ -1,7 +1,7 @@
 import { redirect } from "next/navigation";
-import { getSessionUser } from "@/lib/auth";
-import BottomNav from "@/components/BottomNav";
-import DesktopNav from "@/components/DesktopNav";
+import { getSessionUser } from "@/server/lib/auth";
+import BottomNav from "@/client/components/BottomNav";
+import DesktopNav from "@/client/components/DesktopNav";
 
 export default async function DashboardLayout({
   children,

@@ -1,10 +1,10 @@
 import { NextRequest } from "next/server";
 import { z } from "zod";
-import { connectDB } from "@/lib/mongodb";
-import { authError, fail, ok } from "@/lib/api";
-import { requireRole } from "@/lib/auth";
-import { validateCustomerOffer } from "@/lib/job/offers";
-import { Job, Offer } from "@/models";
+import { connectDB } from "@/server/lib/mongodb";
+import { authError, fail, ok } from "@/server/lib/api";
+import { requireRole } from "@/server/lib/auth";
+import { validateCustomerOffer } from "@/server/lib/job/offers";
+import { Job, Offer } from "@/server/models";
 
 export const dynamic = "force-dynamic";
 

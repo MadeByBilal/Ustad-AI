@@ -3,10 +3,10 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "dev": "tsx --env-file=.env server.ts",
+    "dev": "tsx --env-file=.env src/server/index.ts",
     "dev:next": "next dev",
     "build": "next build",
-    "start": "NODE_ENV=production tsx server.ts",
+    "start": "NODE_ENV=production tsx src/server/index.ts",
     "lint": "next lint",
     "test": "vitest run",
     "seed": "tsx --env-file=.env src/scripts/seed.ts"

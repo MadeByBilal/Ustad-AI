@@ -1,9 +1,9 @@
 import { redirect } from "next/navigation";
-import { requireRole } from "@/lib/auth";
-import { connectDB } from "@/lib/mongodb";
-import { Worker, Job } from "@/models";
+import { requireRole } from "@/server/lib/auth";
+import { connectDB } from "@/server/lib/mongodb";
+import { Worker, Job } from "@/server/models";
 import WorkerWorkPageClient from "./WorkerWorkPageClient";
-import TranslatedHeading from "@/components/TranslatedHeading";
+import TranslatedHeading from "@/client/components/TranslatedHeading";
 
 export const dynamic = "force-dynamic";
 

@@ -1,7 +1,7 @@
 import { redirect, notFound } from "next/navigation";
-import { requireRole } from "@/lib/auth";
-import { connectDB } from "@/lib/mongodb";
-import { Job, Worker } from "@/models";
+import { requireRole } from "@/server/lib/auth";
+import { connectDB } from "@/server/lib/mongodb";
+import { Job, Worker } from "@/server/models";
 import TrackingPageClient from "./TrackingPageClient";
 
 export const dynamic = "force-dynamic";

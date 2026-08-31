@@ -1,8 +1,8 @@
 import { describe, expect, it, vi, beforeEach } from "vitest";
 import { NextRequest } from "next/server";
 
-vi.mock("@/lib/auth", () => ({ requireRole: vi.fn() }));
-vi.mock("@/lib/job/flow", () => {
+vi.mock("@/server/lib/auth", () => ({ requireRole: vi.fn() }));
+vi.mock("@/server/lib/job/flow", () => {
   class FlowError extends Error {
     constructor(
       public readonly code: string,
@@ -15,11 +15,11 @@ vi.mock("@/lib/job/flow", () => {
   }
   return { FlowError, reanalyzeJob: vi.fn() };
 });
-vi.mock("@/lib/job/detail", () => ({ getJobDetail: vi.fn() }));
+vi.mock("@/server/lib/job/detail", () => ({ getJobDetail: vi.fn() }));
 
-import { requireRole } from "@/lib/auth";
-import { FlowError, reanalyzeJob } from "@/lib/job/flow";
-import { getJobDetail } from "@/lib/job/detail";
+import { requireRole } from "@/server/lib/auth";
+import { FlowError, reanalyzeJob } from "@/server/lib/job/flow";
+import { getJobDetail } from "@/server/lib/job/detail";
 import { GET, PATCH } from "./route";
 
 const CUSTOMER_SESSION = {

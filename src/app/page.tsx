@@ -1,9 +1,9 @@
 "use client";
 
 import Link from "next/link";
-import VoiceCapture from "@/components/VoiceCapture";
-import LanguageToggle from "@/components/LanguageToggle";
-import { useLang } from "@/lib/i18n/context";
+import VoiceCapture from "@/client/components/VoiceCapture";
+import LanguageToggle from "@/client/components/LanguageToggle";
+import { useLang } from "@/client/lib/i18n/context";
 import { Droplets, Zap, Wrench, Hammer } from "lucide-react";
 
 export default function HomePage() {

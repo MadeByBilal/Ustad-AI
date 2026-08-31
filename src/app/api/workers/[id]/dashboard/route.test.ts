@@ -1,13 +1,13 @@
 import { describe, expect, it, vi, beforeEach } from "vitest";
 import { NextRequest } from "next/server";
 
-vi.mock("@/lib/auth", () => ({ requireRole: vi.fn() }));
-vi.mock("@/lib/worker/dashboard", () => ({ getWorkerDashboard: vi.fn() }));
-vi.mock("@/models", () => ({ Worker: { findOne: vi.fn() } }));
+vi.mock("@/server/lib/auth", () => ({ requireRole: vi.fn() }));
+vi.mock("@/server/lib/worker/dashboard", () => ({ getWorkerDashboard: vi.fn() }));
+vi.mock("@/server/models", () => ({ Worker: { findOne: vi.fn() } }));
 
-import { requireRole } from "@/lib/auth";
-import { getWorkerDashboard } from "@/lib/worker/dashboard";
-import { Worker } from "@/models";
+import { requireRole } from "@/server/lib/auth";
+import { getWorkerDashboard } from "@/server/lib/worker/dashboard";
+import { Worker } from "@/server/models";
 import { GET } from "./route";
 
 const WORKER_SESSION = {

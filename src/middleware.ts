@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { SESSION_COOKIE_NAME } from "@/lib/auth/session";
+import { SESSION_COOKIE_NAME } from "@/server/lib/auth/session";
 
 /**
  * Lightweight gate for protected areas: redirects to /login when the

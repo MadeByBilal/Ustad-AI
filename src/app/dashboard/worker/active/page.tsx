@@ -1,8 +1,8 @@
 import { redirect } from "next/navigation";
-import { requireRole } from "@/lib/auth";
-import { connectDB } from "@/lib/mongodb";
-import { Worker } from "@/models";
-import WorkerActiveTracking from "@/components/worker/WorkerActiveTracking";
+import { requireRole } from "@/server/lib/auth";
+import { connectDB } from "@/server/lib/mongodb";
+import { Worker } from "@/server/models";
+import WorkerActiveTracking from "@/client/components/worker/WorkerActiveTracking";
 
 export const dynamic = "force-dynamic";
 

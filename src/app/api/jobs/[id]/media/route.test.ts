@@ -1,9 +1,9 @@
 import { describe, expect, it, vi, beforeEach } from "vitest";
 import { NextRequest } from "next/server";
 
-vi.mock("@/lib/auth", () => ({ requireRole: vi.fn() }));
-vi.mock("@/lib/mongodb", () => ({ connectDB: vi.fn().mockResolvedValue(undefined) }));
-vi.mock("@/lib/job/flow", () => {
+vi.mock("@/server/lib/auth", () => ({ requireRole: vi.fn() }));
+vi.mock("@/server/lib/mongodb", () => ({ connectDB: vi.fn().mockResolvedValue(undefined) }));
+vi.mock("@/server/lib/job/flow", () => {
   class FlowError extends Error {
     constructor(
       public readonly code: string,
@@ -16,11 +16,11 @@ vi.mock("@/lib/job/flow", () => {
   }
   return { FlowError, workerAttachPhoto: vi.fn() };
 });
-vi.mock("@/models", () => ({ Worker: { findOne: vi.fn() } }));
+vi.mock("@/server/models", () => ({ Worker: { findOne: vi.fn() } }));
 
-import { requireRole } from "@/lib/auth";
-import { FlowError, workerAttachPhoto } from "@/lib/job/flow";
-import { Worker } from "@/models";
+import { requireRole } from "@/server/lib/auth";
+import { FlowError, workerAttachPhoto } from "@/server/lib/job/flow";
+import { Worker } from "@/server/models";
 import { POST } from "./route";
 
 const WORKER_SESSION = {

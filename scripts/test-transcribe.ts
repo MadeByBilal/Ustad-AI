@@ -1,6 +1,6 @@
 import fs from "fs";
 import path from "path";
-import { transcribeAudio } from "../src/lib/job/ai";
+import { transcribeAudio } from "../src/server/lib/job/ai";
 
 async function main() {
   const audioFilePath = process.argv[2];

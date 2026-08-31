@@ -3,11 +3,11 @@
 import { useRouter, useSearchParams } from "next/navigation";
 import { Suspense, useState } from "react";
 import Link from "next/link";
-import { CANONICAL_SKILLS } from "@/lib/job/analyze";
-import type { WorkerCategory } from "@/models";
+import { CANONICAL_SKILLS } from "@/server/lib/job/analyze";
+import type { WorkerCategory } from "@/server/models";
 import { motion } from "framer-motion";
-import { useLang } from "@/lib/i18n/context";
-import LanguageToggle from "@/components/LanguageToggle";
+import { useLang } from "@/client/lib/i18n/context";
+import LanguageToggle from "@/client/components/LanguageToggle";
 
 type Mode = "signin" | "signup";
 type Role = "customer" | "worker";

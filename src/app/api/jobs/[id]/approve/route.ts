@@ -1,11 +1,11 @@
 import { NextRequest } from "next/server";
 import { z } from "zod";
-import { connectDB } from "@/lib/mongodb";
-import { authError, fail, ok } from "@/lib/api";
-import { requireRole } from "@/lib/auth";
-import { Job, JobEvent, Message, Worker, SYSTEM_SENDER_ID } from "@/models";
-import { canTransition } from "@/lib/job/state-machine";
-import { WORKER_SCORE_COMPLETION_REWARD } from "@/lib/job/flow";
+import { connectDB } from "@/server/lib/mongodb";
+import { authError, fail, ok } from "@/server/lib/api";
+import { requireRole } from "@/server/lib/auth";
+import { Job, JobEvent, Message, Worker, SYSTEM_SENDER_ID } from "@/server/models";
+import { canTransition } from "@/server/lib/job/state-machine";
+import { WORKER_SCORE_COMPLETION_REWARD } from "@/server/lib/job/flow";
 
 const bodySchema = z.object({
   action: z.enum(["approve", "dispute"]),

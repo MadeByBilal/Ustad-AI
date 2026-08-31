@@ -1,6 +1,6 @@
-import { connectDB, disconnectDB } from "../lib/mongodb";
-import { User, Worker } from "../models";
-import { hashPassword } from "../lib/auth/password";
+import { connectDB, disconnectDB } from "../server/lib/mongodb";
+import { User, Worker } from "../server/models";
+import { hashPassword } from "../server/lib/auth/password";
 
 interface UstadSeedData {
   name: string;
@@ -343,7 +343,7 @@ async function seed() {
 
   // Also create a test customer user for convenience
   const customerEmail = "customer@ustad.ai";
-  let customer = await User.findOne({ email: customerEmail });
+  const customer = await User.findOne({ email: customerEmail });
   if (!customer) {
     await User.create({
       email: customerEmail,

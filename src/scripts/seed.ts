@@ -1,5 +1,5 @@
-import { hashPassword } from "../lib/auth/password";
-import { connectDB, disconnectDB } from "../lib/mongodb";
+import { hashPassword } from "../server/lib/auth/password";
+import { connectDB, disconnectDB } from "../server/lib/mongodb";
 import {
   Job,
   JobEvent,
@@ -11,7 +11,7 @@ import {
   User,
   Worker,
   type WorkerCategory,
-} from "../models";
+} from "../server/models";
 
 /** Default password for all demo technician accounts. */
 const DEMO_PASSWORD = "password123";

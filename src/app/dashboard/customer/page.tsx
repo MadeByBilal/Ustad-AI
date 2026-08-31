@@ -1,6 +1,6 @@
 import { redirect } from "next/navigation";
-import { requireRole } from "@/lib/auth";
-import CustomerHomeContent from "@/components/CustomerHomeContent";
+import { requireRole } from "@/server/lib/auth";
+import CustomerHomeContent from "@/client/components/CustomerHomeContent";
 
 export const dynamic = "force-dynamic";
 

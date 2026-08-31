@@ -2,8 +2,8 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import WorkerChat from "@/components/worker/WorkerChat";
-import JobPhotoUpload from "@/components/worker/JobPhotoUpload";
+import WorkerChat from "@/client/components/worker/WorkerChat";
+import JobPhotoUpload from "@/client/components/worker/JobPhotoUpload";
 import { motion } from "framer-motion";
 
 const NEXT_ACTIONS: Record<string, { label: string; to: string }> = {

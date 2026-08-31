@@ -1,14 +1,14 @@
 import { describe, expect, it, vi, beforeEach } from "vitest";
 import { NextRequest } from "next/server";
-import { hashPassword } from "@/lib/auth/password";
+import { hashPassword } from "@/server/lib/auth/password";
 
-vi.mock("@/lib/mongodb", () => ({ connectDB: vi.fn().mockResolvedValue(undefined) }));
-vi.mock("@/models", () => ({
+vi.mock("@/server/lib/mongodb", () => ({ connectDB: vi.fn().mockResolvedValue(undefined) }));
+vi.mock("@/server/models", () => ({
   User: { findOne: vi.fn() },
   Session: { create: vi.fn() },
 }));
 
-import { User, Session } from "@/models";
+import { User, Session } from "@/server/models";
 import { POST } from "./route";
 
 const STORED_HASH = hashPassword("correct-password-1");

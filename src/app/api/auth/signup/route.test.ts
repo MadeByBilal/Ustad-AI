@@ -1,8 +1,8 @@
 import { describe, expect, it, vi, beforeEach } from "vitest";
 import { NextRequest } from "next/server";
 
-vi.mock("@/lib/mongodb", () => ({ connectDB: vi.fn().mockResolvedValue(undefined) }));
-vi.mock("@/models", () => ({
+vi.mock("@/server/lib/mongodb", () => ({ connectDB: vi.fn().mockResolvedValue(undefined) }));
+vi.mock("@/server/models", () => ({
   User: { findOne: vi.fn(), create: vi.fn() },
   Worker: { create: vi.fn() },
   Session: { create: vi.fn() },
@@ -10,7 +10,7 @@ vi.mock("@/models", () => ({
   WORKER_CATEGORIES: ["plumber", "electrician", "ac_technician", "carpenter"],
 }));
 
-import { User, Worker, Session } from "@/models";
+import { User, Worker, Session } from "@/server/models";
 import { POST } from "./route";
 
 const CUSTOMER_BODY = {

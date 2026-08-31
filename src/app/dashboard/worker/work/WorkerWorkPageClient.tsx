@@ -2,8 +2,8 @@
 
 import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
-import JobPhotoUpload from "@/components/worker/JobPhotoUpload";
-import { useJobStream } from "@/lib/useJobStream";
+import JobPhotoUpload from "@/client/components/worker/JobPhotoUpload";
+import { useJobStream } from "@/client/hooks/useJobStream";
 import { motion } from "framer-motion";
 
 const NEXT_ACTIONS: Record<string, { label: string; to: string }> = {

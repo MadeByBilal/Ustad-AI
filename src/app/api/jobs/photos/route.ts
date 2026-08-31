@@ -1,9 +1,9 @@
 import { NextRequest } from "next/server";
-import { connectDB } from "@/lib/mongodb";
-import { authError, fail, ok } from "@/lib/api";
-import { requireRole } from "@/lib/auth";
-import { Upload } from "@/models";
-import { photoUploadSchema } from "@/lib/photos";
+import { connectDB } from "@/server/lib/mongodb";
+import { authError, fail, ok } from "@/server/lib/api";
+import { requireRole } from "@/server/lib/auth";
+import { Upload } from "@/server/models";
+import { photoUploadSchema } from "@/client/lib/photos";
 
 export const dynamic = "force-dynamic";
 

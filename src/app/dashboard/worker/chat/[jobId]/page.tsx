@@ -1,7 +1,7 @@
 import { redirect, notFound } from "next/navigation";
-import { requireRole } from "@/lib/auth";
-import { connectDB } from "@/lib/mongodb";
-import { Job } from "@/models";
+import { requireRole } from "@/server/lib/auth";
+import { connectDB } from "@/server/lib/mongodb";
+import { Job } from "@/server/models";
 import WorkerChatPageClient from "./WorkerChatPageClient";
 
 export const dynamic = "force-dynamic";

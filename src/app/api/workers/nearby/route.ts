@@ -1,9 +1,9 @@
 import { NextRequest } from "next/server";
 import { z } from "zod";
-import { connectDB } from "@/lib/mongodb";
-import { fail, ok } from "@/lib/api";
-import { haversineDistanceKm } from "@/lib/geo";
-import { Worker, WORKER_CATEGORIES } from "@/models";
+import { connectDB } from "@/server/lib/mongodb";
+import { fail, ok } from "@/server/lib/api";
+import { haversineDistanceKm } from "@/client/lib/geo";
+import { Worker, WORKER_CATEGORIES } from "@/server/models";
 
 export const dynamic = "force-dynamic";
 

@@ -1,12 +1,12 @@
 import { NextRequest } from "next/server";
-import { connectDB } from "@/lib/mongodb";
-import { fail, ok } from "@/lib/api";
+import { connectDB } from "@/server/lib/mongodb";
+import { fail, ok } from "@/server/lib/api";
 import {
   SESSION_COOKIE_NAME,
   isSessionExpired,
   isSessionTokenValid,
-} from "@/lib/auth/session";
-import { Session } from "@/models";
+} from "@/server/lib/auth/session";
+import { Session } from "@/server/models";
 
 export const dynamic = "force-dynamic";
 

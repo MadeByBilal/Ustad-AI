@@ -1,9 +1,9 @@
 import { NextRequest } from "next/server";
-import { authError, fail, ok } from "@/lib/api";
-import { requireRole } from "@/lib/auth";
-import { FlowError } from "@/lib/job/flow";
-import { getWorkerDashboard } from "@/lib/worker/dashboard";
-import { Worker } from "@/models";
+import { authError, fail, ok } from "@/server/lib/api";
+import { requireRole } from "@/server/lib/auth";
+import { FlowError } from "@/server/lib/job/flow";
+import { getWorkerDashboard } from "@/server/lib/worker/dashboard";
+import { Worker } from "@/server/models";
 
 export const dynamic = "force-dynamic";
 

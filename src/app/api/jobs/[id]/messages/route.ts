@@ -1,11 +1,11 @@
 import { NextRequest } from "next/server";
 import { z } from "zod";
-import { connectDB } from "@/lib/mongodb";
-import { authError, fail, ok } from "@/lib/api";
-import { requireRole } from "@/lib/auth";
-import { FlowError } from "@/lib/job/flow";
-import { listJobMessages, sendJobMessage } from "@/lib/job/chat";
-import { Worker } from "@/models";
+import { connectDB } from "@/server/lib/mongodb";
+import { authError, fail, ok } from "@/server/lib/api";
+import { requireRole } from "@/server/lib/auth";
+import { FlowError } from "@/server/lib/job/flow";
+import { listJobMessages, sendJobMessage } from "@/server/lib/job/chat";
+import { Worker } from "@/server/models";
 
 export const dynamic = "force-dynamic";
 

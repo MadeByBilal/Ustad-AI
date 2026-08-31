@@ -1,8 +1,8 @@
 import { NextRequest } from "next/server";
 import { z } from "zod";
-import { authError, fail, ok } from "@/lib/api";
-import { requireRole } from "@/lib/auth";
-import { createDirectRequest, RequestError } from "@/lib/job/requests";
+import { authError, fail, ok } from "@/server/lib/api";
+import { requireRole } from "@/server/lib/auth";
+import { createDirectRequest, RequestError } from "@/server/lib/job/requests";
 
 export const dynamic = "force-dynamic";
 

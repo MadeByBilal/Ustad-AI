@@ -1,7 +1,7 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import WorkerChat from "@/components/worker/WorkerChat";
+import WorkerChat from "@/client/components/worker/WorkerChat";
 import { motion } from "framer-motion";
 
 export default function CustomerChatPageClient({

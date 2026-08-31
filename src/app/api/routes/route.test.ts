@@ -1,9 +1,9 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { NextRequest } from "next/server";
 
-vi.mock("@/lib/auth", () => ({ requireRole: vi.fn() }));
+vi.mock("@/server/lib/auth", () => ({ requireRole: vi.fn() }));
 
-import { requireRole } from "@/lib/auth";
+import { requireRole } from "@/server/lib/auth";
 import { GET } from "./route";
 
 beforeEach(() => {

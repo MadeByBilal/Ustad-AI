@@ -1,6 +1,6 @@
 import { redirect } from "next/navigation";
-import { requireRole } from "@/lib/auth";
-import NewWorkWizard from "@/components/NewWorkWizard";
+import { requireRole } from "@/server/lib/auth";
+import NewWorkWizard from "@/client/components/NewWorkWizard";
 
 export const dynamic = "force-dynamic";
 

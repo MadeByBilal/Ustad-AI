@@ -1,8 +1,8 @@
 import { NextRequest } from "next/server";
-import { ok, fail } from "@/lib/api";
-import { understandJobInput } from "@/lib/job/ai";
-import { getWorkerOptions } from "@/lib/matching";
-import type { WorkerCategory, UrgencyLevel } from "@/models";
+import { ok, fail } from "@/server/lib/api";
+import { understandJobInput } from "@/server/lib/job/ai";
+import { getWorkerOptions } from "@/server/lib/matching";
+import type { WorkerCategory, UrgencyLevel } from "@/server/models";
 
 export const dynamic = "force-dynamic";
 
@@ -120,7 +120,7 @@ export async function POST(req: NextRequest) {
     let transcript: string | undefined;
     if (payload.audio) {
       try {
-        transcript = await import("@/lib/job/ai").then((m) =>
+        transcript = await import("@/server/lib/job/ai").then((m) =>
           m.transcribeAudio(payload.audio!.buffer, payload.audio!.mime)
         );
       } catch {

@@ -1,17 +1,17 @@
 import { describe, expect, it, vi, beforeEach } from "vitest";
 import { NextRequest } from "next/server";
 
-vi.mock("@/lib/auth", () => ({ requireRole: vi.fn() }));
-vi.mock("@/lib/mongodb", () => ({ connectDB: vi.fn().mockResolvedValue(undefined) }));
-vi.mock("@/lib/job/chat", () => ({
+vi.mock("@/server/lib/auth", () => ({ requireRole: vi.fn() }));
+vi.mock("@/server/lib/mongodb", () => ({ connectDB: vi.fn().mockResolvedValue(undefined) }));
+vi.mock("@/server/lib/job/chat", () => ({
   listJobMessages: vi.fn(),
   sendJobMessage: vi.fn(),
 }));
-vi.mock("@/models", () => ({ Worker: { findOne: vi.fn() } }));
+vi.mock("@/server/models", () => ({ Worker: { findOne: vi.fn() } }));
 
-import { requireRole } from "@/lib/auth";
-import { listJobMessages, sendJobMessage } from "@/lib/job/chat";
-import { Worker } from "@/models";
+import { requireRole } from "@/server/lib/auth";
+import { listJobMessages, sendJobMessage } from "@/server/lib/job/chat";
+import { Worker } from "@/server/models";
 import { GET, POST } from "./route";
 
 const WORKER_SESSION = {
