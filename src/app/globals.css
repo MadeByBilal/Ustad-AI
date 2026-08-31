@@ -157,14 +157,13 @@ option {
     display: flex;
     flex-direction: column;
     height: 100vh;
-    overflow: hidden;
     @apply bg-bg;
   }
   .page-header {
     @apply sticky top-0 z-40 border-b border-divider bg-[rgb(var(--surface))]/95 px-4 py-3 backdrop-blur-xl md:static md:border-b-0 md:bg-transparent md:px-6 md:py-4;
   }
   .page-scroll {
-    @apply flex flex-col flex-1 overflow-y-scroll;
+    @apply flex flex-col flex-1 overflow-y-auto;
     -webkit-overflow-scrolling: touch;
     min-height: 0;
   }

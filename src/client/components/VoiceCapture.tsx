@@ -1,5 +1,6 @@
 "use client";
 import { useCallback, useEffect, useRef, useState } from "react";
+import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { motion, AnimatePresence, useReducedMotion } from "framer-motion";
 import { parseApiResponse } from "@/client/lib/api-client";
@@ -7,7 +8,7 @@ import type { AiUnderstandResult } from "@/server/lib/job/ai";
 import type { WorkerOption } from "@/server/lib/matching";
 import type { WorkerCategory, UrgencyLevel } from "@/server/models";
 import TechnicianRequestModal from "./TechnicianRequestModal";
-import MatchResults, { type MatchResultsData } from "./MatchResults";
+import TextType from "./TextType";
 import { Star, AlertTriangle, Mic } from "lucide-react";
 
 export interface UnderstandResponse extends AiUnderstandResult {
@@ -165,7 +166,7 @@ function WorkerCard({
   );
 }
 
-function ResultPanel({ data, variant, location }: { data: UnderstandResponse; variant: "landing" | "dashboard"; location?: Coordinates | null }) {
+function ResultPanel({ data, location }: { data: UnderstandResponse; location?: Coordinates | null }) {
   const u = data.understanding;
   const ranked = data.workers.ranked ?? [
     ...(data.workers.best ? [data.workers.best] : []),
@@ -178,20 +179,11 @@ function ResultPanel({ data, variant, location }: { data: UnderstandResponse; va
     category: u.category ?? "",
     urgency: u.urgency,
   });
-  const ctaHref =
-    variant === "dashboard"
-      ? `/dashboard/customer/new-work?${nextParams.toString()}`
-      : `/login?next=${encodeURIComponent(`/new-work?${nextParams.toString()}`)}`;
+  const ctaHref = `/login?next=${encodeURIComponent(`/new-work?${nextParams.toString()}`)}`;
 
-  // Landing-only modal state. Dashboard handles its modal inside MatchResults.
+  // Landing-only modal state.
   const [selectedWorker, setSelectedWorker] = useState<WorkerOption | null>(null);
   const [submittedJobId, setSubmittedJobId] = useState<string | null>(null);
-
-  // Dashboard uses the rebuilt MatchResults screen (dark surface palette,
-  // Tabler icons, JetBrains Mono numbers, Fraunces headings, copper accent).
-  if (variant === "dashboard") {
-    return <MatchResults data={data as MatchResultsData} location={location} />;
-  }
 
   return (
     <div className="space-y-3">
@@ -278,18 +270,16 @@ function ResultPanel({ data, variant, location }: { data: UnderstandResponse; va
         </p>
       )}
 
-      {variant === "landing" && (
-        <Link
-          href={ctaHref}
-          className="btn-primary block w-full !rounded-xl !py-2.5 text-center text-sm"
-        >
-          Set price &amp; find workers
-        </Link>
-      )}
+      <Link
+        href={ctaHref}
+        className="btn-primary block w-full !rounded-xl !py-2.5 text-center text-sm"
+      >
+        Set price &amp; find workers
+      </Link>
 
-      {/* Technician request modal — landing path keeps the modal inline; dashboard handles it inside MatchResults */}
+      {/* Technician request modal */}
       <AnimatePresence mode="wait">
-        {variant === "landing" && selectedWorker && (
+        {selectedWorker && (
           <TechnicianRequestModal
             key={selectedWorker.id}
             worker={selectedWorker}
@@ -313,6 +303,7 @@ function ResultPanel({ data, variant, location }: { data: UnderstandResponse; va
 }
 
 export default function VoiceCapture({ variant = "landing" }: VoiceCaptureProps) {
+  const router = useRouter();
   const [status, setStatus] = useState<Status>("idle");
   const [recording, setRecording] = useState(false);
   const [starting, setStarting] = useState(false);
@@ -546,7 +537,22 @@ export default function VoiceCapture({ variant = "landing" }: VoiceCaptureProps)
 
         setResult(data);
         setClarificationSelections([]);
-        setStatus(data.clarification_question || data.manual_fallback ? "clarifying" : "done");
+        if (data.clarification_question || data.manual_fallback) {
+          setStatus("clarifying");
+        } else {
+          setStatus("done");
+          try {
+            sessionStorage.setItem(
+              "voiceResult",
+              JSON.stringify({ data, location: customerLocation })
+            );
+          } catch {
+            // sessionStorage full or unavailable
+          }
+          if (variant === "dashboard") {
+            router.push("/dashboard/customer/result");
+          }
+        }
         pendingBodyRef.current = null;
       } catch (err) {
         if (!isCurrentRequest()) return;
@@ -1044,16 +1050,22 @@ export default function VoiceCapture({ variant = "landing" }: VoiceCaptureProps)
 
       {/* Processing */}
       {status === "processing" && (
-        <p
-          className={`mt-5 flex items-center gap-2 rounded-full px-4 py-2 text-sm ${
-            variant === "dashboard"
-              ? "bg-surface text-muted"
-              : "bg-surface text-muted"
-          }`}
-        >
-          <span className="h-3.5 w-3.5 animate-spin rounded-full border-2 border-warning border-t-transparent" />
-          Transcribing &amp; analyzing…
-        </p>
+        <div className="mt-5 flex items-center gap-2 rounded-full bg-surface px-4 py-2 text-sm text-muted">
+          <TextType
+            text={[
+              "Ustad is understanding your problem…",
+              "Finding nearest workers…",
+              "Analyzing your requirements…",
+              "Almost ready…",
+            ]}
+            typingSpeed={40}
+            pauseDuration={1500}
+            deletingSpeed={25}
+            loop={true}
+            showCursor={true}
+            cursorCharacter="|"
+          />
+        </div>
       )}
 
       {/* Error */}
@@ -1073,21 +1085,17 @@ export default function VoiceCapture({ variant = "landing" }: VoiceCaptureProps)
         </div>
       )}
 
-      {/* Result */}
-      {status === "done" && result && (
+      {/* Result — only shown for landing variant; dashboard navigates to result page */}
+      {status === "done" && result && variant !== "dashboard" && (
         <div className="mt-6 w-full">
-          <ResultPanel data={result} variant={variant} location={customerLocation} />
+          <ResultPanel data={result} location={customerLocation} />
           <motion.button
             type="button"
             onClick={reset}
             whileTap={{ scale: 0.95 }}
             whileHover={{ y: -1 }}
             transition={{ duration: 0.15, ease: "easeOut" }}
-            className={`mt-3 w-full rounded-lg border py-2 text-sm font-semibold transition ${
-              variant === "dashboard"
-                ? "border-divider text-muted hover:bg-surface"
-                : "border-divider text-muted hover:bg-surface"
-            }`}
+            className="mt-3 w-full rounded-lg border border-divider py-2 text-sm font-semibold text-muted transition hover:bg-surface"
           >
             New request
           </motion.button>

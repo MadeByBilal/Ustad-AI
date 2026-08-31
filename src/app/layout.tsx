@@ -22,7 +22,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html suppressHydrationWarning>
+    <html suppressHydrationWarning className="font-sans">
       <head>
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link
