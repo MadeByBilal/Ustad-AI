@@ -52,6 +52,23 @@ const availabilitySchema = z.object({
 });
 
 /**
+ * GET /by-user/:userId — return the worker profile for a given user id.
+ */
+router.get("/by-user/:userId", async (req: Request, res: Response) => {
+  try {
+    await connectDB();
+    const worker = await Worker.findOne({ user_id: req.params.userId }).lean();
+    if (!worker) {
+      return fail(res, "Worker not found", 404);
+    }
+    return ok({ _id: String(worker._id), name: worker.name, category: worker.category })(res);
+  } catch (error) {
+    console.error("[workers/by-user] error:", error);
+    return fail(res, "Internal error", 500);
+  }
+});
+
+/**
  * GET /nearby — geospatial worker search using 2dsphere index with haversine re-sort.
  */
 router.get("/nearby", async (req: Request, res: Response) => {
