@@ -367,6 +367,26 @@ export default function WorkerActiveTracking({
             {statusInfo.label}
           </p>
         </div>
+        {job && (
+          <Link
+            href={`/dashboard/worker/chat/${job.job_id}`}
+            className="flex h-10 w-10 items-center justify-center rounded-full hover:bg-surface"
+          >
+            <svg
+              className="h-5 w-5 text-muted"
+              fill="none"
+              viewBox="0 0 24 24"
+              strokeWidth={1.5}
+              stroke="currentColor"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                d="M8.625 12a.375.375 0 11-.75 0 .375.375 0 01.75 0zm4.125 0a.375.375 0 11-.75 0 .375.375 0 01.75 0zm4.125 0a.375.375 0 11-.75 0 .375.375 0 01.75 0zM3.75 20.105V4.875A2.625 2.625 0 016.375 2.25h11.25A2.625 2.625 0 0120.25 4.875v10.5A2.625 2.625 0 0117.625 18H7.5l-3.75 2.105z"
+              />
+            </svg>
+          </Link>
+        )}
       </div>
 
       {/* Map */}
@@ -432,6 +452,14 @@ export default function WorkerActiveTracking({
             >
               {advancing ? "Updating..." : nextAction.label}
             </motion.button>
+          )}
+          {job && (
+            <Link
+              href={`/dashboard/worker/chat/${job.job_id}`}
+              className="btn-secondary flex-1 text-center"
+            >
+              Chat
+            </Link>
           )}
           <Link
             href="/dashboard/worker/work"

@@ -139,7 +139,7 @@ export default function DirectRequestCard({
               onClick={() =>
                 void act("accept", async () => {
                   await postJson("/api/requests/respond", { offer_id: req.offer_id, action: "accept" });
-                  router.push("/dashboard/worker/work");
+                  router.push("/dashboard/worker/active");
                 })
               }
               disabled={busy !== null}

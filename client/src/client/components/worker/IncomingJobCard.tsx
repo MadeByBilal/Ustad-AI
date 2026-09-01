@@ -212,7 +212,7 @@ export default function IncomingJobCard({
                   onClick={() =>
                     void act("accept", async () => {
                       await postJson(`/api/jobs/${job.id}/accept`);
-                      router.push("/dashboard/worker/work");
+                      router.push("/dashboard/worker/active");
                     })
                   }
                   disabled={busy !== null}
