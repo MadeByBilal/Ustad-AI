@@ -79,10 +79,10 @@ router.post("/signup", async (req, res) => {
 
     res.cookie(SESSION_COOKIE_NAME, token, {
       httpOnly: true,
-      sameSite: "lax",
-      secure: process.env.NODE_ENV === "production",
+      sameSite: "none",
+      secure: true,
       path: "/",
-      maxAge: SESSION_TTL_DAYS * 24 * 60 * 60,
+      maxAge: SESSION_TTL_DAYS * 24 * 60 * 60 * 1000,
     });
 
     return ok({
