@@ -9,7 +9,8 @@ import {
   createSessionToken,
 } from "../../lib/auth/session.js";
 import { fingerprint } from "../../lib/auth/fingerprint.js";
-import { Session, User } from "../../models/index.js";
+import { Session, User, Worker } from "../../models/index.js";
+import { WORKER_CATEGORIES } from "../../models/Worker.js";
 
 const router = Router();
 
@@ -19,6 +20,12 @@ const signupSchema = z.object({
   name: z.string().trim().min(1, "Name is required").max(100),
   role: z.enum(["customer", "worker"]).default("customer"),
   language: z.enum(["en", "ur"]).default("en"),
+  worker: z
+    .object({
+      category: z.enum(WORKER_CATEGORIES).default("plumber"),
+      skills: z.array(z.string()).default([]),
+    })
+    .optional(),
 });
 
 router.post("/signup", async (req, res) => {
@@ -49,6 +56,15 @@ router.post("/signup", async (req, res) => {
       role: parsed.data.role,
       language: parsed.data.language,
     });
+
+    if (parsed.data.role === "worker" && parsed.data.worker) {
+      await Worker.create({
+        user_id: user._id,
+        name: parsed.data.name,
+        category: parsed.data.worker.category,
+        skills: parsed.data.worker.skills,
+      });
+    }
 
     const token = createSessionToken();
     const userAgent = req.headers["user-agent"] ?? "";
