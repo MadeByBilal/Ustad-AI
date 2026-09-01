@@ -5,7 +5,8 @@
   "scripts": {
     "dev": "next dev -p 3001",
     "build": "next build",
-    "start": "next start",
+    "start": "next start -p 3001",
+    "prebuild": "bash prebuild.sh",
     "lint": "next lint",
     "test": "vitest run"
   },
