@@ -30,12 +30,11 @@ declare const workerSchema: mongoose.Schema<any, mongoose.Model<any, any, any, a
     repeat_customers: number;
     emergency_capabilities: string[];
     location?: {
-        type: "Point";
-        coordinates?: number[] | null | undefined;
+        coordinates: number[];
+        type?: "Point" | null | undefined;
     } | null | undefined;
     service_area?: {
-        type: "Polygon";
-        coordinates?: mongoose.Types.DocumentArray<{
+        coordinates: mongoose.Types.DocumentArray<{
             [x: number]: number[];
             [Symbol.iterator]: {} | null;
             concat: {} | null;
@@ -263,7 +262,8 @@ declare const workerSchema: mongoose.Schema<any, mongoose.Model<any, any, any, a
             flatMap: {} | null;
             flat: {} | null;
             1: unknown;
-        }> | null | undefined;
+        }>;
+        type?: "Polygon" | null | undefined;
     } | null | undefined;
     active_job_id?: mongoose.Types.ObjectId | null | undefined;
 }, mongoose.Document<unknown, {}, mongoose.FlatRecord<{
@@ -288,12 +288,11 @@ declare const workerSchema: mongoose.Schema<any, mongoose.Model<any, any, any, a
     repeat_customers: number;
     emergency_capabilities: string[];
     location?: {
-        type: "Point";
-        coordinates?: number[] | null | undefined;
+        coordinates: number[];
+        type?: "Point" | null | undefined;
     } | null | undefined;
     service_area?: {
-        type: "Polygon";
-        coordinates?: mongoose.Types.DocumentArray<{
+        coordinates: mongoose.Types.DocumentArray<{
             [x: number]: number[];
             [Symbol.iterator]: {} | null;
             concat: {} | null;
@@ -521,7 +520,8 @@ declare const workerSchema: mongoose.Schema<any, mongoose.Model<any, any, any, a
             flatMap: {} | null;
             flat: {} | null;
             1: unknown;
-        }> | null | undefined;
+        }>;
+        type?: "Polygon" | null | undefined;
     } | null | undefined;
     active_job_id?: mongoose.Types.ObjectId | null | undefined;
 }>, {}, mongoose.MergeType<mongoose.DefaultSchemaOptions, {
@@ -551,12 +551,11 @@ declare const workerSchema: mongoose.Schema<any, mongoose.Model<any, any, any, a
     repeat_customers: number;
     emergency_capabilities: string[];
     location?: {
-        type: "Point";
-        coordinates?: number[] | null | undefined;
+        coordinates: number[];
+        type?: "Point" | null | undefined;
     } | null | undefined;
     service_area?: {
-        type: "Polygon";
-        coordinates?: mongoose.Types.DocumentArray<{
+        coordinates: mongoose.Types.DocumentArray<{
             [x: number]: number[];
             [Symbol.iterator]: {} | null;
             concat: {} | null;
@@ -784,7 +783,8 @@ declare const workerSchema: mongoose.Schema<any, mongoose.Model<any, any, any, a
             flatMap: {} | null;
             flat: {} | null;
             1: unknown;
-        }> | null | undefined;
+        }>;
+        type?: "Polygon" | null | undefined;
     } | null | undefined;
     active_job_id?: mongoose.Types.ObjectId | null | undefined;
 }> & {
@@ -815,12 +815,11 @@ export declare const Worker: mongoose.Model<{
     repeat_customers: number;
     emergency_capabilities: string[];
     location?: {
-        type: "Point";
-        coordinates?: number[] | null | undefined;
+        coordinates: number[];
+        type?: "Point" | null | undefined;
     } | null | undefined;
     service_area?: {
-        type: "Polygon";
-        coordinates?: mongoose.Types.DocumentArray<{
+        coordinates: mongoose.Types.DocumentArray<{
             [x: number]: number[];
             [Symbol.iterator]: {} | null;
             concat: {} | null;
@@ -1048,7 +1047,8 @@ export declare const Worker: mongoose.Model<{
             flatMap: {} | null;
             flat: {} | null;
             1: unknown;
-        }> | null | undefined;
+        }>;
+        type?: "Polygon" | null | undefined;
     } | null | undefined;
     active_job_id?: mongoose.Types.ObjectId | null | undefined;
 }, {}, {}, {}, mongoose.Document<unknown, {}, {
@@ -1073,12 +1073,11 @@ export declare const Worker: mongoose.Model<{
     repeat_customers: number;
     emergency_capabilities: string[];
     location?: {
-        type: "Point";
-        coordinates?: number[] | null | undefined;
+        coordinates: number[];
+        type?: "Point" | null | undefined;
     } | null | undefined;
     service_area?: {
-        type: "Polygon";
-        coordinates?: mongoose.Types.DocumentArray<{
+        coordinates: mongoose.Types.DocumentArray<{
             [x: number]: number[];
             [Symbol.iterator]: {} | null;
             concat: {} | null;
@@ -1306,7 +1305,8 @@ export declare const Worker: mongoose.Model<{
             flatMap: {} | null;
             flat: {} | null;
             1: unknown;
-        }> | null | undefined;
+        }>;
+        type?: "Polygon" | null | undefined;
     } | null | undefined;
     active_job_id?: mongoose.Types.ObjectId | null | undefined;
 }, {}, {}> & {
@@ -1331,12 +1331,11 @@ export declare const Worker: mongoose.Model<{
     repeat_customers: number;
     emergency_capabilities: string[];
     location?: {
-        type: "Point";
-        coordinates?: number[] | null | undefined;
+        coordinates: number[];
+        type?: "Point" | null | undefined;
     } | null | undefined;
     service_area?: {
-        type: "Polygon";
-        coordinates?: mongoose.Types.DocumentArray<{
+        coordinates: mongoose.Types.DocumentArray<{
             [x: number]: number[];
             [Symbol.iterator]: {} | null;
             concat: {} | null;
@@ -1564,7 +1563,8 @@ export declare const Worker: mongoose.Model<{
             flatMap: {} | null;
             flat: {} | null;
             1: unknown;
-        }> | null | undefined;
+        }>;
+        type?: "Polygon" | null | undefined;
     } | null | undefined;
     active_job_id?: mongoose.Types.ObjectId | null | undefined;
 } & {

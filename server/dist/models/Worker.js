@@ -34,17 +34,13 @@ const workerSchema = new Schema({
         default: "identity_reviewed",
     },
     suspended: { type: Boolean, default: false },
-    // Optional at sign-up: a self-registered technician completes their
-    // geo profile later (voice matching does not depend on it).
     location: {
         type: {
             type: String,
             enum: ["Point"],
-            default: "Point",
         },
         coordinates: {
             type: [Number],
-            default: undefined,
         },
     },
     location_updated_at: { type: Date, default: Date.now },
@@ -52,11 +48,9 @@ const workerSchema = new Schema({
         type: {
             type: String,
             enum: ["Polygon"],
-            default: "Polygon",
         },
         coordinates: {
             type: [[[Number]]],
-            default: undefined,
         },
     },
     active_job_id: {
