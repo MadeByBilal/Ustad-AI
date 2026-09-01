@@ -12,12 +12,12 @@ export default function WorkerChatPage() {
   useEffect(() => {
     fetch("/api/auth/me")
       .then((r) => r.json())
-      .then((body: { success?: boolean; data?: { user?: { _id?: string } } }) => {
+      .then((body: { success?: boolean; data?: { user?: { id?: string } } }) => {
         if (!body?.success || !body.data?.user) {
           router.push("/login");
           return;
         }
-        return fetch(`/api/workers/by-user/${body.data.user._id}`);
+        return fetch(`/api/workers/by-user/${body.data.user.id}`);
       })
       .then((r) => r?.json())
       .then((body: { success?: boolean; data?: { _id?: string } } | undefined) => {

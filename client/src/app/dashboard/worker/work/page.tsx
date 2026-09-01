@@ -26,13 +26,13 @@ export default function WorkerWorkPage() {
     async function load() {
       try {
         const meRes = await fetch("/api/auth/me");
-        const meBody: { success?: boolean; data?: { user?: { _id?: string } } } = await meRes.json();
+        const meBody: { success?: boolean; data?: { user?: { id?: string } } } = await meRes.json();
         if (!meBody?.success || !meBody.data?.user) {
           router.push("/login");
           return;
         }
 
-        const workerRes = await fetch(`/api/workers/by-user/${meBody.data.user._id}`);
+        const workerRes = await fetch(`/api/workers/by-user/${meBody.data.user.id}`);
         const workerBody: { success?: boolean; data?: { _id?: string; active_job_id?: string } } = await workerRes.json();
         if (!workerBody?.success || !workerBody.data?._id) {
           router.push("/login");
