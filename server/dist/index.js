@@ -37,13 +37,7 @@ app.use("/api/requests", requestRoutes);
 app.use("/api/ai", aiRoutes);
 app.use("/api/photos", photoRoutes);
 app.use("/api/routes", routeRoutes);
-app.use("/api", healthRoutes);
-// Health check
-app.get("/api/health", async (_req, res) => {
-    const { connectDB: connect, isDbConnected } = await import("./lib/mongodb.js");
-    await connect();
-    res.json({ ok: true, db: isDbConnected() ? "connected" : "connecting" });
-});
+app.use("/", healthRoutes);
 server.listen(PORT, () => {
     console.log(`[server] listening on http://localhost:${PORT}`);
     console.log(`[server] CORS origin: ${CLIENT_URL}`);
