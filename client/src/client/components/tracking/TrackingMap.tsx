@@ -151,20 +151,22 @@ export default function TrackingMap({
 
     leaflet
       .tileLayer(
-        "https://tile.openstreetmap.org/{z}/{x}/{y}.png",
+        "https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png",
         {
           attribution:
-            '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
+            '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>',
           maxZoom: 19,
           minZoom: 2,
+          subdomains: "abcd",
         },
       )
       .addTo(map);
 
     leaflet.control.zoom({ position: "bottomright" }).addTo(map);
 
-    // Invalidate size after a short delay to ensure container is fully rendered
-    setTimeout(() => map.invalidateSize(), 100);
+    // Invalidate size after a delay to ensure container is fully rendered
+    setTimeout(() => map.invalidateSize(), 300);
+    setTimeout(() => map.invalidateSize(), 1000);
 
     mapInstanceRef.current = map;
 

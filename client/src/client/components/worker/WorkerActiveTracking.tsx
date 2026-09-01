@@ -248,8 +248,8 @@ export default function WorkerActiveTracking({
     const next = NEXT_ACTIONS[job.status];
     if (!next) return;
 
-    // When starting work, go to work page where photos + complete live
-    if (job.status === "ARRIVED") {
+    // When starting work or completing, go to work page where photos + complete live
+    if (job.status === "ARRIVED" || job.status === "IN_PROGRESS") {
       window.location.href = `/dashboard/worker/work`;
       return;
     }
@@ -340,7 +340,7 @@ export default function WorkerActiveTracking({
   const nextAction = NEXT_ACTIONS[job.status];
 
   return (
-    <div className="relative flex h-full flex-col overflow-hidden bg-bg">
+    <div className="relative flex min-h-0 flex-1 flex-col overflow-hidden bg-bg">
       {/* Header */}
       <div className="absolute left-0 right-0 top-0 z-30 flex items-center gap-3 bg-surface/95 px-4 py-3 backdrop-blur-lg">
         <Link
@@ -402,7 +402,7 @@ export default function WorkerActiveTracking({
       </div>
 
       {/* Bottom Panel */}
-      <div className="flex-1 bg-surface px-5 pt-4 pb-6">
+      <div className="flex-1 overflow-y-auto bg-surface px-5 pt-4 pb-6">
         <div className="flex items-center justify-between">
           <div>
             <p className={`text-lg font-bold ${statusInfo.color}`}>

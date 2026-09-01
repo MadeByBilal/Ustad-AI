@@ -373,7 +373,7 @@ export default function ActiveJobTracking() {
   }
 
   return (
-    <div className="relative flex h-full flex-col overflow-hidden bg-bg">
+    <div className="relative flex min-h-0 flex-1 flex-col overflow-hidden bg-bg">
       {/* Header */}
       <div className="absolute left-0 right-0 top-0 z-30 flex items-center gap-3 bg-surface/95 px-4 py-3 backdrop-blur-lg">
         <Link
