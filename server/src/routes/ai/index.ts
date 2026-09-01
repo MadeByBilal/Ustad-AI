@@ -1,10 +1,16 @@
 import { Router, type Request, type Response } from "express";
+import multer from "multer";
 import { ok, fail } from "../../lib/api.js";
 import { understandJobInput } from "../../lib/job/ai.js";
 import { getWorkerOptions } from "../../lib/matching.js";
 import type { WorkerCategory, UrgencyLevel } from "../../models/index.js";
 
 const router = Router();
+
+const upload = multer({
+  storage: multer.memoryStorage(),
+  limits: { fileSize: 12 * 1024 * 1024 },
+});
 
 const MAX_AUDIO_BYTES = 12 * 1024 * 1024; // 12MB
 const MAX_IMAGE_BYTES = 5 * 1024 * 1024; // 5MB
@@ -46,7 +52,7 @@ function parseLocation(lat: unknown, lng: unknown): { lat: number; lng: number }
  *   - photo  -> form-data with an `image` file
  *   - text   -> JSON `{ text, clarification? }` (or form-data `text`)
  */
-router.post("/understand", async (req: Request, res: Response) => {
+router.post("/understand", upload.single("audio"), async (req: Request, res: Response) => {
   let payload: {
     text?: string;
     clarification?: string;
