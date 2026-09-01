@@ -85,7 +85,7 @@ export default function MatchResults({ data, location, onRequestSent }: MatchRes
       <header className="flex flex-col items-center gap-2 text-center">
         <SplitText
           text="Ustad Suggestions"
-          className="font-display text-3xl font-semibold text-text"
+          className="font-display text-2xl font-semibold text-text sm:text-3xl"
           splitType="chars"
           delay={40}
           duration={1.0}
@@ -171,7 +171,7 @@ export default function MatchResults({ data, location, onRequestSent }: MatchRes
             animate={{ y: 0, opacity: 1 }}
             exit={{ y: 80, opacity: 0 }}
             transition={{ type: "spring", stiffness: 400, damping: 30 }}
-            className="fixed inset-x-0 bottom-0 z-50 flex justify-center p-4 pb-[max(1.5rem,env(safe-area-inset-bottom))]"
+            className="fixed inset-x-0 bottom-16 z-50 flex justify-center p-4 pb-[max(1rem,env(safe-area-inset-bottom))]"
           >
             <button
               type="button"
@@ -233,7 +233,7 @@ function WorkerMatchCard({
       data-best-match={isBest ? "true" : "false"}
       onClick={onSelect}
       className={cn(
-        "cursor-pointer rounded-xl border bg-surface p-5 transition-all",
+        "cursor-pointer rounded-xl border bg-surface p-4 transition-all sm:p-5",
         selected
           ? "border-accent ring-2 ring-accent/20"
           : isBest

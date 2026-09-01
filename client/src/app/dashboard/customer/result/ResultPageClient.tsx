@@ -29,7 +29,7 @@ export default function ResultPageClient() {
 
   if (!stored) {
     return (
-      <div className="relative overflow-hidden">
+      <div className="relative">
         <div className="pointer-events-none absolute -right-20 -top-20 h-64 w-64 rounded-full bg-accent/8 blur-3xl" />
         <div className="pointer-events-none absolute -bottom-24 -left-12 h-56 w-56 rounded-full bg-warning/6 blur-3xl" />
         <div className="page-header">
@@ -64,7 +64,7 @@ export default function ResultPageClient() {
   }
 
   return (
-    <div className="relative overflow-hidden">
+    <div className="relative">
       <div className="pointer-events-none absolute -right-20 -top-20 h-64 w-64 rounded-full bg-accent/8 blur-3xl" />
       <div className="pointer-events-none absolute -bottom-24 -left-12 h-56 w-56 rounded-full bg-warning/6 blur-3xl" />
       <div className="page-header">
@@ -81,7 +81,7 @@ export default function ResultPageClient() {
           data={stored.data}
           location={stored.location}
         />
-        <div className="mt-4 flex gap-3">
+        <div className="mt-4 flex gap-3 pb-4">
           <Link
             href="/dashboard/customer"
             className="btn-secondary flex-1 text-center"
