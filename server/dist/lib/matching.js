@@ -1,0 +1,352 @@
+import { connectDB } from "./mongodb.js";
+import { buildBoundingBox, haversineDistanceKm } from "./geo.js";
+import { Worker } from "../models/index.js";
+import { calculatePredictedPrice } from "./job/pricing.js";
+export const RANKING_WEIGHTS = {
+    skill_match: 0.3,
+    distance: 0.25,
+    reliability: 0.2,
+    ustad: 0.15,
+    response: 0.1,
+};
+/** Bonus for workers who opted into emergency service on emergency jobs. */
+export const EMERGENCY_CAPABILITY_BONUS = 10;
+/** Bonus applied to verified workers in the voice-match options path. */
+export const VERIFIED_BONUS = 5;
+/**
+ * Weights used by getWorkerOptions when no geo context is available
+ * (radius_km = 0). The 25% distance weight is redistributed to skill
+ * match and reliability so it doesn't zero-out every candidate.
+ */
+export const NO_GEO_WEIGHTS = {
+    skill_match: 0.35,
+    distance: 0,
+    reliability: 0.25,
+    ustad: 0.2,
+    response: 0.1,
+    rating: 0.1,
+};
+export const LOCATION_FRESHNESS_NORMAL_MS = 5 * 60_000;
+export const LOCATION_FRESHNESS_EMERGENCY_MS = 2 * 60_000;
+function clamp(value, min, max) {
+    return Math.min(max, Math.max(min, value));
+}
+/**
+ * Common synonyms (especially Roman-Urdu) mapped to the canonical skill
+ * tokens used by the keyword engine. Word-level substitution so
+ * "tap repair" becomes "faucet repair" and "faucet installation" also
+ * maps to the "faucet" token.
+ */
+const SKILL_SYNONYMS = {
+    tap: "faucet",
+    nalka: "faucet",
+    naali: "drain",
+    pani: "pipe",
+    paani: "pipe",
+    lakri: "wood",
+    lakdi: "wood",
+    darwaza: "door",
+    almari: "cabinet",
+    bijli: "electricity",
+    cooling: "ac",
+    refrigerant: "gas",
+    "gas refill": "gas refilling",
+};
+/** Canonicalize a skill string so synonym and token overlap can be compared. */
+export function canonicalizeSkill(skill) {
+    return skill
+        .toLowerCase()
+        .trim()
+        .split(/\s+/)
+        .map((w) => SKILL_SYNONYMS[w] ?? w)
+        .join(" ");
+}
+function skillMatchScore(workerSkills, requiredSkills) {
+    if (requiredSkills.length === 0) {
+        return 100;
+    }
+    const required = requiredSkills.map(canonicalizeSkill);
+    const owned = new Set(workerSkills.map(canonicalizeSkill));
+    const matched = required.filter((s) => owned.has(s));
+    return Math.round((matched.length / required.length) * 100);
+}
+export function scoreWorker(worker, ctx, id, name, category) {
+    const matched = worker.skills.filter((s) => ctx.required_skills.some((r) => canonicalizeSkill(r) === canonicalizeSkill(s)));
+    const skill_match_score = skillMatchScore(worker.skills, ctx.required_skills);
+    const distance_score = ctx.radius_km > 0
+        ? Number(clamp(100 * (1 - ctx.distance_km / ctx.radius_km), 0, 100).toFixed(2))
+        : 0;
+    const reliability_score = clamp(0.8 * worker.response_rate + 0.2 * (100 - worker.cancellation_rate), 0, 100);
+    const ustad_score = clamp(worker.ustad_score, 0, 100);
+    const response_score = worker.completed_jobs > 0
+        ? clamp((worker.confirmed_jobs / worker.completed_jobs) * 100, 0, 100)
+        : 0;
+    const rating_score = clamp(worker.average_rating * 20, 0, 100); // 5.0 → 100
+    const emergencyBonus = ctx.urgency === "emergency" &&
+        worker.emergency_available &&
+        worker.emergency_capabilities.length > 0
+        ? EMERGENCY_CAPABILITY_BONUS
+        : 0;
+    const final_score = RANKING_WEIGHTS.skill_match * skill_match_score +
+        RANKING_WEIGHTS.distance * distance_score +
+        RANKING_WEIGHTS.reliability * reliability_score +
+        RANKING_WEIGHTS.ustad * ustad_score +
+        RANKING_WEIGHTS.response * response_score +
+        emergencyBonus;
+    return {
+        ...worker,
+        _id: id ?? null,
+        name: name ?? "",
+        category: category ?? null,
+        distance_km: ctx.distance_km,
+        matched_skills: matched,
+        skill_match_score,
+        distance_score,
+        reliability_score,
+        response_score,
+        rating_score,
+        final_score: Number(final_score.toFixed(2)),
+    };
+}
+export function rankWorkers(workers) {
+    return [...workers].sort((a, b) => b.final_score - a.final_score ||
+        a.distance_km - b.distance_km ||
+        b.ustad_score - a.ustad_score);
+}
+function workerToScoreInput(w) {
+    return {
+        skills: w.skills,
+        ustad_score: w.ustad_score,
+        completed_jobs: w.completed_jobs,
+        confirmed_jobs: w.confirmed_jobs,
+        response_rate: w.response_rate,
+        cancellation_rate: w.cancellation_rate,
+        average_rating: w.average_rating,
+        emergency_available: w.emergency_available,
+        emergency_capabilities: w.emergency_capabilities,
+    };
+}
+/**
+ * Deterministic eligible-worker search:
+ *   - category + at least one required skill (enforced post-query by score)
+ *   - verified, online, available, not suspended, no active job
+ *   - fresh location (5 min normal / 2 min emergency)
+ *   - within search_radius_km (geo box pre-filter, exact haversine post-filter)
+ *   - service area covers the customer location
+ *   - emergency jobs additionally require emergency_available
+ *
+ * A bounding-box $geoWithin pre-filter (instead of $near) is used so the
+ * query stays unambiguous with the collection's two 2dsphere indexes
+ * (location + service_area) — see README "Geo search" note. Exact distance
+ * is enforced with haversine before ranking.
+ */
+export async function searchEligibleWorkers(filters) {
+    const { category, lat, lng, radius_km, urgency, required_skills } = filters;
+    await connectDB();
+    const freshnessMs = urgency === "emergency"
+        ? LOCATION_FRESHNESS_EMERGENCY_MS
+        : LOCATION_FRESHNESS_NORMAL_MS;
+    const [minLng, minLat, maxLng, maxLat] = buildBoundingBox(lng, lat, radius_km);
+    const ring = [
+        [minLng, minLat],
+        [maxLng, minLat],
+        [maxLng, maxLat],
+        [minLng, maxLat],
+        [minLng, minLat],
+    ];
+    const query = {
+        category,
+        verified: true,
+        is_online: true,
+        is_available: true,
+        suspended: false,
+        active_job_id: null,
+        location_updated_at: { $gte: new Date(Date.now() - freshnessMs) },
+        location: {
+            $geoWithin: {
+                $geometry: { type: "Polygon", coordinates: [ring] },
+            },
+        },
+        service_area: {
+            $geoIntersects: {
+                $geometry: { type: "Point", coordinates: [lng, lat] },
+            },
+        },
+    };
+    if (urgency === "emergency") {
+        query.emergency_available = true;
+    }
+    const candidates = await Worker.find(query).lean();
+    const nearby = candidates
+        .filter((w) => Boolean(w.location?.coordinates))
+        .filter((w) => w.location?.coordinates)
+        .map((w) => {
+        const coords = w.location.coordinates;
+        return {
+            ...w,
+            distance_km: haversineDistanceKm(lat, lng, coords[1], coords[0]),
+        };
+    })
+        .filter((w) => w.distance_km <= radius_km)
+        .filter((w) => required_skills.length === 0
+        ? true
+        : w.skills.some((s) => required_skills.some((r) => r.toLowerCase() === s.toLowerCase())));
+    const ctx = { required_skills, radius_km, urgency };
+    const ranked = nearby
+        .map((w) => scoreWorker(workerToScoreInput(w), { ...ctx, distance_km: w.distance_km }, w._id, w.name, w.category))
+        .sort((a, b) => b.final_score - a.final_score ||
+        a.distance_km - b.distance_km ||
+        b.ustad_score - a.ustad_score);
+    const limit = filters.limit ?? 15;
+    return ranked.slice(0, limit);
+}
+export const FRESH_LOCATION_DAYS = 7;
+/**
+ * How complete a worker's public profile is, as a percent. Used by the
+ * results UI to nudge workers to finish onboarding.
+ */
+export function workerCompletenessPct(signals, now = new Date()) {
+    let pct = 0;
+    if (signals.name && signals.name.trim().length >= 3)
+        pct += 25;
+    if (signals.skills && signals.skills.length >= 3)
+        pct += 25;
+    const locationUpdated = signals.location_updated_at
+        ? new Date(signals.location_updated_at)
+        : null;
+    if (locationUpdated &&
+        now.getTime() - locationUpdated.getTime() <= FRESH_LOCATION_DAYS * 24 * 3600 * 1000) {
+        pct += 25;
+    }
+    if (signals.verification_level === "documents_verified")
+        pct += 25;
+    return Math.min(pct, 100);
+}
+export async function getWorkerResults(filters) {
+    const ranked = await searchEligibleWorkers(filters);
+    const byId = await Worker.find({ _id: { $in: ranked.map((r) => r._id) } })
+        .select("_id name verification_level location_updated_at skills verified")
+        .lean();
+    const meta = new Map(byId.map((w) => [String(w._id), w]));
+    return ranked.map((r) => {
+        const m = meta.get(String(r._id));
+        return {
+            id: String(r._id),
+            name: r.name || "Ustad",
+            category: r.category ?? "plumber",
+            skills: r.skills,
+            matched_skills: r.matched_skills,
+            verification_level: m?.verification_level ?? "identity_reviewed",
+            verified: Boolean(m?.verified),
+            completeness_pct: workerCompletenessPct({
+                name: m?.name ?? r.name,
+                skills: m?.skills,
+                location_updated_at: m?.location_updated_at,
+                verification_level: m?.verification_level,
+            }),
+            ustad_score: r.ustad_score,
+            completed_jobs: r.completed_jobs,
+            average_rating: r.average_rating,
+            distance_km: Number(r.distance_km.toFixed(2)),
+            skills_match: r.skill_match_score,
+            final_score: r.final_score,
+        };
+    });
+}
+/**
+ * Splits a ranked worker list into the single best match plus the
+ * alternative options shown below it. The best is the first item; others
+ * are capped at `limit - 1`.
+ */
+export function pickBestAndOthers(ranked, limit) {
+    if (ranked.length === 0) {
+        return { best: null, others: [] };
+    }
+    const ordered = [...ranked].sort((a, b) => b.final_score - a.final_score || b.ustad_score - a.ustad_score);
+    const [best, ...rest] = ordered;
+    return { best, others: rest.slice(0, Math.max(0, limit - 1)) };
+}
+/**
+ * Whole-catalogue match for the landing and dashboard experiences:
+ * finds currently-available workers in the category (or any category
+ * when the analysis is unsure) and ranks them by fit.  No geo box or
+ * location freshness is applied — this is a "best guess" showcase, not
+ * the customer's exact broadcast.
+ *
+ * Unverified workers are included so self-registered technicians are
+ * discoverable immediately.  Verified workers receive a bonus.
+ */
+export async function getWorkerOptions(filters) {
+    await connectDB();
+    const query = {
+        is_available: true,
+        suspended: false,
+        active_job_id: null,
+    };
+    if (filters.category) {
+        query.category = filters.category;
+    }
+    const candidates = await Worker.find(query)
+        .select("_id name category skills ustad_score completed_jobs confirmed_jobs response_rate cancellation_rate average_rating emergency_available emergency_capabilities verification_level verified location")
+        .lean();
+    const ctx = {
+        required_skills: filters.required_skills,
+        radius_km: 0,
+        urgency: filters.urgency,
+    };
+    const weights = NO_GEO_WEIGHTS;
+    const ranked = candidates
+        .map((w) => {
+        const s = scoreWorker(workerToScoreInput(w), { ...ctx, distance_km: 0 }, w._id, w.name, w.category);
+        // Recompute final_score with no-geo weights + verified bonus
+        const verified = w.verified === true;
+        const noGeoScore = weights.skill_match * s.skill_match_score +
+            weights.distance * s.distance_score +
+            weights.reliability * s.reliability_score +
+            weights.ustad * s.ustad_score +
+            weights.response * s.response_score +
+            weights.rating * s.rating_score +
+            (verified ? VERIFIED_BONUS : 0);
+        return {
+            doc: w,
+            score: { ...s, final_score: Number(noGeoScore.toFixed(2)) },
+            verified,
+        };
+    })
+        .sort((a, b) => b.score.final_score - a.score.final_score ||
+        b.score.ustad_score - a.score.ustad_score);
+    const options = ranked.map(({ doc, score }) => {
+        const coordinates = doc.location?.coordinates;
+        const distanceKm = filters.location && coordinates && coordinates.length === 2
+            ? Number(haversineDistanceKm(filters.location.lat, filters.location.lng, coordinates[1], coordinates[0]).toFixed(2))
+            : null;
+        const predicted = calculatePredictedPrice({
+            estimateMin: filters.estimate_min ?? 0,
+            estimateMax: filters.estimate_max ?? 0,
+            complexity: filters.complexity,
+            distanceKm,
+        });
+        return {
+            id: String(doc._id),
+            name: doc.name || "Ustad",
+            category: (doc.category ?? "plumber"),
+            skills: doc.skills,
+            verified: doc.verified === true,
+            verification_level: doc.verification_level ?? "identity_reviewed",
+            ustad_score: score.ustad_score,
+            completed_jobs: doc.completed_jobs,
+            average_rating: doc.average_rating,
+            response_rate: doc.response_rate,
+            skills_match: score.skill_match_score,
+            final_score: score.final_score,
+            distance_km: distanceKm,
+            ...(predicted.predicted_price_pkr > 0
+                ? { predicted_price: predicted.predicted_price_pkr }
+                : {}),
+            travel_cost_pkr: predicted.travel_cost_pkr,
+        };
+    });
+    const limit = filters.limit ?? 10;
+    return { ...pickBestAndOthers(options, limit), ranked: options };
+}
+//# sourceMappingURL=matching.js.map

@@ -10,16 +10,16 @@
     "forceConsistentCasingInFileNames": true,
     "resolveJsonModule": true,
     "isolatedModules": true,
-    "noEmit": true,
     "outDir": "dist",
+    "rootDir": "src",
     "declaration": true,
     "declarationMap": true,
     "sourceMap": true,
     "paths": {
-      "@contracts/*": ["../contracts/*"]
+      "@contracts/*": ["./contracts/*"]
     },
     "baseUrl": "."
   },
-  "include": ["src/**/*", "../contracts/**/*"],
+  "include": ["src/**/*"],
   "exclude": ["node_modules", "dist"]
 }
