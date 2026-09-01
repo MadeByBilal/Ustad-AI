@@ -125,6 +125,7 @@ export default function WorkerWorkPageClient({
         throw new Error(body?.error ?? "Cancel failed");
       }
       setJobStatus("CANCELLED");
+      window.location.href = "/dashboard/worker";
     } catch (e) {
       setAdvanceError(e instanceof Error ? e.message : "Cancel failed");
     } finally {

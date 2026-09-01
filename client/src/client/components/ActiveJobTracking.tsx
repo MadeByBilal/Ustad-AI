@@ -334,7 +334,8 @@ export default function ActiveJobTracking() {
         workerName={job.worker_name}
         onDone={() => {
           setShowReview(false);
-          setJob(null);
+      setJob(null);
+      window.location.href = "/dashboard/customer";
         }}
       />
     );

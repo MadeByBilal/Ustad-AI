@@ -187,6 +187,7 @@ export default function TrackingPageClient({
         throw new Error(body?.error ?? "Cancel failed");
       }
       setJobStatus("CANCELLED");
+      window.location.href = "/dashboard/customer";
     } catch {
       // ignore
     } finally {

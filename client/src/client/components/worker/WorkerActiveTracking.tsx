@@ -66,7 +66,8 @@ export default function WorkerActiveTracking({
       const activeJob = body.data?.active_job;
       if (!activeJob) {
         activeJobIdRef.current = null;
-        setJob(null);
+      setJob(null);
+      window.location.href = "/dashboard/worker";
         setPrecomputedRoute(null);
         return;
       }
