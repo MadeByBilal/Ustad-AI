@@ -1,0 +1,12 @@
+{
+  "name": "ustad-ai",
+  "private": true,
+  "scripts": {
+    "server:dev": "cd server && npm run dev",
+    "client:dev": "cd client && npm run dev",
+    "server:build": "cd server && npm run prebuild && npm run build",
+    "client:build": "cd client && npm run prebuild && npm run build",
+    "server:start": "cd server && npm start",
+    "client:start": "cd client && npm start"
+  }
+}
