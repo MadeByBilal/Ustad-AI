@@ -21,7 +21,6 @@ export default function ResultPageClient() {
       if (raw) {
         const parsed = JSON.parse(raw) as StoredResult;
         setStored(parsed);
-        sessionStorage.removeItem("voiceResult");
       }
     } catch {
       // corrupted data, ignore
@@ -82,12 +81,14 @@ export default function ResultPageClient() {
           data={stored.data}
           location={stored.location}
         />
-        <Link
-          href="/dashboard/customer"
-          className="btn-secondary mt-4 block w-full text-center"
-        >
-          New request
-        </Link>
+        <div className="mt-4 flex gap-3">
+          <Link
+            href="/dashboard/customer"
+            className="btn-secondary flex-1 text-center"
+          >
+            New request
+          </Link>
+        </div>
       </div>
     </div>
   );
