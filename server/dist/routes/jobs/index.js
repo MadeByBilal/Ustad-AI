@@ -5,6 +5,7 @@ import { fail, ok } from "../../lib/api.js";
 import { requireRole } from "../../lib/auth-middleware.js";
 import { FlowError, createAndAnalyzeJob } from "../../lib/job/flow.js";
 import { Job, Worker, URGENCY_LEVELS, WORKER_CATEGORIES } from "../../models/index.js";
+import { jobIdRoutes } from "./[id].js";
 const router = Router();
 const querySchema = z.object({
     scope: z.enum(["customer", "worker"]).optional(),
@@ -98,5 +99,6 @@ router.post("/", requireRole(["customer"]), async (req, res) => {
         return fail(res, "Internal error", 500);
     }
 });
+router.use("/", jobIdRoutes);
 export { router as jobRoutes };
 //# sourceMappingURL=index.js.map

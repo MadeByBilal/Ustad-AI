@@ -21,8 +21,17 @@ import { getJobDetail } from "../../lib/job/detail.js";
 import { listJobMessages, sendJobMessage } from "../../lib/job/chat.js";
 import { Job, JobEvent, Message, Review, Worker, SYSTEM_SENDER_ID } from "../../models/index.js";
 import { canTransition } from "../../lib/job/state-machine.js";
+import { getTrackingTarget } from "../../lib/tracking/realtime.js";
 
 const router = Router();
+
+const TRACKING_STATUSES = new Set([
+  "ACCEPTED",
+  "EN_ROUTE",
+  "ARRIVED",
+  "IN_PROGRESS",
+  "AWAITING_CUSTOMER_CONFIRMATION",
+]);
 
 const patchSchema = z
   .object({
@@ -134,7 +143,17 @@ router.get("/:id", requireRole(["customer", "worker"]), async (req: Request, res
   }
 
   try {
-    const detail = await getJobDetail(jobId, String(sessionUser.user._id));
+    let accessId = String(sessionUser.user._id);
+    if (sessionUser.user.role === "worker") {
+      const worker = await Worker.findOne({ user_id: sessionUser.user._id })
+        .select("_id")
+        .lean();
+      if (!worker) {
+        return fail(res, "Worker profile not found for this account", 404);
+      }
+      accessId = String(worker._id);
+    }
+    const detail = await getJobDetail(jobId, accessId);
     return ok(detail)(res);
   } catch (e) {
     if (e instanceof FlowError) {
@@ -706,64 +725,80 @@ router.get("/:id/tracking", requireRole(["customer", "worker"]), async (req: Req
     }
 
     const isCustomer = role === "customer" && String(job.customer_id) === userId;
+    const acceptedWorkerIds = (job.matching?.accepted_worker_ids ?? []).map(String);
     const isWorker =
       role === "worker" &&
-      String(job.matching?.selected_worker_id) === workerProfileId;
+      workerProfileId != null &&
+      (String(job.matching?.selected_worker_id) === workerProfileId ||
+        acceptedWorkerIds.includes(workerProfileId));
 
     if (!isCustomer && !isWorker) {
       return fail(res, "Unauthorized", 403, undefined, "unauthorized");
     }
 
-    const workerId = job.matching?.selected_worker_id;
-    if (!workerId) {
-      return ok({ status: job.status })(res);
-    }
-
-    const worker = await Worker.findOne({ _id: workerId })
-      .select("name location location_updated_at")
-      .lean();
-
-    if (!worker?.location?.coordinates || worker.location.coordinates.length !== 2) {
-      const destCoords = job.location?.coordinates;
+    if (!TRACKING_STATUSES.has(job.status)) {
       return ok({
         status: job.status,
-        worker_name: worker?.name ?? "Ustad",
-        destination_lat: destCoords?.[1] ?? null,
-        destination_lng: destCoords?.[0] ?? null,
+        worker_name: null,
+        worker_lat: null,
+        worker_lng: null,
+        worker_location_updated_at: null,
+        distance_km: null,
+        eta_minutes: null,
+        destination_lat: job.location?.coordinates?.[1] ?? null,
+        destination_lng: job.location?.coordinates?.[0] ?? null,
         destination_label: job.location?.address_label ?? null,
-        before_photo_id: job.completion?.before_photo_id ?? null,
-        after_photo_id: job.completion?.after_photo_id ?? null,
-        note: job.completion?.note ?? null,
-        precomputed_route: job.route?.polyline ?? null,
-        route_distance_meters: job.route?.distance_meters ?? null,
-        route_duration_seconds: job.route?.duration_seconds ?? null,
+        customer_lat: null,
+        customer_lng: null,
+        customer_location_updated_at: null,
+        before_photo_id: null,
+        after_photo_id: null,
+        note: null,
+        precomputed_route: null,
+        route_distance_meters: null,
+        route_duration_seconds: null,
       })(res);
     }
 
-    const [workerLng, workerLat] = worker.location.coordinates;
+    const selectedWorkerId = job.matching?.selected_worker_id
+      ? String(job.matching.selected_worker_id)
+      : null;
+    const workerId = selectedWorkerId ?? (role === "worker" ? workerProfileId : null);
+    const worker = workerId
+      ? await Worker.findOne({ _id: workerId })
+          .select("name location location_updated_at")
+          .lean()
+      : null;
+    const workerCoordinates = worker?.location?.coordinates;
     const destCoords = job.location?.coordinates;
+    const targetCoords = getTrackingTarget(job);
+    const customerCoordinates = job.tracking?.customer_location?.coordinates;
 
     let distanceKm: number | null = null;
     let etaMinutes: number | null = null;
 
-    if (destCoords && destCoords.length === 2) {
-      const [destLng, destLat] = destCoords;
+    if (targetCoords && workerCoordinates && workerCoordinates.length === 2) {
+      const [workerLng, workerLat] = workerCoordinates;
+      const [targetLng, targetLat] = targetCoords;
       const { haversineDistanceKm, estimateETAMinutes } = await import("../../lib/geo.js");
-      distanceKm = Math.round(haversineDistanceKm(workerLat, workerLng, destLat, destLng) * 100) / 100;
+      distanceKm = Math.round(haversineDistanceKm(workerLat, workerLng, targetLat, targetLng) * 100) / 100;
       etaMinutes = estimateETAMinutes(distanceKm);
     }
 
     return ok({
       status: job.status,
-      worker_name: worker.name ?? "Ustad",
-      worker_lat: workerLat,
-      worker_lng: workerLng,
-      worker_location_updated_at: worker.location_updated_at,
+      worker_name: worker?.name ?? "Ustad",
+      worker_lat: workerCoordinates?.[1] ?? null,
+      worker_lng: workerCoordinates?.[0] ?? null,
+      worker_location_updated_at: worker?.location_updated_at ?? null,
       distance_km: distanceKm,
       eta_minutes: etaMinutes,
       destination_lat: destCoords?.[1] ?? null,
       destination_lng: destCoords?.[0] ?? null,
       destination_label: job.location?.address_label ?? null,
+      customer_lat: customerCoordinates?.[1] ?? null,
+      customer_lng: customerCoordinates?.[0] ?? null,
+      customer_location_updated_at: job.tracking?.customer_location_updated_at ?? null,
       before_photo_id: job.completion?.before_photo_id ?? null,
       after_photo_id: job.completion?.after_photo_id ?? null,
       note: job.completion?.note ?? null,

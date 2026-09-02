@@ -46,14 +46,23 @@ const availabilitySchema = z.object({
 /**
  * GET /by-user/:userId — return the worker profile for a given user id.
  */
-router.get("/by-user/:userId", async (req, res) => {
+router.get("/by-user/:userId", requireRole(["worker"]), async (req, res) => {
+    const sessionUser = res.locals.sessionUser;
+    if (String(req.params.userId) !== String(sessionUser.user._id)) {
+        return fail(res, "Not allowed for this account", 403, undefined, "role_forbidden");
+    }
     try {
         await connectDB();
         const worker = await Worker.findOne({ user_id: req.params.userId }).lean();
         if (!worker) {
             return fail(res, "Worker not found", 404);
         }
-        return ok({ _id: String(worker._id), name: worker.name, category: worker.category })(res);
+        return ok({
+            _id: String(worker._id),
+            name: worker.name,
+            category: worker.category,
+            active_job_id: worker.active_job_id ? String(worker.active_job_id) : null,
+        })(res);
     }
     catch (error) {
         console.error("[workers/by-user] error:", error);
@@ -212,14 +221,20 @@ router.patch("/me/location", requireRole(["worker"]), async (req, res) => {
             return fail(res, "Worker profile not found for this account", 404);
         }
         const coordinates = [parsed.data.lng, parsed.data.lat];
-        const updated = await Worker.findOneAndUpdate({
-            _id: worker._id,
-            service_area: {
-                $geoIntersects: {
-                    $geometry: { type: "Point", coordinates },
+        const hasServiceArea = worker.service_area?.type === "Polygon" &&
+            Array.isArray(worker.service_area.coordinates) &&
+            worker.service_area.coordinates.length > 0;
+        const locationFilter = hasServiceArea
+            ? {
+                _id: worker._id,
+                service_area: {
+                    $geoIntersects: {
+                        $geometry: { type: "Point", coordinates },
+                    },
                 },
-            },
-        }, {
+            }
+            : { _id: worker._id };
+        const updated = await Worker.findOneAndUpdate(locationFilter, {
             $set: {
                 location: { type: "Point", coordinates },
                 location_updated_at: new Date(),

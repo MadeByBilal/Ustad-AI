@@ -12,8 +12,64 @@ declare const jobSchema: mongoose.Schema<any, mongoose.Model<any, any, any, any,
     };
 }, {
     [x: string]: NativeDate;
-    status: "EN_ROUTE" | "ARRIVED" | "DRAFT" | "ANALYZING" | "WAITING_FOR_CUSTOMER" | "READY_TO_MATCH" | "BROADCASTING" | "WORKER_RESPONSES" | "CUSTOMER_SELECTING" | "ACCEPTED" | "IN_PROGRESS" | "AWAITING_CUSTOMER_CONFIRMATION" | "COMPLETED" | "CANCELLED" | "EXPIRED" | "DISPUTED";
     customer_id: mongoose.Types.ObjectId;
+    status: "DRAFT" | "ANALYZING" | "WAITING_FOR_CUSTOMER" | "READY_TO_MATCH" | "BROADCASTING" | "WORKER_RESPONSES" | "CUSTOMER_SELECTING" | "ACCEPTED" | "EN_ROUTE" | "ARRIVED" | "IN_PROGRESS" | "AWAITING_CUSTOMER_CONFIRMATION" | "COMPLETED" | "CANCELLED" | "EXPIRED" | "DISPUTED";
+    location?: {
+        type: "Point";
+        address_label: string;
+        coordinates?: number[] | null | undefined;
+    } | null | undefined;
+    input?: {
+        type: "text" | "voice" | "photo";
+        original_text: string;
+        transcript: string;
+        photo_ids: string[];
+    } | null | undefined;
+    understanding?: {
+        description: string;
+        category: string;
+        subcategory: string;
+        required_skills: string[];
+        urgency: "normal" | "potentially_urgent" | "emergency";
+        safety_flags: string[];
+        confidence: number;
+        clarification_required: boolean;
+        complexity: "low" | "medium" | "high";
+    } | null | undefined;
+    pricing?: {
+        status: "pending" | "agreed" | "disputed";
+        estimate_min: number;
+        estimate_max: number;
+        inspection_fee: number;
+        customer_offer: number;
+        currency: string;
+        worker_counter_offer?: number | null | undefined;
+        final_price?: number | null | undefined;
+    } | null | undefined;
+    matching?: {
+        search_radius_km: number;
+        broadcast_round: number;
+        eligible_workers_count: number;
+        accepted_worker_ids: mongoose.Types.ObjectId[];
+        broadcast_id?: string | null | undefined;
+        acceptance_deadline?: NativeDate | null | undefined;
+        selection_deadline?: NativeDate | null | undefined;
+        selected_worker_id?: mongoose.Types.ObjectId | null | undefined;
+    } | null | undefined;
+    completion?: {
+        customer_confirmed: boolean;
+        before_photo_id?: string | null | undefined;
+        after_photo_id?: string | null | undefined;
+        note?: string | null | undefined;
+        ai_work_confirmation?: string | null | undefined;
+    } | null | undefined;
+    tracking?: {
+        customer_location?: {
+            coordinates: number[];
+            type?: "Point" | null | undefined;
+        } | null | undefined;
+        customer_location_updated_at?: NativeDate | null | undefined;
+    } | null | undefined;
     route?: {
         polyline?: mongoose.Types.DocumentArray<{
             [x: number]: number | null;
@@ -247,60 +303,67 @@ declare const jobSchema: mongoose.Schema<any, mongoose.Model<any, any, any, any,
         distance_meters?: number | null | undefined;
         duration_seconds?: number | null | undefined;
         computed_at?: NativeDate | null | undefined;
-    } | null | undefined;
-    location?: {
-        type: "Point";
-        address_label: string;
-        coordinates?: number[] | null | undefined;
-    } | null | undefined;
-    input?: {
-        type: "text" | "voice" | "photo";
-        original_text: string;
-        transcript: string;
-        photo_ids: string[];
-    } | null | undefined;
-    understanding?: {
-        description: string;
-        category: string;
-        subcategory: string;
-        required_skills: string[];
-        urgency: "normal" | "potentially_urgent" | "emergency";
-        safety_flags: string[];
-        confidence: number;
-        clarification_required: boolean;
-        complexity: "low" | "medium" | "high";
-    } | null | undefined;
-    pricing?: {
-        status: "pending" | "agreed" | "disputed";
-        estimate_min: number;
-        estimate_max: number;
-        inspection_fee: number;
-        customer_offer: number;
-        currency: string;
-        worker_counter_offer?: number | null | undefined;
-        final_price?: number | null | undefined;
-    } | null | undefined;
-    matching?: {
-        search_radius_km: number;
-        broadcast_round: number;
-        eligible_workers_count: number;
-        accepted_worker_ids: mongoose.Types.ObjectId[];
-        broadcast_id?: string | null | undefined;
-        acceptance_deadline?: NativeDate | null | undefined;
-        selection_deadline?: NativeDate | null | undefined;
-        selected_worker_id?: mongoose.Types.ObjectId | null | undefined;
-    } | null | undefined;
-    completion?: {
-        customer_confirmed: boolean;
-        before_photo_id?: string | null | undefined;
-        after_photo_id?: string | null | undefined;
-        note?: string | null | undefined;
-        ai_work_confirmation?: string | null | undefined;
     } | null | undefined;
 }, mongoose.Document<unknown, {}, mongoose.FlatRecord<{
     [x: string]: NativeDate;
-    status: "EN_ROUTE" | "ARRIVED" | "DRAFT" | "ANALYZING" | "WAITING_FOR_CUSTOMER" | "READY_TO_MATCH" | "BROADCASTING" | "WORKER_RESPONSES" | "CUSTOMER_SELECTING" | "ACCEPTED" | "IN_PROGRESS" | "AWAITING_CUSTOMER_CONFIRMATION" | "COMPLETED" | "CANCELLED" | "EXPIRED" | "DISPUTED";
     customer_id: mongoose.Types.ObjectId;
+    status: "DRAFT" | "ANALYZING" | "WAITING_FOR_CUSTOMER" | "READY_TO_MATCH" | "BROADCASTING" | "WORKER_RESPONSES" | "CUSTOMER_SELECTING" | "ACCEPTED" | "EN_ROUTE" | "ARRIVED" | "IN_PROGRESS" | "AWAITING_CUSTOMER_CONFIRMATION" | "COMPLETED" | "CANCELLED" | "EXPIRED" | "DISPUTED";
+    location?: {
+        type: "Point";
+        address_label: string;
+        coordinates?: number[] | null | undefined;
+    } | null | undefined;
+    input?: {
+        type: "text" | "voice" | "photo";
+        original_text: string;
+        transcript: string;
+        photo_ids: string[];
+    } | null | undefined;
+    understanding?: {
+        description: string;
+        category: string;
+        subcategory: string;
+        required_skills: string[];
+        urgency: "normal" | "potentially_urgent" | "emergency";
+        safety_flags: string[];
+        confidence: number;
+        clarification_required: boolean;
+        complexity: "low" | "medium" | "high";
+    } | null | undefined;
+    pricing?: {
+        status: "pending" | "agreed" | "disputed";
+        estimate_min: number;
+        estimate_max: number;
+        inspection_fee: number;
+        customer_offer: number;
+        currency: string;
+        worker_counter_offer?: number | null | undefined;
+        final_price?: number | null | undefined;
+    } | null | undefined;
+    matching?: {
+        search_radius_km: number;
+        broadcast_round: number;
+        eligible_workers_count: number;
+        accepted_worker_ids: mongoose.Types.ObjectId[];
+        broadcast_id?: string | null | undefined;
+        acceptance_deadline?: NativeDate | null | undefined;
+        selection_deadline?: NativeDate | null | undefined;
+        selected_worker_id?: mongoose.Types.ObjectId | null | undefined;
+    } | null | undefined;
+    completion?: {
+        customer_confirmed: boolean;
+        before_photo_id?: string | null | undefined;
+        after_photo_id?: string | null | undefined;
+        note?: string | null | undefined;
+        ai_work_confirmation?: string | null | undefined;
+    } | null | undefined;
+    tracking?: {
+        customer_location?: {
+            coordinates: number[];
+            type?: "Point" | null | undefined;
+        } | null | undefined;
+        customer_location_updated_at?: NativeDate | null | undefined;
+    } | null | undefined;
     route?: {
         polyline?: mongoose.Types.DocumentArray<{
             [x: number]: number | null;
@@ -534,55 +597,6 @@ declare const jobSchema: mongoose.Schema<any, mongoose.Model<any, any, any, any,
         distance_meters?: number | null | undefined;
         duration_seconds?: number | null | undefined;
         computed_at?: NativeDate | null | undefined;
-    } | null | undefined;
-    location?: {
-        type: "Point";
-        address_label: string;
-        coordinates?: number[] | null | undefined;
-    } | null | undefined;
-    input?: {
-        type: "text" | "voice" | "photo";
-        original_text: string;
-        transcript: string;
-        photo_ids: string[];
-    } | null | undefined;
-    understanding?: {
-        description: string;
-        category: string;
-        subcategory: string;
-        required_skills: string[];
-        urgency: "normal" | "potentially_urgent" | "emergency";
-        safety_flags: string[];
-        confidence: number;
-        clarification_required: boolean;
-        complexity: "low" | "medium" | "high";
-    } | null | undefined;
-    pricing?: {
-        status: "pending" | "agreed" | "disputed";
-        estimate_min: number;
-        estimate_max: number;
-        inspection_fee: number;
-        customer_offer: number;
-        currency: string;
-        worker_counter_offer?: number | null | undefined;
-        final_price?: number | null | undefined;
-    } | null | undefined;
-    matching?: {
-        search_radius_km: number;
-        broadcast_round: number;
-        eligible_workers_count: number;
-        accepted_worker_ids: mongoose.Types.ObjectId[];
-        broadcast_id?: string | null | undefined;
-        acceptance_deadline?: NativeDate | null | undefined;
-        selection_deadline?: NativeDate | null | undefined;
-        selected_worker_id?: mongoose.Types.ObjectId | null | undefined;
-    } | null | undefined;
-    completion?: {
-        customer_confirmed: boolean;
-        before_photo_id?: string | null | undefined;
-        after_photo_id?: string | null | undefined;
-        note?: string | null | undefined;
-        ai_work_confirmation?: string | null | undefined;
     } | null | undefined;
 }>, {}, mongoose.MergeType<mongoose.DefaultSchemaOptions, {
     timestamps: {
@@ -591,8 +605,64 @@ declare const jobSchema: mongoose.Schema<any, mongoose.Model<any, any, any, any,
     };
 }>> & mongoose.FlatRecord<{
     [x: string]: NativeDate;
-    status: "EN_ROUTE" | "ARRIVED" | "DRAFT" | "ANALYZING" | "WAITING_FOR_CUSTOMER" | "READY_TO_MATCH" | "BROADCASTING" | "WORKER_RESPONSES" | "CUSTOMER_SELECTING" | "ACCEPTED" | "IN_PROGRESS" | "AWAITING_CUSTOMER_CONFIRMATION" | "COMPLETED" | "CANCELLED" | "EXPIRED" | "DISPUTED";
     customer_id: mongoose.Types.ObjectId;
+    status: "DRAFT" | "ANALYZING" | "WAITING_FOR_CUSTOMER" | "READY_TO_MATCH" | "BROADCASTING" | "WORKER_RESPONSES" | "CUSTOMER_SELECTING" | "ACCEPTED" | "EN_ROUTE" | "ARRIVED" | "IN_PROGRESS" | "AWAITING_CUSTOMER_CONFIRMATION" | "COMPLETED" | "CANCELLED" | "EXPIRED" | "DISPUTED";
+    location?: {
+        type: "Point";
+        address_label: string;
+        coordinates?: number[] | null | undefined;
+    } | null | undefined;
+    input?: {
+        type: "text" | "voice" | "photo";
+        original_text: string;
+        transcript: string;
+        photo_ids: string[];
+    } | null | undefined;
+    understanding?: {
+        description: string;
+        category: string;
+        subcategory: string;
+        required_skills: string[];
+        urgency: "normal" | "potentially_urgent" | "emergency";
+        safety_flags: string[];
+        confidence: number;
+        clarification_required: boolean;
+        complexity: "low" | "medium" | "high";
+    } | null | undefined;
+    pricing?: {
+        status: "pending" | "agreed" | "disputed";
+        estimate_min: number;
+        estimate_max: number;
+        inspection_fee: number;
+        customer_offer: number;
+        currency: string;
+        worker_counter_offer?: number | null | undefined;
+        final_price?: number | null | undefined;
+    } | null | undefined;
+    matching?: {
+        search_radius_km: number;
+        broadcast_round: number;
+        eligible_workers_count: number;
+        accepted_worker_ids: mongoose.Types.ObjectId[];
+        broadcast_id?: string | null | undefined;
+        acceptance_deadline?: NativeDate | null | undefined;
+        selection_deadline?: NativeDate | null | undefined;
+        selected_worker_id?: mongoose.Types.ObjectId | null | undefined;
+    } | null | undefined;
+    completion?: {
+        customer_confirmed: boolean;
+        before_photo_id?: string | null | undefined;
+        after_photo_id?: string | null | undefined;
+        note?: string | null | undefined;
+        ai_work_confirmation?: string | null | undefined;
+    } | null | undefined;
+    tracking?: {
+        customer_location?: {
+            coordinates: number[];
+            type?: "Point" | null | undefined;
+        } | null | undefined;
+        customer_location_updated_at?: NativeDate | null | undefined;
+    } | null | undefined;
     route?: {
         polyline?: mongoose.Types.DocumentArray<{
             [x: number]: number | null;
@@ -826,55 +896,6 @@ declare const jobSchema: mongoose.Schema<any, mongoose.Model<any, any, any, any,
         distance_meters?: number | null | undefined;
         duration_seconds?: number | null | undefined;
         computed_at?: NativeDate | null | undefined;
-    } | null | undefined;
-    location?: {
-        type: "Point";
-        address_label: string;
-        coordinates?: number[] | null | undefined;
-    } | null | undefined;
-    input?: {
-        type: "text" | "voice" | "photo";
-        original_text: string;
-        transcript: string;
-        photo_ids: string[];
-    } | null | undefined;
-    understanding?: {
-        description: string;
-        category: string;
-        subcategory: string;
-        required_skills: string[];
-        urgency: "normal" | "potentially_urgent" | "emergency";
-        safety_flags: string[];
-        confidence: number;
-        clarification_required: boolean;
-        complexity: "low" | "medium" | "high";
-    } | null | undefined;
-    pricing?: {
-        status: "pending" | "agreed" | "disputed";
-        estimate_min: number;
-        estimate_max: number;
-        inspection_fee: number;
-        customer_offer: number;
-        currency: string;
-        worker_counter_offer?: number | null | undefined;
-        final_price?: number | null | undefined;
-    } | null | undefined;
-    matching?: {
-        search_radius_km: number;
-        broadcast_round: number;
-        eligible_workers_count: number;
-        accepted_worker_ids: mongoose.Types.ObjectId[];
-        broadcast_id?: string | null | undefined;
-        acceptance_deadline?: NativeDate | null | undefined;
-        selection_deadline?: NativeDate | null | undefined;
-        selected_worker_id?: mongoose.Types.ObjectId | null | undefined;
-    } | null | undefined;
-    completion?: {
-        customer_confirmed: boolean;
-        before_photo_id?: string | null | undefined;
-        after_photo_id?: string | null | undefined;
-        note?: string | null | undefined;
-        ai_work_confirmation?: string | null | undefined;
     } | null | undefined;
 }> & {
     _id: mongoose.Types.ObjectId;
@@ -884,8 +905,64 @@ declare const jobSchema: mongoose.Schema<any, mongoose.Model<any, any, any, any,
 export type JobDoc = InferSchemaType<typeof jobSchema>;
 export declare const Job: mongoose.Model<{
     [x: string]: NativeDate;
-    status: "EN_ROUTE" | "ARRIVED" | "DRAFT" | "ANALYZING" | "WAITING_FOR_CUSTOMER" | "READY_TO_MATCH" | "BROADCASTING" | "WORKER_RESPONSES" | "CUSTOMER_SELECTING" | "ACCEPTED" | "IN_PROGRESS" | "AWAITING_CUSTOMER_CONFIRMATION" | "COMPLETED" | "CANCELLED" | "EXPIRED" | "DISPUTED";
     customer_id: mongoose.Types.ObjectId;
+    status: "DRAFT" | "ANALYZING" | "WAITING_FOR_CUSTOMER" | "READY_TO_MATCH" | "BROADCASTING" | "WORKER_RESPONSES" | "CUSTOMER_SELECTING" | "ACCEPTED" | "EN_ROUTE" | "ARRIVED" | "IN_PROGRESS" | "AWAITING_CUSTOMER_CONFIRMATION" | "COMPLETED" | "CANCELLED" | "EXPIRED" | "DISPUTED";
+    location?: {
+        type: "Point";
+        address_label: string;
+        coordinates?: number[] | null | undefined;
+    } | null | undefined;
+    input?: {
+        type: "text" | "voice" | "photo";
+        original_text: string;
+        transcript: string;
+        photo_ids: string[];
+    } | null | undefined;
+    understanding?: {
+        description: string;
+        category: string;
+        subcategory: string;
+        required_skills: string[];
+        urgency: "normal" | "potentially_urgent" | "emergency";
+        safety_flags: string[];
+        confidence: number;
+        clarification_required: boolean;
+        complexity: "low" | "medium" | "high";
+    } | null | undefined;
+    pricing?: {
+        status: "pending" | "agreed" | "disputed";
+        estimate_min: number;
+        estimate_max: number;
+        inspection_fee: number;
+        customer_offer: number;
+        currency: string;
+        worker_counter_offer?: number | null | undefined;
+        final_price?: number | null | undefined;
+    } | null | undefined;
+    matching?: {
+        search_radius_km: number;
+        broadcast_round: number;
+        eligible_workers_count: number;
+        accepted_worker_ids: mongoose.Types.ObjectId[];
+        broadcast_id?: string | null | undefined;
+        acceptance_deadline?: NativeDate | null | undefined;
+        selection_deadline?: NativeDate | null | undefined;
+        selected_worker_id?: mongoose.Types.ObjectId | null | undefined;
+    } | null | undefined;
+    completion?: {
+        customer_confirmed: boolean;
+        before_photo_id?: string | null | undefined;
+        after_photo_id?: string | null | undefined;
+        note?: string | null | undefined;
+        ai_work_confirmation?: string | null | undefined;
+    } | null | undefined;
+    tracking?: {
+        customer_location?: {
+            coordinates: number[];
+            type?: "Point" | null | undefined;
+        } | null | undefined;
+        customer_location_updated_at?: NativeDate | null | undefined;
+    } | null | undefined;
     route?: {
         polyline?: mongoose.Types.DocumentArray<{
             [x: number]: number | null;
@@ -1119,60 +1196,67 @@ export declare const Job: mongoose.Model<{
         distance_meters?: number | null | undefined;
         duration_seconds?: number | null | undefined;
         computed_at?: NativeDate | null | undefined;
-    } | null | undefined;
-    location?: {
-        type: "Point";
-        address_label: string;
-        coordinates?: number[] | null | undefined;
-    } | null | undefined;
-    input?: {
-        type: "text" | "voice" | "photo";
-        original_text: string;
-        transcript: string;
-        photo_ids: string[];
-    } | null | undefined;
-    understanding?: {
-        description: string;
-        category: string;
-        subcategory: string;
-        required_skills: string[];
-        urgency: "normal" | "potentially_urgent" | "emergency";
-        safety_flags: string[];
-        confidence: number;
-        clarification_required: boolean;
-        complexity: "low" | "medium" | "high";
-    } | null | undefined;
-    pricing?: {
-        status: "pending" | "agreed" | "disputed";
-        estimate_min: number;
-        estimate_max: number;
-        inspection_fee: number;
-        customer_offer: number;
-        currency: string;
-        worker_counter_offer?: number | null | undefined;
-        final_price?: number | null | undefined;
-    } | null | undefined;
-    matching?: {
-        search_radius_km: number;
-        broadcast_round: number;
-        eligible_workers_count: number;
-        accepted_worker_ids: mongoose.Types.ObjectId[];
-        broadcast_id?: string | null | undefined;
-        acceptance_deadline?: NativeDate | null | undefined;
-        selection_deadline?: NativeDate | null | undefined;
-        selected_worker_id?: mongoose.Types.ObjectId | null | undefined;
-    } | null | undefined;
-    completion?: {
-        customer_confirmed: boolean;
-        before_photo_id?: string | null | undefined;
-        after_photo_id?: string | null | undefined;
-        note?: string | null | undefined;
-        ai_work_confirmation?: string | null | undefined;
     } | null | undefined;
 }, {}, {}, {}, mongoose.Document<unknown, {}, {
     [x: string]: NativeDate;
-    status: "EN_ROUTE" | "ARRIVED" | "DRAFT" | "ANALYZING" | "WAITING_FOR_CUSTOMER" | "READY_TO_MATCH" | "BROADCASTING" | "WORKER_RESPONSES" | "CUSTOMER_SELECTING" | "ACCEPTED" | "IN_PROGRESS" | "AWAITING_CUSTOMER_CONFIRMATION" | "COMPLETED" | "CANCELLED" | "EXPIRED" | "DISPUTED";
     customer_id: mongoose.Types.ObjectId;
+    status: "DRAFT" | "ANALYZING" | "WAITING_FOR_CUSTOMER" | "READY_TO_MATCH" | "BROADCASTING" | "WORKER_RESPONSES" | "CUSTOMER_SELECTING" | "ACCEPTED" | "EN_ROUTE" | "ARRIVED" | "IN_PROGRESS" | "AWAITING_CUSTOMER_CONFIRMATION" | "COMPLETED" | "CANCELLED" | "EXPIRED" | "DISPUTED";
+    location?: {
+        type: "Point";
+        address_label: string;
+        coordinates?: number[] | null | undefined;
+    } | null | undefined;
+    input?: {
+        type: "text" | "voice" | "photo";
+        original_text: string;
+        transcript: string;
+        photo_ids: string[];
+    } | null | undefined;
+    understanding?: {
+        description: string;
+        category: string;
+        subcategory: string;
+        required_skills: string[];
+        urgency: "normal" | "potentially_urgent" | "emergency";
+        safety_flags: string[];
+        confidence: number;
+        clarification_required: boolean;
+        complexity: "low" | "medium" | "high";
+    } | null | undefined;
+    pricing?: {
+        status: "pending" | "agreed" | "disputed";
+        estimate_min: number;
+        estimate_max: number;
+        inspection_fee: number;
+        customer_offer: number;
+        currency: string;
+        worker_counter_offer?: number | null | undefined;
+        final_price?: number | null | undefined;
+    } | null | undefined;
+    matching?: {
+        search_radius_km: number;
+        broadcast_round: number;
+        eligible_workers_count: number;
+        accepted_worker_ids: mongoose.Types.ObjectId[];
+        broadcast_id?: string | null | undefined;
+        acceptance_deadline?: NativeDate | null | undefined;
+        selection_deadline?: NativeDate | null | undefined;
+        selected_worker_id?: mongoose.Types.ObjectId | null | undefined;
+    } | null | undefined;
+    completion?: {
+        customer_confirmed: boolean;
+        before_photo_id?: string | null | undefined;
+        after_photo_id?: string | null | undefined;
+        note?: string | null | undefined;
+        ai_work_confirmation?: string | null | undefined;
+    } | null | undefined;
+    tracking?: {
+        customer_location?: {
+            coordinates: number[];
+            type?: "Point" | null | undefined;
+        } | null | undefined;
+        customer_location_updated_at?: NativeDate | null | undefined;
+    } | null | undefined;
     route?: {
         polyline?: mongoose.Types.DocumentArray<{
             [x: number]: number | null;
@@ -1406,60 +1490,67 @@ export declare const Job: mongoose.Model<{
         distance_meters?: number | null | undefined;
         duration_seconds?: number | null | undefined;
         computed_at?: NativeDate | null | undefined;
-    } | null | undefined;
-    location?: {
-        type: "Point";
-        address_label: string;
-        coordinates?: number[] | null | undefined;
-    } | null | undefined;
-    input?: {
-        type: "text" | "voice" | "photo";
-        original_text: string;
-        transcript: string;
-        photo_ids: string[];
-    } | null | undefined;
-    understanding?: {
-        description: string;
-        category: string;
-        subcategory: string;
-        required_skills: string[];
-        urgency: "normal" | "potentially_urgent" | "emergency";
-        safety_flags: string[];
-        confidence: number;
-        clarification_required: boolean;
-        complexity: "low" | "medium" | "high";
-    } | null | undefined;
-    pricing?: {
-        status: "pending" | "agreed" | "disputed";
-        estimate_min: number;
-        estimate_max: number;
-        inspection_fee: number;
-        customer_offer: number;
-        currency: string;
-        worker_counter_offer?: number | null | undefined;
-        final_price?: number | null | undefined;
-    } | null | undefined;
-    matching?: {
-        search_radius_km: number;
-        broadcast_round: number;
-        eligible_workers_count: number;
-        accepted_worker_ids: mongoose.Types.ObjectId[];
-        broadcast_id?: string | null | undefined;
-        acceptance_deadline?: NativeDate | null | undefined;
-        selection_deadline?: NativeDate | null | undefined;
-        selected_worker_id?: mongoose.Types.ObjectId | null | undefined;
-    } | null | undefined;
-    completion?: {
-        customer_confirmed: boolean;
-        before_photo_id?: string | null | undefined;
-        after_photo_id?: string | null | undefined;
-        note?: string | null | undefined;
-        ai_work_confirmation?: string | null | undefined;
     } | null | undefined;
 }, {}, {}> & {
     [x: string]: NativeDate;
-    status: "EN_ROUTE" | "ARRIVED" | "DRAFT" | "ANALYZING" | "WAITING_FOR_CUSTOMER" | "READY_TO_MATCH" | "BROADCASTING" | "WORKER_RESPONSES" | "CUSTOMER_SELECTING" | "ACCEPTED" | "IN_PROGRESS" | "AWAITING_CUSTOMER_CONFIRMATION" | "COMPLETED" | "CANCELLED" | "EXPIRED" | "DISPUTED";
     customer_id: mongoose.Types.ObjectId;
+    status: "DRAFT" | "ANALYZING" | "WAITING_FOR_CUSTOMER" | "READY_TO_MATCH" | "BROADCASTING" | "WORKER_RESPONSES" | "CUSTOMER_SELECTING" | "ACCEPTED" | "EN_ROUTE" | "ARRIVED" | "IN_PROGRESS" | "AWAITING_CUSTOMER_CONFIRMATION" | "COMPLETED" | "CANCELLED" | "EXPIRED" | "DISPUTED";
+    location?: {
+        type: "Point";
+        address_label: string;
+        coordinates?: number[] | null | undefined;
+    } | null | undefined;
+    input?: {
+        type: "text" | "voice" | "photo";
+        original_text: string;
+        transcript: string;
+        photo_ids: string[];
+    } | null | undefined;
+    understanding?: {
+        description: string;
+        category: string;
+        subcategory: string;
+        required_skills: string[];
+        urgency: "normal" | "potentially_urgent" | "emergency";
+        safety_flags: string[];
+        confidence: number;
+        clarification_required: boolean;
+        complexity: "low" | "medium" | "high";
+    } | null | undefined;
+    pricing?: {
+        status: "pending" | "agreed" | "disputed";
+        estimate_min: number;
+        estimate_max: number;
+        inspection_fee: number;
+        customer_offer: number;
+        currency: string;
+        worker_counter_offer?: number | null | undefined;
+        final_price?: number | null | undefined;
+    } | null | undefined;
+    matching?: {
+        search_radius_km: number;
+        broadcast_round: number;
+        eligible_workers_count: number;
+        accepted_worker_ids: mongoose.Types.ObjectId[];
+        broadcast_id?: string | null | undefined;
+        acceptance_deadline?: NativeDate | null | undefined;
+        selection_deadline?: NativeDate | null | undefined;
+        selected_worker_id?: mongoose.Types.ObjectId | null | undefined;
+    } | null | undefined;
+    completion?: {
+        customer_confirmed: boolean;
+        before_photo_id?: string | null | undefined;
+        after_photo_id?: string | null | undefined;
+        note?: string | null | undefined;
+        ai_work_confirmation?: string | null | undefined;
+    } | null | undefined;
+    tracking?: {
+        customer_location?: {
+            coordinates: number[];
+            type?: "Point" | null | undefined;
+        } | null | undefined;
+        customer_location_updated_at?: NativeDate | null | undefined;
+    } | null | undefined;
     route?: {
         polyline?: mongoose.Types.DocumentArray<{
             [x: number]: number | null;
@@ -1693,55 +1784,6 @@ export declare const Job: mongoose.Model<{
         distance_meters?: number | null | undefined;
         duration_seconds?: number | null | undefined;
         computed_at?: NativeDate | null | undefined;
-    } | null | undefined;
-    location?: {
-        type: "Point";
-        address_label: string;
-        coordinates?: number[] | null | undefined;
-    } | null | undefined;
-    input?: {
-        type: "text" | "voice" | "photo";
-        original_text: string;
-        transcript: string;
-        photo_ids: string[];
-    } | null | undefined;
-    understanding?: {
-        description: string;
-        category: string;
-        subcategory: string;
-        required_skills: string[];
-        urgency: "normal" | "potentially_urgent" | "emergency";
-        safety_flags: string[];
-        confidence: number;
-        clarification_required: boolean;
-        complexity: "low" | "medium" | "high";
-    } | null | undefined;
-    pricing?: {
-        status: "pending" | "agreed" | "disputed";
-        estimate_min: number;
-        estimate_max: number;
-        inspection_fee: number;
-        customer_offer: number;
-        currency: string;
-        worker_counter_offer?: number | null | undefined;
-        final_price?: number | null | undefined;
-    } | null | undefined;
-    matching?: {
-        search_radius_km: number;
-        broadcast_round: number;
-        eligible_workers_count: number;
-        accepted_worker_ids: mongoose.Types.ObjectId[];
-        broadcast_id?: string | null | undefined;
-        acceptance_deadline?: NativeDate | null | undefined;
-        selection_deadline?: NativeDate | null | undefined;
-        selected_worker_id?: mongoose.Types.ObjectId | null | undefined;
-    } | null | undefined;
-    completion?: {
-        customer_confirmed: boolean;
-        before_photo_id?: string | null | undefined;
-        after_photo_id?: string | null | undefined;
-        note?: string | null | undefined;
-        ai_work_confirmation?: string | null | undefined;
     } | null | undefined;
 } & {
     _id: mongoose.Types.ObjectId;

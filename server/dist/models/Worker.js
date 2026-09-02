@@ -63,7 +63,7 @@ const workerSchema = new Schema({
     confirmed_jobs: { type: Number, min: 0, default: 0 },
     response_rate: { type: Number, min: 0, max: 100, default: 100 },
     cancellation_rate: { type: Number, min: 0, max: 100, default: 0 },
-    average_rating: { type: Number, min: 0, max: 5, default: 0 },
+    average_rating: { type: Number, min: 0, max: 5, default: 4 },
     repeat_customers: { type: Number, min: 0, default: 0 },
     emergency_capabilities: { type: [String], default: [] },
 }, {

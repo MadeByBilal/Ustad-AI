@@ -41,7 +41,7 @@ const ACTOR_ALLOWANCES: Record<string, JobActor[]> = {
   "BROADCASTING->ACCEPTED": ["worker", "system"],
   "BROADCASTING->EXPIRED": ["system"],
   "WORKER_RESPONSES->CUSTOMER_SELECTING": ["system"],
-  "WORKER_RESPONSES->READY_TO_MATCH": ["customer", "system"],
+  "WORKER_RESPONSES->READY_TO_MATCH": ["customer", "worker", "system"],
   "WORKER_RESPONSES->EXPIRED": ["system"],
   "CUSTOMER_SELECTING->ACCEPTED": ["customer"],
   "CUSTOMER_SELECTING->READY_TO_MATCH": ["customer", "system"],

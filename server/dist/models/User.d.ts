@@ -13,11 +13,11 @@ declare const userSchema: mongoose.Schema<any, mongoose.Model<any, any, any, any
     password_hash: string;
     language: "ur" | "en";
     name?: string | null | undefined;
+    phone?: string | null | undefined;
     location?: {
         coordinates: number[];
         type?: "Point" | null | undefined;
     } | null | undefined;
-    phone?: string | null | undefined;
 }, mongoose.Document<unknown, {}, mongoose.FlatRecord<{
     [x: string]: NativeDate;
     role: "customer" | "worker" | "admin";
@@ -25,11 +25,11 @@ declare const userSchema: mongoose.Schema<any, mongoose.Model<any, any, any, any
     password_hash: string;
     language: "ur" | "en";
     name?: string | null | undefined;
+    phone?: string | null | undefined;
     location?: {
         coordinates: number[];
         type?: "Point" | null | undefined;
     } | null | undefined;
-    phone?: string | null | undefined;
 }>, {}, mongoose.MergeType<mongoose.DefaultSchemaOptions, {
     timestamps: {
         createdAt: string;
@@ -42,11 +42,11 @@ declare const userSchema: mongoose.Schema<any, mongoose.Model<any, any, any, any
     password_hash: string;
     language: "ur" | "en";
     name?: string | null | undefined;
+    phone?: string | null | undefined;
     location?: {
         coordinates: number[];
         type?: "Point" | null | undefined;
     } | null | undefined;
-    phone?: string | null | undefined;
 }> & {
     _id: mongoose.Types.ObjectId;
 } & {
@@ -60,11 +60,11 @@ export declare const User: mongoose.Model<{
     password_hash: string;
     language: "ur" | "en";
     name?: string | null | undefined;
+    phone?: string | null | undefined;
     location?: {
         coordinates: number[];
         type?: "Point" | null | undefined;
     } | null | undefined;
-    phone?: string | null | undefined;
 }, {}, {}, {}, mongoose.Document<unknown, {}, {
     [x: string]: NativeDate;
     role: "customer" | "worker" | "admin";
@@ -72,11 +72,11 @@ export declare const User: mongoose.Model<{
     password_hash: string;
     language: "ur" | "en";
     name?: string | null | undefined;
+    phone?: string | null | undefined;
     location?: {
         coordinates: number[];
         type?: "Point" | null | undefined;
     } | null | undefined;
-    phone?: string | null | undefined;
 }, {}, {}> & {
     [x: string]: NativeDate;
     role: "customer" | "worker" | "admin";
@@ -84,11 +84,11 @@ export declare const User: mongoose.Model<{
     password_hash: string;
     language: "ur" | "en";
     name?: string | null | undefined;
+    phone?: string | null | undefined;
     location?: {
         coordinates: number[];
         type?: "Point" | null | undefined;
     } | null | undefined;
-    phone?: string | null | undefined;
 } & {
     _id: mongoose.Types.ObjectId;
 } & {

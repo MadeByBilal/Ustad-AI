@@ -6,6 +6,7 @@ import { canTransition, expireIfDeadlinePassed, resolveAcceptanceDeadline, resol
 import { searchEligibleWorkers } from "../matching.js";
 import { computeAndStoreRoute } from "./route-precompute.js";
 import { getIO } from "../socket.js";
+import { canCustomerCancel, resolveWorkerCancellation, } from "./cancellation.js";
 export class FlowError extends Error {
     code;
     statusCode;
@@ -26,6 +27,13 @@ async function recordEvent(jobId, from_state, to_state, actor_id, actor_type, me
         actor_id,
         actor_type,
         metadata,
+    });
+    getIO()?.to(`job:${String(jobId)}`).emit("job-status-update", {
+        jobId: String(jobId),
+        fromStatus: from_state,
+        status: to_state,
+        actorType: actor_type,
+        timestamp: new Date().toISOString(),
     });
 }
 /**
@@ -637,19 +645,53 @@ export async function customerRejectWorker(jobId, customerId, workerId, action =
 export async function workerCancelJob(jobId, workerId, note) {
     const job = await requireJob({
         _id: jobId,
-        "matching.selected_worker_id": workerId,
+        $or: [
+            { "matching.selected_worker_id": workerId },
+            { "matching.accepted_worker_ids": workerId },
+        ],
     });
-    const cancellable = [
-        "ACCEPTED",
-        "EN_ROUTE",
-        "ARRIVED",
-        "IN_PROGRESS",
-    ];
-    if (!cancellable.includes(job.status)) {
+    const decision = resolveWorkerCancellation({
+        status: job.status,
+        selectedWorkerId: job.matching?.selected_worker_id
+            ? String(job.matching.selected_worker_id)
+            : null,
+        acceptedWorkerIds: (job.matching?.accepted_worker_ids ?? []).map(String),
+    }, workerId);
+    if (!decision) {
         throw new FlowError("invalid_status", `Job cannot be cancelled from ${job.status}`, 409);
     }
-    guardJourney(job, job.status, "CANCELLED", "worker");
-    const updated = await Job.findOneAndUpdate({ _id: jobId, status: job.status, "matching.selected_worker_id": workerId }, { $set: { status: "CANCELLED" } }, { new: true });
+    if (decision.targetStatus !== job.status) {
+        guardJourney(job, job.status, decision.targetStatus, "worker");
+    }
+    const update = {
+        $set: {
+            status: decision.targetStatus,
+            ...(decision.cancelsJob
+                ? {
+                    "matching.selected_worker_id": null,
+                    "matching.accepted_worker_ids": [],
+                    "matching.selection_deadline": null,
+                    "matching.acceptance_deadline": null,
+                }
+                : decision.targetStatus === "READY_TO_MATCH"
+                    ? {
+                        "matching.selection_deadline": null,
+                        "matching.acceptance_deadline": null,
+                    }
+                    : {}),
+        },
+    };
+    if (!decision.cancelsJob) {
+        update.$pull = { "matching.accepted_worker_ids": workerId };
+    }
+    const updated = await Job.findOneAndUpdate({
+        _id: jobId,
+        status: job.status,
+        $or: [
+            { "matching.selected_worker_id": workerId },
+            { "matching.accepted_worker_ids": workerId },
+        ],
+    }, update, { new: true });
     if (!updated) {
         throw new FlowError("invalid_status", "Job changed concurrently", 409);
     }
@@ -663,11 +705,15 @@ export async function workerCancelJob(jobId, workerId, note) {
         $max: { ustad_score: 0 },
     });
     await Offer.updateMany({ job_id: jobId, worker_id: workerId, status: "pending" }, { $set: { status: "declined", expires_at: null } });
-    await recordEvent(jobId, job.status, "CANCELLED", workerId, "worker", {
-        reason: "worker-cancelled",
+    await recordEvent(jobId, job.status, decision.targetStatus, workerId, "worker", {
+        reason: decision.cancelsJob ? "worker-cancelled" : "worker-withdrew",
         ...(note ? { note } : {}),
     });
-    await recordSystemMessage(jobId, "Job cancelled by the worker");
+    await recordSystemMessage(jobId, decision.cancelsJob
+        ? "Job cancelled by the worker"
+        : decision.targetStatus === "READY_TO_MATCH"
+            ? "Worker withdrew — the job is available again"
+            : "Worker withdrew their offer");
     return updated;
 }
 /**
@@ -676,21 +722,24 @@ export async function workerCancelJob(jobId, workerId, note) {
  */
 export async function customerCancelJob(jobId, customerId, note) {
     const job = await requireJob({ _id: jobId, customer_id: customerId });
-    const cancellable = [
-        "ACCEPTED",
-        "EN_ROUTE",
-        "ARRIVED",
-        "IN_PROGRESS",
-    ];
-    if (!cancellable.includes(job.status)) {
+    if (!canCustomerCancel(job.status)) {
         throw new FlowError("invalid_status", `Job cannot be cancelled from ${job.status}`, 409);
     }
     guardJourney(job, job.status, "CANCELLED", "customer");
-    const updated = await Job.findOneAndUpdate({ _id: jobId, status: job.status, customer_id: customerId }, { $set: { status: "CANCELLED" } }, { new: true });
+    const updated = await Job.findOneAndUpdate({ _id: jobId, status: job.status, customer_id: customerId }, {
+        $set: {
+            status: "CANCELLED",
+            "matching.selected_worker_id": null,
+            "matching.accepted_worker_ids": [],
+            "matching.selection_deadline": null,
+            "matching.acceptance_deadline": null,
+        },
+    }, { new: true });
     if (!updated) {
         throw new FlowError("invalid_status", "Job changed concurrently", 409);
     }
     const workerId = job.matching?.selected_worker_id;
+    const responderIds = (job.matching?.accepted_worker_ids ?? []).map(String);
     if (workerId) {
         await Worker.updateOne({ _id: workerId, active_job_id: jobId }, {
             $set: { active_job_id: null, is_available: true },
@@ -702,6 +751,10 @@ export async function customerCancelJob(jobId, customerId, note) {
             $max: { ustad_score: 0 },
         });
     }
+    if (responderIds.length > 0) {
+        await Worker.updateMany({ _id: { $in: responderIds }, active_job_id: jobId }, { $set: { active_job_id: null, is_available: true } });
+    }
+    await Offer.updateMany({ job_id: jobId, status: "pending" }, { $set: { status: "declined", expires_at: null } });
     await recordEvent(jobId, job.status, "CANCELLED", customerId, "customer", {
         reason: "customer-cancelled",
         ...(note ? { note } : {}),

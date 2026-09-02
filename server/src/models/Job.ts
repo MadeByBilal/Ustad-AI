@@ -118,6 +118,16 @@ const jobSchema = new Schema(
       ai_work_confirmation: { type: String, default: null },
       customer_confirmed: { type: Boolean, default: false },
     },
+    tracking: {
+      customer_location: {
+        type: {
+          type: String,
+          enum: ["Point"],
+        },
+        coordinates: { type: [Number] },
+      },
+      customer_location_updated_at: { type: Date, default: null },
+    },
     route: {
       polyline: { type: [[Number]], default: null },
       distance_meters: { type: Number, default: null },

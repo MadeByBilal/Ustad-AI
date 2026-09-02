@@ -11,7 +11,7 @@ declare const jobEventSchema: mongoose.Schema<any, mongoose.Model<any, any, any,
     from_state: string;
     to_state: string;
     actor_id: string;
-    actor_type: "system" | "customer" | "worker";
+    actor_type: "customer" | "worker" | "system";
     metadata: any;
 }, mongoose.Document<unknown, {}, mongoose.FlatRecord<{
     [x: string]: NativeDate;
@@ -19,7 +19,7 @@ declare const jobEventSchema: mongoose.Schema<any, mongoose.Model<any, any, any,
     from_state: string;
     to_state: string;
     actor_id: string;
-    actor_type: "system" | "customer" | "worker";
+    actor_type: "customer" | "worker" | "system";
     metadata: any;
 }>, {}, mongoose.MergeType<mongoose.DefaultSchemaOptions, {
     timestamps: {
@@ -32,7 +32,7 @@ declare const jobEventSchema: mongoose.Schema<any, mongoose.Model<any, any, any,
     from_state: string;
     to_state: string;
     actor_id: string;
-    actor_type: "system" | "customer" | "worker";
+    actor_type: "customer" | "worker" | "system";
     metadata: any;
 }> & {
     _id: mongoose.Types.ObjectId;
@@ -46,7 +46,7 @@ export declare const JobEvent: mongoose.Model<{
     from_state: string;
     to_state: string;
     actor_id: string;
-    actor_type: "system" | "customer" | "worker";
+    actor_type: "customer" | "worker" | "system";
     metadata: any;
 }, {}, {}, {}, mongoose.Document<unknown, {}, {
     [x: string]: NativeDate;
@@ -54,7 +54,7 @@ export declare const JobEvent: mongoose.Model<{
     from_state: string;
     to_state: string;
     actor_id: string;
-    actor_type: "system" | "customer" | "worker";
+    actor_type: "customer" | "worker" | "system";
     metadata: any;
 }, {}, {}> & {
     [x: string]: NativeDate;
@@ -62,7 +62,7 @@ export declare const JobEvent: mongoose.Model<{
     from_state: string;
     to_state: string;
     actor_id: string;
-    actor_type: "system" | "customer" | "worker";
+    actor_type: "customer" | "worker" | "system";
     metadata: any;
 } & {
     _id: mongoose.Types.ObjectId;

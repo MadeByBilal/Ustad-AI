@@ -12,7 +12,7 @@ declare const messageSchema: mongoose.Schema<any, mongoose.Model<any, any, any, 
     [x: string]: NativeDate;
     job_id: mongoose.Types.ObjectId;
     sender_id: any;
-    sender_type: "system" | "customer" | "worker";
+    sender_type: "customer" | "worker" | "system";
     content: string;
     media_ids: string[];
     location?: {
@@ -23,7 +23,7 @@ declare const messageSchema: mongoose.Schema<any, mongoose.Model<any, any, any, 
     [x: string]: NativeDate;
     job_id: mongoose.Types.ObjectId;
     sender_id: any;
-    sender_type: "system" | "customer" | "worker";
+    sender_type: "customer" | "worker" | "system";
     content: string;
     media_ids: string[];
     location?: {
@@ -39,7 +39,7 @@ declare const messageSchema: mongoose.Schema<any, mongoose.Model<any, any, any, 
     [x: string]: NativeDate;
     job_id: mongoose.Types.ObjectId;
     sender_id: any;
-    sender_type: "system" | "customer" | "worker";
+    sender_type: "customer" | "worker" | "system";
     content: string;
     media_ids: string[];
     location?: {
@@ -56,7 +56,7 @@ export declare const Message: mongoose.Model<{
     [x: string]: NativeDate;
     job_id: mongoose.Types.ObjectId;
     sender_id: any;
-    sender_type: "system" | "customer" | "worker";
+    sender_type: "customer" | "worker" | "system";
     content: string;
     media_ids: string[];
     location?: {
@@ -67,7 +67,7 @@ export declare const Message: mongoose.Model<{
     [x: string]: NativeDate;
     job_id: mongoose.Types.ObjectId;
     sender_id: any;
-    sender_type: "system" | "customer" | "worker";
+    sender_type: "customer" | "worker" | "system";
     content: string;
     media_ids: string[];
     location?: {
@@ -78,7 +78,7 @@ export declare const Message: mongoose.Model<{
     [x: string]: NativeDate;
     job_id: mongoose.Types.ObjectId;
     sender_id: any;
-    sender_type: "system" | "customer" | "worker";
+    sender_type: "customer" | "worker" | "system";
     content: string;
     media_ids: string[];
     location?: {

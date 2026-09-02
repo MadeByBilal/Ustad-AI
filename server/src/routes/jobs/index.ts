@@ -6,6 +6,7 @@ import { requireRole } from "../../lib/auth-middleware.js";
 import { FlowError, createAndAnalyzeJob, reanalyzeJob } from "../../lib/job/flow.js";
 import { getJobDetail } from "../../lib/job/detail.js";
 import { Job, Worker, URGENCY_LEVELS, WORKER_CATEGORIES } from "../../models/index.js";
+import { jobIdRoutes } from "./[id].js";
 
 const router = Router();
 
@@ -115,5 +116,7 @@ router.post("/", requireRole(["customer"]), async (req: Request, res: Response) 
     return fail(res, "Internal error", 500);
   }
 });
+
+router.use("/", jobIdRoutes);
 
 export { router as jobRoutes };

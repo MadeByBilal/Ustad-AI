@@ -18,6 +18,8 @@ const signupSchema = z.object({
         .object({
         category: z.enum(WORKER_CATEGORIES).default("plumber"),
         skills: z.array(z.string()).default([]),
+        lat: z.number().min(-90).max(90).optional(),
+        lng: z.number().min(-180).max(180).optional(),
     })
         .optional(),
 });
@@ -46,12 +48,37 @@ router.post("/signup", async (req, res) => {
             language: parsed.data.language,
         });
         if (parsed.data.role === "worker" && parsed.data.worker) {
-            await Worker.create({
+            const w = parsed.data.worker;
+            const workerData = {
                 user_id: user._id,
                 name: parsed.data.name,
-                category: parsed.data.worker.category,
-                skills: parsed.data.worker.skills,
-            });
+                category: w.category,
+                skills: w.skills,
+                is_online: true,
+                verified: true,
+            };
+            // If lat/lng provided, set location + 10km service area polygon
+            if (w.lat != null && w.lng != null) {
+                const d = 0.09; // ~10km bounding box
+                workerData.location = {
+                    type: "Point",
+                    coordinates: [w.lng, w.lat],
+                };
+                workerData.location_updated_at = new Date();
+                workerData.service_area = {
+                    type: "Polygon",
+                    coordinates: [
+                        [
+                            [w.lng - d, w.lat - d],
+                            [w.lng + d, w.lat - d],
+                            [w.lng + d, w.lat + d],
+                            [w.lng - d, w.lat + d],
+                            [w.lng - d, w.lat - d],
+                        ],
+                    ],
+                };
+            }
+            await Worker.create(workerData);
         }
         const token = createSessionToken();
         const userAgent = req.headers["user-agent"] ?? "";
@@ -65,10 +92,10 @@ router.post("/signup", async (req, res) => {
         });
         res.cookie(SESSION_COOKIE_NAME, token, {
             httpOnly: true,
-            sameSite: "lax",
-            secure: process.env.NODE_ENV === "production",
+            sameSite: "none",
+            secure: true,
             path: "/",
-            maxAge: SESSION_TTL_DAYS * 24 * 60 * 60,
+            maxAge: SESSION_TTL_DAYS * 24 * 60 * 60 * 1000,
         });
         return ok({
             user: { id: user._id, role: user.role, name: user.name, email: user.email },

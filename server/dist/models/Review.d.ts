@@ -7,16 +7,16 @@ declare const reviewSchema: mongoose.Schema<any, mongoose.Model<any, any, any, a
 }, {
     [x: string]: NativeDate;
     text: string;
-    job_id: mongoose.Types.ObjectId;
     customer_id: mongoose.Types.ObjectId;
+    job_id: mongoose.Types.ObjectId;
     worker_id: mongoose.Types.ObjectId;
     rating: number;
     tags: string[];
 }, mongoose.Document<unknown, {}, mongoose.FlatRecord<{
     [x: string]: NativeDate;
     text: string;
-    job_id: mongoose.Types.ObjectId;
     customer_id: mongoose.Types.ObjectId;
+    job_id: mongoose.Types.ObjectId;
     worker_id: mongoose.Types.ObjectId;
     rating: number;
     tags: string[];
@@ -28,8 +28,8 @@ declare const reviewSchema: mongoose.Schema<any, mongoose.Model<any, any, any, a
 }>> & mongoose.FlatRecord<{
     [x: string]: NativeDate;
     text: string;
-    job_id: mongoose.Types.ObjectId;
     customer_id: mongoose.Types.ObjectId;
+    job_id: mongoose.Types.ObjectId;
     worker_id: mongoose.Types.ObjectId;
     rating: number;
     tags: string[];
@@ -42,24 +42,24 @@ export type ReviewDoc = InferSchemaType<typeof reviewSchema>;
 export declare const Review: mongoose.Model<{
     [x: string]: NativeDate;
     text: string;
-    job_id: mongoose.Types.ObjectId;
     customer_id: mongoose.Types.ObjectId;
+    job_id: mongoose.Types.ObjectId;
     worker_id: mongoose.Types.ObjectId;
     rating: number;
     tags: string[];
 }, {}, {}, {}, mongoose.Document<unknown, {}, {
     [x: string]: NativeDate;
     text: string;
-    job_id: mongoose.Types.ObjectId;
     customer_id: mongoose.Types.ObjectId;
+    job_id: mongoose.Types.ObjectId;
     worker_id: mongoose.Types.ObjectId;
     rating: number;
     tags: string[];
 }, {}, {}> & {
     [x: string]: NativeDate;
     text: string;
-    job_id: mongoose.Types.ObjectId;
     customer_id: mongoose.Types.ObjectId;
+    job_id: mongoose.Types.ObjectId;
     worker_id: mongoose.Types.ObjectId;
     rating: number;
     tags: string[];

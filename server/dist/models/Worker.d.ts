@@ -11,7 +11,6 @@ declare const workerSchema: mongoose.Schema<any, mongoose.Model<any, any, any, a
 }, {
     [x: string]: NativeDate;
     name: string;
-    location_updated_at: NativeDate;
     user_id: mongoose.Types.ObjectId;
     category: "plumber" | "electrician" | "ac_technician" | "carpenter";
     skills: string[];
@@ -21,6 +20,7 @@ declare const workerSchema: mongoose.Schema<any, mongoose.Model<any, any, any, a
     verified: boolean;
     verification_level: "identity_reviewed" | "documents_verified";
     suspended: boolean;
+    location_updated_at: NativeDate;
     ustad_score: number;
     completed_jobs: number;
     confirmed_jobs: number;
@@ -269,7 +269,6 @@ declare const workerSchema: mongoose.Schema<any, mongoose.Model<any, any, any, a
 }, mongoose.Document<unknown, {}, mongoose.FlatRecord<{
     [x: string]: NativeDate;
     name: string;
-    location_updated_at: NativeDate;
     user_id: mongoose.Types.ObjectId;
     category: "plumber" | "electrician" | "ac_technician" | "carpenter";
     skills: string[];
@@ -279,6 +278,7 @@ declare const workerSchema: mongoose.Schema<any, mongoose.Model<any, any, any, a
     verified: boolean;
     verification_level: "identity_reviewed" | "documents_verified";
     suspended: boolean;
+    location_updated_at: NativeDate;
     ustad_score: number;
     completed_jobs: number;
     confirmed_jobs: number;
@@ -532,7 +532,6 @@ declare const workerSchema: mongoose.Schema<any, mongoose.Model<any, any, any, a
 }>> & mongoose.FlatRecord<{
     [x: string]: NativeDate;
     name: string;
-    location_updated_at: NativeDate;
     user_id: mongoose.Types.ObjectId;
     category: "plumber" | "electrician" | "ac_technician" | "carpenter";
     skills: string[];
@@ -542,6 +541,7 @@ declare const workerSchema: mongoose.Schema<any, mongoose.Model<any, any, any, a
     verified: boolean;
     verification_level: "identity_reviewed" | "documents_verified";
     suspended: boolean;
+    location_updated_at: NativeDate;
     ustad_score: number;
     completed_jobs: number;
     confirmed_jobs: number;
@@ -796,7 +796,6 @@ export type WorkerDoc = InferSchemaType<typeof workerSchema>;
 export declare const Worker: mongoose.Model<{
     [x: string]: NativeDate;
     name: string;
-    location_updated_at: NativeDate;
     user_id: mongoose.Types.ObjectId;
     category: "plumber" | "electrician" | "ac_technician" | "carpenter";
     skills: string[];
@@ -806,6 +805,7 @@ export declare const Worker: mongoose.Model<{
     verified: boolean;
     verification_level: "identity_reviewed" | "documents_verified";
     suspended: boolean;
+    location_updated_at: NativeDate;
     ustad_score: number;
     completed_jobs: number;
     confirmed_jobs: number;
@@ -1054,7 +1054,6 @@ export declare const Worker: mongoose.Model<{
 }, {}, {}, {}, mongoose.Document<unknown, {}, {
     [x: string]: NativeDate;
     name: string;
-    location_updated_at: NativeDate;
     user_id: mongoose.Types.ObjectId;
     category: "plumber" | "electrician" | "ac_technician" | "carpenter";
     skills: string[];
@@ -1064,6 +1063,7 @@ export declare const Worker: mongoose.Model<{
     verified: boolean;
     verification_level: "identity_reviewed" | "documents_verified";
     suspended: boolean;
+    location_updated_at: NativeDate;
     ustad_score: number;
     completed_jobs: number;
     confirmed_jobs: number;
@@ -1312,7 +1312,6 @@ export declare const Worker: mongoose.Model<{
 }, {}, {}> & {
     [x: string]: NativeDate;
     name: string;
-    location_updated_at: NativeDate;
     user_id: mongoose.Types.ObjectId;
     category: "plumber" | "electrician" | "ac_technician" | "carpenter";
     skills: string[];
@@ -1322,6 +1321,7 @@ export declare const Worker: mongoose.Model<{
     verified: boolean;
     verification_level: "identity_reviewed" | "documents_verified";
     suspended: boolean;
+    location_updated_at: NativeDate;
     ustad_score: number;
     completed_jobs: number;
     confirmed_jobs: number;
