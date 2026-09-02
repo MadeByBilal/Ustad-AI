@@ -65,7 +65,7 @@ export interface BroadcastResult {
   acceptance_deadline: Date;
 }
 
-async function recordEvent(
+export async function recordEvent(
   jobId: unknown,
   from_state: JobStatus,
   to_state: JobStatus,

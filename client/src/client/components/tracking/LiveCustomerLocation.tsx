@@ -44,7 +44,7 @@ export default function LiveCustomerLocation({
     async (location: { lat: number; lng: number }) => {
       if (!activeRef.current) return;
       try {
-        const res = await fetch("/api/workers/me/location", {
+        const res = await fetch(`/api/jobs/${jobId}/customer-location`, {
           method: "PATCH",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify(location),
@@ -57,7 +57,7 @@ export default function LiveCustomerLocation({
         if (activeRef.current) setError("Live location is unavailable");
       }
     },
-    [],
+    [jobId],
   );
 
   const startHttpFallback = useCallback(() => {
@@ -137,6 +137,7 @@ export default function LiveCustomerLocation({
         clearTimeout(timerRef.current);
         timerRef.current = null;
       }
+      console.log("[LiveCustomerLocation] sending location:", location.lat, location.lng);
       onLocationUpdateRef.current?.(location);
 
       // Always keep the latest location for the HTTP fallback.
@@ -196,14 +197,17 @@ export default function LiveCustomerLocation({
 
     setError(null);
     setSharing(true);
+    console.log("[LiveCustomerLocation] starting GPS watch for job:", jobId);
     const watchId = navigator.geolocation.watchPosition(
       (position) => {
+        console.log("[LiveCustomerLocation] GPS position received:", position.coords.latitude, position.coords.longitude);
         publish({
           lat: position.coords.latitude,
           lng: position.coords.longitude,
         });
       },
-      () => {
+      (err) => {
+        console.error("[LiveCustomerLocation] GPS error:", err.code, err.message);
         if (activeRef.current) {
           setSharing(false);
           setError("Allow location access to share your live position");

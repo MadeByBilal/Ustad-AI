@@ -5,6 +5,8 @@ import { useRouter } from "next/navigation";
 import BottomNav from "@/client/components/BottomNav";
 import DesktopNav from "@/client/components/DesktopNav";
 
+const TRACKING_STATUSES = new Set(["ACCEPTED", "EN_ROUTE", "ARRIVED", "IN_PROGRESS", "AWAITING_CUSTOMER_CONFIRMATION"]);
+
 export default function DashboardLayout({
   children,
 }: {
@@ -31,6 +33,63 @@ export default function DashboardLayout({
         router.push("/login");
       });
   }, [router]);
+
+  // Socket-based instant redirect: when worker accepts, redirect from ANY page
+  useEffect(() => {
+    if (role !== "customer") return;
+
+    let mounted = true;
+    let cleanup: (() => void) | null = null;
+
+    async function setup() {
+      try {
+        // Find the active job — include BROADCASTING so we join early
+        const listRes = await fetch("/api/requests/list", { cache: "no-store" });
+        const listBody = await listRes.json().catch(() => null);
+        if (!listBody?.success || !mounted) return;
+
+        const active = (listBody.data?.requests ?? []).find((r: { status: string; job_id: string }) =>
+          ["BROADCASTING", "WORKER_RESPONSES", "CUSTOMER_SELECTING", "ACCEPTED", "EN_ROUTE", "ARRIVED", "IN_PROGRESS", "AWAITING_CUSTOMER_CONFIRMATION"].includes(r.status)
+        );
+        if (!active || !mounted) return;
+
+        const jobId = active.job_id;
+
+        // If already in a tracking status, redirect immediately
+        if (TRACKING_STATUSES.has(active.status)) {
+          window.location.href = `/dashboard/customer/track/${jobId}`;
+          return;
+        }
+
+        // Join the socket room for BROADCASTING/WORKER_RESPONSES/CUSTOMER_SELECTING jobs
+        const { joinJob } = await import("@/client/lib/socket-client");
+        if (!mounted) return;
+        const socket = await joinJob(jobId, "customer");
+
+        const handleStatusUpdate = (data: { jobId?: string; status?: string }) => {
+          if (!mounted) return;
+          if (data.jobId && data.jobId !== jobId) return;
+          if (data.status && TRACKING_STATUSES.has(data.status)) {
+            window.location.href = `/dashboard/customer/track/${jobId}`;
+          }
+        };
+
+        socket.on("job-status-update", handleStatusUpdate);
+        cleanup = () => {
+          socket.emit("leave-job", { jobId });
+          socket.off("job-status-update", handleStatusUpdate);
+        };
+      } catch {
+        // ignore — socket not available
+      }
+    }
+
+    void setup();
+    return () => {
+      mounted = false;
+      cleanup?.();
+    };
+  }, [role]);
 
   if (!loaded || !role) {
     return (

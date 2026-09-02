@@ -813,6 +813,63 @@ router.get("/:id/tracking", requireRole(["customer", "worker"]), async (req: Req
 });
 
 /**
+ * PATCH /:id/customer-location — customer updates their live location during tracking.
+ */
+router.patch("/:id/customer-location", requireRole(["customer"]), async (req: Request, res: Response) => {
+  const sessionUser = res.locals.sessionUser;
+  const jobId = String(req.params.id).trim();
+  if (!jobId) {
+    return fail(res, "Job id is required", 400);
+  }
+
+  const locationSchema = z.object({
+    lat: z.number().min(-90).max(90),
+    lng: z.number().min(-180).max(180),
+  });
+  const parsed = locationSchema.safeParse(req.body ?? {});
+  if (!parsed.success) {
+    return fail(res, "Invalid location", 400, parsed.error.flatten().fieldErrors);
+  }
+
+  try {
+    await connectDB();
+    const job = await Job.findOne({ _id: jobId, customer_id: sessionUser.user._id }).lean();
+    if (!job) {
+      return fail(res, "Job not found", 404);
+    }
+
+    await Job.updateOne(
+      { _id: jobId },
+      {
+        $set: {
+          "tracking.customer_location": {
+            type: "Point",
+            coordinates: [parsed.data.lng, parsed.data.lat],
+          },
+          "tracking.customer_location_updated_at": new Date(),
+        },
+      },
+    );
+
+    // Broadcast to the room so the worker sees it
+    const { getIO } = await import("../../lib/socket.js");
+    const io = getIO();
+    if (io) {
+      io.to(`job:${jobId}`).emit("customer-location-update", {
+        jobId,
+        lat: parsed.data.lat,
+        lng: parsed.data.lng,
+      });
+    }
+
+    return ok({ lat: parsed.data.lat, lng: parsed.data.lng })(res);
+  } catch (e) {
+    console.error("[jobs/:id/customer-location] error:", e);
+    return fail(res, "Internal error", 500);
+  }
+});
+
+/**
  * GET /:id/stream — Server-sent events for a job.
  * Returns a ReadableStream with SSE headers for real-time updates.
  */

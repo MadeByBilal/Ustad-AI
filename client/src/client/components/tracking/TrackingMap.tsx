@@ -328,6 +328,7 @@ export default function TrackingMap({
 
     // ── Customer location marker — green pin ──
     if (hasUser) {
+      console.log("[TrackingMap] rendering customer pin at:", userLocation!.lat, userLocation!.lng);
       const customerIcon = getCustomerIcon(leaflet);
       if (customerMarkerRef.current) {
         customerMarkerRef.current.setLatLng([userLocation!.lat, userLocation!.lng]);

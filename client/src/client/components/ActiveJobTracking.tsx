@@ -223,6 +223,7 @@ export default function ActiveJobTracking() {
           lat?: number;
           lng?: number;
         }) => {
+          console.log("[ActiveJobTracking] customer-location-update received:", data);
           if (
             mounted &&
             data.jobId === jobId &&

@@ -1,6 +1,7 @@
 import { randomUUID } from "node:crypto";
 import { connectDB } from "../mongodb.js";
 import { validateCustomerOffer, validateWorkerCounter } from "./offers.js";
+import { recordEvent } from "./flow.js";
 import { Job, JobEvent, Message, Offer, Worker, SYSTEM_SENDER_ID, type UrgencyLevel } from "../../models/index.js";
 
 export class RequestError extends Error {
@@ -310,13 +311,9 @@ export async function respondToDirectRequest(
 
   await Offer.findByIdAndUpdate(offerId, { $set: { status: "selected", expires_at: null } });
 
-  await JobEvent.create({
-    job_id: job._id,
-    from_state: "BROADCASTING",
-    to_state: "ACCEPTED",
-    actor_id: String(worker._id),
-    actor_type: "worker",
-    metadata: { final_price: finalPrice, direct_request: true },
+  await recordEvent(job._id, "BROADCASTING", "ACCEPTED", String(worker._id), "worker", {
+    final_price: finalPrice,
+    direct_request: true,
   });
   await Message.create({
     job_id: job._id,
@@ -421,13 +418,9 @@ export async function respondToCounter(
 
   await Offer.findByIdAndUpdate(offerId, { $set: { status: "selected", expires_at: null } });
 
-  await JobEvent.create({
-    job_id: job._id,
-    from_state: "BROADCASTING",
-    to_state: "ACCEPTED",
-    actor_id: customerId,
-    actor_type: "customer",
-    metadata: { final_price: counterPrice, accepted_counter: true },
+  await recordEvent(job._id, "BROADCASTING", "ACCEPTED", customerId, "customer", {
+    final_price: counterPrice,
+    accepted_counter: true,
   });
   await Message.create({
     job_id: job._id,
