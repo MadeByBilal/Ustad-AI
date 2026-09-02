@@ -284,17 +284,11 @@ export default function WorkerActiveTracking({
     };
   }, [activeJobId, workerId]);
 
-  // Advance job status — for "Start work" (ARRIVED→IN_PROGRESS), navigate to chat page
+  // Advance job status
   async function handleAdvance() {
     if (!job) return;
     const next = NEXT_ACTIONS[job.status];
     if (!next) return;
-
-    // When starting work or completing, go to work page where photos + complete live
-    if (job.status === "ARRIVED" || job.status === "IN_PROGRESS") {
-      window.location.href = `/dashboard/worker/work`;
-      return;
-    }
 
     setAdvancing(true);
     setMessage(null);
@@ -308,7 +302,17 @@ export default function WorkerActiveTracking({
       if (!res.ok || !body?.success) {
         throw new Error(getApiErrorMessage(body, "Status update failed"));
       }
-      setMessage({ ok: true, text: `${next.label} — done` });
+
+      // Navigate based on the new status
+      if (next.to === "ARRIVED") {
+        window.location.href = `/dashboard/worker/inspection?jobId=${job.job_id}`;
+        return;
+      }
+      if (next.to === "IN_PROGRESS" || next.to === "AWAITING_CUSTOMER_CONFIRMATION") {
+        window.location.href = `/dashboard/worker/work`;
+        return;
+      }
+
       setJob((prev) => (prev ? { ...prev, status: next.to } : prev));
       void refresh();
     } catch (e) {
@@ -514,12 +518,6 @@ export default function WorkerActiveTracking({
                 Chat
               </Link>
             )}
-            <Link
-              href="/dashboard/worker/work"
-              className="btn-secondary flex-1 text-center"
-            >
-              Work
-            </Link>
           </div>
 
           <motion.button

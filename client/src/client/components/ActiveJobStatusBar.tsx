@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useState, useRef } from "react";
 import Link from "next/link";
 import { useLang } from "@/client/lib/i18n/context";
 import {
@@ -38,10 +38,13 @@ const STATUS_CONFIG: Record<
   AWAITING_CUSTOMER_CONFIRMATION: { label: "needsApproval", color: "bg-warning", Icon: Clock, ping: true },
 };
 
+const TRACKING_STATUSES = new Set(["ACCEPTED", "EN_ROUTE", "ARRIVED", "IN_PROGRESS", "AWAITING_CUSTOMER_CONFIRMATION"]);
+
 export default function ActiveJobStatusBar() {
   const { t } = useLang();
   const [job, setJob] = useState<ActiveJob | null>(null);
   const [loading, setLoading] = useState(true);
+  const prevStatusRef = useRef<string | null>(null);
 
   const refresh = useCallback(async () => {
     try {
@@ -54,14 +57,25 @@ export default function ActiveJobStatusBar() {
       );
 
       if (active) {
+        const newStatus = active.status;
+        const prevStatus = prevStatusRef.current;
+
+        // Auto-redirect to tracking when worker accepts or status changes to tracking
+        if (prevStatus && prevStatus !== newStatus && TRACKING_STATUSES.has(newStatus)) {
+          window.location.href = `/dashboard/customer/track/${active.job_id}`;
+          return;
+        }
+
+        prevStatusRef.current = newStatus;
         setJob({
           job_id: active.job_id,
-          status: active.status,
+          status: newStatus,
           category: active.category,
           original_text: active.original_text,
           worker_name: active.worker_name ?? t("worker"),
         });
       } else {
+        prevStatusRef.current = null;
         setJob(null);
       }
     } catch {
@@ -91,8 +105,9 @@ export default function ActiveJobStatusBar() {
   const isApproval = job.status === "AWAITING_CUSTOMER_CONFIRMATION";
 
   let href = "/dashboard/customer/jobs";
-  if (isTracking) href = "/dashboard/customer/active";
-  if (isApproval) href = "/dashboard/customer/active";
+  if (isTracking) href = `/dashboard/customer/track/${job.job_id}`;
+  if (isApproval) href = `/dashboard/customer/track/${job.job_id}`;
+  if (job.status === "ACCEPTED") href = `/dashboard/customer/track/${job.job_id}`;
 
   return (
     <Link href={href} className="block">

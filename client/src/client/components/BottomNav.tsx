@@ -25,7 +25,6 @@ export default function BottomNav({ role }: { role: "customer" | "worker" }) {
 
   const customerNav: NavItem[] = [
     { href: "/dashboard/customer", label: t("home"), icon: Home },
-    { href: "/dashboard/customer/jobs", label: t("myJobs"), icon: Briefcase },
     { href: "/dashboard/customer/active", label: t("track"), icon: MapPin },
     { href: "/dashboard/customer/profile", label: t("profile"), icon: User },
   ];

@@ -1,10 +1,11 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import Link from "next/link";
 import { motion } from "framer-motion";
 import { useLang } from "@/client/lib/i18n/context";
 import LogoutButton from "@/client/components/LogoutButton";
-import { User, Mail, Phone, Star, ShieldCheck, AlertCircle } from "lucide-react";
+import { User, Mail, Phone, Star, ShieldCheck, AlertCircle, ClipboardList } from "lucide-react";
 
 interface UserProfile {
   name: string;
@@ -144,6 +145,26 @@ export default function CustomerProfilePage() {
           <span className="capitalize">{user.role}</span>
         </div>
       </motion.div>
+
+      {/* History */}
+      <Link href="/dashboard/customer/jobs" className="block">
+        <motion.div
+          className="card flex items-center gap-3 transition-colors hover:bg-surface/80"
+          whileHover={{ y: -2 }}
+          transition={{ duration: 0.2, ease: "easeOut" }}
+        >
+          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-accent/15">
+            <ClipboardList className="h-5 w-5 text-accent" />
+          </div>
+          <div className="min-w-0 flex-1">
+            <p className="text-sm font-bold text-text">Job History</p>
+            <p className="text-xs text-muted">View all your past and active jobs</p>
+          </div>
+          <svg className="h-5 w-5 shrink-0 text-muted" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" d="M8.25 4.5l7.5 7.5-7.5 7.5" />
+          </svg>
+        </motion.div>
+      </Link>
 
       {/* Logout */}
       <div className="pt-2">
