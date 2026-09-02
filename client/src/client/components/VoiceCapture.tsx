@@ -182,25 +182,30 @@ function WorkerCard({
       }}
       className={
         highlight
-          ? "rounded-xl border-2 border-accent bg-surface p-4"
-          : "rounded-xl border border-divider bg-surface p-4"
+          ? "rounded-2xl p-4"
+          : "rounded-2xl p-4"
       }
+      style={{
+        background: "rgba(255,255,255,0.05)",
+        border: highlight ? "1px solid rgba(38,166,80,0.5)" : "1px solid rgba(255,255,255,0.12)",
+        boxShadow: highlight ? "0 8px 24px rgba(38,166,80,0.1)" : "0 4px 12px rgba(0,0,0,0.15)",
+      }}
     >
       {highlight && (
-        <span className="badge mb-2 bg-accent text-bg">
+        <span className="badge mb-2" style={{ background: "#26A650", color: "#08240F" }}>
           Best match
         </span>
       )}
       <div className="flex items-center justify-between gap-3">
         <div>
-          <p className="font-semibold text-text">{worker.name}</p>
-          <p className="text-xs text-muted">
-            {CATEGORY_LABELS[worker.category] ?? worker.category} · <Star className="h-3.5 w-3.5 text-warning inline" />{" "}
+          <p className="font-semibold text-[#F1F4F1]">{worker.name}</p>
+          <p className="text-xs text-[#93A396]">
+            {CATEGORY_LABELS[worker.category] ?? worker.category} · <Star className="h-3.5 w-3.5 inline" style={{ color: "#D4A24C" }} />{" "}
             <span className="font-mono">{worker.average_rating.toFixed(1)}</span> · {worker.completed_jobs} jobs ·{" "}
             {worker.verified ? "verified" : "unverified"}
           </p>
         </div>
-        <span className="shrink-0 rounded-lg bg-accent px-2 py-1 text-xs font-bold text-bg">
+        <span className="shrink-0 rounded-lg px-2 py-1 text-xs font-bold" style={{ background: "#26A650", color: "#08240F" }}>
           {worker.ustad_score}
         </span>
       </div>
@@ -209,7 +214,8 @@ function WorkerCard({
           {worker.skills.slice(0, 4).map((s) => (
             <span
               key={s}
-              className="rounded-md bg-surface px-2 py-0.5 text-xs text-muted"
+              className="rounded-lg px-2 py-0.5 text-xs text-[#93A396]"
+              style={{ background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.12)" }}
             >
               {s}
             </span>
@@ -217,19 +223,19 @@ function WorkerCard({
         </div>
       )}
       {(worker.distance_km != null || worker.predicted_price != null) && (
-        <div className="mt-2 flex flex-wrap gap-2 text-xs text-muted">
+        <div className="mt-2 flex flex-wrap gap-2 text-xs text-[#93A396]">
           {worker.distance_km != null && (
-            <span className="font-mono rounded-md bg-surface px-2 py-0.5">
+            <span className="font-mono rounded-lg px-2 py-0.5" style={{ background: "rgba(255,255,255,0.05)" }}>
               {worker.distance_km.toFixed(1)} km away
             </span>
           )}
           {worker.predicted_price != null && (
-            <span className="font-mono rounded-md bg-warning/10 px-2 py-0.5 text-warning">
+            <span className="font-mono rounded-lg px-2 py-0.5" style={{ background: "rgba(212,162,74,0.16)", color: "#D4A24C" }}>
               Est. PKR {worker.predicted_price.toLocaleString("en-PK")}
             </span>
           )}
           {worker.travel_cost_pkr != null && worker.travel_cost_pkr > 0 && (
-            <span className="font-mono rounded-md bg-surface px-2 py-0.5">
+            <span className="font-mono rounded-lg px-2 py-0.5" style={{ background: "rgba(255,255,255,0.05)" }}>
               Travel PKR {worker.travel_cost_pkr.toLocaleString("en-PK")}
             </span>
           )}
@@ -265,22 +271,22 @@ function ResultPanel({ data, location }: { data: UnderstandResponse; location?: 
       transition={{ duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
       className="space-y-3"
     >
-      <div className="rounded-xl border border-divider bg-surface p-4 text-left">
+      <div className="rounded-2xl p-4 text-left" style={{ background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.12)" }}>
         <div className="flex flex-wrap items-center gap-x-3 gap-y-2 text-sm">
-          <span className="font-semibold text-text">
+          <span className="font-semibold text-[#F1F4F1]">
             {u.category ? CATEGORY_LABELS[u.category] ?? u.category : "Not sure yet"}
           </span>
-          <span className="rounded-md bg-surface px-2 py-0.5 text-xs text-muted">
+          <span className="rounded-lg px-2 py-0.5 text-xs text-[#93A396]" style={{ background: "rgba(255,255,255,0.05)" }}>
             {URGENCY_LABELS[u.urgency] ?? u.urgency}
           </span>
           {u.confidence > 0 && (
-            <span className="text-xs text-muted">
+            <span className="text-xs text-[#93A396]">
               {Math.round(u.confidence * 100)}% confident
             </span>
           )}
         </div>
         {u.description && (
-          <p className="mt-2 text-sm text-text">
+          <p className="mt-2 text-sm text-[#F1F4F1]">
             &ldquo;{u.description}&rdquo;
           </p>
         )}
@@ -289,7 +295,8 @@ function ResultPanel({ data, location }: { data: UnderstandResponse; location?: 
             {u.required_skills.map((s) => (
               <span
                 key={s}
-                className="rounded-md bg-bg px-2 py-0.5 text-xs text-muted"
+                className="rounded-lg px-2 py-0.5 text-xs text-[#93A396]"
+                style={{ background: "rgba(255,255,255,0.05)" }}
               >
                 {s}
               </span>
@@ -297,7 +304,7 @@ function ResultPanel({ data, location }: { data: UnderstandResponse; location?: 
           </div>
         )}
         {u.safety_flags.length > 0 && (
-          <p className="mt-2 text-xs font-semibold text-warning">
+          <p className="mt-2 text-xs font-semibold" style={{ color: "#E0A461" }}>
             <AlertTriangle className="h-3.5 w-3.5 inline" /> {u.safety_flags.join(", ")}
           </p>
         )}
@@ -308,32 +315,33 @@ function ResultPanel({ data, location }: { data: UnderstandResponse; location?: 
           initial={{ opacity: 0, y: 15 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.4, ease: [0.22, 1, 0.36, 1], delay: 0.1 }}
-          className="flex items-start gap-3 rounded-xl border border-accent/20 bg-accent/5 p-3 text-left"
+          className="flex items-start gap-3 rounded-2xl p-3 text-left"
+          style={{ background: "rgba(38,166,80,0.08)", border: "1px solid rgba(38,166,80,0.2)" }}
         >
-          <Mic className="mt-0.5 h-4 w-4 shrink-0 text-accent" />
+          <Mic className="mt-0.5 h-4 w-4 shrink-0" style={{ color: "#26A650" }} />
           <div className="min-w-0">
-            <p className="text-[10px] font-semibold uppercase tracking-wide text-accent">You said</p>
-            <p className="mt-0.5 text-xs leading-relaxed text-text">{data.transcript}</p>
+            <p className="text-[10px] font-semibold uppercase tracking-wide" style={{ color: "#26A650" }}>You said</p>
+            <p className="mt-0.5 text-xs leading-relaxed text-[#F1F4F1]">{data.transcript}</p>
           </div>
         </motion.div>
       )}
 
       {u.category && (
-        <div className="rounded-xl border-l-4 border-warning bg-warning/10 p-4 text-left">
-          <p className="text-xs font-semibold uppercase tracking-wide text-warning">
+        <div className="rounded-2xl p-4 text-left" style={{ background: "rgba(212,162,74,0.1)", border: "1px solid rgba(212,162,74,0.3)", borderLeft: "4px solid #D4A24C" }}>
+          <p className="text-xs font-semibold uppercase tracking-wide" style={{ color: "#D4A24C" }}>
             Price — set automatically
           </p>
-          <p className="text-2xl font-bold text-text">
+          <p className="mt-1 text-2xl font-bold text-[#F1F4F1]">
             {currency(u.inspection_fee)} visit fee · then{" "}
             {u.estimate_min > 0
               ? `${currency(u.estimate_min)} – ${currency(u.estimate_max)}`
               : "after checking"}
           </p>
-          <p className="text-xs text-warning/80">
+          <p className="mt-1 text-xs" style={{ color: "rgba(212,162,74,0.8)" }}>
             آپ پہلے صرف معائنہ فیس دیتے ہیں — اصل مرمت کی قیمت اُستاد کے معائنے کے بعد طے ہوگی۔
           </p>
           {u.complexity && (
-            <p className="mt-1 text-xs text-warning/80">
+            <p className="mt-1 text-xs" style={{ color: "rgba(212,162,74,0.8)" }}>
               Complexity: {u.complexity}
             </p>
           )}
@@ -341,8 +349,8 @@ function ResultPanel({ data, location }: { data: UnderstandResponse; location?: 
       )}
 
       {submittedJobId && (
-        <div className="rounded-xl border border-success/40 bg-success p-4 text-center">
-          <p className="text-sm font-semibold text-success-fg">
+        <div className="rounded-2xl p-4 text-center" style={{ background: "rgba(38,166,80,0.15)", border: "1px solid rgba(38,166,80,0.4)" }}>
+          <p className="text-sm font-semibold" style={{ color: "#26A650" }}>
             Request sent! Waiting for the technician to respond.
           </p>
         </div>
@@ -356,14 +364,15 @@ function ResultPanel({ data, location }: { data: UnderstandResponse; location?: 
           ))}
         </div>
       ) : (
-        <p className="rounded-xl border border-divider bg-surface p-4 text-sm text-muted">
+        <p className="rounded-2xl p-4 text-sm text-[#93A396]" style={{ background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.12)" }}>
           No ustads available right now — try again later.
         </p>
       )}
 
       <Link
         href={ctaHref}
-        className="btn-primary block w-full !rounded-xl !py-2.5 text-center text-sm"
+        className="block w-full rounded-xl py-2.5 text-center text-sm font-bold transition-all duration-200"
+        style={{ background: "#26A650", color: "#08240F", boxShadow: "0 4px 16px rgba(38,166,80,0.3)" }}
       >
         Set price &amp; find workers
       </Link>
@@ -918,7 +927,6 @@ export default function VoiceCapture({ variant = "landing", onStatusChange }: Vo
             onPointerDown={handleMicPointerDown}
             onLostPointerCapture={handleMicLostPointerCapture}
             onContextMenu={(e) => e.preventDefault()}
-            style={{ touchAction: "none" }}
             animate={{
               scale: recording && !reduceMotion ? 1 + micLevel * 0.08 : 1,
             }}
@@ -928,11 +936,20 @@ export default function VoiceCapture({ variant = "landing", onStatusChange }: Vo
             }}
             className={`mic-btn relative flex h-28 w-28 items-center justify-center overflow-visible rounded-full text-5xl select-none disabled:cursor-not-allowed disabled:opacity-70 ${
               recording
-                ? "bg-warning text-bg shadow-lg shadow-warning/40"
+                ? "text-[#08240F]"
                 : status === "processing"
-                  ? "bg-accent/60 text-bg shadow-lg shadow-accent/20"
-                  : "bg-accent text-bg shadow-xl shadow-accent/30 hover:bg-accent/90"
+                  ? "text-[#08240F]"
+                  : "text-[#08240F]"
             }`}
+            style={{
+              touchAction: "none",
+              background: recording ? "#E0A461" : status === "processing" ? "rgba(38,166,80,0.6)" : "#26A650",
+              boxShadow: recording
+                ? "0 8px 32px rgba(224,164,97,0.4)"
+                : status === "processing"
+                  ? "0 8px 32px rgba(38,166,80,0.2)"
+                  : "0 8px 32px rgba(38,166,80,0.3)",
+            }}
           >
             <motion.span
               aria-hidden="true"
@@ -956,7 +973,7 @@ export default function VoiceCapture({ variant = "landing", onStatusChange }: Vo
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: -20 }}
               transition={{ duration: 0.3 }}
-              className="mt-4 text-sm font-medium text-muted"
+              className="mt-4 text-sm font-medium text-[#93A396]"
               aria-live="polite"
             >
               {starting ? "Starting recording…" : "Hold to speak"}
@@ -991,14 +1008,15 @@ export default function VoiceCapture({ variant = "landing", onStatusChange }: Vo
       {/* Location failure */}
       {locationFailure && status === "done" && (
         <div
-          className="mt-4 w-full space-y-2 rounded-xl border border-warning/40 bg-warning/10 p-3 text-left"
+          className="mt-4 w-full space-y-2 rounded-2xl p-3 text-left"
+          style={{ background: "rgba(224,164,97,0.1)", border: "1px solid rgba(224,164,97,0.3)" }}
           role="status"
           aria-live="polite"
         >
-          <p className="text-xs font-semibold text-warning">
+          <p className="text-xs font-semibold" style={{ color: "#E0A461" }}>
             Location unavailable. These matches are not distance-aware.
           </p>
-          <p className="text-xs text-warning/80">
+          <p className="text-xs" style={{ color: "rgba(224,164,97,0.8)" }}>
             {locationFailureMessage(locationFailure)}
           </p>
         </div>
@@ -1019,7 +1037,8 @@ export default function VoiceCapture({ variant = "landing", onStatusChange }: Vo
               {[0, 1, 2].map((i) => (
                 <motion.span
                   key={i}
-                  className="h-2 w-2 rounded-full bg-accent"
+                  className="h-2 w-2 rounded-full"
+                  style={{ background: "#26A650" }}
                   animate={{ y: [0, -8, 0] }}
                   transition={{
                     duration: 0.6,
@@ -1057,9 +1076,10 @@ export default function VoiceCapture({ variant = "landing", onStatusChange }: Vo
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: -20, scale: 0.97 }}
             transition={{ type: "spring", stiffness: 280, damping: 22 }}
-            className="mt-6 w-full space-y-2 rounded-xl border border-warning bg-warning/10 p-4 text-left"
+            className="mt-6 w-full space-y-2 rounded-2xl p-4 text-left"
+            style={{ background: "rgba(212,162,74,0.1)", border: "1px solid rgba(212,162,74,0.3)" }}
           >
-            <p className="text-sm font-medium text-text">
+            <p className="text-sm font-medium text-[#F1F4F1]">
               {result.clarification_question}
             </p>
             {result.clarification_options && result.clarification_options.length > 0 && (
@@ -1067,7 +1087,8 @@ export default function VoiceCapture({ variant = "landing", onStatusChange }: Vo
                 {result.clarification_options.map((option) => (
                   <label
                     key={option}
-                    className="flex cursor-pointer items-center gap-2 rounded-lg border border-warning/40 bg-surface px-3 py-2 text-sm text-text"
+                    className="flex cursor-pointer items-center gap-2 rounded-xl px-3 py-2 text-sm text-[#F1F4F1]"
+                    style={{ background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.12)" }}
                   >
                     <input
                       type="checkbox"
@@ -1079,7 +1100,7 @@ export default function VoiceCapture({ variant = "landing", onStatusChange }: Vo
                             : current.filter((selected) => selected !== option)
                         );
                       }}
-                      className="h-4 w-4 accent-accent"
+                      className="h-4 w-4 accent-[#26A650]"
                     />
                     {option}
                   </label>
@@ -1091,9 +1112,10 @@ export default function VoiceCapture({ variant = "landing", onStatusChange }: Vo
               value={clarificationAnswer}
               onChange={(e) => setClarificationAnswer(e.target.value)}
               placeholder="Your answer, e.g. bijli ka masla hai"
-              className="w-full rounded-lg border border-divider bg-surface px-3 py-2 text-sm text-text outline-none focus:border-accent"
+              className="w-full rounded-xl px-3 py-2 text-sm text-[#F1F4F1] placeholder:text-[#93A396] outline-none transition-all duration-200 focus:ring-2 focus:ring-[#26A650]/30"
+              style={{ background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.12)" }}
             />
-            <motion.button
+            <button
               type="button"
               onClick={() =>
                 void run({
@@ -1103,13 +1125,11 @@ export default function VoiceCapture({ variant = "landing", onStatusChange }: Vo
                 })
               }
               disabled={busy || (!clarificationAnswer.trim() && clarificationSelections.length === 0)}
-              whileTap={{ scale: 0.95 }}
-              whileHover={{ y: -1 }}
-              transition={{ duration: 0.15, ease: "easeOut" }}
-              className="w-full rounded-lg bg-accent py-2 text-sm font-semibold text-bg hover:bg-accent/90 disabled:opacity-50"
+              className="w-full rounded-xl py-2 text-sm font-semibold transition-all duration-200 disabled:opacity-50"
+              style={{ background: "#26A650", color: "#08240F" }}
             >
               Continue
-            </motion.button>
+            </button>
           </motion.div>
         )}
       </AnimatePresence>
@@ -1123,19 +1143,18 @@ export default function VoiceCapture({ variant = "landing", onStatusChange }: Vo
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: -20, scale: 0.97 }}
             transition={{ type: "spring", stiffness: 300, damping: 24 }}
-            className="mt-5 w-full space-y-2 rounded-xl border border-warning/40 bg-warning/10 p-4 text-left"
+            className="mt-5 w-full space-y-2 rounded-2xl p-4 text-left"
+            style={{ background: "rgba(224,164,97,0.1)", border: "1px solid rgba(224,164,97,0.3)" }}
           >
-            <p className="text-sm text-warning">{error}</p>
-            <motion.button
+            <p className="text-sm" style={{ color: "#E0A461" }}>{error}</p>
+            <button
               type="button"
               onClick={reset}
-              whileTap={{ scale: 0.95 }}
-              whileHover={{ y: -1 }}
-              transition={{ duration: 0.15, ease: "easeOut" }}
-              className="rounded-lg bg-warning px-3 py-1.5 text-xs font-semibold text-bg hover:bg-warning/90"
+              className="rounded-xl px-3 py-1.5 text-xs font-semibold transition-all duration-200"
+              style={{ background: "#E0A461", color: "#0B0F0C" }}
             >
               Try again
-            </motion.button>
+            </button>
           </motion.div>
         )}
       </AnimatePresence>
@@ -1160,7 +1179,8 @@ export default function VoiceCapture({ variant = "landing", onStatusChange }: Vo
               transition={{ delay: 0.3 }}
               whileTap={{ scale: 0.95 }}
               whileHover={{ y: -1 }}
-              className="mt-3 w-full rounded-lg border border-divider py-2 text-sm font-semibold text-muted transition hover:bg-surface"
+              className="mt-3 w-full rounded-xl py-2 text-sm font-semibold text-[#93A396] transition-all duration-200 hover:text-[#F1F4F1]"
+              style={{ background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.12)" }}
             >
               New request
             </motion.button>

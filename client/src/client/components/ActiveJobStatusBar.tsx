@@ -27,15 +27,15 @@ interface ActiveJob {
 
 const STATUS_CONFIG: Record<
   string,
-  { label: string; color: string; Icon: LucideIcon; ping: boolean }
+  { label: string; Icon: LucideIcon; ping: boolean }
 > = {
-  BROADCASTING: { label: "lookingForWorker", color: "bg-warning", Icon: Search, ping: false },
-  WORKER_RESPONSES: { label: "waitingForResponse", color: "bg-muted", Icon: MessageSquare, ping: false },
-  ACCEPTED: { label: "workerConfirmed", color: "bg-success", Icon: CheckCircle2, ping: false },
-  EN_ROUTE: { label: "onTheWay", color: "bg-accent", Icon: Car, ping: true },
-  ARRIVED: { label: "workerArrived", color: "bg-accent", Icon: MapPin, ping: true },
-  IN_PROGRESS: { label: "workInProgress", color: "bg-accent", Icon: Wrench, ping: false },
-  AWAITING_CUSTOMER_CONFIRMATION: { label: "needsApproval", color: "bg-warning", Icon: Clock, ping: true },
+  BROADCASTING: { label: "lookingForWorker", Icon: Search, ping: false },
+  WORKER_RESPONSES: { label: "waitingForResponse", Icon: MessageSquare, ping: false },
+  ACCEPTED: { label: "workerConfirmed", Icon: CheckCircle2, ping: false },
+  EN_ROUTE: { label: "onTheWay", Icon: Car, ping: true },
+  ARRIVED: { label: "workerArrived", Icon: MapPin, ping: true },
+  IN_PROGRESS: { label: "workInProgress", Icon: Wrench, ping: false },
+  AWAITING_CUSTOMER_CONFIRMATION: { label: "needsApproval", Icon: Clock, ping: true },
 };
 
 const TRACKING_STATUSES = new Set(["ACCEPTED", "EN_ROUTE", "ARRIVED", "IN_PROGRESS", "AWAITING_CUSTOMER_CONFIRMATION"]);
@@ -60,7 +60,6 @@ export default function ActiveJobStatusBar() {
         const newStatus = active.status;
         const prevStatus = prevStatusRef.current;
 
-        // Auto-redirect to tracking when worker accepts or status changes to tracking
         if (prevStatus && prevStatus !== newStatus && TRACKING_STATUSES.has(newStatus)) {
           window.location.href = `/dashboard/customer/track/${active.job_id}`;
           return;
@@ -95,7 +94,6 @@ export default function ActiveJobStatusBar() {
 
   const config = STATUS_CONFIG[job.status] ?? {
     label: "status",
-    color: "bg-muted",
     Icon: Search,
     ping: false,
   };
@@ -111,26 +109,35 @@ export default function ActiveJobStatusBar() {
 
   return (
     <Link href={href} className="block">
-      <div className="border-t border-divider bg-surface px-5 py-4 transition-colors hover:bg-surface/80 active:scale-[0.99]">
+      <div
+        className="px-5 py-4 transition-all duration-200 hover:bg-white/[0.07] active:scale-[0.99]"
+        style={{
+          borderTop: "1px solid rgba(255,255,255,0.12)",
+          background: "rgba(255,255,255,0.03)",
+        }}
+      >
         <div className="flex items-center gap-3">
-          <div className="relative flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-accent/15">
-            <Icon className="h-5 w-5 text-accent" />
+          <div
+            className="relative flex h-10 w-10 shrink-0 items-center justify-center rounded-full"
+            style={{ background: "rgba(38,166,80,0.15)" }}
+          >
+            <Icon className="h-5 w-5" style={{ color: "#26A650" }} />
             {ping && (
-              <span className="absolute inset-0 animate-ping rounded-full bg-accent/20" />
+              <span className="absolute inset-0 animate-ping rounded-full" style={{ background: "rgba(38,166,80,0.2)" }} />
             )}
           </div>
 
           <div className="min-w-0 flex-1">
-            <p className="text-sm font-bold text-text">{t(config.label as Parameters<typeof t>[0])}</p>
+            <p className="text-sm font-bold text-[#F1F4F1]">{t(config.label as Parameters<typeof t>[0])}</p>
             {job.worker_name && job.status !== "BROADCASTING" && (
-              <p className="truncate text-xs text-muted">
+              <p className="truncate text-xs text-[#93A396]">
                 {job.worker_name}
                 {job.original_text && ` · ${job.original_text}`}
               </p>
             )}
           </div>
 
-          <ChevronRight className="h-5 w-5 shrink-0 text-muted" />
+          <ChevronRight className="h-5 w-5 shrink-0 text-[#93A396]" />
         </div>
       </div>
     </Link>
