@@ -8,6 +8,7 @@ import type { WorkerCategory } from "@contracts/worker";
 import { motion } from "framer-motion";
 import { useLang } from "@/client/lib/i18n/context";
 import LanguageToggle from "@/client/components/LanguageToggle";
+import "@/app/dark-glass-theme.css";
 
 type Mode = "signin" | "signup";
 type Role = "customer" | "worker";
@@ -90,76 +91,81 @@ function AuthForm() {
   const availableSkills = CANONICAL_SKILLS[category];
 
   return (
-    <motion.div className="card mx-auto w-full max-w-md" whileHover={{ y: -2 }} transition={{ duration: 0.2, ease: "easeOut" }}>
-      <div className="flex items-center justify-between">
+    <div className="w-full max-w-md mx-auto px-4">
+      {/* Top bar */}
+      <div className="flex items-center justify-between mb-8">
         <Link
           href="/"
-          className="mb-6 inline-flex items-center gap-1.5 text-sm font-semibold text-accent hover:underline"
+          className="inline-flex items-center gap-1.5 text-sm font-semibold text-[#93A396] hover:text-[#F1F4F1] transition-colors"
         >
+          <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 19.5L8.25 12l7.5-7.5" />
+          </svg>
           {t("back")}
         </Link>
         <LanguageToggle />
       </div>
 
       {/* Sign in / Sign up tabs */}
-      <div className="grid grid-cols-2 gap-2 rounded-xl bg-surface p-1">
+      <div className="grid grid-cols-2 gap-1 p-1 rounded-2xl" style={{ background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.12)" }}>
         {(["signin", "signup"] as const).map((m) => (
-          <motion.button
+          <button
             key={m}
             type="button"
             onClick={() => switchMode(m)}
-            whileTap={{ scale: 0.95 }}
-            whileHover={{ y: -1 }}
-            transition={{ duration: 0.15, ease: "easeOut" }}
-            className={`rounded-lg py-2 text-sm font-semibold transition-colors ${
+            className={`rounded-xl py-2.5 text-sm font-semibold transition-all duration-200 ${
               mode === m
-                ? "bg-accent text-bg shadow-sm"
-                : "text-muted hover:text-text"
+                ? "bg-[#26A650] text-[#08240F] shadow-lg shadow-[#26A650]/20"
+                : "text-[#93A396] hover:text-[#F1F4F1] hover:bg-white/5"
             }`}
           >
             {m === "signin" ? t("signIn") : t("signUp")}
-          </motion.button>
+          </button>
         ))}
       </div>
 
-      <h1 className={`mt-5 text-2xl font-bold ${lang === "ur" ? "font-urdu" : ""}`}>
-        {mode === "signin" ? t("signInTitle") : t("signUpTitle")}
-      </h1>
-      <p className="mt-1 text-sm text-muted">
-        {mode === "signin" ? t("signInDesc") : t("signUpDesc")}
-      </p>
-
-      {error && (
-        <p className="mt-4 rounded-lg border border-warning/40 bg-warning/10 px-3 py-2 text-sm text-warning">
-          {error}
+      {/* Title */}
+      <div className="mt-8 mb-6">
+        <h1 className={`text-2xl font-bold text-[#F1F4F1] ${lang === "ur" ? "font-urdu" : ""}`}>
+          {mode === "signin" ? t("signInTitle") : t("signUpTitle")}
+        </h1>
+        <p className="mt-1.5 text-sm text-[#93A396]">
+          {mode === "signin" ? t("signInDesc") : t("signUpDesc")}
         </p>
+      </div>
+
+      {/* Error */}
+      {error && (
+        <div className="mb-4 rounded-xl px-4 py-3 text-sm font-medium" style={{ background: "rgba(224,164,97,0.12)", border: "1px solid rgba(224,164,97,0.3)", color: "#E0A461" }}>
+          {error}
+        </div>
       )}
 
-      <form onSubmit={submit} className="mt-6 space-y-4">
+      {/* Form */}
+      <form onSubmit={submit} className="space-y-4">
         {mode === "signup" && (
           <>
-            <div className="grid grid-cols-2 gap-2 rounded-xl bg-surface p-1">
+            {/* Role selector */}
+            <div className="grid grid-cols-2 gap-1 p-1 rounded-2xl" style={{ background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.12)" }}>
               {(["customer", "worker"] as const).map((r) => (
-                <motion.button
+                <button
                   key={r}
                   type="button"
                   onClick={() => setRole(r)}
-                  whileTap={{ scale: 0.95 }}
-                  whileHover={{ y: -1 }}
-                  transition={{ duration: 0.15, ease: "easeOut" }}
-                  className={`rounded-lg py-2 text-sm font-semibold transition-colors ${
+                  className={`rounded-xl py-2.5 text-sm font-semibold transition-all duration-200 ${
                     role === r
-                      ? "bg-accent text-bg shadow-sm"
-                      : "text-muted hover:text-text"
+                      ? "bg-[#26A650] text-[#08240F] shadow-lg shadow-[#26A650]/20"
+                      : "text-[#93A396] hover:text-[#F1F4F1] hover:bg-white/5"
                   }`}
                 >
                   {r === "customer" ? t("customer") : t("technician")}
-                </motion.button>
+                </button>
               ))}
             </div>
 
+            {/* Name */}
             <div>
-              <label htmlFor="name" className="mb-1 block text-sm font-medium text-text">
+              <label htmlFor="name" className="mb-1.5 block text-sm font-medium text-[#F1F4F1]">
                 {t("fullName")}
               </label>
               <input
@@ -169,15 +175,17 @@ function AuthForm() {
                 placeholder="e.g. Ayesha Khan"
                 value={name}
                 onChange={(e) => setName(e.target.value)}
-                className="input"
+                className="w-full rounded-xl px-4 py-3 text-sm text-[#F1F4F1] placeholder:text-[#93A396] outline-none transition-all duration-200 focus:ring-2 focus:ring-[#26A650]/30"
+                style={{ background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.12)" }}
                 required
               />
             </div>
           </>
         )}
 
+        {/* Email */}
         <div>
-          <label htmlFor="email" className="mb-1 block text-sm font-medium text-text">
+          <label htmlFor="email" className="mb-1.5 block text-sm font-medium text-[#F1F4F1]">
             {t("email")}
           </label>
           <input
@@ -187,13 +195,15 @@ function AuthForm() {
             placeholder="you@example.com"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
-            className="input"
+            className="w-full rounded-xl px-4 py-3 text-sm text-[#F1F4F1] placeholder:text-[#93A396] outline-none transition-all duration-200 focus:ring-2 focus:ring-[#26A650]/30"
+            style={{ background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.12)" }}
             required
           />
         </div>
 
+        {/* Password */}
         <div>
-          <label htmlFor="password" className="mb-1 block text-sm font-medium text-text">
+          <label htmlFor="password" className="mb-1.5 block text-sm font-medium text-[#F1F4F1]">
             {t("password")}
           </label>
           <input
@@ -203,15 +213,17 @@ function AuthForm() {
             placeholder={mode === "signup" ? t("passwordPlaceholder") : t("yourPassword")}
             value={password}
             onChange={(e) => setPassword(e.target.value)}
-            className="input"
+            className="w-full rounded-xl px-4 py-3 text-sm text-[#F1F4F1] placeholder:text-[#93A396] outline-none transition-all duration-200 focus:ring-2 focus:ring-[#26A650]/30"
+            style={{ background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.12)" }}
             required
           />
         </div>
 
+        {/* Worker fields */}
         {mode === "signup" && role === "worker" && (
           <>
             <div>
-              <label htmlFor="category" className="mb-1 block text-sm font-medium text-text">
+              <label htmlFor="category" className="mb-1.5 block text-sm font-medium text-[#F1F4F1]">
                 {t("category")}
               </label>
               <select
@@ -221,39 +233,39 @@ function AuthForm() {
                   setCategory(e.target.value as WorkerCategory);
                   setSkills([]);
                 }}
-                className="input"
+                className="w-full rounded-xl px-4 py-3 text-sm text-[#F1F4F1] outline-none transition-all duration-200 focus:ring-2 focus:ring-[#26A650]/30"
+                style={{ background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.12)" }}
               >
                 {(Object.keys(CATEGORY_LABELS) as WorkerCategory[]).map((c) => (
-                  <option key={c} value={c}>
+                  <option key={c} value={c} style={{ background: "#0B0F0C", color: "#F1F4F1" }}>
                     {CATEGORY_LABELS[c]}
                   </option>
                 ))}
               </select>
             </div>
-            <fieldset>
-                <legend className="mb-1 block text-sm font-medium text-text">
-                {t("skills")} <span className="font-normal text-muted">({t("pickAtLeastOne")})</span>
+
+            <fieldset className="border-none p-0 m-0">
+              <legend className="mb-2 block text-sm font-medium text-[#F1F4F1]">
+                {t("skills")} <span className="font-normal text-[#93A396]">({t("pickAtLeastOne")})</span>
               </legend>
               <div className="flex flex-wrap gap-2">
                 {availableSkills.map((skill) => {
                   const active = skills.includes(skill);
                   return (
-                    <motion.button
+                    <button
                       key={skill}
                       type="button"
                       aria-pressed={active}
                       onClick={() => toggleSkill(skill)}
-                      whileTap={{ scale: 0.95 }}
-                      whileHover={{ y: -1 }}
-                      transition={{ duration: 0.15, ease: "easeOut" }}
-                      className={`rounded-full px-3 py-1.5 text-xs font-semibold transition-colors ${
+                      className={`rounded-full px-3.5 py-1.5 text-xs font-semibold transition-all duration-200 ${
                         active
-                          ? "bg-accent text-bg"
-                          : "bg-surface text-muted hover:bg-bg"
+                          ? "bg-[#26A650] text-[#08240F] shadow-md shadow-[#26A650]/20"
+                          : "text-[#93A396] hover:text-[#F1F4F1] hover:bg-white/5"
                       }`}
+                      style={!active ? { background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.12)" } : undefined}
                     >
                       {skill}
-                    </motion.button>
+                    </button>
                   );
                 })}
               </div>
@@ -261,7 +273,13 @@ function AuthForm() {
           </>
         )}
 
-        <motion.button type="submit" disabled={loading} whileTap={{ scale: 0.95 }} whileHover={{ y: -1 }} transition={{ duration: 0.15, ease: "easeOut" }} className="btn-primary w-full disabled:opacity-60">
+        {/* Submit */}
+        <button
+          type="submit"
+          disabled={loading}
+          className="w-full rounded-xl py-3 text-sm font-bold transition-all duration-200 disabled:opacity-50 mt-2"
+          style={{ background: "#26A650", color: "#08240F", boxShadow: "0 4px 16px rgba(38,166,80,0.3)" }}
+        >
           {loading
             ? mode === "signin"
               ? t("signingIn")
@@ -271,16 +289,16 @@ function AuthForm() {
               : role === "worker"
                 ? t("createTechAccount")
                 : t("createAccount")}
-        </motion.button>
+        </button>
       </form>
-    </motion.div>
+    </div>
   );
 }
 
 export default function LoginPage() {
   return (
-    <main className="flex h-screen items-center justify-center overflow-y-auto bg-bg px-4 py-10">
-      <Suspense fallback={<motion.div className="card" whileHover={{ y: -2 }} transition={{ duration: 0.2, ease: "easeOut" }}>Loading…</motion.div>}>
+    <main className="dark-glass-theme flex min-h-screen items-center justify-center overflow-y-auto px-4 py-10" style={{ background: "#0B0F0C" }}>
+      <Suspense fallback={<div className="text-sm text-[#93A396]">Loading...</div>}>
         <AuthForm />
       </Suspense>
     </main>

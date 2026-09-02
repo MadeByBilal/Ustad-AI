@@ -6,6 +6,7 @@ import { motion } from "framer-motion";
 import { useLang } from "@/client/lib/i18n/context";
 import LogoutButton from "@/client/components/LogoutButton";
 import { User, Mail, Phone, Star, ShieldCheck, AlertCircle, ClipboardList } from "lucide-react";
+import "@/app/dark-glass-theme.css";
 
 interface UserProfile {
   name: string;
@@ -39,16 +40,16 @@ export default function CustomerProfilePage() {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center py-12">
-        <div className="h-8 w-8 animate-spin rounded-full border-4 border-divider border-t-accent" />
+      <div className="dark-glass-theme flex items-center justify-center py-12" style={{ background: "#0B0F0C" }}>
+        <div className="h-8 w-8 animate-spin rounded-full border-4 border-white/10 border-t-[#26A650]" />
       </div>
     );
   }
 
   if (!user) {
     return (
-      <div className="page-content">
-        <p className="text-center text-muted">Failed to load profile</p>
+      <div className="dark-glass-theme page-content" style={{ background: "#0B0F0C" }}>
+        <p className="text-center text-[#93A396]">Failed to load profile</p>
       </div>
     );
   }
@@ -61,109 +62,133 @@ export default function CustomerProfilePage() {
   };
 
   return (
-    <div className="space-y-6 p-4">
+    <div className="dark-glass-theme min-h-screen px-4 py-6 space-y-5" style={{ background: "#0B0F0C" }}>
       {/* Profile Header */}
-      <motion.div
-        className="card flex items-center gap-4"
-        whileHover={{ y: -2 }}
-        transition={{ duration: 0.2, ease: "easeOut" }}
+      <div
+        className="glass-sheen rounded-2xl p-5 flex items-center gap-4"
+        style={{
+          background: "rgba(255,255,255,0.05)",
+          border: "1px solid rgba(255,255,255,0.12)",
+          boxShadow: "0 8px 24px rgba(0,0,0,0.2), inset 0 1px 0 rgba(255,255,255,0.14)",
+        }}
       >
-        <div className="flex h-16 w-16 items-center justify-center rounded-full bg-accent">
-          <span className="text-2xl font-bold text-bg">
+        <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-full" style={{ background: "#26A650" }}>
+          <span className="text-xl font-bold" style={{ color: "#08240F" }}>
             {user.name?.charAt(0) ?? "U"}
           </span>
         </div>
         <div className="min-w-0 flex-1">
-          <h2 className={`text-lg font-bold text-text ${lang === "ur" ? "font-urdu" : ""}`}>
+          <h2 className={`text-lg font-bold text-[#F1F4F1] ${lang === "ur" ? "font-urdu" : ""}`}>
             {user.name}
           </h2>
-          <p className="text-sm capitalize text-muted">
+          <p className="text-sm text-[#93A396] capitalize">
             {t("customer")}
           </p>
         </div>
-      </motion.div>
+      </div>
 
       {/* Trust Score & Stats Grid */}
-      <motion.div
-        className="grid grid-cols-2 gap-3 sm:grid-cols-4"
-        whileHover={{ y: -1 }}
-        transition={{ duration: 0.2, ease: "easeOut" }}
-      >
-        <div className="card flex flex-col items-center justify-center text-center">
-          <div className="flex items-center gap-1 text-accent">
-            <ShieldCheck className="h-5 w-5" />
-            <span className="text-xl font-extrabold">{stats.trust_score}</span>
+      <div className="grid grid-cols-3 gap-3">
+        <div
+          className="rounded-2xl p-4 flex flex-col items-center text-center"
+          style={{
+            background: "rgba(255,255,255,0.05)",
+            border: "1px solid rgba(255,255,255,0.12)",
+          }}
+        >
+          <div className="flex items-center gap-1" style={{ color: "#26A650" }}>
+            <ShieldCheck className="h-4 w-4" />
+            <span className="text-lg font-extrabold text-[#F1F4F1]">{stats.trust_score}</span>
           </div>
-          <span className="mt-1 text-xs text-muted">Trust Score</span>
+          <span className="mt-1 text-[10px] font-medium text-[#93A396]">Trust</span>
         </div>
 
-        <div className="card flex flex-col items-center justify-center text-center">
-          <div className="flex items-center gap-1 text-warning">
-            <Star className="h-5 w-5 fill-current" />
-            <span className="text-xl font-extrabold">{stats.average_rating.toFixed(1)}</span>
+        <div
+          className="rounded-2xl p-4 flex flex-col items-center text-center"
+          style={{
+            background: "rgba(255,255,255,0.05)",
+            border: "1px solid rgba(255,255,255,0.12)",
+          }}
+        >
+          <div className="flex items-center gap-1" style={{ color: "#D4A24C" }}>
+            <Star className="h-4 w-4 fill-current" />
+            <span className="text-lg font-extrabold text-[#F1F4F1]">{stats.average_rating.toFixed(1)}</span>
           </div>
-          <span className="mt-1 text-xs text-muted">{stats.reviews_count} Reviews</span>
+          <span className="mt-1 text-[10px] font-medium text-[#93A396]">{stats.reviews_count} Reviews</span>
         </div>
 
-        <div className="card flex flex-col items-center justify-center text-center">
-          <div className="flex items-center gap-1 text-warning">
-            <AlertCircle className="h-5 w-5" />
-            <span className="text-xl font-extrabold">{stats.cancellations}</span>
+        <div
+          className="rounded-2xl p-4 flex flex-col items-center text-center"
+          style={{
+            background: "rgba(255,255,255,0.05)",
+            border: "1px solid rgba(255,255,255,0.12)",
+          }}
+        >
+          <div className="flex items-center gap-1" style={{ color: "#E0A461" }}>
+            <AlertCircle className="h-4 w-4" />
+            <span className="text-lg font-extrabold text-[#F1F4F1]">{stats.cancellations}</span>
           </div>
-          <span className="mt-1 text-xs text-muted">Active Cancels</span>
+          <span className="mt-1 text-[10px] font-medium text-[#93A396]">Cancels</span>
         </div>
-      </motion.div>
+      </div>
 
       {/* Cancellation Penalty Notice */}
       {stats.cancellations > 0 && (
-        <div className="rounded-xl border border-warning/40 bg-warning/10 p-4 text-sm text-warning">
+        <div
+          className="rounded-2xl p-4 text-sm"
+          style={{ background: "rgba(224,164,97,0.1)", border: "1px solid rgba(224,164,97,0.25)", color: "#E0A461" }}
+        >
           <p className="font-semibold">Cancellation Penalty Notice</p>
-          <p className="mt-1 text-xs text-warning/90">
-            Cancelling a job while a worker is actively tracking/on the way decreases your Trust Score. Keeping your score high ensures workers accept your requests faster.
+          <p className="mt-1 text-xs" style={{ color: "rgba(224,164,97,0.8)" }}>
+            Cancelling a job while a worker is actively tracking decreases your Trust Score.
           </p>
         </div>
       )}
 
-      {/* Info */}
-      <motion.div
-        className="card space-y-3"
-        whileHover={{ y: -2 }}
-        transition={{ duration: 0.2, ease: "easeOut" }}
+      {/* Contact Info */}
+      <div
+        className="rounded-2xl p-4 space-y-3"
+        style={{
+          background: "rgba(255,255,255,0.05)",
+          border: "1px solid rgba(255,255,255,0.12)",
+        }}
       >
-        <div className="flex items-center gap-3 text-sm text-text">
-          <Mail className="h-4 w-4 text-muted" />
+        <div className="flex items-center gap-3 text-sm text-[#F1F4F1]">
+          <Mail className="h-4 w-4 text-[#93A396]" />
           <span>{user.email}</span>
         </div>
         {user.phone && (
-          <div className="flex items-center gap-3 text-sm text-text">
-            <Phone className="h-4 w-4 text-muted" />
+          <div className="flex items-center gap-3 text-sm text-[#F1F4F1]">
+            <Phone className="h-4 w-4 text-[#93A396]" />
             <span>{user.phone}</span>
           </div>
         )}
-        <div className="flex items-center gap-3 text-sm text-text">
-          <User className="h-4 w-4 text-muted" />
+        <div className="flex items-center gap-3 text-sm text-[#F1F4F1]">
+          <User className="h-4 w-4 text-[#93A396]" />
           <span className="capitalize">{user.role}</span>
         </div>
-      </motion.div>
+      </div>
 
-      {/* History */}
+      {/* Job History */}
       <Link href="/dashboard/customer/jobs" className="block">
-        <motion.div
-          className="card flex items-center gap-3 transition-colors hover:bg-surface/80"
-          whileHover={{ y: -2 }}
-          transition={{ duration: 0.2, ease: "easeOut" }}
+        <div
+          className="rounded-2xl p-4 flex items-center gap-3 transition-all duration-200 hover:bg-white/[0.07] cursor-pointer"
+          style={{
+            background: "rgba(255,255,255,0.05)",
+            border: "1px solid rgba(255,255,255,0.12)",
+          }}
         >
-          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-accent/15">
-            <ClipboardList className="h-5 w-5 text-accent" />
+          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl" style={{ background: "rgba(38,166,80,0.15)" }}>
+            <ClipboardList className="h-5 w-5" style={{ color: "#26A650" }} />
           </div>
           <div className="min-w-0 flex-1">
-            <p className="text-sm font-bold text-text">Job History</p>
-            <p className="text-xs text-muted">View all your past and active jobs</p>
+            <p className="text-sm font-bold text-[#F1F4F1]">Job History</p>
+            <p className="text-xs text-[#93A396]">View all your past and active jobs</p>
           </div>
-          <svg className="h-5 w-5 shrink-0 text-muted" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
+          <svg className="h-5 w-5 shrink-0 text-[#93A396]" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
             <path strokeLinecap="round" strokeLinejoin="round" d="M8.25 4.5l7.5 7.5-7.5 7.5" />
           </svg>
-        </motion.div>
+        </div>
       </Link>
 
       {/* Logout */}

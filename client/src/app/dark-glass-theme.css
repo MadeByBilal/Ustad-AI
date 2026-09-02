@@ -1,0 +1,122 @@
+/* Scoped dark glass theme for auth + profile pages */
+.dark-glass-theme {
+  color-scheme: dark;
+  --bg: 11 15 12;
+  --surface: 255 255 255;
+  --text: 241 244 241;
+  --accent: 38 166 80;
+  --muted: 147 163 150;
+  --warning: 224 164 97;
+  --success: 38 166 80;
+  --success-fg: 8 36 15;
+  --divider: 255 255 255;
+}
+
+.dark-glass-theme body,
+.dark-glass-theme {
+  color: rgb(var(--text));
+  background: rgb(var(--bg));
+}
+
+.dark-glass-theme .card {
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  box-shadow:
+    0 8px 24px rgba(0, 0, 0, 0.2),
+    inset 0 1px 0 rgba(255, 255, 255, 0.14);
+}
+
+.dark-glass-theme .card-lg {
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  box-shadow:
+    0 8px 24px rgba(0, 0, 0, 0.2),
+    inset 0 1px 0 rgba(255, 255, 255, 0.14);
+}
+
+.dark-glass-theme .btn-primary {
+  background: #26A650;
+  color: #08240F;
+  box-shadow: 0 2px 8px rgba(38, 166, 80, 0.3);
+}
+
+.dark-glass-theme .btn-primary:hover {
+  background: #2bb85a;
+}
+
+.dark-glass-theme .btn-secondary {
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  color: rgb(var(--text));
+}
+
+.dark-glass-theme .btn-secondary:hover {
+  background: rgba(255, 255, 255, 0.08);
+  border-color: rgba(255, 255, 255, 0.2);
+}
+
+.dark-glass-theme .input {
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  color: rgb(var(--text));
+}
+
+.dark-glass-theme .input::placeholder {
+  color: rgb(var(--muted));
+}
+
+.dark-glass-theme .input:focus {
+  border-color: #26A650;
+  box-shadow: 0 0 0 2px rgba(38, 166, 80, 0.2);
+}
+
+.dark-glass-theme select.input option {
+  background: #0B0F0C;
+  color: rgb(var(--text));
+}
+
+.dark-glass-theme .bottom-nav {
+  background: rgba(11, 15, 12, 0.95);
+  border-color: rgba(255, 255, 255, 0.12);
+}
+
+.dark-glass-theme .page-header {
+  background: rgba(11, 15, 12, 0.95);
+  border-color: rgba(255, 255, 255, 0.12);
+}
+
+/* Glass reflection sheen effect */
+.glass-sheen {
+  position: relative;
+  overflow: hidden;
+}
+
+.glass-sheen::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -10%;
+  right: -10%;
+  height: 100%;
+  background: linear-gradient(
+    180deg,
+    rgba(255, 255, 255, 0.14) 0%,
+    transparent 60%
+  );
+  transform: rotate(-5deg);
+  pointer-events: none;
+  z-index: 1;
+}
+
+/* Accent badge */
+.badge-premium {
+  background: rgba(212, 162, 74, 0.16);
+  border: 1px solid rgba(212, 162, 74, 0.4);
+  color: #D4A24C;
+}
+
+/* Glass icon circle */
+.glass-icon-circle {
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+}
