@@ -105,6 +105,7 @@ export default function TrackingMap({
   const mapInstanceRef = useRef<L.Map | null>(null);
   const workerMarkerRef = useRef<L.Marker | null>(null);
   const destMarkerRef = useRef<L.Marker | null>(null);
+  const customerMarkerRef = useRef<L.Marker | null>(null);
   const arrivalCircleRef = useRef<L.Circle | null>(null);
   const roadPolylineRef = useRef<L.Polyline | null>(null);
   const routeRequestIdRef = useRef(0);
@@ -191,8 +192,7 @@ export default function TrackingMap({
     (L: typeof import("leaflet")) => {
       const isCustomerPerspective = perspective === "customer";
       return L.divIcon({
-        html: isCustomerPerspective
-          ? `
+        html: `
           <div style="
             width: 32px; height: 32px;
             display: flex; align-items: center; justify-content: center;
@@ -210,26 +210,10 @@ export default function TrackingMap({
                50% { box-shadow: 0 0 0 9px rgba(201,122,61,0.12), 0 2px 8px rgba(0,0,0,0.3); }
             }
           </style>
-        `
-          : `
-          <div style="
-            width: 24px; height: 24px;
-             background: #C97A3D;
-             border: 3px solid #F5EDE0;
-             border-radius: 50%;
-             box-shadow: 0 0 0 2px #C97A3D, 0 2px 8px rgba(0,0,0,0.3);
-            animation: pulse 2s infinite;
-          "></div>
-          <style>
-            @keyframes pulse {
-               0%, 100% { box-shadow: 0 0 0 2px #C97A3D, 0 2px 8px rgba(0,0,0,0.3); }
-               50% { box-shadow: 0 0 0 8px rgba(201,122,61,0.2), 0 2px 8px rgba(0,0,0,0.3); }
-            }
-          </style>
         `,
         className: "",
-        iconSize: isCustomerPerspective ? [32, 32] : [24, 24],
-        iconAnchor: isCustomerPerspective ? [16, 16] : [12, 12],
+        iconSize: [32, 32],
+        iconAnchor: [16, 16],
       });
     },
     [perspective],
@@ -254,6 +238,7 @@ export default function TrackingMap({
         });
       }
 
+      // Worker perspective: black flag destination
       return L.divIcon({
         html: `
           <div style="
@@ -261,7 +246,7 @@ export default function TrackingMap({
             position: relative;
           ">
             <svg viewBox="0 0 24 36" fill="none" xmlns="http://www.w3.org/2000/svg">
-              <path d="M12 0C5.4 0 0 5.4 0 12c0 9 12 24 12 24s12-15 12-24C24 5.4 18.6 0 12 0z" fill="#E8A93C"/>
+              <path d="M12 0C5.4 0 0 5.4 0 12c0 9 12 24 12 24s12-15 12-24C24 5.4 18.6 0 12 0z" fill="#1a1a1a"/>
               <circle cx="12" cy="12" r="5" fill="#F5EDE0"/>
             </svg>
           </div>
@@ -274,25 +259,22 @@ export default function TrackingMap({
     [perspective],
   );
 
-  const getUserIcon = useCallback((L: typeof import("leaflet")) => {
+  const getCustomerIcon = useCallback((L: typeof import("leaflet")) => {
     return L.divIcon({
       html: `
         <div style="
-          width: 30px; height: 36px; position: relative;
+          width: 28px; height: 34px; position: relative;
           filter: drop-shadow(0 3px 5px rgba(0,0,0,0.28));
         ">
-          <svg viewBox="0 0 30 36" width="30" height="36" fill="none" xmlns="http://www.w3.org/2000/svg">
-            <path d="M4 4h22v3H7v22H4V4Z" fill="#2F6B5F"/>
-            <path d="M7 7h18v11H7z" fill="#F5EDE0" stroke="#2F6B5F" stroke-width="2"/>
-            <path d="M13 12h8" stroke="#2F6B5F" stroke-width="2" stroke-linecap="round"/>
-            <path d="M13 16h5" stroke="#2F6B5F" stroke-width="2" stroke-linecap="round"/>
-            <path d="M15 18 12 32l7-7 7 7-3-14" fill="#E8A93C" stroke="#2F6B5F" stroke-width="2" stroke-linejoin="round"/>
+          <svg viewBox="0 0 24 36" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M12 0C5.4 0 0 5.4 0 12c0 9 12 24 12 24s12-15 12-24C24 5.4 18.6 0 12 0z" fill="#2F6B5F"/>
+            <circle cx="12" cy="12" r="5" fill="#F5EDE0"/>
           </svg>
         </div>
       `,
       className: "",
-      iconSize: [30, 36],
-      iconAnchor: [15, 36],
+      iconSize: [28, 34],
+      iconAnchor: [14, 34],
     });
   }, []);
 
@@ -301,12 +283,11 @@ export default function TrackingMap({
     if (!leaflet || !mapInstanceRef.current) return;
     const map = mapInstanceRef.current;
 
-    const liveUser = hasValidCoordinate(userLocation);
-    const targetLocation = liveUser ? userLocation : destination;
-    const hasDest = hasValidCoordinate(targetLocation);
+    const hasUser = hasValidCoordinate(userLocation);
+    const hasDest = hasValidCoordinate(destination);
     const hasWorker = hasValidCoordinate(workerLocation);
 
-    if (!hasDest || !hasWorker) {
+    if (!hasDest && !hasUser) {
       roadPolylineRef.current?.remove();
       roadPolylineRef.current = null;
       lastRouteOriginRef.current = null;
@@ -315,30 +296,27 @@ export default function TrackingMap({
       lastPrecomputedRouteRef.current = null;
     }
 
-    // Destination marker — only when valid coordinates exist
+    // ── Destination marker — always show at the job destination ──
     if (hasDest) {
-      const targetIcon = liveUser ? getUserIcon(leaflet) : getDestIcon(leaflet);
-      const targetLabel = liveUser ? "You" : destination?.label;
-      const safeLabel = targetLabel
-        ? targetLabel.replace(/[<>&"']/g, (ch) =>
+      const targetIcon = getDestIcon(leaflet);
+      const safeLabel = destination?.label
+        ? destination.label.replace(/[<>&"']/g, (ch) =>
             ({ "<": "&lt;", ">": "&gt;", "&": "&amp;", '"': "&quot;", "'": "&#39;" })[ch] ?? ch,
           )
         : null;
       if (destMarkerRef.current) {
-        destMarkerRef.current.setLatLng([targetLocation!.lat, targetLocation!.lng]);
+        destMarkerRef.current.setLatLng([destination!.lat, destination!.lng]);
         destMarkerRef.current.setIcon(targetIcon);
         if (safeLabel) destMarkerRef.current.setTooltipContent(safeLabel);
       } else {
         destMarkerRef.current = leaflet
-          .marker([targetLocation!.lat, targetLocation!.lng], {
-            icon: targetIcon,
-          })
+          .marker([destination!.lat, destination!.lng], { icon: targetIcon })
           .addTo(map);
         if (safeLabel) {
           destMarkerRef.current.bindTooltip(safeLabel, {
             permanent: true,
             direction: "top",
-            offset: [0, -40],
+            offset: [0, -30],
             className: "dest-tooltip",
           });
         }
@@ -348,16 +326,36 @@ export default function TrackingMap({
       destMarkerRef.current = null;
     }
 
-    // Arrival zone circle
+    // ── Customer location marker — green pin ──
+    if (hasUser) {
+      const customerIcon = getCustomerIcon(leaflet);
+      const customerLabel = perspective === "customer" ? "You" : "Customer";
+      if (customerMarkerRef.current) {
+        customerMarkerRef.current.setLatLng([userLocation!.lat, userLocation!.lng]);
+        customerMarkerRef.current.setIcon(customerIcon);
+      } else {
+        customerMarkerRef.current = leaflet
+          .marker([userLocation!.lat, userLocation!.lng], { icon: customerIcon })
+          .addTo(map)
+          .bindTooltip(customerLabel, {
+            permanent: true,
+            direction: "top",
+            offset: [0, -30],
+            className: "dest-tooltip",
+          });
+      }
+    } else if (customerMarkerRef.current) {
+      customerMarkerRef.current.remove();
+      customerMarkerRef.current = null;
+    }
+
+    // ── Arrival zone circle — at destination ──
     if (showArrivalZone && hasDest) {
       if (arrivalCircleRef.current) {
-        arrivalCircleRef.current.setLatLng([
-          targetLocation!.lat,
-          targetLocation!.lng,
-        ]);
+        arrivalCircleRef.current.setLatLng([destination!.lat, destination!.lng]);
       } else {
         arrivalCircleRef.current = leaflet
-          .circle([targetLocation!.lat, targetLocation!.lng], {
+          .circle([destination!.lat, destination!.lng], {
             radius: ARRIVAL_ZONE_RADIUS,
             color: "#C97A3D",
             fillColor: "#C97A3D",
@@ -372,7 +370,7 @@ export default function TrackingMap({
       arrivalCircleRef.current = null;
     }
 
-    // Worker marker
+    // ── Worker marker — orange emoji at worker position ──
     if (hasWorker) {
       const latlng: [number, number] = [workerLocation.lat, workerLocation.lng];
 
@@ -411,30 +409,28 @@ export default function TrackingMap({
           .addTo(map);
       }
 
-      // ── Map centering / follow logic ──────────────────────────────────────
-      // First render: fit both worker and destination into view for context.
-      // Subsequent renders: pan (without changing zoom) to keep worker visible
-      // when they drift outside the current viewport.
+      // ── Map centering / follow logic ──
       if (!hasCenteredMapRef.current) {
         const bounds = leaflet.latLngBounds([latlng]);
-        if (hasDest) {
-          bounds.extend([targetLocation!.lat, targetLocation!.lng]);
-        }
+        if (hasDest) bounds.extend([destination!.lat, destination!.lng]);
+        if (hasUser) bounds.extend([userLocation!.lat, userLocation!.lng]);
         map.fitBounds(bounds, { padding: [60, 60], maxZoom: 16 });
         hasCenteredMapRef.current = true;
         lastFollowedLocationRef.current = workerLocation;
       } else {
-        // Pan to keep the worker in view if they've moved outside the viewport.
         const workerLatLng = leaflet.latLng(latlng);
         if (!map.getBounds().contains(workerLatLng)) {
           map.panTo(workerLatLng, { animate: true, duration: 0.6 });
           lastFollowedLocationRef.current = workerLocation;
         }
       }
-    } else if (hasDest && !hasCenteredMapRef.current) {
-      // No worker location yet — center on destination
-      map.setView([targetLocation!.lat, targetLocation!.lng], 15);
-      hasCenteredMapRef.current = true;
+    } else if (!hasCenteredMapRef.current) {
+      // No worker location yet — center on destination or user
+      const centerTarget = hasDest ? destination : hasUser ? userLocation : null;
+      if (centerTarget) {
+        map.setView([centerTarget.lat, centerTarget.lng], 15);
+        hasCenteredMapRef.current = true;
+      }
     }
 
     return () => {
@@ -450,8 +446,9 @@ export default function TrackingMap({
     destination,
     getWorkerIcon,
     getDestIcon,
-    getUserIcon,
+    getCustomerIcon,
     showArrivalZone,
+    perspective,
   ]);
 
   // Render a road-following route. Uses precomputed route from DB first,
@@ -463,7 +460,7 @@ export default function TrackingMap({
     const routingLeaflet = leafletModule;
     const routingMap = map;
 
-    const targetLocation = hasValidCoordinate(userLocation) ? userLocation : destination;
+    const targetLocation = hasValidCoordinate(destination) ? destination : null;
     const hasDest = hasValidCoordinate(targetLocation);
     const hasWorker = hasValidCoordinate(workerLocation);
     if (!hasDest || !hasWorker) return;

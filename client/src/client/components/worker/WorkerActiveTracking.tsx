@@ -446,15 +446,14 @@ export default function WorkerActiveTracking({
         />
       </div>
 
-      {["ACCEPTED", "EN_ROUTE", "ARRIVED", "IN_PROGRESS"].includes(job.status) && (
-        <div className="px-5 pt-3">
-          <LiveTracker
-            jobId={job.job_id}
-            workerId={workerId}
-            onArrived={() => void refresh()}
-          />
-        </div>
-      )}
+      {/* Silent GPS broadcaster — no UI, just broadcasts location via socket */}
+      <div className="sr-only" aria-hidden="true">
+        <LiveTracker
+          jobId={job.job_id}
+          workerId={workerId}
+          onArrived={() => void refresh()}
+        />
+      </div>
 
       {/* Bottom Panel */}
       <div className="flex min-h-0 flex-1 flex-col bg-surface px-5 pt-4 pb-6">

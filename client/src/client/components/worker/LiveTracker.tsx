@@ -209,45 +209,6 @@ export default function LiveTracker({
     };
   }, [ensureJoined, startTracking, stopTracking]);
 
-  return (
-    <div className="rounded-xl border border-divider bg-surface px-3 py-2">
-      <div className="flex items-center justify-between gap-3">
-        <div>
-          <h3 className="text-sm font-bold text-text">Live Tracking</h3>
-          <p className="text-xs text-muted">
-            {tracking
-              ? lastPing
-                ? `Last ping: ${lastPing.toLocaleTimeString("en-GB", {
-                    hour: "2-digit",
-                    minute: "2-digit",
-                    second: "2-digit",
-                  })}`
-                : "Starting..."
-              : "Tracking paused"}
-          </p>
-        </div>
-        <button
-          type="button"
-          onClick={tracking ? stopTracking : startTracking}
-          className={`rounded-xl px-4 py-2 text-sm font-bold transition-colors ${
-            tracking
-              ? "border border-warning text-warning hover:bg-warning/10"
-              : "bg-accent text-bg hover:bg-accent/90"
-          }`}
-        >
-          {tracking ? "Stop" : "Start tracking"}
-        </button>
-      </div>
-      {error && (
-        <p className="mt-2 rounded-lg border border-warning/40 bg-warning/10 px-3 py-1.5 text-xs text-warning">
-          {error}
-        </p>
-      )}
-      {tracking && (
-        <p className="mt-2 rounded-xl bg-accent/10 px-3 py-2 text-xs font-medium text-accent">
-          Broadcasting your location to the customer
-        </p>
-      )}
-    </div>
-  );
+  // Render nothing — tracking runs silently in the background.
+  return null;
 }
