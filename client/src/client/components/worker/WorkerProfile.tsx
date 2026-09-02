@@ -73,7 +73,7 @@ export default function WorkerProfile({ workerId }: { workerId: string }) {
       {/* Stats */}
       <motion.div className="card" whileHover={{ y: -2 }} transition={{ duration: 0.2, ease: "easeOut" }}>
         <h3 className={`mb-3 text-sm font-bold text-text ${lang === "ur" ? "font-urdu" : ""}`}>{t("ustadScore")}</h3>
-        <div className="grid grid-cols-2 gap-3">
+        <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
           <div className="rounded-xl bg-bg p-3 text-center">
             <p className="text-xl font-bold text-accent">{w.ustad_score}</p>
             <p className={`text-xs text-muted ${lang === "ur" ? "font-urdu" : ""}`}>{t("ustadScore")}</p>
@@ -89,6 +89,10 @@ export default function WorkerProfile({ workerId }: { workerId: string }) {
           <div className="rounded-xl bg-bg p-3 text-center">
             <p className="font-mono text-xl font-bold text-text">{w.response_rate}%</p>
             <p className={`text-xs text-muted ${lang === "ur" ? "font-urdu" : ""}`}>{t("responseRate")}</p>
+          </div>
+          <div className="rounded-xl bg-bg p-3 text-center">
+            <p className="font-mono text-xl font-bold text-warning">{w.cancellation_rate}%</p>
+            <p className="text-xs text-muted">Cancels</p>
           </div>
         </div>
       </motion.div>

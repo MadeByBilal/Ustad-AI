@@ -4,11 +4,14 @@ import {
   JobEvent,
   Message,
   Offer,
+  User,
   Worker,
   SYSTEM_SENDER_ID,
   type JobDoc,
   type JobStatus,
 } from "../../models/index.js";
+
+export const CUSTOMER_SCORE_CANCEL_PENALTY = 5;
 import { analyzeJobInput } from "./analyze.js";
 import { validateCustomerOffer, validateWorkerCounter } from "./offers.js";
 import {
@@ -1111,6 +1114,12 @@ export async function workerCancelJob(
     workerId,
   );
   if (!decision) {
+    // If the job is already in a terminal state, ensure the worker record is
+    // cleaned up so they are not permanently stuck on this job.
+    await Worker.updateOne(
+      { _id: workerId, active_job_id: jobId },
+      { $set: { active_job_id: null, is_available: true } },
+    );
     throw new FlowError(
       "invalid_status",
       `Job cannot be cancelled from ${job.status}`,
@@ -1162,15 +1171,22 @@ export async function workerCancelJob(
 
   await Worker.updateOne(
     { _id: workerId, active_job_id: jobId },
-    {
-      $set: { active_job_id: null, is_available: true },
-      $inc: {
-        cancellation_rate: 1,
-        ustad_score: -WORKER_SCORE_CANCEL_PENALTY,
+    [
+      {
+        $set: {
+          active_job_id: null,
+          is_available: true,
+          // Clamp cancellation_rate to [0, 100] in one expression
+          cancellation_rate: {
+            $min: [100, { $max: [0, { $add: ["$cancellation_rate", 1] }] }],
+          },
+          // Clamp ustad_score to a floor of 0
+          ustad_score: {
+            $max: [0, { $subtract: ["$ustad_score", WORKER_SCORE_CANCEL_PENALTY] }],
+          },
+        },
       },
-      $min: { cancellation_rate: 100 },
-      $max: { ustad_score: 0 },
-    },
+    ],
   );
   await Offer.updateMany(
     { job_id: jobId, worker_id: workerId, status: "pending" },
@@ -1202,6 +1218,13 @@ export async function customerCancelJob(
   note?: string,
 ): Promise<JobDoc> {
   const job = await requireJob({ _id: jobId, customer_id: customerId });
+
+  // Idempotent: if the job is already cancelled (e.g. by the worker or a
+  // concurrent request), treat it as success so the client can redirect.
+  if (job.status === "CANCELLED") {
+    return job;
+  }
+
   if (!canCustomerCancel(job.status)) {
     throw new FlowError(
       "invalid_status",
@@ -1228,20 +1251,58 @@ export async function customerCancelJob(
     throw new FlowError("invalid_status", "Job changed concurrently", 409);
   }
 
+  // Deduct trust score if customer cancels after worker was assigned / during tracking
+  const isTrackingOrAccepted = [
+    "ACCEPTED",
+    "EN_ROUTE",
+    "ARRIVED",
+    "IN_PROGRESS",
+  ].includes(job.status);
+  if (isTrackingOrAccepted) {
+    await User.updateOne(
+      { _id: customerId },
+      [
+        {
+          $set: {
+            "stats.cancellations": {
+              $add: [{ $ifNull: ["$stats.cancellations", 0] }, 1],
+            },
+            "stats.trust_score": {
+              $max: [
+                0,
+                {
+                  $subtract: [
+                    { $ifNull: ["$stats.trust_score", 100] },
+                    CUSTOMER_SCORE_CANCEL_PENALTY,
+                  ],
+                },
+              ],
+            },
+          },
+        },
+      ],
+    );
+  }
+
   const workerId = job.matching?.selected_worker_id;
   const responderIds = (job.matching?.accepted_worker_ids ?? []).map(String);
   if (workerId) {
     await Worker.updateOne(
       { _id: workerId, active_job_id: jobId },
-      {
-        $set: { active_job_id: null, is_available: true },
-        $inc: {
-          cancellation_rate: 1,
-          ustad_score: -WORKER_SCORE_CANCEL_PENALTY,
+      [
+        {
+          $set: {
+            active_job_id: null,
+            is_available: true,
+            cancellation_rate: {
+              $min: [100, { $max: [0, { $add: ["$cancellation_rate", 1] }] }],
+            },
+            ustad_score: {
+              $max: [0, { $subtract: ["$ustad_score", WORKER_SCORE_CANCEL_PENALTY] }],
+            },
+          },
         },
-        $min: { cancellation_rate: 100 },
-        $max: { ustad_score: 0 },
-      },
+      ],
     );
   }
 

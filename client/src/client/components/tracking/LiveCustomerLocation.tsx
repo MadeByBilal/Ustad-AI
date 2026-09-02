@@ -4,6 +4,10 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import type { Socket } from "socket.io-client";
 
 const LOCATION_PING_INTERVAL_MS = 3_000;
+/** How many consecutive socket failures before we switch to HTTP. */
+const SOCKET_FAIL_THRESHOLD = 3;
+/** Interval for the HTTP fallback pings. */
+const HTTP_FALLBACK_INTERVAL_MS = 5_000;
 
 interface LiveCustomerLocationProps {
   jobId: string;
@@ -27,16 +31,91 @@ export default function LiveCustomerLocation({
   const onLocationUpdateRef = useRef(onLocationUpdate);
   onLocationUpdateRef.current = onLocationUpdate;
 
+  // Track consecutive socket errors so we can fall back to HTTP.
+  const socketFailCountRef = useRef(0);
+  const useHttpFallbackRef = useRef(false);
+  const httpIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const lastHttpLocationRef = useRef<{ lat: number; lng: number } | null>(null);
+  const cleanupReconnectRef = useRef<(() => void) | null>(null);
+
+  // ── HTTP fallback ──────────────────────────────────────────────────────────
+
+  const sendViaHttp = useCallback(
+    async (location: { lat: number; lng: number }) => {
+      if (!activeRef.current) return;
+      try {
+        const res = await fetch("/api/workers/me/location", {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(location),
+          credentials: "include",
+        });
+        if (!res.ok && activeRef.current) {
+          setError("Live location update failed");
+        }
+      } catch {
+        if (activeRef.current) setError("Live location is unavailable");
+      }
+    },
+    [],
+  );
+
+  const startHttpFallback = useCallback(() => {
+    if (httpIntervalRef.current) return; // already running
+    useHttpFallbackRef.current = true;
+
+    // Send the most-recent known location immediately.
+    const current = lastHttpLocationRef.current;
+    if (current) void sendViaHttp(current);
+
+    httpIntervalRef.current = setInterval(() => {
+      const loc = lastHttpLocationRef.current;
+      if (loc && activeRef.current) void sendViaHttp(loc);
+    }, HTTP_FALLBACK_INTERVAL_MS);
+  }, [sendViaHttp]);
+
+  const stopHttpFallback = useCallback(() => {
+    if (httpIntervalRef.current) {
+      clearInterval(httpIntervalRef.current);
+      httpIntervalRef.current = null;
+    }
+    useHttpFallbackRef.current = false;
+  }, []);
+
+  // ── Socket ─────────────────────────────────────────────────────────────────
+
   const getSocket = useCallback(async (): Promise<Socket | null> => {
     if (socketRef.current) return socketRef.current;
     if (!activeRef.current) return null;
     if (joinPromiseRef.current) return joinPromiseRef.current;
 
     const joining = (async () => {
-      const { joinJob } = await import("@/client/lib/socket-client");
+      const { joinJob, attachReconnectLogic } = await import(
+        "@/client/lib/socket-client"
+      );
       const socket = await joinJob(jobId, "customer");
       socketRef.current = socket;
       joinedRef.current = true;
+      socketFailCountRef.current = 0;
+
+      // Attach retry logic with callbacks to switch to HTTP fallback when
+      // the socket gives up, and back to socket on successful reconnection.
+      cleanupReconnectRef.current = attachReconnectLogic(socket, {
+        onReconnecting: () => {
+          socketFailCountRef.current += 1;
+          if (socketFailCountRef.current >= SOCKET_FAIL_THRESHOLD) {
+            startHttpFallback();
+          }
+        },
+        onReconnected: () => {
+          socketFailCountRef.current = 0;
+          stopHttpFallback();
+        },
+        onGiveUp: () => {
+          startHttpFallback();
+        },
+      });
+
       return socket;
     })();
     joinPromiseRef.current = joining;
@@ -45,7 +124,9 @@ export default function LiveCustomerLocation({
     } finally {
       if (joinPromiseRef.current === joining) joinPromiseRef.current = null;
     }
-  }, [jobId]);
+  }, [jobId, startHttpFallback, stopHttpFallback]);
+
+  // ── Location publishing ────────────────────────────────────────────────────
 
   const sendNow = useCallback(
     (location: { lat: number; lng: number }) => {
@@ -57,6 +138,17 @@ export default function LiveCustomerLocation({
         timerRef.current = null;
       }
       onLocationUpdateRef.current?.(location);
+
+      // Always keep the latest location for the HTTP fallback.
+      lastHttpLocationRef.current = location;
+
+      if (useHttpFallbackRef.current) {
+        // HTTP path: send immediately (interval handles periodic resends).
+        void sendViaHttp(location);
+        return;
+      }
+
+      // Socket path.
       void getSocket()
         .then((socket) => {
           if (socket && activeRef.current) {
@@ -64,10 +156,15 @@ export default function LiveCustomerLocation({
           }
         })
         .catch(() => {
-          if (activeRef.current) setError("Live location is unavailable");
+          if (activeRef.current) {
+            socketFailCountRef.current += 1;
+            if (socketFailCountRef.current >= SOCKET_FAIL_THRESHOLD) {
+              startHttpFallback();
+            }
+          }
         });
     },
-    [getSocket, jobId],
+    [getSocket, jobId, sendViaHttp, startHttpFallback],
   );
 
   const publish = useCallback(
@@ -119,11 +216,15 @@ export default function LiveCustomerLocation({
       activeRef.current = false;
       navigator.geolocation.clearWatch(watchId);
       if (timerRef.current) clearTimeout(timerRef.current);
+      if (httpIntervalRef.current) clearInterval(httpIntervalRef.current);
+      cleanupReconnectRef.current?.();
       if (socketRef.current && joinedRef.current) {
         socketRef.current.emit("leave-job", { jobId });
       }
       socketRef.current = null;
       joinedRef.current = false;
+      useHttpFallbackRef.current = false;
+      socketFailCountRef.current = 0;
     };
   }, [jobId, publish]);
 
@@ -134,7 +235,10 @@ export default function LiveCustomerLocation({
       }`}
       aria-live="polite"
     >
-      {error ?? (sharing ? "Sharing your live location with the worker" : "Starting live location sharing...")}
+      {error ??
+        (sharing
+          ? `Sharing your live location with the worker${useHttpFallbackRef.current ? " (offline mode)" : ""}`
+          : "Starting live location sharing...")}
     </p>
   );
 }

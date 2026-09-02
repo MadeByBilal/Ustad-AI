@@ -332,10 +332,11 @@ export default function WorkerActiveTracking({
         body: JSON.stringify({ reason: "Cancelled by worker" }),
       });
       const body = await res.json().catch(() => null);
-      if (!res.ok || !body?.success) {
+      // Treat already-cancelled (409 invalid_status) as success — job is gone.
+      if (!res.ok && !(res.status === 409 && body?.details?.code === "invalid_status")) {
         throw new Error(getApiErrorMessage(body, "Cancel failed"));
       }
-      setJob(null);
+      window.location.href = "/dashboard/worker";
     } catch (e) {
       setMessage({
         ok: false,
@@ -445,7 +446,7 @@ export default function WorkerActiveTracking({
         />
       </div>
 
-      {job.status === "EN_ROUTE" && (
+      {["ACCEPTED", "EN_ROUTE", "ARRIVED", "IN_PROGRESS"].includes(job.status) && (
         <div className="px-5 pt-3">
           <LiveTracker
             jobId={job.job_id}

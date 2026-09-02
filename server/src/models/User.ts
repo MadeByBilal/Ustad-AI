@@ -37,6 +37,12 @@ const userSchema = new Schema(
         type: [Number],
       },
     },
+    stats: {
+      average_rating: { type: Number, default: 5.0 },
+      reviews_count: { type: Number, default: 0 },
+      trust_score: { type: Number, default: 100 },
+      cancellations: { type: Number, default: 0 },
+    },
   },
   {
     timestamps: { createdAt: "created_at", updatedAt: "updated_at" },

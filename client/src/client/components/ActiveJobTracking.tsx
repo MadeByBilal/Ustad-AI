@@ -317,10 +317,12 @@ export default function ActiveJobTracking() {
         body: JSON.stringify({ reason: "Cancelled by customer" }),
       });
       const body = await res.json().catch(() => null);
-      if (!res.ok || !body?.success) {
+      // Treat both success and already-cancelled (409 invalid_status) as done.
+      if (!res.ok && !(res.status === 409 && body?.details?.code === "invalid_status")) {
         throw new Error(getApiErrorMessage(body, "Cancel failed"));
       }
-      setJob(null);
+      // Redirect to home regardless — job is gone.
+      window.location.href = "/dashboard/customer";
     } catch (e) {
       setMessage({
         ok: false,

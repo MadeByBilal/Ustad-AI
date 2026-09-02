@@ -4,13 +4,19 @@ import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
 import { useLang } from "@/client/lib/i18n/context";
 import LogoutButton from "@/client/components/LogoutButton";
-import { User, Mail, Phone } from "lucide-react";
+import { User, Mail, Phone, Star, ShieldCheck, AlertCircle } from "lucide-react";
 
 interface UserProfile {
   name: string;
   email: string;
   phone?: string;
   role: string;
+  stats?: {
+    average_rating: number;
+    reviews_count: number;
+    trust_score: number;
+    cancellations: number;
+  };
 }
 
 export default function CustomerProfilePage() {
@@ -46,6 +52,13 @@ export default function CustomerProfilePage() {
     );
   }
 
+  const stats = user.stats ?? {
+    average_rating: 5.0,
+    reviews_count: 0,
+    trust_score: 100,
+    cancellations: 0,
+  };
+
   return (
     <div className="space-y-6 p-4">
       {/* Profile Header */}
@@ -68,6 +81,47 @@ export default function CustomerProfilePage() {
           </p>
         </div>
       </motion.div>
+
+      {/* Trust Score & Stats Grid */}
+      <motion.div
+        className="grid grid-cols-2 gap-3 sm:grid-cols-4"
+        whileHover={{ y: -1 }}
+        transition={{ duration: 0.2, ease: "easeOut" }}
+      >
+        <div className="card flex flex-col items-center justify-center text-center">
+          <div className="flex items-center gap-1 text-accent">
+            <ShieldCheck className="h-5 w-5" />
+            <span className="text-xl font-extrabold">{stats.trust_score}</span>
+          </div>
+          <span className="mt-1 text-xs text-muted">Trust Score</span>
+        </div>
+
+        <div className="card flex flex-col items-center justify-center text-center">
+          <div className="flex items-center gap-1 text-warning">
+            <Star className="h-5 w-5 fill-current" />
+            <span className="text-xl font-extrabold">{stats.average_rating.toFixed(1)}</span>
+          </div>
+          <span className="mt-1 text-xs text-muted">{stats.reviews_count} Reviews</span>
+        </div>
+
+        <div className="card flex flex-col items-center justify-center text-center">
+          <div className="flex items-center gap-1 text-warning">
+            <AlertCircle className="h-5 w-5" />
+            <span className="text-xl font-extrabold">{stats.cancellations}</span>
+          </div>
+          <span className="mt-1 text-xs text-muted">Active Cancels</span>
+        </div>
+      </motion.div>
+
+      {/* Cancellation Penalty Notice */}
+      {stats.cancellations > 0 && (
+        <div className="rounded-xl border border-warning/40 bg-warning/10 p-4 text-sm text-warning">
+          <p className="font-semibold">Cancellation Penalty Notice</p>
+          <p className="mt-1 text-xs text-warning/90">
+            Cancelling a job while a worker is actively tracking/on the way decreases your Trust Score. Keeping your score high ensures workers accept your requests faster.
+          </p>
+        </div>
+      )}
 
       {/* Info */}
       <motion.div

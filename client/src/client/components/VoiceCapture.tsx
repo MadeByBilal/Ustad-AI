@@ -611,10 +611,10 @@ export default function VoiceCapture({ variant = "landing", onStatusChange }: Vo
 
         setCustomerLocation(location);
 
-        // ─── MOCK: Use mock understanding for voice, real workers from API ────
-        // For voice (microphone) requests, we still call the real API to fetch
-        // real workers from the database, but replace the understanding result
-        // with hardcoded mock data. Text-based search uses the full real API.
+        // ─── MOCK: Mock understanding for voice, real workers from API ───────
+        // Voice (mic) requests call the real API to get real workers from the
+        // database, then swap in mock understanding. Text search uses the
+        // full real API response.
         let data: UnderstandResponse;
         {
           const requestInit: RequestInit = {
@@ -654,7 +654,6 @@ export default function VoiceCapture({ variant = "landing", onStatusChange }: Vo
             }),
           ]);
 
-          // For voice mock: keep real workers from API, swap understanding with mock
           if (isVoiceMock) {
             data = {
               ...MOCK_RESPONSE,
@@ -714,6 +713,13 @@ export default function VoiceCapture({ variant = "landing", onStatusChange }: Vo
     },
     [getLocation]
   );
+
+  // Request location immediately when entering the dashboard
+  useEffect(() => {
+    if (variant === "dashboard" && locationDecisionRef.current === "unresolved") {
+      void getLocation();
+    }
+  }, [variant, getLocation]);
 
   const startRecording = useCallback(async () => {
     if (

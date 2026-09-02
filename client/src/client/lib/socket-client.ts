@@ -4,6 +4,19 @@ import { io, type Socket } from "socket.io-client";
 
 let socket: Socket | null = null;
 
+/**
+ * Maximum number of automatic reconnection attempts before giving up and
+ * letting the caller decide (e.g. fall back to HTTP polling).
+ */
+const MAX_RECONNECT_ATTEMPTS = 5;
+
+/**
+ * Base delay (ms) for exponential back-off reconnection.
+ * Attempt n waits min(BASE_RECONNECT_DELAY * 2^n, MAX_RECONNECT_DELAY) ms.
+ */
+const BASE_RECONNECT_DELAY_MS = 1_000;
+const MAX_RECONNECT_DELAY_MS = 30_000;
+
 export function getSocket(): Socket {
   if (socket) return socket;
 
@@ -20,6 +33,8 @@ export function getSocket(): Socket {
     transports: ["websocket", "polling"],
     autoConnect: false,
     withCredentials: true,
+    // Disable the built-in reconnection so we can apply our own back-off logic.
+    reconnection: false,
   });
 
   return socket;
@@ -31,6 +46,71 @@ export function connectSocket(): Socket {
     s.connect();
   }
   return s;
+}
+
+/**
+ * Attach exponential back-off reconnection to a socket instance.
+ *
+ * Call this once after obtaining a socket. The returned cleanup function
+ * removes all reconnect listeners and cancels any pending retry timer.
+ */
+export function attachReconnectLogic(
+  s: Socket,
+  opts?: {
+    maxAttempts?: number;
+    onReconnecting?: (attempt: number) => void;
+    onReconnected?: () => void;
+    onGiveUp?: () => void;
+  },
+): () => void {
+  const maxAttempts = opts?.maxAttempts ?? MAX_RECONNECT_ATTEMPTS;
+  let attempt = 0;
+  let retryTimer: ReturnType<typeof setTimeout> | null = null;
+  let active = true;
+
+  function scheduleReconnect() {
+    if (!active || attempt >= maxAttempts) {
+      opts?.onGiveUp?.();
+      return;
+    }
+    const delay = Math.min(
+      BASE_RECONNECT_DELAY_MS * 2 ** attempt,
+      MAX_RECONNECT_DELAY_MS,
+    );
+    attempt += 1;
+    opts?.onReconnecting?.(attempt);
+    retryTimer = setTimeout(() => {
+      retryTimer = null;
+      if (active && !s.connected) {
+        s.connect();
+      }
+    }, delay);
+  }
+
+  function onConnect() {
+    attempt = 0;
+    opts?.onReconnected?.();
+  }
+
+  function onDisconnect(reason: string) {
+    // "io server disconnect" means the server intentionally closed the
+    // connection (e.g. auth failure).  Don't retry in that case.
+    if (!active || reason === "io server disconnect") return;
+    scheduleReconnect();
+  }
+
+  s.on("connect", onConnect);
+  s.on("disconnect", onDisconnect);
+
+  return () => {
+    active = false;
+    if (retryTimer !== null) {
+      clearTimeout(retryTimer);
+      retryTimer = null;
+    }
+    s.off("connect", onConnect);
+    s.off("disconnect", onDisconnect);
+  };
 }
 
 export async function joinJob(

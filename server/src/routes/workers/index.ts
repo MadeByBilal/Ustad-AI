@@ -5,10 +5,12 @@ import { fail, ok } from "../../lib/api.js";
 import { requireRole } from "../../lib/auth-middleware.js";
 import { FlowError } from "../../lib/job/flow.js";
 import { getWorkerDashboard } from "../../lib/worker/dashboard.js";
-import { haversineDistanceKm } from "../../lib/geo.js";
+import { haversineDistanceKm, estimateETAMinutes } from "../../lib/geo.js";
 import { getWorkerResults } from "../../lib/matching.js";
 import { photoUploadSchema } from "../../lib/photos.js";
-import { Worker, Upload } from "../../models/index.js";
+import { Worker, Upload, Job } from "../../models/index.js";
+import { getIO } from "../../lib/socket.js";
+import { getTrackingTarget } from "../../lib/tracking/realtime.js";
 
 const router = Router();
 
@@ -286,6 +288,40 @@ router.patch("/me/location", requireRole(["worker"]), async (req: Request, res: 
 
     if (!updated) {
       return fail(res, "Location is outside your service area", 403);
+    }
+
+    // Broadcast to the active job's socket room so customers receive real-time
+    // updates even when the worker's socket transport falls back to HTTP.
+    const activeJobId = updated.active_job_id ? String(updated.active_job_id) : null;
+    if (activeJobId) {
+      const io = getIO();
+      if (io) {
+        const job = await Job.findById(activeJobId).lean();
+        if (job) {
+          const target = getTrackingTarget(job);
+          if (target) {
+            const [targetLng, targetLat] = target;
+            const distanceKm = haversineDistanceKm(
+              parsed.data.lat,
+              parsed.data.lng,
+              targetLat,
+              targetLng,
+            );
+            io.to(`job:${activeJobId}`).emit("location-update", {
+              jobId: activeJobId,
+              workerId: String(worker._id),
+              lat: parsed.data.lat,
+              lng: parsed.data.lng,
+              targetLat,
+              targetLng,
+              distanceKm: Math.round(distanceKm * 100) / 100,
+              distanceMeters: Math.round(distanceKm * 1000),
+              etaMinutes: estimateETAMinutes(distanceKm),
+              timestamp: new Date().toISOString(),
+            });
+          }
+        }
+      }
     }
 
     return ok({

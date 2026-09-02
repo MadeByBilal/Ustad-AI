@@ -115,7 +115,10 @@ export default function TrackingMap({
   const lastPrecomputedRouteRef = useRef<[number, number][] | null>(null);
   const workerAnimationFrameRef = useRef<number | null>(null);
   const [leaflet, setLeaflet] = useState<typeof L | null>(null);
+  /** True once the map has been given its initial fit-bounds view. */
   const hasCenteredMapRef = useRef(false);
+  /** Worker location at the time of the last map pan-to-follow. */
+  const lastFollowedLocationRef = useRef<{ lat: number; lng: number } | null>(null);
 
   // Load Leaflet dynamically (client-side only)
   useEffect(() => {
@@ -408,15 +411,25 @@ export default function TrackingMap({
           .addTo(map);
       }
 
-      // Only fit the map once when the view is first established.
-      // Repeated re-fit calls cause the map to jump around as the worker updates.
-      const bounds = leaflet.latLngBounds([latlng]);
-      if (hasDest) {
-        bounds.extend([targetLocation!.lat, targetLocation!.lng]);
-      }
+      // ── Map centering / follow logic ──────────────────────────────────────
+      // First render: fit both worker and destination into view for context.
+      // Subsequent renders: pan (without changing zoom) to keep worker visible
+      // when they drift outside the current viewport.
       if (!hasCenteredMapRef.current) {
+        const bounds = leaflet.latLngBounds([latlng]);
+        if (hasDest) {
+          bounds.extend([targetLocation!.lat, targetLocation!.lng]);
+        }
         map.fitBounds(bounds, { padding: [60, 60], maxZoom: 16 });
         hasCenteredMapRef.current = true;
+        lastFollowedLocationRef.current = workerLocation;
+      } else {
+        // Pan to keep the worker in view if they've moved outside the viewport.
+        const workerLatLng = leaflet.latLng(latlng);
+        if (!map.getBounds().contains(workerLatLng)) {
+          map.panTo(workerLatLng, { animate: true, duration: 0.6 });
+          lastFollowedLocationRef.current = workerLocation;
+        }
       }
     } else if (hasDest && !hasCenteredMapRef.current) {
       // No worker location yet — center on destination

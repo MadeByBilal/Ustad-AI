@@ -38,6 +38,12 @@ async function handleSession(req: any, res: any) {
       name?: string;
       email: string;
       language: string;
+      stats?: {
+        average_rating?: number;
+        reviews_count?: number;
+        trust_score?: number;
+        cancellations?: number;
+      };
     };
 
     return ok({
@@ -47,6 +53,12 @@ async function handleSession(req: any, res: any) {
         name: user.name,
         email: user.email,
         language: user.language,
+        stats: {
+          average_rating: user.stats?.average_rating ?? 5.0,
+          reviews_count: user.stats?.reviews_count ?? 0,
+          trust_score: user.stats?.trust_score ?? 100,
+          cancellations: user.stats?.cancellations ?? 0,
+        },
       },
     })(res);
   } catch (error) {
