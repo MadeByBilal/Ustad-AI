@@ -92,10 +92,13 @@ export default function WorkerWorkPageClient({
       });
       const body = (await res.json().catch(() => null)) as {
         success?: boolean;
-        error?: string;
+        error?: string | { code: string; message: string };
       } | null;
       if (!res.ok || !body?.success) {
-        throw new Error(body?.error ?? "Status update failed");
+        const errMsg = typeof body?.error === "string"
+          ? body.error
+          : body?.error?.message ?? "Status update failed";
+        throw new Error(errMsg);
       }
       setJobStatus(nextAction.to);
       setAdvanceSuccess(`${nextAction.label} — done`);
@@ -122,7 +125,10 @@ export default function WorkerWorkPageClient({
       });
       const body = await res.json().catch(() => null);
       if (!res.ok || !body?.success) {
-        throw new Error(body?.error ?? "Cancel failed");
+        const errMsg = typeof body?.error === "string"
+          ? body.error
+          : body?.error?.message ?? "Cancel failed";
+        throw new Error(errMsg);
       }
       setJobStatus("CANCELLED");
       window.location.href = "/dashboard/worker";

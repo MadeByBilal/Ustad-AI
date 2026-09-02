@@ -265,9 +265,13 @@ export default function WorkerActiveTracking({
       });
       const body = await res.json().catch(() => null);
       if (!res.ok || !body?.success) {
-        throw new Error(body?.error ?? "Status update failed");
+        const errMsg = typeof body?.error === "string"
+          ? body.error
+          : body?.error?.message ?? "Status update failed";
+        throw new Error(errMsg);
       }
       setMessage({ ok: true, text: `${next.label} — done` });
+      setJob((prev) => (prev ? { ...prev, status: next.to } : prev));
       void refresh();
     } catch (e) {
       setMessage({
@@ -291,7 +295,10 @@ export default function WorkerActiveTracking({
       });
       const body = await res.json().catch(() => null);
       if (!res.ok || !body?.success) {
-        throw new Error(body?.error ?? "Cancel failed");
+        const errMsg = typeof body?.error === "string"
+          ? body.error
+          : body?.error?.message ?? "Cancel failed";
+        throw new Error(errMsg);
       }
       setJob(null);
     } catch (e) {
@@ -403,16 +410,14 @@ export default function WorkerActiveTracking({
       </div>
 
       {/* Bottom Panel */}
-      <div className="flex-1 overflow-y-auto bg-surface px-5 pt-4 pb-6">
+      <div className="flex min-h-0 flex-1 flex-col bg-surface px-5 pt-4 pb-6">
         <div className="flex items-center justify-between">
           <div>
             <p className={`text-lg font-bold ${statusInfo.color}`}>
               {statusInfo.label}
             </p>
             <p className="text-sm text-muted">
-              {job.original_text
-                ? job.original_text.slice(0, 50)
-                : "Job in progress"}
+              {job.category || "Job in progress"}
             </p>
           </div>
           <div className="text-right">
@@ -440,58 +445,60 @@ export default function WorkerActiveTracking({
           </p>
         )}
 
-        <div className="mt-4 flex gap-3">
-          {nextAction && (
-            <motion.button
-              type="button"
-              onClick={() => void handleAdvance()}
-              disabled={advancing}
-              className="btn-primary flex-1 disabled:opacity-60"
-              whileTap={{ scale: 0.95 }}
-              whileHover={{ y: -1 }}
-              transition={{ duration: 0.15, ease: "easeOut" }}
-            >
-              {advancing ? "Updating..." : nextAction.label}
-            </motion.button>
-          )}
-          {job && (
+        <div className="mt-auto flex flex-col gap-3 pt-4">
+          <div className="flex gap-3">
+            {nextAction && (
+              <motion.button
+                type="button"
+                onClick={() => void handleAdvance()}
+                disabled={advancing}
+                className="btn-primary flex-1 disabled:opacity-60"
+                whileTap={{ scale: 0.95 }}
+                whileHover={{ y: -1 }}
+                transition={{ duration: 0.15, ease: "easeOut" }}
+              >
+                {advancing ? "Updating..." : nextAction.label}
+              </motion.button>
+            )}
+            {job && (
+              <Link
+                href={`/dashboard/worker/chat/${job.job_id}`}
+                className="btn-secondary flex-1 text-center"
+              >
+                Chat
+              </Link>
+            )}
             <Link
-              href={`/dashboard/worker/chat/${job.job_id}`}
+              href="/dashboard/worker/work"
               className="btn-secondary flex-1 text-center"
             >
-              Chat
+              Work
             </Link>
-          )}
-          <Link
-            href="/dashboard/worker/work"
-            className="btn-secondary flex-1 text-center"
+          </div>
+
+          <motion.button
+            type="button"
+            onClick={() => void handleCancel()}
+            disabled={cancelling}
+            className="w-full rounded-xl border border-warning px-4 py-2.5 text-sm font-semibold text-warning transition-colors hover:bg-warning/10 disabled:opacity-60"
+            whileTap={{ scale: 0.95 }}
+            whileHover={{ y: -1 }}
+            transition={{ duration: 0.15, ease: "easeOut" }}
           >
-            Work
-          </Link>
+            {cancelling ? "Cancelling..." : "Cancel Job"}
+          </motion.button>
+
+          {lastUpdate && (
+            <p className="text-center text-xs text-muted">
+              Updated{" "}
+              {lastUpdate.toLocaleTimeString("en-GB", {
+                hour: "2-digit",
+                minute: "2-digit",
+                second: "2-digit",
+              })}
+            </p>
+          )}
         </div>
-
-        <motion.button
-          type="button"
-          onClick={() => void handleCancel()}
-          disabled={cancelling}
-          className="mt-3 w-full rounded-xl border border-warning px-4 py-2.5 text-sm font-semibold text-warning transition-colors hover:bg-warning/10 disabled:opacity-60"
-          whileTap={{ scale: 0.95 }}
-          whileHover={{ y: -1 }}
-          transition={{ duration: 0.15, ease: "easeOut" }}
-        >
-          {cancelling ? "Cancelling..." : "Cancel Job"}
-        </motion.button>
-
-        {lastUpdate && (
-          <p className="mt-3 text-center text-xs text-muted">
-            Updated{" "}
-            {lastUpdate.toLocaleTimeString("en-GB", {
-              hour: "2-digit",
-              minute: "2-digit",
-              second: "2-digit",
-            })}
-          </p>
-        )}
       </div>
     </div>
   );

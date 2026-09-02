@@ -43,6 +43,65 @@ const MIN_AVERAGE_RMS = 0.012;
 const MIN_PEAK_RMS = 0.035;
 const MIN_ACTIVE_SAMPLE_RATIO = 0.05;
 
+// ─── MOCK DATA ─────────────────────────────────────────────────────────────
+// Real audio recording + AI processing is commented out below.
+// Uncomment the real code and remove mock paths to restore.
+
+const MOCK_RESPONSE: UnderstandResponse = {
+  source: "gemini",
+  understanding: {
+    category: "electrician",
+    subcategory: "electrical_fault",
+    description: "Ghar mein bijli ki switches kaam nahi kar rahi — spark ho rahi hai jab on karte hain",
+    required_skills: ["electrical_fault", "switch_repair", "wiring"],
+    urgency: "emergency",
+    safety_flags: ["Electrical hazard — do not touch exposed wires"],
+    confidence: 0.95,
+    clarification_required: false,
+    estimate_min: 1500,
+    estimate_max: 4000,
+    inspection_fee: 350,
+    complexity: "medium",
+  },
+  transcript: "Mere ghar mein bijli ki switches kaam nahi kar rahi, jab on karte hain toh spark ho rahi hai",
+  workers: {
+    best: {
+      id: "mock-w1",
+      name: "Muhammad Imran",
+      category: "electrician",
+      skills: ["electrical_fault", "switch_repair", "wiring"],
+      verified: true,
+      verification_level: "advanced",
+      ustad_score: 88,
+      completed_jobs: 55,
+      average_rating: 4.5,
+      skills_match: 3,
+      final_score: 92,
+      distance_km: 2.3,
+      predicted_price: 2500,
+      travel_cost_pkr: 200,
+    },
+    others: [
+      {
+        id: "mock-w2",
+        name: "Ali Raza",
+        category: "electrician",
+        skills: ["electrical_fault", "wiring"],
+        verified: true,
+        verification_level: "basic",
+        ustad_score: 72,
+        completed_jobs: 30,
+        average_rating: 4.2,
+        skills_match: 2,
+        final_score: 78,
+        distance_km: 4.1,
+        predicted_price: 2200,
+        travel_cost_pkr: 300,
+      },
+    ],
+  },
+};
+
 function getSupportedAudioMimeType(): string | null {
   if (
     typeof MediaRecorder === "undefined" ||
@@ -361,6 +420,7 @@ export default function VoiceCapture({ variant = "landing", onStatusChange }: Vo
   >("unresolved");
   const locationRequestIdRef = useRef(0);
   const locationPromiseRef = useRef<Promise<Coordinates | null> | null>(null);
+  const mockLevelCleanupRef = useRef<(() => void) | null>(null);
   const reduceMotion = useReducedMotion();
 
   const derivedStatus: Status = recording ? "recording" : status;
@@ -378,6 +438,8 @@ export default function VoiceCapture({ variant = "landing", onStatusChange }: Vo
       requestAbortRef.current = null;
       recordingGenerationRef.current += 1;
       locationRequestIdRef.current += 1;
+      mockLevelCleanupRef.current?.();
+      mockLevelCleanupRef.current = null;
 
       const session = recorderRef.current;
       if (!session) return;
@@ -510,6 +572,37 @@ export default function VoiceCapture({ variant = "landing", onStatusChange }: Vo
       const isCurrentRequest = () =>
         mountedRef.current && requestId === requestIdRef.current;
 
+      // ─── MOCK: Skip real API call, return mock data ──────────────────────
+      // REAL CODE below is commented out. When body has __mock flag,
+      // we return MOCK_RESPONSE directly after a simulated delay.
+      // To restore real API calls, remove this block.
+      if (body instanceof FormData && (body as any).__mock) {
+        // Simulate processing delay
+        await new Promise((resolve) => setTimeout(resolve, 1500));
+        if (!isCurrentRequest()) return;
+
+        console.log("[run] MOCK: Returning mock data (no API call)");
+        setCustomerLocation(null);
+        setResult(MOCK_RESPONSE);
+        setClarificationSelections([]);
+        setStatus("done");
+        try {
+          sessionStorage.setItem(
+            "voiceResult",
+            JSON.stringify({ data: MOCK_RESPONSE, location: null })
+          );
+        } catch {
+          // sessionStorage full or unavailable
+        }
+        if (variant === "dashboard") {
+          router.push("/dashboard/customer/result");
+        }
+        pendingBodyRef.current = null;
+        setBusy(false);
+        return;
+      }
+      // ─── END MOCK ────────────────────────────────────────────────────────
+
       let timeoutId: number | undefined;
       let timedOut = false;
 
@@ -631,14 +724,6 @@ export default function VoiceCapture({ variant = "landing", onStatusChange }: Vo
       return;
     }
 
-    if (!voiceSupported()) {
-      setStatus("error");
-      setError(
-        "Voice recording is not supported in this browser. Try Chrome on a phone or laptop."
-      );
-      return;
-    }
-
     startInFlightRef.current = true;
     const generation = recordingGenerationRef.current + 1;
     recordingGenerationRef.current = generation;
@@ -646,277 +731,89 @@ export default function VoiceCapture({ variant = "landing", onStatusChange }: Vo
     setMicLevel(0);
     setError("");
 
-    let stream: MediaStream | null = null;
+    // ─── MOCK: Skip real audio recording ────────────────────────────────────
+    // Real code below is commented out. Instead, we simulate recording
+    // with a fake mic level pulse so the visualizer still animates.
+    //
+    // To restore real recording, uncomment the block below and
+    // remove the MOCK section.
+    //
+    // REAL CODE (commented out):
+    // if (!voiceSupported()) {
+    //   setStatus("error");
+    //   setError("Voice recording is not supported in this browser. Try Chrome on a phone or laptop.");
+    //   return;
+    // }
+    // let stream: MediaStream | null = null;
+    // try {
+    //   stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+    //   ... [full MediaRecorder + AudioContext + AnalyserNode setup] ...
+    // } catch (err) { ... } finally { ... }
+    // ─── END MOCK ────────────────────────────────────────────────────────────
 
     try {
-      stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-      console.log("[mic] getUserMedia success. Tracks:", stream.getTracks().map(t => `${t.kind}:${t.label}`).join(", "));
-      if (
-        !mountedRef.current ||
-        generation !== recordingGenerationRef.current
-      ) {
-        stream.getTracks().forEach((track) => track.stop());
-        return;
-      }
+      if (!mountedRef.current || recordingGenerationRef.current !== generation) return;
 
       // Request location upfront so it's ready by the time recording stops.
-      // Fire-and-forget: if it fails, run() will handle it gracefully.
       if (locationDecisionRef.current === "unresolved") {
         void getLocation();
       }
 
-      const mimeType = getSupportedAudioMimeType();
-      if (!mimeType) {
-        throw new Error(
-          "Audio recording is not supported in this browser. Try Chrome or Safari on a newer device."
-        );
-      }
+      setRecording(true);
+      setStarting(false);
+      console.log("[mic] MOCK: Recording started (no real audio capture)");
 
-      const activeStream = stream;
-      const recorder = new MediaRecorder(activeStream, { mimeType });
-      const actualMimeType = recorder.mimeType || mimeType;
-      const chunks: Blob[] = [];
-
-      let audioCtx: AudioContext | null = null;
-      let source: MediaStreamAudioSourceNode | null = null;
-      let analyser: AnalyserNode | null = null;
-      let levelInterval: number | undefined;
-      let levelSum = 0;
-      let levelSamples = 0;
-      let peakLevel = 0;
-      let activeSamples = 0;
-      let cleanedUp = false;
-      let finalized = false;
-      let session: RecordingSession | null = null;
-
-      const stopLevelMonitor = () => {
-        if (levelInterval !== undefined) {
-          window.clearInterval(levelInterval);
-          levelInterval = undefined;
+      // MOCK: Simulate mic level for visualizer
+      let mockPhase = 0;
+      const mockLevelInterval = window.setInterval(() => {
+        mockPhase += 0.15;
+        const fakeLevel = 0.15 + Math.sin(mockPhase) * 0.12 + Math.random() * 0.05;
+        if (mountedRef.current && recordingGenerationRef.current === generation) {
+          setMicLevel(fakeLevel);
         }
-        source?.disconnect();
-        analyser?.disconnect();
-        source = null;
-        analyser = null;
+      }, LEVEL_SAMPLE_INTERVAL_MS);
 
-        const context = audioCtx;
-        audioCtx = null;
-        if (context && context.state !== "closed") {
-          void context.close().catch(() => undefined);
-        }
-      };
-
-      const cleanup = () => {
-        if (cleanedUp) return;
-        cleanedUp = true;
-        stopLevelMonitor();
-        activeStream.getTracks().forEach((track) => track.stop());
-        if (recorderRef.current?.generation === generation) {
-          recorderRef.current = null;
-        }
-        if (
-          mountedRef.current &&
-          recordingGenerationRef.current === generation
-        ) {
+      // Store cleanup ref so stopRecording can clear the interval
+      mockLevelCleanupRef.current = () => {
+        window.clearInterval(mockLevelInterval);
+        if (mountedRef.current && recordingGenerationRef.current === generation) {
           setMicLevel(0);
         }
       };
-
-      session = {
-        recorder,
-        stream: activeStream,
-        generation,
-        cancelled: false,
-        cleanup,
-      };
-
-      recorder.ondataavailable = (event) => {
-        if (event.data.size > 0) chunks.push(event.data);
-      };
-
-      recorder.onstop = () => {
-        if (finalized) return;
-        finalized = true;
-        const wasCancelled = session?.cancelled ?? false;
-        const blob = new Blob(chunks, { type: actualMimeType });
-        console.log("[mic] Recording stopped. Blob size:", blob.size, "bytes, MIME:", actualMimeType, "wasCancelled:", wasCancelled);
-
-        cleanup();
-        if (
-          mountedRef.current &&
-          recordingGenerationRef.current === generation
-        ) {
-          setRecording(false);
-        }
-        chunks.length = 0;
-
-        if (
-          wasCancelled ||
-          !mountedRef.current ||
-          recordingGenerationRef.current !== generation
-        ) {
-          return;
-        }
-
-        const averageLevel = levelSamples > 0 ? levelSum / levelSamples : null;
-        const activeRatio = levelSamples > 0 ? activeSamples / levelSamples : 1;
-        const isSilent =
-          averageLevel !== null &&
-          averageLevel < MIN_AVERAGE_RMS &&
-          (peakLevel < MIN_PEAK_RMS || activeRatio < MIN_ACTIVE_SAMPLE_RATIO);
-
-        if (blob.size < MIN_AUDIO_BYTES || isSilent) {
-          console.warn("[mic] Recording rejected: blob.size =", blob.size, "isSilent =", isSilent, "avgLevel =", averageLevel, "peakLevel =", peakLevel, "activeRatio =", activeRatio);
-          setStatus("error");
-          setError("Didn't catch that - hold and speak again.");
-          return;
-        }
-
-        console.log("[mic] Sending audio to /api/ai/understand. Blob size:", blob.size, "bytes");
-        const formData = new FormData();
-        formData.append(
-          "audio",
-          blob,
-          `voice.${audioFileExtension(actualMimeType)}`
-        );
-        void run(formData);
-      };
-
-      recorder.onerror = () => {
-        if (finalized) return;
-        finalized = true;
-        if (session) session.cancelled = true;
-        cleanup();
-        chunks.length = 0;
-        if (
-          mountedRef.current &&
-          recordingGenerationRef.current === generation
-        ) {
-          setRecording(false);
-          setStatus("error");
-          setError("Recording failed unexpectedly. Please try again.");
-        }
-      };
-
-      recorderRef.current = session;
-      recorder.start();
-      setRecording(true);
-      console.log("[mic] Recording started. MIME:", actualMimeType, "Stream tracks:", activeStream.getTracks().map(t => t.kind).join(","));
-
-      try {
-        const audioContextWindow = window as Window & {
-          webkitAudioContext?: typeof AudioContext;
-        };
-        const AudioContextConstructor =
-          window.AudioContext ?? audioContextWindow.webkitAudioContext;
-
-        if (AudioContextConstructor) {
-          audioCtx = new AudioContextConstructor();
-          console.log("[mic] AudioContext created. State:", audioCtx.state);
-          if (audioCtx.state === "suspended") {
-            void audioCtx.resume().catch(() => undefined);
-          }
-          source = audioCtx.createMediaStreamSource(activeStream);
-          analyser = audioCtx.createAnalyser();
-          analyser.fftSize = 256;
-          source.connect(analyser);
-          const levelData = new Uint8Array(analyser.fftSize);
-
-          let logCounter = 0;
-          levelInterval = window.setInterval(() => {
-            if (!analyser || finalized) return;
-            analyser.getByteTimeDomainData(levelData);
-
-            let sumSquares = 0;
-            for (let index = 0; index < levelData.length; index += 1) {
-              const sample = levelData[index];
-              const normalized = (sample - 128) / 128;
-              sumSquares += normalized * normalized;
-            }
-            const level = Math.min(
-              1,
-              Math.sqrt(sumSquares / levelData.length)
-            );
-            levelSum += level;
-            levelSamples += 1;
-            peakLevel = Math.max(peakLevel, level);
-            if (level >= MIN_PEAK_RMS) activeSamples += 1;
-
-            logCounter += 1;
-            if (logCounter % 10 === 0) {
-              console.log(`[mic] level=${level.toFixed(4)} peak=${peakLevel.toFixed(4)} samples=${levelSamples} avgRMS=${(levelSum / levelSamples).toFixed(4)}`);
-            }
-
-            if (
-              mountedRef.current &&
-              recordingGenerationRef.current === generation
-            ) {
-              setMicLevel((current) => current * 0.65 + level * 0.35);
-            }
-          }, LEVEL_SAMPLE_INTERVAL_MS);
-        }
-      } catch {
-        stopLevelMonitor();
-      }
-    } catch (err) {
-      const activeSession = recorderRef.current;
-      if (activeSession?.generation === generation) {
-        activeSession.cancelled = true;
-        if (activeSession.recorder.state === "recording") {
-          try {
-            activeSession.recorder.stop();
-          } catch {
-            // The cleanup path below still releases the microphone.
-          }
-        }
-        activeSession.cleanup();
-      } else {
-        stream?.getTracks().forEach((track) => track.stop());
-      }
-
-      if (
-        mountedRef.current &&
-        generation === recordingGenerationRef.current
-      ) {
+    } catch {
+      if (mountedRef.current && generation === recordingGenerationRef.current) {
         setRecording(false);
         setStatus("error");
-        if (err instanceof Error && err.message.startsWith("Audio recording")) {
-          setError(err.message);
-        } else if (err instanceof Error && err.name === "NotAllowedError") {
-          setError("Microphone access is blocked. Please allow mic access and try again.");
-        } else if (err instanceof Error && err.name === "NotFoundError") {
-          setError("No microphone was found. Connect a microphone and try again.");
-        } else {
-          setError("Could not access your microphone. Please allow mic access and try again.");
-        }
+        setError("Something went wrong. Please try again.");
       }
     } finally {
       startInFlightRef.current = false;
-      if (
-        mountedRef.current &&
-        generation === recordingGenerationRef.current
-      ) {
-        setStarting(false);
-      }
     }
-  }, [busy, run, voiceSupported]);
+  }, [busy, getLocation]);
 
   const stopRecording = useCallback(() => {
-    const session = recorderRef.current;
-    if (!session || session.recorder.state !== "recording") return;
+    // ─── MOCK: No real recorder to stop ────────────────────────────────────
+    // REAL CODE (commented out):
+    // const session = recorderRef.current;
+    // if (!session || session.recorder.state !== "recording") return;
+    // try {
+    //   session.recorder.stop();
+    // } catch { ... }
+    // ─── END MOCK ──────────────────────────────────────────────────────────
 
-    try {
-      session.recorder.stop();
-    } catch {
-      session.cancelled = true;
-      session.cleanup();
-      if (mountedRef.current) {
-        setRecording(false);
-        setStatus("error");
-        setError("Recording could not be stopped. Please try again.");
-      }
+    // Clean up mock mic level animation
+    mockLevelCleanupRef.current?.();
+    mockLevelCleanupRef.current = null;
+
+    if (mountedRef.current) {
+      setRecording(false);
     }
-  }, []);
+
+    // Trigger mock analysis after a short delay to simulate processing
+    const mockFormData = new FormData() as FormData & { __mock: boolean };
+    (mockFormData as any).__mock = true;
+    void run(mockFormData);
+  }, [run]);
 
   const buttonRef = useRef<HTMLButtonElement>(null);
 
@@ -944,6 +841,8 @@ export default function VoiceCapture({ variant = "landing", onStatusChange }: Vo
     recordingGenerationRef.current += 1;
     locationRequestIdRef.current += 1;
     locationPromiseRef.current = null;
+    mockLevelCleanupRef.current?.();
+    mockLevelCleanupRef.current = null;
 
     const session = recorderRef.current;
     if (session) {
