@@ -33,6 +33,9 @@ export default function InspectionPageClient({
   const [completion, setCompletion] = useState(initialCompletion);
   const [description, setDescription] = useState(initialCompletion?.note ?? "");
   const [inspectionDone, setInspectionDone] = useState(false);
+  const [offerPrice, setOfferPrice] = useState("");
+  const [sendingOffer, setSendingOffer] = useState(false);
+  const [offerSent, setOfferSent] = useState(false);
   const [advancing, setAdvancing] = useState(false);
   const [advanceError, setAdvanceError] = useState<string | null>(null);
   const [cancelling, setCancelling] = useState(false);
@@ -74,79 +77,86 @@ export default function InspectionPageClient({
       setAdvanceError("Please take a photo before continuing");
       return;
     }
-    // Save the description as a note
-    if (description.trim()) {
-      try {
-        await fetch(`/api/jobs/${jobId}/media`, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            type: "before",
-            photo_id: completion?.before_photo_id ?? "",
-            note: description.trim(),
-          }),
-        });
-      } catch {
-        // ignore — note is optional
-      }
-    }
     setInspectionDone(true);
   }
 
-  // Choice 1: Just inspection — advance to IN_PROGRESS then to AWAITING_CUSTOMER_CONFIRMATION
+  // Choice 1: Just inspection — advance to AWAITING_CUSTOMER_CONFIRMATION
   async function handleJustInspection() {
     setAdvancing(true);
     setAdvanceError(null);
     try {
-      // Advance to IN_PROGRESS
-      let res = await fetch(`/api/jobs/${jobId}/status`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ status: "IN_PROGRESS" }),
-      });
-      let body = await res.json().catch(() => null);
-      if (!res.ok || !body?.success) {
-        throw new Error(getApiErrorMessage(body, "Status update failed"));
+      // If at ARRIVED, must go through IN_PROGRESS first
+      if (jobStatus === "ARRIVED") {
+        const res = await fetch(`/api/jobs/${jobId}/status`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ status: "IN_PROGRESS" }),
+        });
+        const body = await res.json().catch(() => null);
+        if (!res.ok || !body?.success) {
+          throw new Error(getApiErrorMessage(body, "Status update failed"));
+        }
       }
 
-      // Immediately complete
-      res = await fetch(`/api/jobs/${jobId}/status`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ status: "AWAITING_CUSTOMER_CONFIRMATION" }),
-      });
-      body = await res.json().catch(() => null);
-      if (!res.ok || !body?.success) {
-        throw new Error(getApiErrorMessage(body, "Status update failed"));
-      }
-
-      window.location.href = `/dashboard/worker/work`;
-    } catch (e) {
-      setAdvanceError(e instanceof Error ? e.message : "Failed");
-      setAdvancing(false);
-    }
-  }
-
-  // Choice 2: Needs work — take after photo, then send to customer
-  async function handleNeedsWork() {
-    setAdvancing(true);
-    setAdvanceError(null);
-    try {
-      // Advance to IN_PROGRESS so worker can take after photo
+      // Now go to AWAITING_CUSTOMER_CONFIRMATION
       const res = await fetch(`/api/jobs/${jobId}/status`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ status: "IN_PROGRESS" }),
+        body: JSON.stringify({ status: "AWAITING_CUSTOMER_CONFIRMATION" }),
       });
       const body = await res.json().catch(() => null);
       if (!res.ok || !body?.success) {
         throw new Error(getApiErrorMessage(body, "Status update failed"));
       }
-      // Go to work page where after photo can be taken
+
       window.location.href = `/dashboard/worker/work`;
     } catch (e) {
       setAdvanceError(e instanceof Error ? e.message : "Failed");
       setAdvancing(false);
+    }
+  }
+
+  // Choice 2: Needs work — send price offer to customer
+  async function handleNeedsWork() {
+    const price = parseInt(offerPrice, 10);
+    if (!price || price <= 0) {
+      setAdvanceError("Please enter a valid price");
+      return;
+    }
+    setSendingOffer(true);
+    setAdvanceError(null);
+    try {
+      // Advance to IN_PROGRESS first if needed
+      if (jobStatus === "ARRIVED") {
+        const res = await fetch(`/api/jobs/${jobId}/status`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ status: "IN_PROGRESS" }),
+        });
+        const body = await res.json().catch(() => null);
+        if (!res.ok || !body?.success) {
+          throw new Error(getApiErrorMessage(body, "Status update failed"));
+        }
+      }
+
+      // Send counter offer via chat
+      const msgRes = await fetch(`/api/jobs/${jobId}/messages`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          content: `Inspection complete. This job needs additional work. My offer: Rs ${price.toLocaleString("en-PK")}`,
+        }),
+      });
+      const msgBody = await msgRes.json().catch(() => null);
+      if (!msgRes.ok || !msgBody?.success) {
+        throw new Error(getApiErrorMessage(msgBody, "Failed to send offer"));
+      }
+
+      setOfferSent(true);
+    } catch (e) {
+      setAdvanceError(e instanceof Error ? e.message : "Failed");
+    } finally {
+      setSendingOffer(false);
     }
   }
 
@@ -211,6 +221,34 @@ export default function InspectionPageClient({
     );
   }
 
+  // Offer sent confirmation
+  if (offerSent) {
+    return (
+      <div className="space-y-4">
+        <motion.div
+          className="card flex flex-col items-center gap-4 py-12 text-center"
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+        >
+          <div className="flex h-16 w-16 items-center justify-center rounded-full bg-success/15">
+            <svg className="h-8 w-8 text-success-fg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+          </div>
+          <div>
+            <p className="text-lg font-bold text-text">Offer Sent!</p>
+            <p className="mt-1 text-sm text-muted">
+              Waiting for customer to accept your offer of Rs {parseInt(offerPrice, 10).toLocaleString("en-PK")}
+            </p>
+          </div>
+          <Link href={`/dashboard/worker/chat/${jobId}`} className="btn-primary !rounded-xl !px-6 !py-2.5 text-sm">
+            Open Chat
+          </Link>
+        </motion.div>
+      </div>
+    );
+  }
+
   // Two-path choice after inspection done
   if (inspectionDone) {
     return (
@@ -257,14 +295,10 @@ export default function InspectionPageClient({
         </motion.button>
 
         {/* Choice 2: Needs Work */}
-        <motion.button
-          type="button"
-          onClick={() => void handleNeedsWork()}
-          disabled={advancing}
-          whileTap={{ scale: 0.97 }}
+        <motion.div
+          className="card transition-colors"
           whileHover={{ y: -2 }}
           transition={{ duration: 0.15, ease: "easeOut" }}
-          className="card w-full text-left transition-colors hover:bg-accent/5 disabled:opacity-60"
         >
           <div className="flex items-center gap-4">
             <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-accent/15">
@@ -272,14 +306,34 @@ export default function InspectionPageClient({
                 <path strokeLinecap="round" strokeLinejoin="round" d="M16.023 9.348h4.992v-.001M2.985 19.644v-4.992m0 0h4.992m-4.993 0l3.181 3.183a8.25 8.25 0 0013.803-3.7M4.031 9.865a8.25 8.25 0 0113.803-3.7l3.181 3.182" />
               </svg>
             </div>
-            <div>
+            <div className="min-w-0 flex-1">
               <p className="text-sm font-bold text-text">Needs Work</p>
               <p className="mt-0.5 text-xs text-muted">
-                Take after photo, send confirmation to customer with price offer.
+                Set a price and send offer to customer.
               </p>
             </div>
           </div>
-        </motion.button>
+          <div className="mt-3 flex items-center gap-2">
+            <span className="text-sm font-bold text-muted">Rs</span>
+            <input
+              type="number"
+              value={offerPrice}
+              onChange={(e) => setOfferPrice(e.target.value)}
+              placeholder="Enter price"
+              min="0"
+              className="flex-1 rounded-xl border border-divider bg-bg px-4 py-2.5 text-sm text-text outline-none focus:border-accent"
+            />
+            <motion.button
+              type="button"
+              onClick={() => void handleNeedsWork()}
+              disabled={sendingOffer || !offerPrice}
+              whileTap={{ scale: 0.97 }}
+              className="rounded-xl bg-accent px-4 py-2.5 text-sm font-bold text-bg transition-colors hover:bg-accent/90 disabled:opacity-50"
+            >
+              {sendingOffer ? "Sending..." : "Send Offer"}
+            </motion.button>
+          </div>
+        </motion.div>
 
         <motion.button
           type="button"
@@ -331,6 +385,8 @@ export default function InspectionPageClient({
           type="before"
           currentId={completion?.before_photo_id ?? null}
           onChanged={handlePhotoChanged}
+          label="Inspection photo"
+          description="Take a photo of the current state"
         />
       </motion.div>
 

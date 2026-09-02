@@ -15,11 +15,15 @@ export default function JobPhotoUpload({
   type,
   currentId,
   onChanged,
+  label,
+  description,
 }: {
   jobId: string;
   type: "before" | "after";
   currentId: string | null;
   onChanged: () => void;
+  label?: string;
+  description?: string;
 }) {
   const inputRef = useRef<HTMLInputElement>(null);
   const [note, setNote] = useState("");
@@ -95,12 +99,12 @@ export default function JobPhotoUpload({
         )}
         <div className="min-w-0 flex-1">
           <p className="text-xs font-bold uppercase tracking-wide text-muted">
-            {type === "before" ? "Before photo" : "After photo"}
+            {label ?? (type === "before" ? "Before photo" : "After photo")}
           </p>
           <p className="text-xs text-muted">
-            {type === "before"
+            {description ?? (type === "before"
               ? "Required for normal jobs before starting work"
-              : "Required before completing the job"}
+              : "Required before completing the job")}
           </p>
           <input
             ref={inputRef}
