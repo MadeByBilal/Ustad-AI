@@ -329,7 +329,6 @@ export default function TrackingMap({
     // ── Customer location marker — green pin ──
     if (hasUser) {
       const customerIcon = getCustomerIcon(leaflet);
-      const customerLabel = perspective === "customer" ? "You" : "Customer";
       if (customerMarkerRef.current) {
         customerMarkerRef.current.setLatLng([userLocation!.lat, userLocation!.lng]);
         customerMarkerRef.current.setIcon(customerIcon);
@@ -337,7 +336,7 @@ export default function TrackingMap({
         customerMarkerRef.current = leaflet
           .marker([userLocation!.lat, userLocation!.lng], { icon: customerIcon })
           .addTo(map)
-          .bindTooltip(customerLabel, {
+          .bindTooltip("Customer", {
             permanent: true,
             direction: "top",
             offset: [0, -30],

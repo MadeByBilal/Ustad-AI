@@ -253,6 +253,21 @@ export function registerSocketHandlers(io: Server): void {
 
           const route = toRoutePayload(jobId, job.route);
           if (route) socket.emit("route-computed", route);
+
+          // Send current customer location to the worker so they see it immediately
+          const customerCoords = job.tracking?.customer_location?.coordinates;
+          if (
+            identity.role === "worker" &&
+            Array.isArray(customerCoords) &&
+            customerCoords.length === 2
+          ) {
+            socket.emit("customer-location-update", {
+              jobId,
+              lat: customerCoords[1],
+              lng: customerCoords[0],
+            });
+          }
+
           respond(true);
         } catch (error) {
           console.error("[socket] join-job error:", error);
