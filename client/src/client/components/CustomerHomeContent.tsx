@@ -1,13 +1,26 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import Link from "next/link";
 import { useLang } from "@/client/lib/i18n/context";
 import VoiceCapture from "@/client/components/VoiceCapture";
 import ActiveJobStatusBar from "@/client/components/ActiveJobStatusBar";
+import { ArrowLeft } from "lucide-react";
 
 export default function CustomerHomeContent() {
   const { t } = useLang();
   const [voiceStatus, setVoiceStatus] = useState<"idle" | "recording" | "processing" | "clarifying" | "done" | "error">("idle");
+  const [hasResults, setHasResults] = useState(false);
+
+  useEffect(() => {
+    try {
+      const raw = sessionStorage.getItem("voiceResult");
+      if (raw) {
+        const parsed = JSON.parse(raw);
+        if (parsed?.data) setHasResults(true);
+      }
+    } catch {}
+  }, []);
 
   const isActive = voiceStatus === "recording" || voiceStatus === "processing";
 
@@ -17,6 +30,15 @@ export default function CustomerHomeContent() {
       <div className="pointer-events-none absolute -bottom-32 -left-16 h-64 w-64 rounded-full bg-warning/8 blur-3xl" />
 
       <div className="page-content relative flex flex-1 flex-col items-center justify-center">
+        {hasResults && !isActive && (
+          <Link
+            href="/dashboard/customer/result"
+            className="absolute left-4 top-4 flex items-center gap-2 text-sm font-medium text-muted hover:text-accent"
+          >
+            <ArrowLeft className="h-4 w-4" />
+            Back to results
+          </Link>
+        )}
         <div className={`transition-all duration-500 ${isActive ? "opacity-0 -translate-y-8 pointer-events-none" : "opacity-100 translate-y-0"}`}>
           <p className="text-center text-3xl font-bold text-text sm:text-4xl">
             {t("whatsBroken")}

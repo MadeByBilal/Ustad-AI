@@ -6,6 +6,7 @@ import type { IncomingJobView } from "@contracts/worker";
 import { motion, AnimatePresence } from "framer-motion";
 import { Timer } from "lucide-react";
 import CounterOfferModal from "./CounterOfferModal";
+import { getApiErrorMessage } from "@/client/lib/api-client";
 
 function timeLeft(deadline: string | null, now: number): string | null {
   if (!deadline) return null;
@@ -22,12 +23,9 @@ async function postJson(url: string, body?: unknown): Promise<void> {
     headers: { "Content-Type": "application/json" },
     body: body === undefined ? undefined : JSON.stringify(body),
   });
-  const parsed = (await res.json().catch(() => null)) as {
-    success?: boolean;
-    error?: string;
-  } | null;
+  const parsed = await res.json().catch(() => null);
   if (!res.ok || !parsed?.success) {
-    throw new Error(parsed?.error ?? `Request failed (${res.status})`);
+    throw new Error(getApiErrorMessage(parsed, `Request failed (${res.status})`));
   }
 }
 

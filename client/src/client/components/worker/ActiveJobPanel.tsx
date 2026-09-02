@@ -4,6 +4,7 @@ import { useState } from "react";
 import { motion } from "framer-motion";
 import JobPhotoUpload from "./JobPhotoUpload";
 import LiveTracker from "./LiveTracker";
+import { getApiErrorMessage } from "@/client/lib/api-client";
 
 interface ActiveJob {
   _id: string;
@@ -69,9 +70,11 @@ const NEXT_ACTIONS: Record<
  */
 export default function ActiveJobPanel({
   job,
+  workerId,
   onChanged,
 }: {
   job: ActiveJob | null;
+  workerId?: string;
   onChanged: () => void;
 }) {
   const [busy, setBusy] = useState(false);
@@ -114,12 +117,9 @@ export default function ActiveJobPanel({
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ status: next.to }),
       });
-      const body = (await res.json().catch(() => null)) as {
-        success?: boolean;
-        error?: string;
-      } | null;
-      if (!res.ok || !body?.success) {
-        throw new Error(body?.error ?? "Status update failed");
+       const body = await res.json().catch(() => null);
+       if (!res.ok || !body?.success) {
+         throw new Error(getApiErrorMessage(body, "Status update failed"));
       }
       onChanged();
     } catch (e) {
@@ -214,8 +214,12 @@ export default function ActiveJobPanel({
         </p>
       )}
 
-      {(activeJob.status === "EN_ROUTE" || activeJob.status === "ARRIVED") && (
-        <LiveTracker jobId={activeJob._id} />
+      {activeJob.status === "EN_ROUTE" && (
+        <LiveTracker
+          jobId={activeJob._id}
+          workerId={workerId}
+          onArrived={onChanged}
+        />
       )}
     </section>
   );

@@ -11,6 +11,7 @@ import IncomingJobCard from "./IncomingJobCard";
 import DirectRequestCard from "./DirectRequestCard";
 import ActiveJobPanel from "./ActiveJobPanel";
 import { Star, Check } from "lucide-react";
+import { getApiErrorMessage } from "@/client/lib/api-client";
 
 const POLL_MS = 15000;
 
@@ -27,11 +28,11 @@ export default function WorkerDashboard({ workerId }: { workerId: string }) {
       });
       const body = (await res.json().catch(() => null)) as {
         success?: boolean;
-        error?: string;
         data?: WorkerDashboardData;
+        error?: unknown;
       } | null;
       if (!res.ok || !body?.success) {
-        throw new Error(body?.error ?? "Dashboard failed to load");
+        throw new Error(getApiErrorMessage(body, "Dashboard failed to load"));
       }
       setData(body.data ?? null);
       setError(null);
@@ -142,7 +143,7 @@ export default function WorkerDashboard({ workerId }: { workerId: string }) {
         </div>
 
         <div className="space-y-4 lg:col-span-2">
-          <ActiveJobPanel job={data.active_job} onChanged={() => void refresh()} />
+          <ActiveJobPanel job={data.active_job} workerId={workerId} onChanged={() => void refresh()} />
 
           <section className="card">
             <h2 className="text-sm font-bold uppercase tracking-wide text-muted">

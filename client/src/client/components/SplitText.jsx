@@ -1,10 +1,14 @@
+"use client";
+
 import { useRef, useEffect, useState } from 'react';
 import { gsap } from 'gsap';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
 import { SplitText as GSAPSplitText } from 'gsap/SplitText';
 import { useGSAP } from '@gsap/react';
 
-gsap.registerPlugin(ScrollTrigger, GSAPSplitText, useGSAP);
+if (typeof window !== 'undefined') {
+  gsap.registerPlugin(ScrollTrigger, GSAPSplitText, useGSAP);
+}
 
 const SplitText = ({
   text,

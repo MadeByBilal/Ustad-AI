@@ -4,7 +4,9 @@ import { useEffect, useState, useCallback } from "react";
 import Link from "next/link";
 import { motion } from "framer-motion";
 import TrackingMap from "@/client/components/tracking/dynamicTrackingMap";
+import LiveCustomerLocation from "@/client/components/tracking/LiveCustomerLocation";
 import type { RouteComputedPayload } from "@/client/lib/route-types";
+import { getApiErrorMessage } from "@/client/lib/api-client";
 
 interface TrackingPageClientProps {
   jobId: string;
@@ -12,6 +14,7 @@ interface TrackingPageClientProps {
   workerName: string;
   destination: { lat: number; lng: number; label: string } | null;
   initialWorkerLocation: { lat: number; lng: number } | null;
+  initialCustomerLocation?: { lat: number; lng: number } | null;
   initialPrecomputedRoute: [number, number][] | null;
   originalText: string;
   category: string;
@@ -23,6 +26,7 @@ export default function TrackingPageClient({
   workerName,
   destination,
   initialWorkerLocation,
+  initialCustomerLocation = null,
   initialPrecomputedRoute,
   originalText,
   category,
@@ -31,6 +35,10 @@ export default function TrackingPageClient({
     lat: number;
     lng: number;
   } | null>(initialWorkerLocation);
+  const [customerLocation, setCustomerLocation] = useState<{
+    lat: number;
+    lng: number;
+  } | null>(initialCustomerLocation);
   const [distanceKm, setDistanceKm] = useState<number | undefined>();
   const [etaMinutes, setEtaMinutes] = useState<number | null>(null);
   const [jobStatus, setJobStatus] = useState(initialStatus);
@@ -70,17 +78,20 @@ export default function TrackingPageClient({
 
     async function connect() {
       try {
-        const { connectSocket } = await import("@/client/lib/socket-client");
+        const { joinJob } = await import("@/client/lib/socket-client");
         if (!mounted) return;
-        const socket = connectSocket();
+        const socket = await joinJob(jobId, "customer");
 
         const handleSocketLocationUpdate = (data: {
+          jobId?: string;
           lat: number;
           lng: number;
           distanceKm: number;
           etaMinutes: number;
         }) => {
-          if (mounted) handleLocationUpdate(data);
+          if (mounted && (!data.jobId || data.jobId === jobId)) {
+            handleLocationUpdate(data);
+          }
         };
 
         const handleRouteComputed = (data: RouteComputedPayload) => {
@@ -99,16 +110,49 @@ export default function TrackingPageClient({
           if (mounted) handleArrived();
         };
 
+        const handleCustomerLocationUpdate = (data: {
+          jobId?: string;
+          lat?: number;
+          lng?: number;
+        }) => {
+          if (
+            mounted &&
+            data.jobId === jobId &&
+            typeof data.lat === "number" &&
+            typeof data.lng === "number"
+          ) {
+            setCustomerLocation({ lat: data.lat, lng: data.lng });
+          }
+        };
+
+        const handleStatusUpdate = (data: {
+          jobId?: string;
+          status?: string;
+        }) => {
+          if (!mounted || data.jobId !== jobId || !data.status) return;
+          setJobStatus(data.status);
+          if (data.status === "ARRIVED") handleArrived();
+        };
+
         socket.on("location-update", handleSocketLocationUpdate);
         socket.on("route-computed", handleRouteComputed);
         socket.on("worker-arrived", handleWorkerArrived);
-        socket.emit("join-job", { jobId, role: "customer" });
-
+        socket.on("customer-location-update", handleCustomerLocationUpdate);
+        socket.on("job-status-update", handleStatusUpdate);
         // Also listen for job status changes via SSE
         const eventSource = new EventSource(`/api/jobs/${jobId}/stream`);
-        eventSource.addEventListener("job_event", () => {
-          // Refresh page on status change
-          if (mounted) window.location.reload();
+        eventSource.addEventListener("job_event", (event) => {
+          if (!mounted) return;
+          try {
+            const events = JSON.parse(event.data) as Array<{ to_state?: string }>;
+            const latest = events.at(-1)?.to_state;
+            if (latest) {
+              setJobStatus(latest);
+              if (latest === "ARRIVED") handleArrived();
+            }
+          } catch {
+            // Polling remains the fallback for malformed stream data.
+          }
         });
 
         cleanup = () => {
@@ -116,6 +160,8 @@ export default function TrackingPageClient({
           socket.off("location-update", handleSocketLocationUpdate);
           socket.off("route-computed", handleRouteComputed);
           socket.off("worker-arrived", handleWorkerArrived);
+          socket.off("customer-location-update", handleCustomerLocationUpdate);
+          socket.off("job-status-update", handleStatusUpdate);
           eventSource.close();
         };
       } catch {
@@ -138,16 +184,26 @@ export default function TrackingPageClient({
         const res = await fetch(`/api/jobs/${jobId}/tracking`);
         const body = await res.json();
         if (body?.success && body.data) {
-          if (body.data.worker_lat && body.data.worker_lng) {
+          if (body.data.status) {
+            setJobStatus(body.data.status);
+            if (body.data.status === "ARRIVED") setArrived(true);
+          }
+          if (body.data.worker_lat != null && body.data.worker_lng != null) {
             setWorkerLocation({
               lat: body.data.worker_lat,
               lng: body.data.worker_lng,
             });
           }
-          if (body.data.distance_km !== undefined) {
+          if (body.data.customer_lat != null && body.data.customer_lng != null) {
+            setCustomerLocation({
+              lat: body.data.customer_lat,
+              lng: body.data.customer_lng,
+            });
+          }
+          if (body.data.distance_km !== undefined && body.data.distance_km !== null) {
             setDistanceKm(body.data.distance_km);
           }
-          if (body.data.eta_minutes !== undefined) {
+          if (body.data.eta_minutes !== undefined && body.data.eta_minutes !== null) {
             setEtaMinutes(body.data.eta_minutes);
           }
           // Capture precomputed route from tracking API
@@ -173,9 +229,12 @@ export default function TrackingPageClient({
   const isArrived = arrived || jobStatus === "ARRIVED";
   const isAccepted = jobStatus === "ACCEPTED";
 
+  const [cancelError, setCancelError] = useState<string | null>(null);
+
   async function handleCancel() {
     if (!confirm("Are you sure you want to cancel this job?")) return;
     setCancelling(true);
+    setCancelError(null);
     try {
       const res = await fetch(`/api/jobs/${jobId}/cancel`, {
         method: "POST",
@@ -184,12 +243,11 @@ export default function TrackingPageClient({
       });
       const body = await res.json().catch(() => null);
       if (!res.ok || !body?.success) {
-        throw new Error(body?.error ?? "Cancel failed");
+        throw new Error(getApiErrorMessage(body, "Cancel failed"));
       }
-      setJobStatus("CANCELLED");
       window.location.href = "/dashboard/customer";
-    } catch {
-      // ignore
+    } catch (e) {
+      setCancelError(e instanceof Error ? e.message : "Cancel failed");
     } finally {
       setCancelling(false);
     }
@@ -342,20 +400,22 @@ export default function TrackingPageClient({
         )}
       </div>
 
-      {/* Map */}
-      {destination ? (
-        <TrackingMap
-          workerLocation={workerLocation}
-          destination={destination}
-          distanceKm={distanceKm}
-          perspective="customer"
-          className="h-[400px]"
-          precomputedRoute={precomputedRoute}
+      {/* Map — always render; TrackingMap handles null destination gracefully */}
+      <TrackingMap
+        workerLocation={workerLocation}
+        userLocation={customerLocation}
+        destination={destination}
+        distanceKm={distanceKm}
+        perspective="customer"
+        className="h-[400px]"
+        precomputedRoute={precomputedRoute}
+      />
+
+      {!isCancelled && (
+        <LiveCustomerLocation
+          jobId={jobId}
+          onLocationUpdate={setCustomerLocation}
         />
-      ) : (
-        <div className="flex h-[300px] items-center justify-center rounded-xl bg-surface">
-          <p className="text-sm text-muted">Location not available</p>
-        </div>
       )}
 
       {/* Job Info */}
@@ -393,17 +453,24 @@ export default function TrackingPageClient({
 
       {/* Cancel Button */}
       {!isCancelled && (
-        <motion.button
-          type="button"
-          onClick={() => void handleCancel()}
-          disabled={cancelling}
-          whileTap={{ scale: 0.95 }}
-          whileHover={{ y: -1 }}
-          transition={{ duration: 0.15, ease: "easeOut" }}
-          className="w-full rounded-xl border border-warning bg-surface px-4 py-3 text-sm font-semibold text-warning transition-colors hover:bg-warning/10 disabled:opacity-60"
-        >
-          {cancelling ? "Cancelling…" : "Cancel Job"}
-        </motion.button>
+        <>
+          <motion.button
+            type="button"
+            onClick={() => void handleCancel()}
+            disabled={cancelling}
+            whileTap={{ scale: 0.95 }}
+            whileHover={{ y: -1 }}
+            transition={{ duration: 0.15, ease: "easeOut" }}
+            className="w-full rounded-xl border border-warning bg-surface px-4 py-3 text-sm font-semibold text-warning transition-colors hover:bg-warning/10 disabled:opacity-60"
+          >
+            {cancelling ? "Cancelling…" : "Cancel Job"}
+          </motion.button>
+          {cancelError && (
+            <p className="mt-2 text-center text-sm text-red-500">
+              {cancelError}
+            </p>
+          )}
+        </>
       )}
 
       {isCancelled && (

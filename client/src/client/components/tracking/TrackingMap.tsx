@@ -15,6 +15,7 @@ export interface TrackingMarker {
 
 interface TrackingMapProps {
   workerLocation: { lat: number; lng: number } | null;
+  userLocation?: { lat: number; lng: number } | null;
   destination: { lat: number; lng: number; label?: string } | null;
   distanceKm?: number;
   showArrivalZone?: boolean;
@@ -92,6 +93,7 @@ function distanceFromPolyline(
 
 export default function TrackingMap({
   workerLocation,
+  userLocation = null,
   destination,
   distanceKm,
   showArrivalZone = true,
@@ -145,6 +147,8 @@ export default function TrackingMap({
     if (!leaflet || !mapRef.current || mapInstanceRef.current) return;
 
     const map = leaflet.map(mapRef.current, {
+      center: [31.5204, 74.3587], // default: Lahore
+      zoom: 12,
       zoomControl: false,
       attributionControl: false,
     });
@@ -195,9 +199,7 @@ export default function TrackingMap({
              box-shadow: 0 0 0 3px rgba(201,122,61,0.25), 0 2px 8px rgba(0,0,0,0.3);
             animation: moving-worker-pulse 1.8s infinite;
           ">
-             <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="#1A1410" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-               <path d="M5 17h14"/><path d="M6 17l1.2-5h9.6l1.2 5"/><path d="M8 12l1-3h6l1 3"/><circle cx="8" cy="17" r="1.5" fill="#1A1410"/><circle cx="16" cy="17" r="1.5" fill="#1A1410"/>
-            </svg>
+             <span aria-hidden="true" style="font-size: 18px; line-height: 1;">🧑‍🔧</span>
           </div>
           <style>
             @keyframes moving-worker-pulse {
@@ -269,12 +271,36 @@ export default function TrackingMap({
     [perspective],
   );
 
+  const getUserIcon = useCallback((L: typeof import("leaflet")) => {
+    return L.divIcon({
+      html: `
+        <div style="
+          width: 30px; height: 36px; position: relative;
+          filter: drop-shadow(0 3px 5px rgba(0,0,0,0.28));
+        ">
+          <svg viewBox="0 0 30 36" width="30" height="36" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M4 4h22v3H7v22H4V4Z" fill="#2F6B5F"/>
+            <path d="M7 7h18v11H7z" fill="#F5EDE0" stroke="#2F6B5F" stroke-width="2"/>
+            <path d="M13 12h8" stroke="#2F6B5F" stroke-width="2" stroke-linecap="round"/>
+            <path d="M13 16h5" stroke="#2F6B5F" stroke-width="2" stroke-linecap="round"/>
+            <path d="M15 18 12 32l7-7 7 7-3-14" fill="#E8A93C" stroke="#2F6B5F" stroke-width="2" stroke-linejoin="round"/>
+          </svg>
+        </div>
+      `,
+      className: "",
+      iconSize: [30, 36],
+      iconAnchor: [15, 36],
+    });
+  }, []);
+
   // Update markers
   useEffect(() => {
     if (!leaflet || !mapInstanceRef.current) return;
     const map = mapInstanceRef.current;
 
-    const hasDest = hasValidCoordinate(destination);
+    const liveUser = hasValidCoordinate(userLocation);
+    const targetLocation = liveUser ? userLocation : destination;
+    const hasDest = hasValidCoordinate(targetLocation);
     const hasWorker = hasValidCoordinate(workerLocation);
 
     if (!hasDest || !hasWorker) {
@@ -288,17 +314,25 @@ export default function TrackingMap({
 
     // Destination marker — only when valid coordinates exist
     if (hasDest) {
+      const targetIcon = liveUser ? getUserIcon(leaflet) : getDestIcon(leaflet);
+      const targetLabel = liveUser ? "You" : destination?.label;
+      const safeLabel = targetLabel
+        ? targetLabel.replace(/[<>&"']/g, (ch) =>
+            ({ "<": "&lt;", ">": "&gt;", "&": "&amp;", '"': "&quot;", "'": "&#39;" })[ch] ?? ch,
+          )
+        : null;
       if (destMarkerRef.current) {
-        destMarkerRef.current.setLatLng([destination!.lat, destination!.lng]);
-        destMarkerRef.current.setIcon(getDestIcon(leaflet));
+        destMarkerRef.current.setLatLng([targetLocation!.lat, targetLocation!.lng]);
+        destMarkerRef.current.setIcon(targetIcon);
+        if (safeLabel) destMarkerRef.current.setTooltipContent(safeLabel);
       } else {
         destMarkerRef.current = leaflet
-          .marker([destination!.lat, destination!.lng], {
-            icon: getDestIcon(leaflet),
+          .marker([targetLocation!.lat, targetLocation!.lng], {
+            icon: targetIcon,
           })
           .addTo(map);
-        if (destination!.label) {
-          destMarkerRef.current.bindTooltip(destination!.label, {
+        if (safeLabel) {
+          destMarkerRef.current.bindTooltip(safeLabel, {
             permanent: true,
             direction: "top",
             offset: [0, -40],
@@ -315,12 +349,12 @@ export default function TrackingMap({
     if (showArrivalZone && hasDest) {
       if (arrivalCircleRef.current) {
         arrivalCircleRef.current.setLatLng([
-          destination!.lat,
-          destination!.lng,
+          targetLocation!.lat,
+          targetLocation!.lng,
         ]);
       } else {
         arrivalCircleRef.current = leaflet
-          .circle([destination!.lat, destination!.lng], {
+          .circle([targetLocation!.lat, targetLocation!.lng], {
             radius: ARRIVAL_ZONE_RADIUS,
             color: "#C97A3D",
             fillColor: "#C97A3D",
@@ -378,7 +412,7 @@ export default function TrackingMap({
       // Repeated re-fit calls cause the map to jump around as the worker updates.
       const bounds = leaflet.latLngBounds([latlng]);
       if (hasDest) {
-        bounds.extend([destination!.lat, destination!.lng]);
+        bounds.extend([targetLocation!.lat, targetLocation!.lng]);
       }
       if (!hasCenteredMapRef.current) {
         map.fitBounds(bounds, { padding: [60, 60], maxZoom: 16 });
@@ -386,7 +420,7 @@ export default function TrackingMap({
       }
     } else if (hasDest && !hasCenteredMapRef.current) {
       // No worker location yet — center on destination
-      map.setView([destination!.lat, destination!.lng], 15);
+      map.setView([targetLocation!.lat, targetLocation!.lng], 15);
       hasCenteredMapRef.current = true;
     }
 
@@ -399,9 +433,11 @@ export default function TrackingMap({
   }, [
     leaflet,
     workerLocation,
+    userLocation,
     destination,
     getWorkerIcon,
     getDestIcon,
+    getUserIcon,
     showArrivalZone,
   ]);
 
@@ -414,12 +450,13 @@ export default function TrackingMap({
     const routingLeaflet = leafletModule;
     const routingMap = map;
 
-    const hasDest = hasValidCoordinate(destination);
+    const targetLocation = hasValidCoordinate(userLocation) ? userLocation : destination;
+    const hasDest = hasValidCoordinate(targetLocation);
     const hasWorker = hasValidCoordinate(workerLocation);
     if (!hasDest || !hasWorker) return;
 
     const origin: [number, number] = [workerLocation.lat, workerLocation.lng];
-    const target: [number, number] = [destination.lat, destination.lng];
+    const target: [number, number] = [targetLocation.lat, targetLocation.lng];
 
     // Helper: render a solid road polyline
     function renderRoadRoute(points: [number, number][]) {
@@ -566,7 +603,7 @@ export default function TrackingMap({
 
     void loadRoute();
     return () => controller.abort();
-  }, [leaflet, workerLocation, destination, precomputedRoute]);
+  }, [leaflet, workerLocation, userLocation, destination, precomputedRoute]);
 
   return (
     <div

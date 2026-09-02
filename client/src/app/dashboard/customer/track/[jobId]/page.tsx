@@ -8,6 +8,7 @@ interface TrackingData {
   jobStatus: string;
   workerName: string;
   initialWorkerLocation: { lat: number; lng: number } | null;
+  initialCustomerLocation: { lat: number; lng: number } | null;
   initialPrecomputedRoute: [number, number][] | null;
   destination: { lat: number; lng: number; label: string } | null;
   originalText: string;
@@ -22,27 +23,78 @@ export default function TrackingPage() {
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    fetch(`/api/jobs/${jobId}/tracking`)
-      .then((r) => {
-        if (r.status === 401 || r.status === 403) {
+    let cancelled = false;
+
+    async function load() {
+      try {
+        const [trackingRes, jobRes] = await Promise.all([
+          fetch(`/api/jobs/${jobId}/tracking`),
+          fetch(`/api/jobs/${jobId}`),
+        ]);
+
+        if (trackingRes.status === 401 || trackingRes.status === 403) {
           router.push("/login");
-          return null;
+          return;
         }
-        if (r.status === 404) {
-          setError("Job not found");
-          return null;
+        if (trackingRes.status === 404) {
+          if (!cancelled) setError("Job not found");
+          return;
         }
-        return r.json();
-      })
-      .then((body: { success?: boolean; data?: TrackingData } | null) => {
-        if (body?.success && body.data) {
-          setData(body.data);
-        } else if (!error) {
-          setError("Failed to load tracking data");
+
+        const trackingBody = await trackingRes.json().catch(() => null);
+        const jobBody = await jobRes.json().catch(() => null);
+
+        if (!trackingBody?.success) {
+          if (!cancelled) setError("Failed to load tracking data");
+          return;
         }
-      })
-      .catch(() => setError("Failed to load tracking data"));
-  }, [jobId, router, error]);
+
+        const t = trackingBody.data;
+
+        // Map flat API fields to the interface the client expects
+        const destination =
+          t.destination_lat != null && t.destination_lng != null
+            ? {
+                lat: t.destination_lat as number,
+                lng: t.destination_lng as number,
+                label: (t.destination_label as string) ?? "",
+              }
+            : null;
+
+        const workerLocation =
+          t.worker_lat != null && t.worker_lng != null
+            ? { lat: t.worker_lat as number, lng: t.worker_lng as number }
+            : null;
+        const customerLocation =
+          t.customer_lat != null && t.customer_lng != null
+            ? { lat: t.customer_lat as number, lng: t.customer_lng as number }
+            : null;
+
+        // Pull originalText and category from the job detail endpoint
+        const job = jobBody?.data?.job;
+        const originalText: string = job?.input?.original_text ?? "";
+        const category: string = job?.understanding?.category ?? "";
+
+        if (!cancelled) {
+          setData({
+            jobStatus: t.status as string,
+            workerName: (t.worker_name as string) ?? "Ustad",
+            initialWorkerLocation: workerLocation,
+            initialCustomerLocation: customerLocation,
+            initialPrecomputedRoute: (t.precomputed_route as [number, number][]) ?? null,
+            destination,
+            originalText,
+            category,
+          });
+        }
+      } catch {
+        if (!cancelled) setError("Failed to load tracking data");
+      }
+    }
+
+    void load();
+    return () => { cancelled = true; };
+  }, [jobId, router]);
 
   if (error) {
     return <div className="p-4 text-sm text-warning">{error}</div>;
@@ -63,6 +115,7 @@ export default function TrackingPage() {
       workerName={data.workerName}
       destination={data.destination}
       initialWorkerLocation={data.initialWorkerLocation}
+      initialCustomerLocation={data.initialCustomerLocation}
       initialPrecomputedRoute={data.initialPrecomputedRoute}
       originalText={data.originalText}
       category={data.category}

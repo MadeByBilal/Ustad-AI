@@ -5,6 +5,7 @@ import { usePathname } from "next/navigation";
 import { useState, useRef, useEffect } from "react";
 import { useLang } from "@/client/lib/i18n/context";
 import LanguageToggle from "@/client/components/LanguageToggle";
+import LogoutButton from "@/client/components/LogoutButton";
 import {
   Home,
   Briefcase,
@@ -12,7 +13,6 @@ import {
   Wrench,
   ClipboardCheck,
   User,
-  LogOut,
   Settings,
   ChevronDown,
 } from "lucide-react";
@@ -40,6 +40,7 @@ export default function DesktopNav({
     { href: "/dashboard/customer", label: t("home"), icon: Home },
     { href: "/dashboard/customer/jobs", label: t("myJobs"), icon: Briefcase },
     { href: "/dashboard/customer/active", label: t("track"), icon: MapPin },
+    { href: "/dashboard/customer/profile", label: t("profile"), icon: User },
   ];
 
   const workerNav: NavItem[] = [
@@ -121,14 +122,7 @@ export default function DesktopNav({
                     <Settings className="h-3.5 w-3.5 text-muted" />
                     {t("settings")}
                   </Link>
-                  <Link
-                    href="/login"
-                    onClick={() => setOpen(false)}
-                    className="flex items-center gap-2 px-3 py-2 text-xs text-warning transition-colors hover:bg-bg"
-                  >
-                    <LogOut className="h-3.5 w-3.5" />
-                    {t("logout")}
-                  </Link>
+                  <LogoutButton />
                 </div>
               </div>
             )}

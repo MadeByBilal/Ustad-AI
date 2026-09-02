@@ -20,7 +20,7 @@ export interface UnderstandResponse extends AiUnderstandResult {
 type Status = "idle" | "recording" | "processing" | "clarifying" | "done" | "error";
 
 type Coordinates = { lat: number; lng: number };
-type RunBody = FormData | { clarification?: string };
+type RunBody = FormData | { clarification?: string; text?: string };
 type LocationFailureReason = "unsupported" | "denied" | "unavailable" | "timeout";
 
 type RecordingSession = {
@@ -554,7 +554,7 @@ export default function VoiceCapture({ variant = "landing", onStatusChange }: Vo
   }, []);
 
   const run = useCallback(
-    async (body: RunBody, options: { skipLocation?: boolean } = {}) => {
+    async (rawBody: RunBody, options: { skipLocation?: boolean } = {}) => {
       if (!mountedRef.current) return;
 
       const requestId = requestIdRef.current + 1;
@@ -563,7 +563,7 @@ export default function VoiceCapture({ variant = "landing", onStatusChange }: Vo
 
       const controller = new AbortController();
       requestAbortRef.current = controller;
-      pendingBodyRef.current = body;
+      pendingBodyRef.current = rawBody;
       setError("");
       setBusy(true);
       setStatus("processing");
@@ -572,34 +572,17 @@ export default function VoiceCapture({ variant = "landing", onStatusChange }: Vo
       const isCurrentRequest = () =>
         mountedRef.current && requestId === requestIdRef.current;
 
-      // ─── MOCK: Skip real API call, return mock data ──────────────────────
-      // REAL CODE below is commented out. When body has __mock flag,
-      // we return MOCK_RESPONSE directly after a simulated delay.
-      // To restore real API calls, remove this block.
-      if (body instanceof FormData && (body as any).__mock) {
-        // Simulate processing delay
-        await new Promise((resolve) => setTimeout(resolve, 1500));
-        if (!isCurrentRequest()) return;
-
-        console.log("[run] MOCK: Returning mock data (no API call)");
-        setCustomerLocation(null);
-        setResult(MOCK_RESPONSE);
-        setClarificationSelections([]);
-        setStatus("done");
-        try {
-          sessionStorage.setItem(
-            "voiceResult",
-            JSON.stringify({ data: MOCK_RESPONSE, location: null })
-          );
-        } catch {
-          // sessionStorage full or unavailable
-        }
-        if (variant === "dashboard") {
-          router.push("/dashboard/customer/result");
-        }
-        pendingBodyRef.current = null;
-        setBusy(false);
-        return;
+      // ─── MOCK: Skip real audio, send text request instead ────────────────
+      // Real audio recording is mocked (sine wave). Instead of returning
+      // hardcoded mock data, we send a text request to the real API so
+      // worker search returns actual available workers from the database.
+      // To restore real audio recording, remove this block and uncomment
+      // the real startRecording/stopRecording code.
+      let body: RunBody = rawBody;
+      const isVoiceMock = rawBody instanceof FormData && (rawBody as any).__mock;
+      if (isVoiceMock) {
+        const mockText = "Mere ghar mein bijli ki switches kaam nahi kar rahi, jab on karte hain toh spark ho rahi hai";
+        body = { text: mockText };
       }
       // ─── END MOCK ────────────────────────────────────────────────────────
 
@@ -628,46 +611,64 @@ export default function VoiceCapture({ variant = "landing", onStatusChange }: Vo
 
         setCustomerLocation(location);
 
-        const requestInit: RequestInit = {
-          method: "POST",
-          signal: controller.signal,
-        };
+        // ─── MOCK: Use mock understanding for voice, real workers from API ────
+        // For voice (microphone) requests, we still call the real API to fetch
+        // real workers from the database, but replace the understanding result
+        // with hardcoded mock data. Text-based search uses the full real API.
+        let data: UnderstandResponse;
+        {
+          const requestInit: RequestInit = {
+            method: "POST",
+            signal: controller.signal,
+          };
 
-        if (body instanceof FormData) {
-          if (location) {
-            body.set("lat", String(location.lat));
-            body.set("lng", String(location.lng));
+          if (body instanceof FormData) {
+            if (location) {
+              body.set("lat", String(location.lat));
+              body.set("lng", String(location.lng));
+            } else {
+              body.delete("lat");
+              body.delete("lng");
+            }
+            requestInit.body = body;
           } else {
-            body.delete("lat");
-            body.delete("lng");
+            requestInit.headers = { "Content-Type": "application/json" };
+            requestInit.body = JSON.stringify({
+              ...body,
+              ...(location ? { lat: location.lat, lng: location.lng } : {}),
+            });
           }
-          requestInit.body = body;
-        } else {
-          requestInit.headers = { "Content-Type": "application/json" };
-          requestInit.body = JSON.stringify({
-            ...body,
-            ...(location ? { lat: location.lat, lng: location.lng } : {}),
-          });
-        }
 
-        console.log("[run] Starting API call to /api/ai/understand. Type:", body instanceof FormData ? "FormData(audio)" : "JSON");
-        const data = await Promise.race([
-          fetch("/api/ai/understand", requestInit).then((response) => {
-            console.log("[run] API response status:", response.status);
-            return parseApiResponse<UnderstandResponse>(response);
-          }),
-          new Promise<UnderstandResponse>((_, reject) => {
-            timeoutId = window.setTimeout(() => {
-              timedOut = true;
-              controller.abort();
-              reject(new Error("Understanding request timed out"));
-            }, ANALYSIS_TIMEOUT_MS);
-          }),
-        ]);
+          console.log("[run] Starting API call to /api/ai/understand. Type:", body instanceof FormData ? "FormData(audio)" : "JSON");
+          const apiData = await Promise.race([
+            fetch("/api/ai/understand", requestInit).then((response) => {
+              console.log("[run] API response status:", response.status);
+              return parseApiResponse<UnderstandResponse>(response);
+            }),
+            new Promise<UnderstandResponse>((_, reject) => {
+              timeoutId = window.setTimeout(() => {
+                timedOut = true;
+                controller.abort();
+                reject(new Error("Understanding request timed out"));
+              }, ANALYSIS_TIMEOUT_MS);
+            }),
+          ]);
+
+          // For voice mock: keep real workers from API, swap understanding with mock
+          if (isVoiceMock) {
+            data = {
+              ...MOCK_RESPONSE,
+              workers: apiData.workers,
+            };
+          } else {
+            data = apiData;
+          }
+        }
+        // ─── END MOCK ────────────────────────────────────────────────────────
 
         if (!isCurrentRequest()) return;
 
-        console.log("[run] API response received. Source:", data.source, "Transcript:", data.transcript?.substring(0, 80), "Workers:", data.workers?.best?.name ?? "none");
+        console.log("[run] Response received. Source:", data.source, "Transcript:", data.transcript?.substring(0, 80), "Workers:", data.workers?.best?.name ?? "none");
         setResult(data);
         setClarificationSelections([]);
         if (data.clarification_question || data.manual_fallback) {
@@ -677,7 +678,7 @@ export default function VoiceCapture({ variant = "landing", onStatusChange }: Vo
           try {
             sessionStorage.setItem(
               "voiceResult",
-              JSON.stringify({ data, location: customerLocation })
+              JSON.stringify({ data, location })
             );
           } catch {
             // sessionStorage full or unavailable
@@ -689,7 +690,7 @@ export default function VoiceCapture({ variant = "landing", onStatusChange }: Vo
         pendingBodyRef.current = null;
     } catch (err) {
       console.error("[mic] startRecording failed:", err);
-        console.error("[run] API call failed:", err);
+      console.error("[run] API call failed:", err);
         if (!isCurrentRequest()) return;
         if (timedOut) {
           setStatus("error");

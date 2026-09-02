@@ -5,6 +5,7 @@ import { motion } from "framer-motion";
 import type { WorkerDashboardData } from "@contracts/worker";
 import { useLang } from "@/client/lib/i18n/context";
 import WorkerAvailability from "@/client/components/WorkerAvailability";
+import LogoutButton from "@/client/components/LogoutButton";
 import LocationUpdater from "./LocationUpdater";
 import { Check, Clock } from "lucide-react";
 
@@ -133,17 +134,7 @@ export default function WorkerProfile({ workerId }: { workerId: string }) {
 
       {/* Logout */}
       <div className="pt-4">
-        <form action="/api/auth/logout" method="POST">
-          <motion.button
-            type="submit"
-            className="btn-danger w-full"
-            whileTap={{ scale: 0.95 }}
-            whileHover={{ y: -1 }}
-            transition={{ duration: 0.15, ease: "easeOut" }}
-          >
-            {t("signOut")}
-          </motion.button>
-        </form>
+        <LogoutButton />
       </div>
     </div>
   );

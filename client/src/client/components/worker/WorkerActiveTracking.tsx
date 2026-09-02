@@ -4,7 +4,9 @@ import { useCallback, useEffect, useState, useRef } from "react";
 import Link from "next/link";
 import { motion } from "framer-motion";
 import TrackingMap from "@/client/components/tracking/dynamicTrackingMap";
+import LiveTracker from "@/client/components/worker/LiveTracker";
 import type { RouteComputedPayload } from "@/client/lib/route-types";
+import { getApiErrorMessage } from "@/client/lib/api-client";
 
 interface ActiveJob {
   job_id: string;
@@ -39,6 +41,10 @@ export default function WorkerActiveTracking({
 }) {
   const [job, setJob] = useState<ActiveJob | null>(null);
   const [workerLocation, setWorkerLocation] = useState<{
+    lat: number;
+    lng: number;
+  } | null>(null);
+  const [customerLocation, setCustomerLocation] = useState<{
     lat: number;
     lng: number;
   } | null>(null);
@@ -151,7 +157,7 @@ export default function WorkerActiveTracking({
       }
 
       // Worker's own location — prefer live tracking data, fallback to stored profile location
-      if (trackBody?.data?.worker_lat && trackBody?.data?.worker_lng) {
+       if (trackBody?.data?.worker_lat != null && trackBody?.data?.worker_lng != null) {
         setWorkerLocation({
           lat: trackBody.data.worker_lat,
           lng: trackBody.data.worker_lng,
@@ -159,16 +165,22 @@ export default function WorkerActiveTracking({
         setDistanceKm(trackBody.data.distance_km);
         setEtaMinutes(trackBody.data.eta_minutes);
         setLastUpdate(new Date());
-      } else if (
-        body.data?.worker?.location_lat &&
-        body.data?.worker?.location_lng
+       } else if (
+        body.data?.worker?.location_lat != null &&
+        body.data?.worker?.location_lng != null
       ) {
         setWorkerLocation({
           lat: body.data.worker.location_lat,
           lng: body.data.worker.location_lng,
         });
-        setLastUpdate(new Date());
-      }
+         setLastUpdate(new Date());
+       }
+       if (trackBody?.data?.customer_lat != null && trackBody?.data?.customer_lng != null) {
+         setCustomerLocation({
+           lat: trackBody.data.customer_lat,
+           lng: trackBody.data.customer_lng,
+         });
+       }
     } catch {
       // ignore
     }
@@ -184,22 +196,24 @@ export default function WorkerActiveTracking({
   const activeJobId = job?.job_id;
   useEffect(() => {
     if (!activeJobId) return;
+    const jobId = activeJobId;
     let mounted = true;
     let cleanup: (() => void) | null = null;
 
     async function connect() {
       try {
-        const { connectSocket } = await import("@/client/lib/socket-client");
+        const { joinJob } = await import("@/client/lib/socket-client");
         if (!mounted) return;
-        const socket = connectSocket();
+        const socket = await joinJob(jobId, "worker");
 
         const handleLocationUpdate = (data: {
+          jobId?: string;
           lat: number;
           lng: number;
           distanceKm: number;
           etaMinutes: number;
         }) => {
-          if (!mounted) return;
+          if (!mounted || (data.jobId && data.jobId !== jobId)) return;
           setWorkerLocation({ lat: data.lat, lng: data.lng });
           setDistanceKm(data.distanceKm);
           setEtaMinutes(data.etaMinutes);
@@ -209,7 +223,7 @@ export default function WorkerActiveTracking({
         const handleRouteComputed = (data: RouteComputedPayload) => {
           if (
             !mounted ||
-            data.jobId !== activeJobId ||
+            data.jobId !== jobId ||
             !Array.isArray(data.polyline) ||
             data.polyline.length < 2
           ) {
@@ -218,18 +232,45 @@ export default function WorkerActiveTracking({
           setPrecomputedRoute(data.polyline);
         };
 
+        const handleCustomerLocationUpdate = (data: {
+          jobId?: string;
+          lat?: number;
+          lng?: number;
+        }) => {
+          if (
+            mounted &&
+            data.jobId === jobId &&
+            typeof data.lat === "number" &&
+            typeof data.lng === "number"
+          ) {
+            setCustomerLocation({ lat: data.lat, lng: data.lng });
+          }
+        };
+
+        const handleStatusUpdate = (data: {
+          jobId?: string;
+          status?: string;
+        }) => {
+          if (!mounted || data.jobId !== jobId || !data.status) return;
+          if (data.status === "CANCELLED") {
+            setJob(null);
+            return;
+          }
+          setJob((current) =>
+            current ? { ...current, status: data.status! } : current,
+          );
+        };
+
         socket.on("location-update", handleLocationUpdate);
         socket.on("route-computed", handleRouteComputed);
-        socket.emit("join-job", {
-          jobId: activeJobId,
-          role: "worker",
-          workerId,
-        });
-
+        socket.on("customer-location-update", handleCustomerLocationUpdate);
+        socket.on("job-status-update", handleStatusUpdate);
         cleanup = () => {
-          socket.emit("leave-job", { jobId: activeJobId });
+          socket.emit("leave-job", { jobId });
           socket.off("location-update", handleLocationUpdate);
           socket.off("route-computed", handleRouteComputed);
+          socket.off("customer-location-update", handleCustomerLocationUpdate);
+          socket.off("job-status-update", handleStatusUpdate);
         };
       } catch {
         // Socket not available
@@ -265,10 +306,7 @@ export default function WorkerActiveTracking({
       });
       const body = await res.json().catch(() => null);
       if (!res.ok || !body?.success) {
-        const errMsg = typeof body?.error === "string"
-          ? body.error
-          : body?.error?.message ?? "Status update failed";
-        throw new Error(errMsg);
+        throw new Error(getApiErrorMessage(body, "Status update failed"));
       }
       setMessage({ ok: true, text: `${next.label} — done` });
       setJob((prev) => (prev ? { ...prev, status: next.to } : prev));
@@ -295,10 +333,7 @@ export default function WorkerActiveTracking({
       });
       const body = await res.json().catch(() => null);
       if (!res.ok || !body?.success) {
-        const errMsg = typeof body?.error === "string"
-          ? body.error
-          : body?.error?.message ?? "Cancel failed";
-        throw new Error(errMsg);
+        throw new Error(getApiErrorMessage(body, "Cancel failed"));
       }
       setJob(null);
     } catch (e) {
@@ -401,6 +436,7 @@ export default function WorkerActiveTracking({
       <div className="h-[65vh] w-full shrink-0">
         <TrackingMap
           workerLocation={workerLocation}
+          userLocation={customerLocation}
           destination={job.destination}
           distanceKm={distanceKm}
           perspective="worker"
@@ -408,6 +444,16 @@ export default function WorkerActiveTracking({
           precomputedRoute={precomputedRoute}
         />
       </div>
+
+      {job.status === "EN_ROUTE" && (
+        <div className="px-5 pt-3">
+          <LiveTracker
+            jobId={job.job_id}
+            workerId={workerId}
+            onArrived={() => void refresh()}
+          />
+        </div>
+      )}
 
       {/* Bottom Panel */}
       <div className="flex min-h-0 flex-1 flex-col bg-surface px-5 pt-4 pb-6">

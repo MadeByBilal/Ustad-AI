@@ -33,7 +33,7 @@ export default function WorkerWorkPage() {
         }
 
         const workerRes = await fetch(`/api/workers/by-user/${meBody.data.user.id}`);
-        const workerBody: { success?: boolean; data?: { _id?: string; active_job_id?: string } } = await workerRes.json();
+        const workerBody: { success?: boolean; data?: { _id?: string; active_job_id?: string | null } } = await workerRes.json();
         if (!workerBody?.success || !workerBody.data?._id) {
           router.push("/login");
           return;
@@ -49,14 +49,24 @@ export default function WorkerWorkPage() {
           if (!cancelled) setActiveJob(null);
           return;
         }
-        const jobBody: { success?: boolean; data?: { status?: string; originalText?: string; completion?: ActiveJobData["completion"] } } = await jobRes.json();
+        const jobBody: {
+          success?: boolean;
+          data?: {
+            job?: {
+              status?: string;
+              input?: { original_text?: string };
+              completion?: ActiveJobData["completion"];
+            };
+          };
+        } = await jobRes.json();
         if (!cancelled) {
-          if (jobBody?.success && jobBody.data) {
+          if (jobBody?.success && jobBody.data?.job) {
+            const job = jobBody.data.job;
             setActiveJob({
               jobId: workerBody.data.active_job_id,
-              status: jobBody.data.status ?? "",
-              originalText: jobBody.data.originalText ?? "",
-              completion: jobBody.data.completion ?? null,
+              status: job.status ?? "",
+              originalText: job.input?.original_text ?? "",
+              completion: job.completion ?? null,
             });
           } else {
             setActiveJob(null);

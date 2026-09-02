@@ -1,10 +1,13 @@
 "use client";
 
-import { useEffect, useRef, useState, useCallback } from "react";
-import { motion } from "framer-motion";
+import { useCallback, useEffect, useRef, useState } from "react";
+import type { Socket } from "socket.io-client";
+
+const LOCATION_PING_INTERVAL_MS = 3_000;
 
 interface LiveTrackerProps {
   jobId: string;
+  workerId?: string;
   onLocationUpdate?: (data: {
     lat: number;
     lng: number;
@@ -14,12 +17,10 @@ interface LiveTrackerProps {
   onArrived?: () => void;
 }
 
-/**
- * Continuous GPS tracker for workers en route to a job.
- * Uses watchPosition with throttled pings via Socket.io.
- */
+/** Continuously publishes the assigned worker's position while en route. */
 export default function LiveTracker({
   jobId,
+  workerId,
   onLocationUpdate,
   onArrived,
 }: LiveTrackerProps) {
@@ -27,155 +28,226 @@ export default function LiveTracker({
   const [error, setError] = useState<string | null>(null);
   const [lastPing, setLastPing] = useState<Date | null>(null);
   const watchIdRef = useRef<number | null>(null);
-  const socketRef = useRef<unknown>(null);
+  const socketRef = useRef<Socket | null>(null);
+  const joinPromiseRef = useRef<Promise<Socket> | null>(null);
+  const joinedRef = useRef(false);
+  const activeRef = useRef(true);
+  const lastSentAtRef = useRef(0);
+  const pendingLocationRef = useRef<{ lat: number; lng: number } | null>(null);
+  const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const onLocationUpdateRef = useRef(onLocationUpdate);
   const onArrivedRef = useRef(onArrived);
-
   onLocationUpdateRef.current = onLocationUpdate;
   onArrivedRef.current = onArrived;
 
+  const ensureJoined = useCallback(async (): Promise<Socket> => {
+    if (socketRef.current?.connected && joinedRef.current) {
+      return socketRef.current;
+    }
+    if (joinPromiseRef.current) return joinPromiseRef.current;
+
+    const joining = (async () => {
+      const { joinJob } = await import("@/client/lib/socket-client");
+      const socket = await joinJob(jobId, "worker");
+      socketRef.current = socket;
+      joinedRef.current = true;
+      return socket;
+    })();
+    joinPromiseRef.current = joining;
+    try {
+      return await joining;
+    } finally {
+      if (joinPromiseRef.current === joining) joinPromiseRef.current = null;
+    }
+  }, [jobId]);
+
+  const sendViaHttp = useCallback(
+    async (location: { lat: number; lng: number }) => {
+      const response = await fetch("/api/workers/me/location", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(location),
+      });
+      if (!response.ok) throw new Error("Location update failed");
+    },
+    [],
+  );
+
+  const sendLocation = useCallback(
+    (location: { lat: number; lng: number }) => {
+      const publish = (socket: Socket) => {
+        if (!activeRef.current) return;
+        socket.emit("worker-location", { jobId, ...location });
+      };
+
+      void (socketRef.current?.connected && joinedRef.current
+        ? Promise.resolve(socketRef.current)
+        : ensureJoined()
+      )
+        .then((socket) => {
+          if (socket) publish(socket);
+        })
+        .catch(async () => {
+          try {
+            await sendViaHttp(location);
+          } catch {
+            if (activeRef.current) setError("Unable to publish your location");
+          }
+        });
+    },
+    [ensureJoined, jobId, sendViaHttp],
+  );
+
+  const sendThrottled = useCallback(
+    (location: { lat: number; lng: number }) => {
+      const elapsed = Date.now() - lastSentAtRef.current;
+      if (lastSentAtRef.current === 0 || elapsed >= LOCATION_PING_INTERVAL_MS) {
+        lastSentAtRef.current = Date.now();
+        pendingLocationRef.current = null;
+        sendLocation(location);
+        setLastPing(new Date());
+        return;
+      }
+
+      pendingLocationRef.current = location;
+      if (!timerRef.current) {
+        timerRef.current = setTimeout(() => {
+          timerRef.current = null;
+          const pending = pendingLocationRef.current;
+          if (pending && activeRef.current) {
+            lastSentAtRef.current = Date.now();
+            pendingLocationRef.current = null;
+            sendLocation(pending);
+            setLastPing(new Date());
+          }
+        }, LOCATION_PING_INTERVAL_MS - elapsed);
+      }
+    },
+    [sendLocation],
+  );
+
   const stopTracking = useCallback(() => {
-    if (watchIdRef.current !== null) {
+    if (watchIdRef.current !== null && typeof navigator !== "undefined") {
       navigator.geolocation.clearWatch(watchIdRef.current);
       watchIdRef.current = null;
     }
-    setTracking(false);
-
-    try {
-      import("@/client/lib/socket-client").then(({ disconnectSocket }) => {
-        disconnectSocket();
-      });
-    } catch {
-      // ignore
+    if (timerRef.current) {
+      clearTimeout(timerRef.current);
+      timerRef.current = null;
     }
-  }, []);
-
-  const sendLocation = useCallback(
-    (lat: number, lng: number) => {
-      try {
-        import("@/client/lib/socket-client").then(({ connectSocket }) => {
-          const socket = connectSocket();
-          socketRef.current = socket;
-
-          socket.emit("worker-location", { jobId, lat, lng });
-
-          socket.off("worker-arrived");
-          socket.on("worker-arrived", () => {
-            onArrivedRef.current?.();
-            stopTracking();
-          });
-        });
-      } catch {
-        // Socket not available
-      }
-    },
-    [jobId, stopTracking]
-  );
+    pendingLocationRef.current = null;
+    setTracking(false);
+    if (socketRef.current && joinedRef.current) {
+      socketRef.current.emit("leave-job", { jobId });
+      joinedRef.current = false;
+    }
+  }, [jobId]);
 
   const startTracking = useCallback(() => {
     if (typeof navigator === "undefined" || !navigator.geolocation) {
-      setError("Geolocation not available");
+      setError("Geolocation is not available on this device");
       return;
     }
+    if (watchIdRef.current !== null) return;
 
     setError(null);
     setTracking(true);
-
     navigator.geolocation.getCurrentPosition(
-      (pos) => {
-        const { latitude, longitude } = pos.coords;
-        sendLocation(latitude, longitude);
-        setLastPing(new Date());
+      (position) => {
+        sendThrottled({
+          lat: position.coords.latitude,
+          lng: position.coords.longitude,
+        });
       },
-      () => {
-        setError("Could not read your location");
-      },
-      { enableHighAccuracy: true, timeout: 5000, maximumAge: 2000 }
+      () => setError("Allow location access to broadcast your position"),
+      { enableHighAccuracy: true, timeout: 10_000, maximumAge: 2_000 },
     );
-
     watchIdRef.current = navigator.geolocation.watchPosition(
-      (pos) => {
-        const { latitude, longitude } = pos.coords;
-        sendLocation(latitude, longitude);
-        setLastPing(new Date());
+      (position) => {
+        sendThrottled({
+          lat: position.coords.latitude,
+          lng: position.coords.longitude,
+        });
       },
-      (err) => {
-        if (err.code === err.PERMISSION_DENIED) {
+      (positionError) => {
+        if (positionError.code === positionError.PERMISSION_DENIED) {
           setError("Location permission denied");
         }
       },
-      { enableHighAccuracy: true, timeout: 5000, maximumAge: 2000 }
+      { enableHighAccuracy: true, timeout: 10_000, maximumAge: 2_000 },
     );
-  }, [sendLocation]);
+  }, [sendThrottled]);
 
   useEffect(() => {
-    return () => {
-      if (watchIdRef.current !== null) {
-        navigator.geolocation.clearWatch(watchIdRef.current);
-      }
+    activeRef.current = true;
+    let listenerSocket: Socket | null = null;
+    const handleArrived = () => {
+      onArrivedRef.current?.();
+      stopTracking();
     };
-  }, []);
+    const handleTrackingError = (payload: { message?: string }) => {
+      if (activeRef.current && payload?.message) setError(payload.message);
+    };
+    void ensureJoined()
+      .then((socket) => {
+        if (!activeRef.current) return;
+        listenerSocket = socket;
+        socket.on("worker-arrived", handleArrived);
+        socket.on("tracking-error", handleTrackingError);
+      })
+      .catch(() => {
+        if (activeRef.current) setError("Live tracking connection unavailable");
+      });
 
-  // Auto-start tracking on mount (when status becomes EN_ROUTE)
-  const hasAutoStarted = useRef(false);
-  useEffect(() => {
-    if (!hasAutoStarted.current) {
-      hasAutoStarted.current = true;
-      startTracking();
-    }
-  }, [startTracking]);
+    startTracking();
+    return () => {
+      activeRef.current = false;
+      stopTracking();
+      listenerSocket?.off("worker-arrived", handleArrived);
+      listenerSocket?.off("tracking-error", handleTrackingError);
+      socketRef.current = null;
+    };
+  }, [ensureJoined, startTracking, stopTracking]);
 
   return (
-    <motion.div className="card" whileHover={{ y: -2 }} transition={{ duration: 0.2, ease: "easeOut" }}>
-      <div className="flex items-center justify-between">
+    <div className="rounded-xl border border-divider bg-surface px-3 py-2">
+      <div className="flex items-center justify-between gap-3">
         <div>
           <h3 className="text-sm font-bold text-text">Live Tracking</h3>
           <p className="text-xs text-muted">
             {tracking
               ? lastPing
-                ? `Last ping: ${lastPing.toLocaleTimeString("en-GB", { hour: "2-digit", minute: "2-digit", second: "2-digit" })}`
+                ? `Last ping: ${lastPing.toLocaleTimeString("en-GB", {
+                    hour: "2-digit",
+                    minute: "2-digit",
+                    second: "2-digit",
+                  })}`
                 : "Starting..."
               : "Tracking paused"}
           </p>
         </div>
-        <div className="flex items-center gap-2">
-          {tracking && (
-            <span className="relative flex h-3 w-3">
-              <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-accent opacity-75"></span>
-              <span className="relative inline-flex h-3 w-3 rounded-full bg-accent"></span>
-            </span>
-          )}
-          <motion.button
-            type="button"
-            onClick={tracking ? stopTracking : startTracking}
-            className={`rounded-xl px-4 py-2 text-sm font-bold transition ${
-              tracking
-                ? "border border-warning text-warning hover:bg-warning/10"
-                : "bg-accent text-bg hover:bg-accent/90"
-            }`}
-            whileTap={{ scale: 0.95 }}
-            whileHover={{ y: -1 }}
-            transition={{ duration: 0.15, ease: "easeOut" }}
-          >
-            {tracking ? "Stop" : "Start tracking"}
-          </motion.button>
-        </div>
+        <button
+          type="button"
+          onClick={tracking ? stopTracking : startTracking}
+          className={`rounded-xl px-4 py-2 text-sm font-bold transition-colors ${
+            tracking
+              ? "border border-warning text-warning hover:bg-warning/10"
+              : "bg-accent text-bg hover:bg-accent/90"
+          }`}
+        >
+          {tracking ? "Stop" : "Start tracking"}
+        </button>
       </div>
-
       {error && (
         <p className="mt-2 rounded-lg border border-warning/40 bg-warning/10 px-3 py-1.5 text-xs text-warning">
           {error}
         </p>
       )}
-
       {tracking && (
-        <div className="mt-3 flex items-center gap-2 rounded-xl bg-accent/15 px-3 py-2">
-          <div className="h-2 w-2 rounded-full bg-accent"></div>
-          <span className="text-xs font-medium text-accent">
-            Broadcasting your location to the customer
-          </span>
-        </div>
+        <p className="mt-2 rounded-xl bg-accent/10 px-3 py-2 text-xs font-medium text-accent">
+          Broadcasting your location to the customer
+        </p>
       )}
-    </motion.div>
+    </div>
   );
 }

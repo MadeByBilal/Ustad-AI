@@ -12,6 +12,12 @@ export interface PhotoBase64 {
   data: string;
 }
 
+function base64ByteLength(b64: string): number {
+  const stripped = b64.replace(/\s/g, "");
+  const padding = (stripped.match(/=+$/) || [""])[0].length;
+  return Math.floor((stripped.length * 3) / 4) - padding;
+}
+
 function readAsDataUrl(file: File): Promise<string> {
   return new Promise((resolve, reject) => {
     const reader = new FileReader();
@@ -57,13 +63,13 @@ export async function fileToPhotoBase64(file: File): Promise<PhotoBase64> {
   let data = dataUrlToBase64(dataUrl);
   let mime: PhotoBase64["mime"] = file.type === "image/png" ? "image/png" : "image/jpeg";
 
-  if (Buffer.byteLength(data, "base64") > MAX_PHOTO_BYTES) {
+  if (base64ByteLength(data) > MAX_PHOTO_BYTES) {
     dataUrl = await downscale(file);
     data = dataUrlToBase64(dataUrl);
     mime = "image/jpeg";
   }
 
-  if (Buffer.byteLength(data, "base64") > MAX_PHOTO_BYTES) {
+  if (base64ByteLength(data) > MAX_PHOTO_BYTES) {
     throw new Error("Image is too large even after compression");
   }
 

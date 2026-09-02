@@ -5,6 +5,7 @@ import Link from "next/link";
 import JobPhotoUpload from "@/client/components/worker/JobPhotoUpload";
 import { useJobStream } from "@/client/hooks/useJobStream";
 import { motion } from "framer-motion";
+import { getApiErrorMessage } from "@/client/lib/api-client";
 
 const NEXT_ACTIONS: Record<string, { label: string; to: string }> = {
   ACCEPTED: { label: "On the way", to: "EN_ROUTE" },
@@ -95,10 +96,7 @@ export default function WorkerWorkPageClient({
         error?: string | { code: string; message: string };
       } | null;
       if (!res.ok || !body?.success) {
-        const errMsg = typeof body?.error === "string"
-          ? body.error
-          : body?.error?.message ?? "Status update failed";
-        throw new Error(errMsg);
+        throw new Error(getApiErrorMessage(body, "Status update failed"));
       }
       setJobStatus(nextAction.to);
       setAdvanceSuccess(`${nextAction.label} — done`);
@@ -125,10 +123,7 @@ export default function WorkerWorkPageClient({
       });
       const body = await res.json().catch(() => null);
       if (!res.ok || !body?.success) {
-        const errMsg = typeof body?.error === "string"
-          ? body.error
-          : body?.error?.message ?? "Cancel failed";
-        throw new Error(errMsg);
+        throw new Error(getApiErrorMessage(body, "Cancel failed"));
       }
       setJobStatus("CANCELLED");
       window.location.href = "/dashboard/worker";

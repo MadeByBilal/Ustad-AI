@@ -5,7 +5,9 @@ import Link from "next/link";
 import ReviewScreen from "./ReviewScreen";
 import { motion } from "framer-motion";
 import TrackingMap from "@/client/components/tracking/dynamicTrackingMap";
+import LiveCustomerLocation from "@/client/components/tracking/LiveCustomerLocation";
 import type { RouteComputedPayload } from "@/client/lib/route-types";
+import { getApiErrorMessage } from "@/client/lib/api-client";
 
 interface ActiveJob {
   job_id: string;
@@ -30,6 +32,10 @@ const STATUS_LABELS: Record<string, { label: string; color: string }> = {
 export default function ActiveJobTracking() {
   const [job, setJob] = useState<ActiveJob | null>(null);
   const [workerLocation, setWorkerLocation] = useState<{
+    lat: number;
+    lng: number;
+  } | null>(null);
+  const [customerLocation, setCustomerLocation] = useState<{
     lat: number;
     lng: number;
   } | null>(null);
@@ -135,7 +141,7 @@ export default function ActiveJobTracking() {
           );
         }
 
-        if (jobBody?.data?.worker_lat && jobBody?.data?.worker_lng) {
+        if (jobBody?.data?.worker_lat != null && jobBody?.data?.worker_lng != null) {
           setWorkerLocation({
             lat: jobBody.data.worker_lat,
             lng: jobBody.data.worker_lng,
@@ -143,6 +149,12 @@ export default function ActiveJobTracking() {
           setDistanceKm(jobBody.data.distance_km);
           setEtaMinutes(jobBody.data.eta_minutes);
           setLastUpdate(new Date());
+        }
+        if (jobBody?.data?.customer_lat != null && jobBody?.data?.customer_lng != null) {
+          setCustomerLocation({
+            lat: jobBody.data.customer_lat,
+            lng: jobBody.data.customer_lng,
+          });
         }
       } else {
         activeJobIdRef.current = null;
@@ -163,22 +175,24 @@ export default function ActiveJobTracking() {
   const activeJobId = job?.job_id;
   useEffect(() => {
     if (!activeJobId) return;
+    const jobId = activeJobId;
     let mounted = true;
     let cleanup: (() => void) | null = null;
 
     async function connect() {
       try {
-        const { connectSocket } = await import("@/client/lib/socket-client");
+        const { joinJob } = await import("@/client/lib/socket-client");
         if (!mounted) return;
-        const socket = connectSocket();
+        const socket = await joinJob(jobId, "customer");
 
         const handleLocationUpdate = (data: {
+          jobId?: string;
           lat: number;
           lng: number;
           distanceKm: number;
           etaMinutes: number;
         }) => {
-          if (!mounted) return;
+          if (!mounted || (data.jobId && data.jobId !== jobId)) return;
           setWorkerLocation({ lat: data.lat, lng: data.lng });
           setDistanceKm(data.distanceKm);
           setEtaMinutes(data.etaMinutes);
@@ -188,7 +202,7 @@ export default function ActiveJobTracking() {
         const handleRouteComputed = (data: RouteComputedPayload) => {
           if (
             !mounted ||
-            data.jobId !== activeJobId ||
+            data.jobId !== jobId ||
             !Array.isArray(data.polyline) ||
             data.polyline.length < 2
           ) {
@@ -204,16 +218,47 @@ export default function ActiveJobTracking() {
           void refresh();
         };
 
+        const handleCustomerLocationUpdate = (data: {
+          jobId?: string;
+          lat?: number;
+          lng?: number;
+        }) => {
+          if (
+            mounted &&
+            data.jobId === jobId &&
+            typeof data.lat === "number" &&
+            typeof data.lng === "number"
+          ) {
+            setCustomerLocation({ lat: data.lat, lng: data.lng });
+          }
+        };
+
+        const handleStatusUpdate = (data: {
+          jobId?: string;
+          status?: string;
+        }) => {
+          if (!mounted || data.jobId !== jobId || !data.status) return;
+          if (data.status === "CANCELLED") {
+            setJob(null);
+            return;
+          }
+          setJob((current) =>
+            current ? { ...current, status: data.status! } : current,
+          );
+        };
+
         socket.on("location-update", handleLocationUpdate);
         socket.on("route-computed", handleRouteComputed);
         socket.on("worker-arrived", handleWorkerArrived);
-        socket.emit("join-job", { jobId: activeJobId, role: "customer" });
-
+        socket.on("customer-location-update", handleCustomerLocationUpdate);
+        socket.on("job-status-update", handleStatusUpdate);
         cleanup = () => {
-          socket.emit("leave-job", { jobId: activeJobId });
+          socket.emit("leave-job", { jobId });
           socket.off("location-update", handleLocationUpdate);
           socket.off("route-computed", handleRouteComputed);
           socket.off("worker-arrived", handleWorkerArrived);
+          socket.off("customer-location-update", handleCustomerLocationUpdate);
+          socket.off("job-status-update", handleStatusUpdate);
         };
       } catch {
         // Socket not available
@@ -240,7 +285,7 @@ export default function ActiveJobTracking() {
       });
       const body = await res.json().catch(() => null);
       if (!res.ok || !body?.success) {
-        throw new Error(body?.error ?? "Action failed");
+        throw new Error(getApiErrorMessage(body, "Action failed"));
       }
       setMessage({
         ok: true,
@@ -273,7 +318,7 @@ export default function ActiveJobTracking() {
       });
       const body = await res.json().catch(() => null);
       if (!res.ok || !body?.success) {
-        throw new Error(body?.error ?? "Cancel failed");
+        throw new Error(getApiErrorMessage(body, "Cancel failed"));
       }
       setJob(null);
     } catch (e) {
@@ -427,6 +472,7 @@ export default function ActiveJobTracking() {
       <div className="h-[65vh] w-full shrink-0">
         <TrackingMap
           workerLocation={workerLocation}
+          userLocation={customerLocation}
           destination={job.destination}
           distanceKm={distanceKm}
           perspective="customer"
@@ -434,6 +480,11 @@ export default function ActiveJobTracking() {
           precomputedRoute={precomputedRoute}
         />
       </div>
+
+      <LiveCustomerLocation
+        jobId={job.job_id}
+        onLocationUpdate={setCustomerLocation}
+      />
 
       {/* Bottom Panel */}
       <div className="flex-1 bg-surface px-5 pt-4 pb-6">

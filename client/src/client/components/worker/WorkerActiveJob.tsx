@@ -42,7 +42,7 @@ export default function WorkerActiveJob({ workerId }: { workerId: string }) {
   return (
     <div className="space-y-4">
       {activeJob ? (
-        <ActiveJobPanel job={activeJob} onChanged={() => void refresh()} />
+        <ActiveJobPanel job={activeJob} workerId={workerId} onChanged={() => void refresh()} />
       ) : (
         <motion.div className="card flex flex-col items-center gap-3 py-12 text-center" whileHover={{ y: -2 }} transition={{ duration: 0.2, ease: "easeOut" }}>
           <div className="flex h-16 w-16 items-center justify-center rounded-full bg-surface">

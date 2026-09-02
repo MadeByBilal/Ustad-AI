@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { motion } from "framer-motion";
+import { getApiErrorMessage } from "@/client/lib/api-client";
 
 interface Coordinates {
   lat: number;
@@ -30,12 +31,9 @@ export default function LocationUpdater({
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(coords),
       });
-      const body = (await res.json().catch(() => null)) as {
-        success?: boolean;
-        error?: string;
-      } | null;
+      const body = await res.json().catch(() => null);
       if (!res.ok || !body?.success) {
-        throw new Error(body?.error ?? "Location update failed");
+        throw new Error(getApiErrorMessage(body, "Location update failed"));
       }
       setMessage({ ok: true, text: "Location updated" });
       setManual(false);

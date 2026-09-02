@@ -6,6 +6,7 @@ import { motion } from "framer-motion";
 import WorkerAvailability from "@/client/components/WorkerAvailability";
 import LocationUpdater from "./LocationUpdater";
 import { useLang } from "@/client/lib/i18n/context";
+import { getApiErrorMessage } from "@/client/lib/api-client";
 import {
   MapPin,
   Shield,
@@ -31,11 +32,11 @@ export default function WorkerHome({ workerId }: { workerId: string }) {
       });
       const body = (await res.json().catch(() => null)) as {
         success?: boolean;
-        error?: string;
+        error?: unknown;
         data?: WorkerDashboardData;
       } | null;
       if (!res.ok || !body?.success) {
-        throw new Error(body?.error ?? "Dashboard failed to load");
+        throw new Error(getApiErrorMessage(body, "Dashboard failed to load"));
       }
       setData(body.data ?? null);
       setError(null);
