@@ -60,7 +60,10 @@ export default function ActiveJobStatusBar() {
         const newStatus = active.status;
         const prevStatus = prevStatusRef.current;
 
-        if (prevStatus && prevStatus !== newStatus && TRACKING_STATUSES.has(newStatus)) {
+        // Don't redirect if already on a tracking page
+        const onTrackingPage = typeof window !== "undefined" && window.location.pathname.startsWith("/dashboard/customer/track");
+
+        if (!onTrackingPage && prevStatus && prevStatus !== newStatus && TRACKING_STATUSES.has(newStatus)) {
           window.location.href = `/dashboard/customer/track/${active.job_id}`;
           return;
         }

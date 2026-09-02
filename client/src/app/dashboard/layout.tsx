@@ -39,6 +39,9 @@ export default function DashboardLayout({
   useEffect(() => {
     if (role !== "customer") return;
 
+    // Don't redirect if already on a tracking page
+    if (typeof window !== "undefined" && window.location.pathname.startsWith("/dashboard/customer/track")) return;
+
     let mounted = true;
     let cleanup: (() => void) | null = null;
 
