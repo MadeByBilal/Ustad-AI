@@ -1,0 +1,99 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@import url("https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,100..900;1,9..144,100..900&family=Inter+Tight:ital,wght@0,100..900;1,100..900&family=JetBrains+Mono:ital,wght@0,100..800;1,100..800&display=swap");
+
+:root {
+  --bg: 246 240 232;
+  --surface: 255 255 255;
+  --text: 32 29 27;
+  --accent: 236 154 92;
+  --muted: 118 109 101;
+  --warning: 224 164 97;
+  --success: 110 157 117;
+  --success-fg: 32 64 49;
+  --divider: 227 216 206;
+}
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+html {
+  color-scheme: light;
+}
+
+body {
+  font-family: "Inter Tight", system-ui, -apple-system, sans-serif;
+  background: rgb(var(--bg));
+  color: rgb(var(--text));
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  overflow-x: hidden;
+}
+
+/* Custom scrollbar */
+::-webkit-scrollbar {
+  width: 4px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: rgb(var(--divider));
+  border-radius: 999px;
+}
+
+/* Focus ring */
+:focus-visible {
+  outline: 2px solid rgb(var(--accent));
+  outline-offset: 2px;
+  border-radius: 8px;
+}
+
+/* Selection */
+::selection {
+  background: rgb(var(--accent) / 0.2);
+  color: rgb(var(--text));
+}
+
+@layer components {
+  .input-field {
+    @apply w-full rounded-2xl border border-divider bg-bg px-4 py-3.5 text-base text-text
+      placeholder:text-muted/60 transition-all duration-200;
+  }
+  .input-field:focus {
+    @apply border-accent ring-2 ring-accent/20 outline-none;
+  }
+  .input-field.error {
+    @apply border-warning ring-2 ring-warning/20;
+  }
+
+  .btn-primary {
+    @apply inline-flex items-center justify-center gap-2 rounded-2xl bg-accent px-6 py-3.5
+      text-sm font-semibold text-surface shadow-button transition-all duration-200
+      active:scale-[0.97] select-none;
+  }
+  .btn-primary:hover {
+    @apply brightness-110 shadow-lg;
+  }
+  .btn-primary:disabled {
+    @apply opacity-50 cursor-not-allowed active:scale-100;
+  }
+
+  .btn-secondary {
+    @apply inline-flex items-center justify-center gap-2 rounded-2xl border border-divider
+      bg-surface px-6 py-3.5 text-sm font-semibold text-text transition-all duration-200
+      active:scale-[0.97] select-none;
+  }
+  .btn-secondary:hover {
+    @apply border-accent/40 shadow-card;
+  }
+
+  .card {
+    @apply rounded-3xl border border-divider bg-surface p-4 shadow-card;
+  }
+}
