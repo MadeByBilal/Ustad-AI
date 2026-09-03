@@ -23,7 +23,6 @@ import {
 
 const ARRIVAL_THRESHOLD_KM = 0.1;
 const LOCATION_RATE_LIMIT_MS = 2000;
-const SESSION_REVALIDATE_INTERVAL_MS = 30_000;
 const TRACKING_STATUSES = new Set([
   "ACCEPTED",
   "EN_ROUTE",
@@ -32,13 +31,138 @@ const TRACKING_STATUSES = new Set([
   "AWAITING_CUSTOMER_CONFIRMATION",
 ]);
 
-interface SocketIdentity {
-  userId: string;
-  role: "customer" | "worker" | "admin";
-  workerId?: string;
-  jobId?: string;
+// --- In-memory location cache with periodic DB flush ---
+const LOCATION_FLUSH_INTERVAL_MS = 30_000;
+const LOCATION_STALENESS_MS = 120_000;
+
+interface CachedLocation {
+  lat: number;
+  lng: number;
+  updatedAt: number;
 }
 
+interface CachedWorkerLocation extends CachedLocation {
+  workerId: string;
+  userId: string;
+}
+
+interface CachedCustomerLocation extends CachedLocation {
+  jobId: string;
+  userId: string;
+}
+
+// jobId -> worker location (single worker per job)
+const workerLocationCache = new Map<string, CachedWorkerLocation>();
+// jobId -> customer location
+const customerLocationCache = new Map<string, CachedCustomerLocation>();
+// socket.id -> jobId (tracks which job room each socket is in)
+const socketJobMap = new Map<string, string>();
+// jobId -> Set<socket.id> (tracks active sockets per job for staleness)
+const jobSocketsMap = new Map<string, Set<string>>();
+
+function cacheWorkerLocation(
+  jobId: string,
+  workerId: string,
+  userId: string,
+  lat: number,
+  lng: number,
+): void {
+  workerLocationCache.set(jobId, {
+    workerId,
+    userId,
+    lat,
+    lng,
+    updatedAt: Date.now(),
+  });
+}
+
+function cacheCustomerLocation(
+  jobId: string,
+  userId: string,
+  lat: number,
+  lng: number,
+): void {
+  customerLocationCache.set(jobId, {
+    jobId,
+    userId,
+    lat,
+    lng,
+    updatedAt: Date.now(),
+  });
+}
+
+async function flushLocationCache(): Promise<void> {
+  const now = Date.now();
+  const workerWrites: Promise<any>[] = [];
+  const customerWrites: Promise<any>[] = [];
+
+  for (const [jobId, loc] of workerLocationCache) {
+    if (now - loc.updatedAt < LOCATION_FLUSH_INTERVAL_MS) continue;
+    workerWrites.push(
+      Worker.updateOne(
+        { _id: loc.workerId, user_id: loc.userId },
+        {
+          $set: {
+            "location.type": "Point",
+            "location.coordinates": [loc.lng, loc.lat],
+            location_updated_at: new Date(loc.updatedAt),
+          },
+        },
+      ).catch((err) =>
+        console.error(`[location-cache] failed to flush worker ${loc.workerId}:`, err),
+      ),
+    );
+    // Mark as flushed by resetting updatedAt to now
+    loc.updatedAt = now;
+  }
+
+  for (const [jobId, loc] of customerLocationCache) {
+    if (now - loc.updatedAt < LOCATION_FLUSH_INTERVAL_MS) continue;
+    customerWrites.push(
+      Job.updateOne(
+        { _id: jobId },
+        {
+          $set: {
+            "tracking.customer_location": {
+              type: "Point",
+              coordinates: [loc.lng, loc.lat],
+            },
+            "tracking.customer_location_updated_at": new Date(loc.updatedAt),
+          },
+        },
+      ).catch((err) =>
+        console.error(`[location-cache] failed to flush customer for job ${jobId}:`, err),
+      ),
+    );
+    loc.updatedAt = now;
+  }
+
+  if (workerWrites.length || customerWrites.length) {
+    await Promise.all([...workerWrites, ...customerWrites]);
+  }
+}
+
+// Flush cache periodically
+const flushTimer = setInterval(() => {
+  void flushLocationCache();
+}, LOCATION_FLUSH_INTERVAL_MS);
+
+// Clean up stale entries where no sockets are connected
+function cleanStaleLocations(): void {
+  const now = Date.now();
+  for (const [jobId] of workerLocationCache) {
+    if (!jobSocketsMap.has(jobId)) {
+      workerLocationCache.delete(jobId);
+    }
+  }
+  for (const [jobId] of customerLocationCache) {
+    if (!jobSocketsMap.has(jobId)) {
+      customerLocationCache.delete(jobId);
+    }
+  }
+}
+
+// --- Rate limiting ---
 const lastLocationTime = new Map<string, number>();
 
 function isLocationRateLimited(socketId: string): boolean {
@@ -53,15 +177,12 @@ function cleanupRateLimitEntry(socketId: string): void {
   lastLocationTime.delete(socketId);
 }
 
-async function revalidateSession(
-  userId: string,
-): Promise<{ valid: boolean; role?: string }> {
-  try {
-    const user = await User.findById(userId).select("role").lean();
-    return user ? { valid: true, role: user.role } : { valid: false };
-  } catch {
-    return { valid: false };
-  }
+// --- Session validation (once on connect, cached on socket.data) ---
+interface SocketIdentity {
+  userId: string;
+  role: "customer" | "worker" | "admin";
+  workerId?: string;
+  jobId?: string;
 }
 
 function readCookie(cookieHeader: string | undefined, name: string): string | null {
@@ -161,6 +282,7 @@ function isJobParticipant(job: any, identity: SocketIdentity): boolean {
 
 function emitTrackingUpdate(
   io: Server,
+  socket: Socket,
   jobId: string,
   workerId: string,
   workerLocation: { lat: number; lng: number },
@@ -175,7 +297,8 @@ function emitTrackingUpdate(
     targetLat,
     targetLng,
   );
-  io.to(`job:${jobId}`).emit("location-update", {
+  // Emit to everyone in the room EXCEPT the sender
+  socket.to(`job:${jobId}`).emit("location-update", {
     jobId,
     workerId,
     lat: workerLocation.lat,
@@ -191,6 +314,33 @@ function emitTrackingUpdate(
 
 function emitSocketError(socket: Socket, message: string): void {
   socket.emit("tracking-error", { message });
+}
+
+function trackSocketForJob(socketId: string, jobId: string): void {
+  socketJobMap.set(socketId, jobId);
+  let sockets = jobSocketsMap.get(jobId);
+  if (!sockets) {
+    sockets = new Set();
+    jobSocketsMap.set(jobId, sockets);
+  }
+  sockets.add(socketId);
+}
+
+function untrackSocket(socketId: string): void {
+  const jobId = socketJobMap.get(socketId);
+  if (jobId) {
+    socketJobMap.delete(socketId);
+    const sockets = jobSocketsMap.get(jobId);
+    if (sockets) {
+      sockets.delete(socketId);
+      if (sockets.size === 0) {
+        jobSocketsMap.delete(jobId);
+        // No more sockets for this job — flush any pending location writes immediately
+        void flushLocationCache();
+        cleanStaleLocations();
+      }
+    }
+  }
 }
 
 export function registerSocketHandlers(io: Server): void {
@@ -227,13 +377,6 @@ export function registerSocketHandlers(io: Server): void {
         }
 
         try {
-          const sessionCheck = await revalidateSession(identity.userId);
-          if (!sessionCheck.valid) {
-            respond(false, "Session expired");
-            socket.disconnect(true);
-            return;
-          }
-
           const job = await Job.findById(jobId).lean();
           if (!job || !isJobParticipant(job, identity)) {
             respond(false, "You do not have access to this tracking room");
@@ -246,26 +389,69 @@ export function registerSocketHandlers(io: Server): void {
             return;
           }
 
-          if (identity.jobId) socket.leave(`job:${identity.jobId}`);
+          // Leave previous room if any
+          if (identity.jobId) {
+            socket.leave(`job:${identity.jobId}`);
+            untrackSocket(socket.id);
+          }
+
           socket.join(`job:${jobId}`);
           identity.jobId = jobId;
           socket.data.identity = identity;
+          trackSocketForJob(socket.id, jobId);
 
           const route = toRoutePayload(jobId, job.route);
           if (route) socket.emit("route-computed", route);
 
-          // Send current customer location to the worker so they see it immediately
-          const customerCoords = job.tracking?.customer_location?.coordinates;
-          if (
-            identity.role === "worker" &&
-            Array.isArray(customerCoords) &&
-            customerCoords.length === 2
-          ) {
+          // Send current customer location to the worker on join
+          // Try cache first, fall back to DB
+          const cached = customerLocationCache.get(jobId);
+          if (identity.role === "worker" && cached) {
             socket.emit("customer-location-update", {
               jobId,
-              lat: customerCoords[1],
-              lng: customerCoords[0],
+              lat: cached.lat,
+              lng: cached.lng,
             });
+          } else {
+            const customerCoords = job.tracking?.customer_location?.coordinates;
+            if (
+              identity.role === "worker" &&
+              Array.isArray(customerCoords) &&
+              customerCoords.length === 2
+            ) {
+              socket.emit("customer-location-update", {
+                jobId,
+                lat: customerCoords[1],
+                lng: customerCoords[0],
+              });
+            }
+          }
+
+          // Send cached worker location to customer on join
+          if (identity.role === "customer") {
+            const wCached = workerLocationCache.get(jobId);
+            if (wCached) {
+              const target = getTrackingTarget(job);
+              const [tLng, tLat] = target ?? [0, 0];
+              const distanceKm = haversineDistanceKm(
+                wCached.lat,
+                wCached.lng,
+                tLat,
+                tLng,
+              );
+              socket.emit("location-update", {
+                jobId,
+                workerId: wCached.workerId,
+                lat: wCached.lat,
+                lng: wCached.lng,
+                targetLat: tLat,
+                targetLng: tLng,
+                distanceKm: Math.round(distanceKm * 100) / 100,
+                distanceMeters: Math.round(distanceKm * 1000),
+                etaMinutes: estimateETAMinutes(distanceKm),
+                timestamp: new Date().toISOString(),
+              });
+            }
           }
 
           respond(true);
@@ -280,6 +466,7 @@ export function registerSocketHandlers(io: Server): void {
     socket.on("leave-job", (data: { jobId?: unknown }) => {
       if (typeof data?.jobId !== "string" || data.jobId !== identity.jobId) return;
       socket.leave(`job:${data.jobId}`);
+      untrackSocket(socket.id);
       identity.jobId = undefined;
       socket.data.identity = identity;
     });
@@ -302,31 +489,20 @@ export function registerSocketHandlers(io: Server): void {
         if (isLocationRateLimited(socket.id)) return;
 
         try {
-          const sessionCheck = await revalidateSession(identity.userId);
-          if (!sessionCheck.valid) {
-            socket.disconnect(true);
-            return;
-          }
+          // Cache location in memory (no DB write here)
+          cacheWorkerLocation(jobId, identity.workerId, identity.userId, location.lat, location.lng);
 
+          // Fetch job for target calculation and geofence check
           const job = await Job.findById(jobId).lean();
           if (!job || !isJobParticipant(job, identity) || !TRACKING_STATUSES.has(job.status)) {
             emitSocketError(socket, "Worker is not assigned to this job");
             return;
           }
 
-          await Worker.updateOne(
-            { _id: identity.workerId, user_id: identity.userId },
-            {
-              $set: {
-                "location.type": "Point",
-                "location.coordinates": [location.lng, location.lat],
-                location_updated_at: new Date(),
-              },
-            },
-          );
+          // Broadcast to room (excluding sender)
+          emitTrackingUpdate(io, socket, jobId, identity.workerId, location, job);
 
-          emitTrackingUpdate(io, jobId, identity.workerId, location, job);
-
+          // Geofence arrival detection
           const target = getTrackingTarget(job);
           if (
             target &&
@@ -344,6 +520,9 @@ export function registerSocketHandlers(io: Server): void {
               { new: true },
             );
             if (!arrived) return;
+
+            // Flush location to DB immediately on status change
+            await flushLocationCache();
 
             const distanceMeters = Math.round(
               haversineDistanceKm(location.lat, location.lng, target[1], target[0]) *
@@ -400,53 +579,45 @@ export function registerSocketHandlers(io: Server): void {
         if (isLocationRateLimited(socket.id)) return;
 
         try {
-          const sessionCheck = await revalidateSession(identity.userId);
-          if (!sessionCheck.valid) {
-            socket.disconnect(true);
-            return;
-          }
+          // Cache location in memory (no DB write here)
+          cacheCustomerLocation(jobId, identity.userId, location.lat, location.lng);
 
-          const job = await Job.findOneAndUpdate(
-            {
-              _id: jobId,
-              customer_id: identity.userId,
-              status: { $in: [...TRACKING_STATUSES] },
-            },
-            {
-              $set: {
-                "tracking.customer_location": {
-                  type: "Point",
-                  coordinates: [location.lng, location.lat],
-                },
-                "tracking.customer_location_updated_at": new Date(),
-              },
-            },
-            { new: true },
-          ).lean();
-          if (!job || !TRACKING_STATUSES.has(job.status)) {
-            emitSocketError(socket, "Customer tracking is not active for this job");
-            return;
-          }
-
-          io.to(`job:${jobId}`).emit("customer-location-update", {
+          // Broadcast to room EXCLUDING the sender
+          socket.to(`job:${jobId}`).emit("customer-location-update", {
             jobId,
             lat: location.lat,
             lng: location.lng,
             timestamp: new Date().toISOString(),
           });
 
-          const workerId = job.matching?.selected_worker_id;
-          if (workerId) {
-            const worker = await Worker.findById(workerId).select("location").lean();
-            const coordinates = worker?.location?.coordinates;
-            if (coordinates?.length === 2) {
-              emitTrackingUpdate(
-                io,
-                jobId,
-                String(workerId),
-                { lat: coordinates[1], lng: coordinates[0] },
-                job,
-              );
+          // Re-emit worker location to customer with fresh distance/ETA
+          // Use cache first, fall back to DB
+          const wCached = workerLocationCache.get(jobId);
+          if (wCached) {
+            const job = await Job.findById(jobId).lean();
+            if (job) {
+              emitTrackingUpdate(io, socket, jobId, wCached.workerId, wCached, job);
+            }
+          } else {
+            const job = await Job.findById(jobId).lean();
+            if (!job || !TRACKING_STATUSES.has(job.status)) {
+              emitSocketError(socket, "Customer tracking is not active for this job");
+              return;
+            }
+            const workerId = job.matching?.selected_worker_id;
+            if (workerId) {
+              const worker = await Worker.findById(workerId).select("location").lean();
+              const coordinates = worker?.location?.coordinates;
+              if (coordinates?.length === 2) {
+                emitTrackingUpdate(
+                  io,
+                  socket,
+                  jobId,
+                  String(workerId),
+                  { lat: coordinates[1], lng: coordinates[0] },
+                  job,
+                );
+              }
             }
           }
         } catch (error) {
@@ -459,6 +630,7 @@ export function registerSocketHandlers(io: Server): void {
     socket.on("disconnect", () => {
       console.log(`[socket] disconnected: ${socket.id}`);
       cleanupRateLimitEntry(socket.id);
+      untrackSocket(socket.id);
     });
   });
 }
