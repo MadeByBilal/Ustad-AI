@@ -1,3 +1,5 @@
+@import "@fortawesome/fontawesome-free/css/all.min.css";
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
@@ -5,14 +7,14 @@
 :root {
   color-scheme: dark;
   --bg: 11 15 12;
-  --surface: 255 255 255;
+  --surface: 18 22 19;
   --text: 241 244 241;
   --accent: 38 166 80;
   --muted: 147 163 150;
   --warning: 224 164 97;
   --success: 38 166 80;
   --success-fg: 8 36 15;
-  --divider: 255 255 255;
+  --divider: 35 42 37;
 }
 
 *,

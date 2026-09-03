@@ -6,22 +6,11 @@ import { useState, useRef, useEffect } from "react";
 import { useLang } from "@/client/lib/i18n/context";
 import LanguageToggle from "@/client/components/LanguageToggle";
 import LogoutButton from "@/client/components/LogoutButton";
-import {
-  Home,
-  Briefcase,
-  MapPin,
-  Wrench,
-  BarChart3,
-  User,
-  Settings,
-  ChevronDown,
-} from "lucide-react";
-import type { LucideIcon } from "lucide-react";
 
 interface NavItem {
   href: string;
   label: string;
-  icon: LucideIcon;
+  icon: string;
 }
 
 export default function DesktopNav({
@@ -37,18 +26,18 @@ export default function DesktopNav({
   const ref = useRef<HTMLDivElement>(null);
 
   const customerNav: NavItem[] = [
-    { href: "/dashboard/customer", label: t("home"), icon: Home },
-    { href: "/dashboard/customer/jobs", label: t("myJobs"), icon: Briefcase },
-    { href: "/dashboard/customer/active", label: t("track"), icon: MapPin },
-    { href: "/dashboard/customer/profile", label: t("profile"), icon: User },
+    { href: "/dashboard/customer", label: t("home"), icon: "fi fi-rr-home" },
+    { href: "/dashboard/customer/jobs", label: t("myJobs"), icon: "fi fi-rr-briefcase" },
+    { href: "/dashboard/customer/active", label: t("tracking"), icon: "fi fi-tr-map-location-track" },
+    { href: "/dashboard/customer/profile", label: t("profile"), icon: "fi fi-rr-user" },
   ];
 
   const workerNav: NavItem[] = [
-    { href: "/dashboard/worker", label: t("home"), icon: Home },
-    { href: "/dashboard/worker/active", label: t("active"), icon: Wrench },
-    { href: "/dashboard/worker/stats", label: t("stats"), icon: BarChart3 },
-    { href: "/dashboard/worker/jobs", label: t("jobs"), icon: Briefcase },
-    { href: "/dashboard/worker/profile", label: t("profile"), icon: User },
+    { href: "/dashboard/worker", label: t("home"), icon: "fi fi-rr-home" },
+    { href: "/dashboard/worker/active", label: t("tracking"), icon: "fi fi-tr-map-location-track" },
+    { href: "/dashboard/worker/stats", label: t("stats"), icon: "fi fi-rr-chart-histogram" },
+    { href: "/dashboard/worker/jobs", label: t("jobs"), icon: "fi fi-rr-briefcase" },
+    { href: "/dashboard/worker/profile", label: t("profile"), icon: "fi fi-rr-user" },
   ];
 
   const items = role === "customer" ? customerNav : workerNav;
@@ -84,7 +73,7 @@ export default function DesktopNav({
                 href={item.href}
                 className={`desktop-nav-item ${isActive ? "active" : ""}`}
               >
-                <item.icon className="h-3.5 w-3.5" />
+                <i className={`${item.icon} text-sm`} />
                 <span className={lang === "ur" ? "font-urdu" : ""}>{item.label}</span>
               </Link>
             );
@@ -101,10 +90,10 @@ export default function DesktopNav({
               className="flex items-center gap-1.5 rounded-xl border border-divider bg-[rgb(var(--surface))] px-2.5 py-1.5 text-xs font-medium text-text transition-colors hover:border-accent/30 hover:bg-bg"
             >
               <div className="flex h-6 w-6 items-center justify-center rounded-full bg-accent/15 text-accent">
-                <User className="h-3 w-3" />
+                <i className="fi fi-rr-user text-xs" />
               </div>
               <span className="hidden lg:inline max-w-[80px] truncate">{userName}</span>
-              <ChevronDown className="h-3 w-3 text-muted" />
+              <i className="fi fi-rr-angle-small-down text-xs text-muted" />
             </button>
 
             {open && (
@@ -119,7 +108,7 @@ export default function DesktopNav({
                     onClick={() => setOpen(false)}
                     className="flex items-center gap-2 px-3 py-2 text-xs text-text transition-colors hover:bg-bg"
                   >
-                    <Settings className="h-3.5 w-3.5 text-muted" />
+                    <i className="fi fi-rr-settings text-xs text-muted" />
                     {t("settings")}
                   </Link>
                   <LogoutButton />

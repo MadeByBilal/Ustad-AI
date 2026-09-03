@@ -4,9 +4,7 @@ import { useCallback, useEffect, useState } from "react";
 import { motion } from "framer-motion";
 import type { WorkerDashboardData, CompletedJobView, WorkerReviewView } from "@contracts/worker";
 import { useLang } from "@/client/lib/i18n/context";
-import WorkerAvailability from "@/client/components/WorkerAvailability";
 import LogoutButton from "@/client/components/LogoutButton";
-import LocationUpdater from "./LocationUpdater";
 import { Check, Clock, Edit3, Save, X, Star } from "lucide-react";
 import { getApiErrorMessage } from "@/client/lib/api-client";
 import { WORKER_CATEGORIES } from "@contracts/worker";
@@ -367,22 +365,6 @@ export default function WorkerProfile({ workerId }: { workerId: string }) {
           </div>
         </motion.div>
       )}
-
-      {/* Availability */}
-      <WorkerAvailability
-        initial={{
-          is_available: w.is_available,
-          is_online: w.is_online,
-          emergency_available: w.emergency_available,
-        }}
-        onChanged={() => void refresh()}
-      />
-
-      {/* Location */}
-      <LocationUpdater
-        lastUpdated={w.location_updated_at}
-        onChanged={() => void refresh()}
-      />
 
       {/* Logout */}
       <div className="pt-4">

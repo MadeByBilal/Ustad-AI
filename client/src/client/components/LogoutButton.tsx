@@ -3,6 +3,7 @@
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { motion } from "framer-motion";
+import { LogOut } from "lucide-react";
 
 export default function LogoutButton() {
   const router = useRouter();
@@ -25,8 +26,9 @@ export default function LogoutButton() {
       whileTap={{ scale: 0.95 }}
       whileHover={{ y: -1 }}
       transition={{ duration: 0.15, ease: "easeOut" }}
-      className="rounded-lg border border-divider bg-surface px-3 py-1.5 text-xs font-semibold text-muted transition-colors hover:bg-bg disabled:opacity-60"
+      className="btn-danger w-full"
     >
+      <LogOut className="mr-2 h-4 w-4" />
       {busy ? "…" : "Logout"}
     </motion.button>
   );

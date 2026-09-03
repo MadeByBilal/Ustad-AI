@@ -3,20 +3,11 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useLang } from "@/client/lib/i18n/context";
-import {
-  Home,
-  Briefcase,
-  MapPin,
-  Wrench,
-  BarChart3,
-  User,
-} from "lucide-react";
-import type { LucideIcon } from "lucide-react";
 
 interface NavItem {
   href: string;
   label: string;
-  icon: LucideIcon;
+  icon: string;
 }
 
 export default function BottomNav({ role }: { role: "customer" | "worker" }) {
@@ -24,17 +15,17 @@ export default function BottomNav({ role }: { role: "customer" | "worker" }) {
   const { t, lang } = useLang();
 
   const customerNav: NavItem[] = [
-    { href: "/dashboard/customer", label: t("home"), icon: Home },
-    { href: "/dashboard/customer/active", label: t("track"), icon: MapPin },
-    { href: "/dashboard/customer/profile", label: t("profile"), icon: User },
+    { href: "/dashboard/customer", label: t("home"), icon: "fi fi-rr-home" },
+    { href: "/dashboard/customer/active", label: t("tracking"), icon: "fi fi-tr-map-location-track" },
+    { href: "/dashboard/customer/profile", label: t("profile"), icon: "fi fi-rr-user" },
   ];
 
   const workerNav: NavItem[] = [
-    { href: "/dashboard/worker", label: t("home"), icon: Home },
-    { href: "/dashboard/worker/active", label: t("active"), icon: Wrench },
-    { href: "/dashboard/worker/stats", label: t("stats"), icon: BarChart3 },
-    { href: "/dashboard/worker/jobs", label: t("jobs"), icon: Briefcase },
-    { href: "/dashboard/worker/profile", label: t("profile"), icon: User },
+    { href: "/dashboard/worker", label: t("home"), icon: "fi fi-rr-home" },
+    { href: "/dashboard/worker/active", label: t("tracking"), icon: "fi fi-tr-map-location-track" },
+    { href: "/dashboard/worker/stats", label: t("stats"), icon: "fi fi-rr-chart-histogram" },
+    { href: "/dashboard/worker/jobs", label: t("jobs"), icon: "fi fi-rr-briefcase" },
+    { href: "/dashboard/worker/profile", label: t("profile"), icon: "fi fi-rr-user" },
   ];
 
   const items = role === "customer" ? customerNav : workerNav;
@@ -53,7 +44,7 @@ export default function BottomNav({ role }: { role: "customer" | "worker" }) {
               href={item.href}
               className={`bottom-nav-item ${isActive ? "active" : ""}`}
             >
-              <item.icon className="h-5 w-5" />
+              <i className={`${item.icon} text-lg`} />
               <span className={`text-[10px] ${lang === "ur" ? "font-urdu" : ""}`}>{item.label}</span>
             </Link>
           );
