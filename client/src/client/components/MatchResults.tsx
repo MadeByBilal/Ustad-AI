@@ -6,6 +6,7 @@ import {
   IconStarFilled,
   IconMapPin,
   IconMicrophone,
+  IconBriefcase,
 } from "@tabler/icons-react";
 import type { WorkerCategory, WorkerOption } from "@contracts/worker";
 import type { AiUnderstandResult } from "@contracts/ai";
@@ -233,58 +234,60 @@ function WorkerMatchCard({
       data-best-match={isBest ? "true" : "false"}
       onClick={onSelect}
       className={cn(
-        "glass-card cursor-pointer p-4 transition-all sm:p-5",
+        "glass-card cursor-pointer p-4 sm:p-4",
         selected
-          ? "border border-accent/40 ring-2 ring-accent/20"
+          ? "border-accent/30 ring-1 ring-accent/15"
           : isBest
-            ? "border border-warning/40"
-            : "border border-divider hover:border-accent/40",
+            ? "border-warning/20"
+            : "border-white/[0.06] hover:border-white/[0.12]",
       )}
     >
-      <div className="flex items-start gap-4">
+      <div className="flex items-start gap-3.5">
         <Avatar name={worker.name} isBest={isBest} />
         <div className="min-w-0 flex-1">
-          <div className="flex flex-wrap items-center gap-2">
-            <h4 className="font-display text-lg font-semibold leading-tight text-text">
+          {/* Name + badge row */}
+          <div className="flex items-center gap-2">
+            <h4 className="font-display text-base font-semibold leading-tight text-text truncate">
               {worker.name}
             </h4>
             {isBest && (
-              <span className="inline-flex items-center gap-1 rounded-full border px-2 py-0.5 font-mono text-xs uppercase tracking-wide badge-premium">
-                Best match
+              <span className="shrink-0 rounded-full bg-warning/15 px-2 py-0.5 font-mono text-[10px] font-semibold uppercase tracking-wider text-warning">
+                Best
               </span>
             )}
           </div>
 
-          {/* Trade category */}
-          <div className="mt-1 text-sm text-muted">
-            <span>{categoryLabel}</span>
+          {/* Category */}
+          <p className="mt-0.5 text-xs text-muted">{categoryLabel}</p>
+
+          {/* Stats row */}
+          <div className="mt-2.5 flex items-center gap-3 text-xs">
+            {/* Distance */}
+            <span className="flex items-center gap-1 text-text">
+              <IconMapPin size={13} stroke={1.8} className="text-muted" />
+              {worker.distance_km != null && worker.distance_km > 0
+                ? worker.distance_km < 1
+                  ? `${Math.round(worker.distance_km * 1000)} m`
+                  : `${worker.distance_km.toFixed(1)} km`
+                : "Nearby"}
+            </span>
+
+            <span className="text-white/10">|</span>
+
+            {/* Completed jobs */}
+            <span className="flex items-center gap-1 text-text">
+              <IconBriefcase size={13} stroke={1.8} className="text-muted" />
+              {worker.completed_jobs} jobs
+            </span>
+
+            <span className="text-white/10">|</span>
+
+            {/* Rating */}
+            <span className="flex items-center gap-1" aria-label={`Rating ${worker.average_rating.toFixed(1)} out of 5`}>
+              <IconStarFilled size={12} stroke={0} className="text-warning" />
+              <span className="text-text">{worker.average_rating.toFixed(1)}</span>
+            </span>
           </div>
-
-          {/* Rating + distance */}
-          <ul className="mt-3 flex flex-wrap items-center gap-x-4 gap-y-2 text-sm">
-            <li
-              className="flex items-center gap-1.5"
-              aria-label={`Rating ${worker.average_rating.toFixed(1)} out of 5`}
-            >
-              <IconStarFilled size={14} stroke={0} className="text-warning" aria-hidden="true" />
-              <span className="font-mono text-text">{worker.average_rating.toFixed(1)}</span>
-              <span className="font-mono text-xs text-muted">/ 5</span>
-            </li>
-
-            {worker.distance_km != null && worker.distance_km > 0 && (
-              <li
-                className="flex items-center gap-1.5"
-                aria-label={`Distance ${worker.distance_km.toFixed(1)} km`}
-              >
-                <IconMapPin size={14} stroke={1.6} className="text-muted" aria-hidden="true" />
-                <span className="font-mono text-text">
-                  {worker.distance_km < 1
-                    ? `${Math.round(worker.distance_km * 1000)} m`
-                    : `${worker.distance_km.toFixed(1)} km`}
-                </span>
-              </li>
-            )}
-          </ul>
         </div>
       </div>
     </article>
@@ -295,11 +298,11 @@ function Avatar({ name, isBest }: { name: string; isBest?: boolean }) {
   return (
     <div
       aria-hidden="true"
-      className={`relative flex h-12 w-12 shrink-0 items-center justify-center rounded-full border ${
-        isBest ? "border-warning/40 bg-warning/15" : "border-divider bg-[rgba(255,255,255,0.06)]"
+      className={`relative flex h-11 w-11 shrink-0 items-center justify-center rounded-full border ${
+        isBest ? "border-warning/30 bg-warning/10" : "border-white/[0.06] bg-white/[0.04]"
       }`}
     >
-      <span className={`font-display text-base font-semibold ${isBest ? "text-warning" : "text-text"}`}>
+      <span className={`font-display text-sm font-semibold ${isBest ? "text-warning" : "text-text"}`}>
         {initials(name)}
       </span>
     </div>
