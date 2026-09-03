@@ -202,7 +202,7 @@ export default function WorkerResults({
         return (
           <div
             key={worker.id}
-            className="rounded-xl border border-divider bg-surface p-4 shadow-sm"
+            className="glass-card p-4"
           >
             <div className="flex flex-wrap items-center gap-2">
               <span className="rounded-full bg-accent px-2 py-0.5 text-xs font-bold text-bg">

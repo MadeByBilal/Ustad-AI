@@ -233,19 +233,13 @@ function WorkerMatchCard({
       data-best-match={isBest ? "true" : "false"}
       onClick={onSelect}
       className={cn(
-        "glass-sheen cursor-pointer rounded-2xl p-4 transition-all sm:p-5",
+        "glass-card cursor-pointer p-4 transition-all sm:p-5",
         selected
           ? "border border-accent/40 ring-2 ring-accent/20"
           : isBest
             ? "border border-warning/40"
             : "border border-divider hover:border-accent/40",
-        "bg-[rgba(255,255,255,0.05)] backdrop-blur-xl",
       )}
-      style={{
-        boxShadow: selected
-          ? "0 8px 24px rgba(38,166,80,0.15), inset 0 1px 0 rgba(255,255,255,0.14)"
-          : "0 8px 24px rgba(0,0,0,0.2), inset 0 1px 0 rgba(255,255,255,0.14)",
-      }}
     >
       <div className="flex items-start gap-4">
         <Avatar name={worker.name} isBest={isBest} />

@@ -248,6 +248,29 @@ option {
   color: #D4A24C;
 }
 
+/* Glass card with reflection highlight */
+.glass-card {
+  background: rgba(255, 255, 255, 0.05);
+  backdrop-filter: blur(24px);
+  -webkit-backdrop-filter: blur(24px);
+  border-radius: 18px;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  position: relative;
+  overflow: hidden;
+}
+
+.glass-card::before {
+  content: '';
+  position: absolute;
+  top: -25%;
+  left: -15%;
+  width: 130%;
+  height: 65%;
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.14) 0%, rgba(255, 255, 255, 0) 100%);
+  transform: rotate(-5deg);
+  pointer-events: none;
+}
+
 /* Glass icon circle */
 .glass-icon-circle {
   background: rgba(255, 255, 255, 0.06);
