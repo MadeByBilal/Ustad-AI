@@ -3,16 +3,16 @@
 @tailwind utilities;
 
 :root {
-  color-scheme: light;
-  --bg: 246 240 232;
+  color-scheme: dark;
+  --bg: 11 15 12;
   --surface: 255 255 255;
-  --text: 32 29 27;
-  --accent: 236 154 92;
-  --muted: 118 109 101;
+  --text: 241 244 241;
+  --accent: 38 166 80;
+  --muted: 147 163 150;
   --warning: 224 164 97;
-  --success: 110 157 117;
-  --success-fg: 32 64 49;
-  --divider: 227 216 206;
+  --success: 38 166 80;
+  --success-fg: 8 36 15;
+  --divider: 255 255 255;
 }
 
 *,
@@ -46,12 +46,12 @@ a,
 input,
 select,
 textarea {
-  color-scheme: light;
+  color-scheme: dark;
   font: inherit;
 }
 
 option {
-  background: rgb(var(--surface));
+  background: #0B0F0C;
   color: rgb(var(--text));
 }
 
@@ -91,13 +91,31 @@ option {
 
 @layer components {
   .btn-primary {
-    @apply inline-flex items-center justify-center rounded-2xl bg-accent px-5 py-2 text-sm font-semibold text-[rgb(var(--surface))] shadow-sm transition-all hover:bg-accent/90 active:scale-[0.97];
+    @apply inline-flex items-center justify-center rounded-2xl px-5 py-2 text-sm font-semibold shadow-sm transition-all active:scale-[0.97];
+    background: #26A650;
+    color: #08240F;
+    box-shadow: 0 2px 8px rgba(38, 166, 80, 0.3);
+  }
+  .btn-primary:hover {
+    background: #2bb85a;
   }
   .btn-secondary {
-    @apply inline-flex items-center justify-center rounded-2xl border border-divider bg-surface px-5 py-2 text-sm font-semibold text-text transition-all hover:border-accent/40 hover:bg-bg active:scale-[0.97];
+    @apply inline-flex items-center justify-center rounded-2xl px-5 py-2 text-sm font-semibold transition-all active:scale-[0.97];
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    color: rgb(var(--text));
+    backdrop-filter: blur(24px);
+  }
+  .btn-secondary:hover {
+    background: rgba(255, 255, 255, 0.08);
+    border-color: rgba(255, 255, 255, 0.2);
   }
   .btn-danger {
-    @apply inline-flex items-center justify-center rounded-2xl border border-warning bg-surface px-5 py-2 text-sm font-semibold text-warning transition-all hover:bg-warning/10 active:scale-[0.97];
+    @apply inline-flex items-center justify-center rounded-2xl px-5 py-2 text-sm font-semibold transition-all active:scale-[0.97];
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(224, 164, 97, 0.3);
+    color: #E0A461;
+    backdrop-filter: blur(24px);
   }
   .btn {
     @apply inline-flex items-center justify-center rounded-2xl px-4 py-2 text-sm font-semibold transition-all active:scale-[0.97];
@@ -106,27 +124,45 @@ option {
     @apply btn-secondary;
   }
   .card {
-    @apply rounded-3xl border border-divider bg-surface p-4 shadow-[0_8px_24px_rgba(40,31,25,0.04)];
+    @apply rounded-3xl p-4;
+    background: rgba(255, 255, 255, 0.05) !important;
+    border: 1px solid rgba(255, 255, 255, 0.12) !important;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.2), inset 0 1px 0 rgba(255, 255, 255, 0.14) !important;
+    backdrop-filter: blur(24px);
   }
   .card-lg {
-    @apply rounded-3xl border border-divider bg-surface p-5 shadow-[0_8px_24px_rgba(40,31,25,0.04)];
+    @apply rounded-3xl p-5;
+    background: rgba(255, 255, 255, 0.05) !important;
+    border: 1px solid rgba(255, 255, 255, 0.12) !important;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.2), inset 0 1px 0 rgba(255, 255, 255, 0.14) !important;
+    backdrop-filter: blur(24px);
   }
   .input {
-    @apply w-full rounded-2xl border border-divider bg-bg px-4 py-3 text-sm text-text placeholder:text-muted focus:border-accent focus:outline-none focus:ring-1 focus:ring-accent/20;
+    @apply w-full rounded-2xl px-4 py-3 text-sm placeholder:text-muted focus:outline-none;
+    background: rgba(255, 255, 255, 0.05) !important;
+    border: 1px solid rgba(255, 255, 255, 0.12) !important;
+    color: rgb(var(--text)) !important;
+  }
+  .input:focus {
+    border-color: #26A650 !important;
+    box-shadow: 0 0 0 2px rgba(38, 166, 80, 0.2) !important;
   }
   .badge {
     @apply inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-xs font-semibold;
   }
 
   .bottom-nav {
-    @apply fixed inset-x-0 bottom-0 z-50 border-t border-divider bg-[rgb(var(--surface))]/95 backdrop-blur-xl;
+    @apply fixed inset-x-0 bottom-0 z-50 backdrop-blur-xl;
     padding-bottom: env(safe-area-inset-bottom, 0px);
+    background: rgba(11, 15, 12, 0.95) !important;
+    border-top: 1px solid rgba(255, 255, 255, 0.12);
   }
   .bottom-nav-item {
-    @apply flex flex-1 flex-col items-center gap-0.5 py-2.5 text-[10px] font-medium text-muted transition-colors;
+    @apply flex flex-1 flex-col items-center gap-0.5 py-2.5 text-[10px] font-medium transition-colors;
+    color: #93A396;
   }
   .bottom-nav-item.active {
-    @apply text-accent;
+    color: #26A650;
   }
 
   .mic-btn:active {
@@ -138,7 +174,9 @@ option {
     padding: 0;
   }
   .desktop-nav-inner {
-    @apply flex h-16 w-full items-center gap-5 border-b border-divider bg-[rgb(var(--bg))]/95 px-5 backdrop-blur-xl md:px-8;
+    @apply flex h-16 w-full items-center gap-5 px-5 backdrop-blur-xl md:px-8;
+    background: rgba(11, 15, 12, 0.95) !important;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.12);
   }
   .desktop-nav-brand {
     @apply flex items-center gap-2 whitespace-nowrap;
@@ -147,10 +185,16 @@ option {
     @apply flex items-center gap-1;
   }
   .desktop-nav-item {
-    @apply flex items-center gap-1.5 rounded-xl px-3 py-2 text-xs font-medium text-muted transition-colors hover:bg-[rgb(var(--surface))] hover:text-text;
+    @apply flex items-center gap-1.5 rounded-xl px-3 py-2 text-xs font-medium transition-colors;
+    color: #93A396;
+  }
+  .desktop-nav-item:hover {
+    background: rgba(255, 255, 255, 0.05);
+    color: #F1F4F1;
   }
   .desktop-nav-item.active {
-    @apply bg-[rgb(var(--surface))] text-accent shadow-sm;
+    background: rgba(255, 255, 255, 0.05);
+    color: #26A650;
   }
 
   .page {
@@ -160,7 +204,9 @@ option {
     @apply bg-bg;
   }
   .page-header {
-    @apply sticky top-0 z-40 border-b border-divider bg-[rgb(var(--surface))]/95 px-4 py-3 backdrop-blur-xl md:static md:border-b-0 md:bg-transparent md:px-6 md:py-4;
+    @apply sticky top-0 z-40 px-4 py-3 backdrop-blur-xl md:static md:border-b-0 md:bg-transparent md:px-6 md:py-4;
+    background: rgba(11, 15, 12, 0.95) !important;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.12);
   }
   .page-scroll {
     @apply flex flex-col flex-1 overflow-y-auto;
@@ -170,4 +216,40 @@ option {
   .page-content {
     @apply w-full px-4 py-3 sm:px-5 sm:py-4 md:px-6 md:py-5;
   }
+}
+
+/* Glass reflection sheen effect */
+.glass-sheen {
+  position: relative;
+  overflow: hidden;
+}
+
+.glass-sheen::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -10%;
+  right: -10%;
+  height: 100%;
+  background: linear-gradient(
+    180deg,
+    rgba(255, 255, 255, 0.14) 0%,
+    transparent 60%
+  );
+  transform: rotate(-5deg);
+  pointer-events: none;
+  z-index: 1;
+}
+
+/* Gold accent badge — badges/tags only, never buttons/large areas */
+.badge-premium {
+  background: rgba(212, 162, 74, 0.16);
+  border: 1px solid rgba(212, 162, 74, 0.4);
+  color: #D4A24C;
+}
+
+/* Glass icon circle */
+.glass-icon-circle {
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.12);
 }

@@ -97,16 +97,14 @@ export default function DashboardLayout({
 
   if (!loaded || !role) {
     return (
-      <div className="dark-glass-theme flex min-h-screen items-center justify-center" style={{ background: "#0B0F0C" }}>
+      <div className="flex min-h-screen items-center justify-center bg-bg">
         <div className="h-10 w-10 animate-spin rounded-full border-4 border-white/10 border-t-[#26A650]" />
       </div>
     );
   }
 
-  const isCustomer = role === "customer";
-
   return (
-    <div className={`page ${isCustomer ? "dark-glass-theme" : ""}`} style={isCustomer ? { background: "#0B0F0C" } : undefined}>
+    <div className="page">
       <DesktopNav role={role} userName={userName} />
       <div className="page-scroll md:pt-0">
         <main className="flex min-h-0 flex-1 flex-col pb-16 md:pb-0">{children}</main>

@@ -90,7 +90,7 @@ export default function CustomerOfferModal({
       >
         <motion.div
           key="panel"
-          className="w-full max-w-sm rounded-xl bg-surface p-6 shadow-lg"
+          className="card w-full max-w-sm p-6 shadow-lg"
           initial={{ opacity: 0, scale: 0.95 }}
           animate={{ opacity: 1, scale: 1 }}
           exit={{ opacity: 0, scale: 0.95 }}

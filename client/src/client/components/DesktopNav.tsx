@@ -11,7 +11,7 @@ import {
   Briefcase,
   MapPin,
   Wrench,
-  ClipboardCheck,
+  BarChart3,
   User,
   Settings,
   ChevronDown,
@@ -46,7 +46,7 @@ export default function DesktopNav({
   const workerNav: NavItem[] = [
     { href: "/dashboard/worker", label: t("home"), icon: Home },
     { href: "/dashboard/worker/active", label: t("active"), icon: Wrench },
-    { href: "/dashboard/worker/work", label: t("work"), icon: ClipboardCheck },
+    { href: "/dashboard/worker/stats", label: t("stats"), icon: BarChart3 },
     { href: "/dashboard/worker/jobs", label: t("jobs"), icon: Briefcase },
     { href: "/dashboard/worker/profile", label: t("profile"), icon: User },
   ];

@@ -74,7 +74,7 @@ export default function CounterOfferModal({
       >
         <motion.div
           key="panel"
-          className="w-full max-w-md rounded-xl bg-surface p-5 shadow-xl"
+          className="card w-full max-w-md p-5 shadow-xl"
           onClick={(e) => e.stopPropagation()}
           initial={{ opacity: 0, scale: 0.95 }}
           animate={{ opacity: 1, scale: 1 }}
