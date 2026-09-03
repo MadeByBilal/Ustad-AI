@@ -166,7 +166,7 @@ export default function WorkerResults({
 
   if (detail && !isAccepted && urgency === "normal" && deadlinePassed && responders.length === 0) {
     return (
-      <div className="rounded-xl border border-divider bg-surface p-6 text-center">
+      <div className="glass-card p-6 text-center">
         <p className="text-muted">No ustads responded yet</p>
       </div>
     );
@@ -174,7 +174,7 @@ export default function WorkerResults({
 
   if (responders.length === 0) {
     return (
-      <div className="rounded-xl border border-divider bg-surface p-6 text-center">
+      <div className="glass-card p-6 text-center">
         <p className="text-muted">
           {urgency === "emergency"
             ? "Finding nearest available worker…"

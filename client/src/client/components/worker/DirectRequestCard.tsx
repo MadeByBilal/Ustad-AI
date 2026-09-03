@@ -79,7 +79,7 @@ export default function DirectRequestCard({
   }
 
   return (
-    <div className="rounded-xl border border-divider bg-surface p-4">
+    <div className="glass-card p-4">
       <div className="flex items-start justify-between gap-3">
         <div className="min-w-0">
           <div className="flex flex-wrap items-center gap-2">
@@ -185,7 +185,7 @@ export default function DirectRequestCard({
       </div>
 
       {showCounter && (
-        <div className="mt-3 space-y-3 rounded-xl border border-divider bg-surface p-4">
+        <div className="mt-3 space-y-3 glass-card p-4">
           <div>
             <label htmlFor={`counter-${req.offer_id}`} className="mb-1 block text-xs font-semibold text-muted">
               Your price (PKR)

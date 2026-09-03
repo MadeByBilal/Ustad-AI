@@ -50,7 +50,7 @@ export default function HomePage() {
           </div>
         </div>
 
-        <div className={`transition-all duration-500 w-full max-w-sm rounded-[2rem] border border-divider bg-[rgb(var(--surface))] p-4 shadow-[0_18px_30px_rgba(42,33,28,0.08)] md:max-w-md ${isActive ? "opacity-0 translate-x-12 pointer-events-none" : "opacity-100 translate-x-0"}`}>
+        <div className={`transition-all duration-500 w-full max-w-sm glass-card p-4 md:max-w-md ${isActive ? "opacity-0 translate-x-12 pointer-events-none" : "opacity-100 translate-x-0"}`}>
           <div className="grid gap-3">
             {[
               { icon: Droplets, label: t("plumber") },
@@ -60,7 +60,7 @@ export default function HomePage() {
             ].map((item) => (
               <div
                 key={item.label}
-                className="flex items-center gap-3 rounded-2xl border border-divider bg-[rgb(var(--surface))] px-4 py-3"
+                className="flex items-center gap-3 glass-card px-4 py-3"
               >
                 <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-accent/10">
                   <item.icon className="h-5 w-5 text-accent" />

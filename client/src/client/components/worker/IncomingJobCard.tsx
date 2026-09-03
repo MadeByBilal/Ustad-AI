@@ -79,7 +79,7 @@ export default function IncomingJobCard({
   }
 
   return (
-    <div className="rounded-xl border border-divider bg-surface p-4">
+    <div className="glass-card p-4">
       <div className="flex items-start justify-between gap-3">
         <div className="min-w-0">
           <div className="flex flex-wrap items-center gap-2">

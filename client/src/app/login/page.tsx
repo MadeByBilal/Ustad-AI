@@ -146,7 +146,7 @@ function AuthForm() {
         {mode === "signup" && (
           <>
             {/* Role selector */}
-            <div className="grid grid-cols-2 gap-1 p-1 rounded-2xl" style={{ background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.12)" }}>
+      <div className="grid grid-cols-2 gap-1 p-1 glass-card">
               {(["customer", "worker"] as const).map((r) => (
                 <button
                   key={r}

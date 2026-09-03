@@ -96,7 +96,7 @@ function MatchingLoader() {
   return (
     <div
       role="presentation"
-      className="w-full max-w-md rounded-xl border border-divider bg-surface p-4"
+      className="w-full max-w-md glass-card p-4"
     >
       <div className="flex items-start gap-3">
         <motion.div

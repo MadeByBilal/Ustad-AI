@@ -7,6 +7,7 @@ import {
   IconMapPin,
   IconMicrophone,
   IconBriefcase,
+  IconTrophy,
 } from "@tabler/icons-react";
 import type { WorkerCategory, WorkerOption } from "@contracts/worker";
 import type { AiUnderstandResult } from "@contracts/ai";
@@ -155,7 +156,7 @@ export default function MatchResults({ data, location, onRequestSent }: MatchRes
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ type: "spring", stiffness: 260, damping: 20, delay: 0.3 }}
-            className="rounded-xl border border-divider bg-surface p-6 text-center"
+            className="glass-card p-6 text-center"
           >
             <p className="text-sm text-muted">
               No ustads available right now — try again in a few minutes.
@@ -234,42 +235,54 @@ function WorkerMatchCard({
       data-best-match={isBest ? "true" : "false"}
       onClick={onSelect}
       className={cn(
-        "glass-card cursor-pointer p-4 sm:p-4",
+        "glass-card cursor-pointer",
+        isBest ? "p-5 sm:p-5" : "p-4 sm:p-5",
         selected
           ? "border-accent/30 ring-1 ring-accent/15"
           : isBest
-            ? "border-warning/20"
+            ? "border-warning/25"
             : "border-white/[0.06] hover:border-white/[0.12]",
       )}
     >
-      <div className="flex items-start gap-3.5">
+      {/* Best card gold top strip */}
+      {isBest && (
+        <div className="absolute top-0 left-0 right-0 h-[2px] bg-gradient-to-r from-transparent via-warning/50 to-transparent" />
+      )}
+
+      <div className={cn("flex items-start gap-4", isBest && "gap-5")}>
         <Avatar name={worker.name} isBest={isBest} />
         <div className="min-w-0 flex-1">
           {/* Name + badge row */}
-          <div className="flex items-center gap-2">
-            <h4 className="font-display text-base font-semibold leading-tight text-text truncate">
+          <div className="flex items-center gap-2.5">
+            <h4 className={cn(
+              "font-display font-semibold leading-tight text-text truncate",
+              isBest ? "text-lg" : "text-base",
+            )}>
               {worker.name}
             </h4>
             {isBest && (
-              <span className="shrink-0 rounded-full bg-warning/15 px-2 py-0.5 font-mono text-[10px] font-semibold uppercase tracking-wider text-warning">
-                Best
+              <span className="shrink-0 inline-flex items-center gap-1 rounded-full bg-warning/15 px-2.5 py-0.5 font-mono text-[10px] font-bold uppercase tracking-wider text-warning">
+                <IconTrophy size={10} stroke={2} />
+                Best Match
               </span>
             )}
           </div>
 
           {/* Category */}
-          <p className="mt-0.5 text-xs text-muted">{categoryLabel}</p>
+          <p className={cn("text-muted", isBest ? "mt-1 text-sm" : "mt-0.5 text-xs")}>
+            {categoryLabel}
+          </p>
 
           {/* Stats row */}
-          <div className="mt-2.5 flex items-center gap-3 text-xs">
-            {/* Distance */}
+          <div className={cn("flex items-center gap-3 text-xs", isBest ? "mt-3" : "mt-2.5")}>
+            {/* Distance — always exact */}
             <span className="flex items-center gap-1 text-text">
               <IconMapPin size={13} stroke={1.8} className="text-muted" />
-              {worker.distance_km != null && worker.distance_km > 0
+              {worker.distance_km != null
                 ? worker.distance_km < 1
                   ? `${Math.round(worker.distance_km * 1000)} m`
                   : `${worker.distance_km.toFixed(1)} km`
-                : "Nearby"}
+                : "—"}
             </span>
 
             <span className="text-white/10">|</span>
@@ -298,11 +311,13 @@ function Avatar({ name, isBest }: { name: string; isBest?: boolean }) {
   return (
     <div
       aria-hidden="true"
-      className={`relative flex h-11 w-11 shrink-0 items-center justify-center rounded-full border ${
-        isBest ? "border-warning/30 bg-warning/10" : "border-white/[0.06] bg-white/[0.04]"
+      className={`relative flex shrink-0 items-center justify-center rounded-full border ${
+        isBest
+          ? "h-14 w-14 border-warning/30 bg-warning/10"
+          : "h-11 w-11 border-white/[0.06] bg-white/[0.04]"
       }`}
     >
-      <span className={`font-display text-sm font-semibold ${isBest ? "text-warning" : "text-text"}`}>
+      <span className={`font-display font-semibold ${isBest ? "text-lg text-warning" : "text-sm text-text"}`}>
         {initials(name)}
       </span>
     </div>

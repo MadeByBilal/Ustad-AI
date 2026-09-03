@@ -124,18 +124,52 @@ option {
     @apply btn-secondary;
   }
   .card {
-    @apply rounded-3xl p-4;
-    background: rgba(255, 255, 255, 0.05) !important;
-    border: 1px solid rgba(255, 255, 255, 0.12) !important;
-    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.2), inset 0 1px 0 rgba(255, 255, 255, 0.14) !important;
-    backdrop-filter: blur(24px);
+    @apply rounded-2xl p-4;
+    background: rgba(255, 255, 255, 0.04);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+    position: relative;
+    overflow: hidden;
+  }
+  .card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 50%;
+    background: linear-gradient(180deg, rgba(255, 255, 255, 0.04) 0%, rgba(255, 255, 255, 0) 100%);
+    pointer-events: none;
+    z-index: 0;
+  }
+  .card > * {
+    position: relative;
+    z-index: 1;
   }
   .card-lg {
-    @apply rounded-3xl p-5;
-    background: rgba(255, 255, 255, 0.05) !important;
-    border: 1px solid rgba(255, 255, 255, 0.12) !important;
-    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.2), inset 0 1px 0 rgba(255, 255, 255, 0.14) !important;
-    backdrop-filter: blur(24px);
+    @apply rounded-2xl p-5;
+    background: rgba(255, 255, 255, 0.04);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+    position: relative;
+    overflow: hidden;
+  }
+  .card-lg::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 50%;
+    background: linear-gradient(180deg, rgba(255, 255, 255, 0.04) 0%, rgba(255, 255, 255, 0) 100%);
+    pointer-events: none;
+    z-index: 0;
+  }
+  .card-lg > * {
+    position: relative;
+    z-index: 1;
   }
   .input {
     @apply w-full rounded-2xl px-4 py-3 text-sm placeholder:text-muted focus:outline-none;
@@ -218,8 +252,13 @@ option {
   }
 }
 
-/* Glass reflection sheen effect */
+/* Glass reflection sheen — use .glass-card instead */
 .glass-sheen {
+  background: rgba(255, 255, 255, 0.04);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border-radius: 16px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
   position: relative;
   overflow: hidden;
 }
@@ -228,16 +267,16 @@ option {
   content: '';
   position: absolute;
   top: 0;
-  left: -10%;
-  right: -10%;
-  height: 100%;
-  background: linear-gradient(
-    180deg,
-    rgba(255, 255, 255, 0.14) 0%,
-    transparent 60%
-  );
-  transform: rotate(-5deg);
+  left: 0;
+  right: 0;
+  height: 50%;
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.04) 0%, rgba(255, 255, 255, 0) 100%);
   pointer-events: none;
+  z-index: 0;
+}
+
+.glass-sheen > * {
+  position: relative;
   z-index: 1;
 }
 

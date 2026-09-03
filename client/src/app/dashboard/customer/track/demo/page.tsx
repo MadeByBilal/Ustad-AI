@@ -74,7 +74,7 @@ export default function TrackingDemoPage() {
       </div>
 
       {/* Status Card */}
-      <div className="rounded-xl border border-divider bg-surface p-4">
+      <div className="glass-card p-4">
         <div className="flex items-center gap-3">
           <div
             className={`flex h-12 w-12 items-center justify-center rounded-full ${
@@ -134,7 +134,7 @@ export default function TrackingDemoPage() {
       />
 
       {/* Job Info */}
-      <div className="rounded-xl border border-divider bg-surface p-4">
+      <div className="glass-card p-4">
         <div className="flex items-center gap-2">
           <span className="badge bg-accent text-bg">{MOCK_WORKER.category}</span>
         </div>
@@ -149,7 +149,7 @@ export default function TrackingDemoPage() {
       </div>
 
       {/* Demo controls */}
-      <div className="rounded-xl border border-divider bg-surface p-4">
+      <div className="glass-card p-4">
         <p className="mb-3 text-xs font-semibold uppercase tracking-wide text-muted">Demo Controls</p>
         <div className="flex flex-wrap gap-2">
           <button

@@ -182,13 +182,12 @@ function WorkerCard({
       }}
       className={
         highlight
-          ? "rounded-2xl p-4"
-          : "rounded-2xl p-4"
+          ? "glass-card p-4"
+          : "glass-card p-4"
       }
       style={{
-        background: "rgba(255,255,255,0.05)",
-        border: highlight ? "1px solid rgba(38,166,80,0.5)" : "1px solid rgba(255,255,255,0.12)",
-        boxShadow: highlight ? "0 8px 24px rgba(38,166,80,0.1)" : "0 4px 12px rgba(0,0,0,0.15)",
+        border: highlight ? "1px solid rgba(38,166,80,0.5)" : undefined,
+        boxShadow: highlight ? "0 8px 24px rgba(38,166,80,0.1)" : undefined,
       }}
     >
       {highlight && (
@@ -273,7 +272,7 @@ function ResultPanel({ data, location }: { data: UnderstandResponse; location?: 
       transition={{ duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
       className="space-y-3"
     >
-      <div className="rounded-2xl p-4 text-left" style={{ background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.12)" }}>
+      <div className="glass-card p-4 text-left">
         <div className="flex flex-wrap items-center gap-x-3 gap-y-2 text-sm">
           <span className="font-semibold text-[#F1F4F1]">
             {u.category ? CATEGORY_LABELS[u.category] ?? u.category : "Not sure yet"}
@@ -366,7 +365,7 @@ function ResultPanel({ data, location }: { data: UnderstandResponse; location?: 
           ))}
         </div>
       ) : (
-        <p className="rounded-2xl p-4 text-sm text-[#93A396]" style={{ background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.12)" }}>
+        <p className="glass-card p-4 text-sm text-[#93A396]">
           No ustads available right now — try again later.
         </p>
       )}
