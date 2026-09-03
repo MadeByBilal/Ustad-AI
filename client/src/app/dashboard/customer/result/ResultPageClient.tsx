@@ -29,13 +29,13 @@ export default function ResultPageClient() {
 
   if (!stored) {
     return (
-      <div className="relative" style={{ background: "#0B0F0C" }}>
-        <div className="pointer-events-none absolute -right-20 -top-20 h-64 w-64 rounded-full blur-3xl" style={{ background: "rgba(38,166,80,0.06)" }} />
-        <div className="pointer-events-none absolute -bottom-24 -left-12 h-56 w-56 rounded-full blur-3xl" style={{ background: "rgba(212,162,74,0.04)" }} />
+      <div className="relative bg-bg">
+        <div className="pointer-events-none absolute -right-20 -top-20 h-64 w-64 rounded-full bg-accent/6 blur-3xl" />
+        <div className="pointer-events-none absolute -bottom-24 -left-12 h-56 w-56 rounded-full bg-warning/4 blur-3xl" />
         <div className="page-header">
           <Link
             href="/dashboard/customer"
-            className="flex items-center gap-2 text-sm font-medium text-[#93A396] hover:text-[#26A650] transition-colors"
+            className="flex items-center gap-2 text-sm font-medium text-muted hover:text-accent transition-colors"
           >
             <ArrowLeft className="h-4 w-4" />
             Back
@@ -48,13 +48,12 @@ export default function ResultPageClient() {
             transition={{ type: "spring", stiffness: 260, damping: 20 }}
             className="flex flex-col items-center justify-center py-20"
           >
-            <p className="text-center text-[#93A396]">
+            <p className="text-center text-muted">
               No results found. Try recording again.
             </p>
             <Link
               href="/dashboard/customer"
-              className="mt-4 rounded-xl px-5 py-2.5 text-sm font-bold transition-all duration-200"
-              style={{ background: "#26A650", color: "#08240F", boxShadow: "0 4px 16px rgba(38,166,80,0.3)" }}
+              className="btn-primary mt-4"
             >
               Go back
             </Link>
@@ -65,13 +64,13 @@ export default function ResultPageClient() {
   }
 
   return (
-    <div className="relative" style={{ background: "#0B0F0C" }}>
-      <div className="pointer-events-none absolute -right-20 -top-20 h-64 w-64 rounded-full blur-3xl" style={{ background: "rgba(38,166,80,0.06)" }} />
-      <div className="pointer-events-none absolute -bottom-24 -left-12 h-56 w-56 rounded-full blur-3xl" style={{ background: "rgba(212,162,74,0.04)" }} />
+    <div className="relative bg-bg">
+      <div className="pointer-events-none absolute -right-20 -top-20 h-64 w-64 rounded-full bg-accent/6 blur-3xl" />
+      <div className="pointer-events-none absolute -bottom-24 -left-12 h-56 w-56 rounded-full bg-warning/4 blur-3xl" />
       <div className="page-header">
         <Link
           href="/dashboard/customer"
-          className="flex items-center gap-2 text-sm font-medium text-[#93A396] hover:text-[#26A650] transition-colors"
+          className="flex items-center gap-2 text-sm font-medium text-muted hover:text-accent transition-colors"
         >
           <ArrowLeft className="h-4 w-4" />
           Back
@@ -85,8 +84,7 @@ export default function ResultPageClient() {
         <div className="mt-4 flex gap-3 pb-4">
           <Link
             href="/dashboard/customer"
-            className="flex-1 rounded-xl py-2.5 text-center text-sm font-semibold text-[#93A396] transition-all duration-200 hover:text-[#F1F4F1]"
-            style={{ background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.12)" }}
+            className="btn-secondary flex-1 text-center"
           >
             New request
           </Link>

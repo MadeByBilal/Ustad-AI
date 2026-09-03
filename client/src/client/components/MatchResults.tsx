@@ -233,23 +233,29 @@ function WorkerMatchCard({
       data-best-match={isBest ? "true" : "false"}
       onClick={onSelect}
       className={cn(
-        "cursor-pointer rounded-xl border bg-surface p-4 transition-all sm:p-5",
+        "glass-sheen cursor-pointer rounded-2xl p-4 transition-all sm:p-5",
         selected
-          ? "border-accent ring-2 ring-accent/20"
+          ? "border border-accent/40 ring-2 ring-accent/20"
           : isBest
-            ? "border-accent"
-            : "border-divider hover:border-accent/40",
+            ? "border border-warning/40"
+            : "border border-divider hover:border-accent/40",
+        "bg-[rgba(255,255,255,0.05)] backdrop-blur-xl",
       )}
+      style={{
+        boxShadow: selected
+          ? "0 8px 24px rgba(38,166,80,0.15), inset 0 1px 0 rgba(255,255,255,0.14)"
+          : "0 8px 24px rgba(0,0,0,0.2), inset 0 1px 0 rgba(255,255,255,0.14)",
+      }}
     >
       <div className="flex items-start gap-4">
-        <Avatar name={worker.name} />
+        <Avatar name={worker.name} isBest={isBest} />
         <div className="min-w-0 flex-1">
           <div className="flex flex-wrap items-center gap-2">
             <h4 className="font-display text-lg font-semibold leading-tight text-text">
               {worker.name}
             </h4>
             {isBest && (
-              <span className="inline-flex items-center gap-1 rounded-full border border-accent/40 bg-accent/15 px-2 py-0.5 font-mono text-xs uppercase tracking-wide text-accent">
+              <span className="inline-flex items-center gap-1 rounded-full border px-2 py-0.5 font-mono text-xs uppercase tracking-wide badge-premium">
                 Best match
               </span>
             )}
@@ -288,13 +294,15 @@ function WorkerMatchCard({
   );
 }
 
-function Avatar({ name }: { name: string }) {
+function Avatar({ name, isBest }: { name: string; isBest?: boolean }) {
   return (
     <div
       aria-hidden="true"
-      className="relative flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-divider bg-bg"
+      className={`relative flex h-12 w-12 shrink-0 items-center justify-center rounded-full border ${
+        isBest ? "border-warning/40 bg-warning/15" : "border-divider bg-[rgba(255,255,255,0.06)]"
+      }`}
     >
-      <span className="font-display text-base font-semibold text-text">
+      <span className={`font-display text-base font-semibold ${isBest ? "text-warning" : "text-text"}`}>
         {initials(name)}
       </span>
     </div>

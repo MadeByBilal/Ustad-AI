@@ -5,7 +5,16 @@ import { motion } from "framer-motion";
 import type { WorkerDashboardData, CompletedJobView, WorkerReviewView } from "@contracts/worker";
 import { useLang } from "@/client/lib/i18n/context";
 import LogoutButton from "@/client/components/LogoutButton";
-import { Check, Clock, Edit3, Save, X, Star } from "lucide-react";
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import {
+  faCheck,
+  faClock,
+  faPenToSquare,
+  faSave,
+  faXmark,
+  faStar,
+  faBriefcase,
+} from "@fortawesome/free-solid-svg-icons";
 import { getApiErrorMessage } from "@/client/lib/api-client";
 import { WORKER_CATEGORIES } from "@contracts/worker";
 
@@ -18,7 +27,6 @@ export default function WorkerProfile({ workerId }: { workerId: string }) {
   const [reviews, setReviews] = useState<WorkerReviewView[]>([]);
   const [totalReviews, setTotalReviews] = useState(0);
 
-  // Edit state
   const [editing, setEditing] = useState(false);
   const [editName, setEditName] = useState("");
   const [editCategory, setEditCategory] = useState("");
@@ -123,10 +131,10 @@ export default function WorkerProfile({ workerId }: { workerId: string }) {
   const w = data.worker;
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-5">
       {/* Profile Header */}
       <motion.div
-        className="card"
+        className="glass-sheen card"
         whileHover={{ y: -2 }}
         transition={{ duration: 0.2, ease: "easeOut" }}
       >
@@ -181,7 +189,7 @@ export default function WorkerProfile({ workerId }: { workerId: string }) {
                 disabled={saving}
                 className="btn-primary flex-1 !rounded-xl !py-2 text-xs disabled:opacity-60"
               >
-                <Save className="mr-1 inline h-3.5 w-3.5" />
+                <FontAwesomeIcon icon={faSave} className="mr-1 h-3.5 w-3.5" />
                 {saving ? t("saving") : t("save")}
               </button>
               <button
@@ -189,26 +197,26 @@ export default function WorkerProfile({ workerId }: { workerId: string }) {
                 onClick={cancelEditing}
                 className="rounded-xl border border-divider px-3 py-2 text-xs text-muted transition-colors hover:bg-bg"
               >
-                <X className="h-3.5 w-3.5" />
+                <FontAwesomeIcon icon={faXmark} className="h-3.5 w-3.5" />
               </button>
             </div>
           </div>
         ) : (
           <div className="flex items-center gap-4">
-            <div className="flex h-16 w-16 items-center justify-center rounded-full bg-success">
-              <span className="text-2xl font-bold text-success-fg">
+            <div className="flex h-16 w-16 shrink-0 items-center justify-center rounded-full glass-icon-circle">
+              <span className="text-2xl font-bold text-success">
                 {w.name?.charAt(0) ?? "U"}
               </span>
             </div>
             <div className="min-w-0 flex-1">
               <div className="flex items-center gap-2">
-                <h2 className="font-urdu text-lg font-bold text-text">{w.name}</h2>
+                <h2 className={`font-urdu text-lg font-bold text-text ${lang === "ur" ? "font-urdu" : ""}`}>{w.name}</h2>
                 <button
                   type="button"
                   onClick={startEditing}
                   className="rounded-lg p-1 text-muted transition-colors hover:bg-bg hover:text-text"
                 >
-                  <Edit3 className="h-3.5 w-3.5" />
+                  <FontAwesomeIcon icon={faPenToSquare} className="h-3.5 w-3.5" />
                 </button>
               </div>
               <p className="text-sm capitalize text-muted">
@@ -238,7 +246,10 @@ export default function WorkerProfile({ workerId }: { workerId: string }) {
             <p className={`text-xs text-muted ${lang === "ur" ? "font-urdu" : ""}`}>{t("completedJobs")}</p>
           </div>
           <div className="rounded-xl bg-bg p-3 text-center">
-            <p className="font-mono text-xl font-bold text-warning">{w.average_rating.toFixed(1)}</p>
+            <div className="flex items-center justify-center gap-1">
+              <FontAwesomeIcon icon={faStar} className="h-4 w-4 text-warning" />
+              <p className="font-mono text-xl font-bold text-warning">{w.average_rating.toFixed(1)}</p>
+            </div>
             <p className={`text-xs text-muted ${lang === "ur" ? "font-urdu" : ""}`}>{t("rating")}</p>
           </div>
           <div className="rounded-xl bg-bg p-3 text-center">
@@ -271,9 +282,9 @@ export default function WorkerProfile({ workerId }: { workerId: string }) {
             }`}
           >
             {w.verification_level === "documents_verified" ? (
-              <><Check className="h-3.5 w-3.5 inline" /> {t("verified")}</>
+              <><FontAwesomeIcon icon={faCheck} className="h-3.5 w-3.5" /> {t("verified")}</>
             ) : (
-              <><Clock className="h-3.5 w-3.5 inline" /> {t("pending")}</>
+              <><FontAwesomeIcon icon={faClock} className="h-3.5 w-3.5" /> {t("pending")}</>
             )}
           </span>
         </div>
@@ -293,12 +304,13 @@ export default function WorkerProfile({ workerId }: { workerId: string }) {
           </h3>
           <div className="space-y-2">
             {reviews.slice(0, 3).map((review) => (
-              <div key={review.id} className="rounded-xl bg-bg p-3">
+              <div key={review.id} className="glass-icon-circle rounded-xl p-3">
                 <div className="flex items-center gap-2">
                   <div className="flex">
                     {Array.from({ length: 5 }).map((_, i) => (
-                      <Star
+                      <FontAwesomeIcon
                         key={i}
+                        icon={faStar}
                         className={`h-3 w-3 ${
                           i < review.rating
                             ? "fill-warning text-warning"
@@ -339,7 +351,7 @@ export default function WorkerProfile({ workerId }: { workerId: string }) {
             {completedJobs.slice(0, 5).map((job) => (
               <div
                 key={job.id}
-                className="flex items-center justify-between rounded-xl bg-bg px-3 py-2.5"
+                className="glass-icon-circle flex items-center justify-between rounded-xl px-3 py-2.5"
               >
                 <div className="min-w-0 flex-1">
                   <p className="truncate text-xs font-medium text-text">
@@ -367,7 +379,7 @@ export default function WorkerProfile({ workerId }: { workerId: string }) {
       )}
 
       {/* Logout */}
-      <div className="pt-4">
+      <div className="pt-2">
         <LogoutButton />
       </div>
     </div>
