@@ -20,8 +20,10 @@ import {
   getTrackingTarget,
   parseLocationPayload,
 } from "./tracking/realtime.js";
+import { computeAndStoreRoute } from "./job/route-precompute.js";
 
 const ARRIVAL_THRESHOLD_KM = 0.1;
+const ROUTE_DEVIATION_THRESHOLD_KM = 0.2; // 200m — re-route if worker deviates this far
 const LOCATION_RATE_LIMIT_MS = 2000;
 const TRACKING_STATUSES = new Set([
   "ACCEPTED",
@@ -297,6 +299,30 @@ function emitTrackingUpdate(
     targetLat,
     targetLng,
   );
+
+  // Prefer route duration when available (more accurate than straight-line estimate)
+  let etaMinutes: number;
+  const routeDuration = job.route?.duration_seconds;
+  if (
+    typeof routeDuration === "number" &&
+    Number.isFinite(routeDuration) &&
+    routeDuration > 0
+  ) {
+    // Scale route duration by how much of the route remains
+    // (rough heuristic: distance-based fraction of total route)
+    const totalRouteDistance = job.route?.distance_meters
+      ? job.route.distance_meters / 1000
+      : null;
+    if (totalRouteDistance && totalRouteDistance > 0) {
+      const fractionRemaining = Math.min(1, distanceKm / totalRouteDistance);
+      etaMinutes = Math.max(1, Math.round((routeDuration / 60) * fractionRemaining));
+    } else {
+      etaMinutes = Math.max(1, Math.round(routeDuration / 60));
+    }
+  } else {
+    etaMinutes = estimateETAMinutes(distanceKm);
+  }
+
   // Emit to everyone in the room EXCEPT the sender
   socket.to(`job:${jobId}`).emit("location-update", {
     jobId,
@@ -307,7 +333,7 @@ function emitTrackingUpdate(
     targetLng,
     distanceKm: Math.round(distanceKm * 100) / 100,
     distanceMeters: Math.round(distanceKm * 1000),
-    etaMinutes: estimateETAMinutes(distanceKm),
+    etaMinutes,
     timestamp: new Date().toISOString(),
   });
 }
@@ -501,6 +527,34 @@ export function registerSocketHandlers(io: Server): void {
 
           // Broadcast to room (excluding sender)
           emitTrackingUpdate(io, socket, jobId, identity.workerId, location, job);
+
+          // Route deviation check: recompute route if worker strays from precomputed path
+          if (job.status === "EN_ROUTE" || job.status === "ACCEPTED") {
+            const existingRoute = job.route?.polyline;
+            if (Array.isArray(existingRoute) && existingRoute.length >= 2 && target) {
+              // Find closest point on precomputed route
+              let minDeviation = Infinity;
+              for (const pt of existingRoute) {
+                if (!Array.isArray(pt) || pt.length !== 2) continue;
+                const [ptLat, ptLng] = pt;
+                const devKm = haversineDistanceKm(location.lat, location.lng, ptLat, ptLng);
+                if (devKm < minDeviation) minDeviation = devKm;
+              }
+              // If deviated beyond threshold, re-route from current position
+              if (minDeviation > ROUTE_DEVIATION_THRESHOLD_KM) {
+                const [destLng, destLat] = target;
+                computeAndStoreRoute(jobId, location.lat, location.lng, destLat, destLng)
+                  .then((route) => {
+                    if (!route) return;
+                    io.to(`job:${jobId}`).emit("route-computed", {
+                      jobId,
+                      ...route,
+                    });
+                  })
+                  .catch(() => {}); // fire-and-forget
+              }
+            }
+          }
 
           // Geofence arrival detection
           const target = getTrackingTarget(job);

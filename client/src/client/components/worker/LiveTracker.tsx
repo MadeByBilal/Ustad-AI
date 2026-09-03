@@ -37,6 +37,7 @@ export default function LiveTracker({
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const onLocationUpdateRef = useRef(onLocationUpdate);
   const onArrivedRef = useRef(onArrived);
+  const highAccuracyFailedRef = useRef(false);
   onLocationUpdateRef.current = onLocationUpdate;
   onArrivedRef.current = onArrived;
 
@@ -127,6 +128,15 @@ export default function LiveTracker({
     [sendLocation],
   );
 
+  const getGpsOptions = useCallback(
+    (fallback = false): PositionOptions => ({
+      enableHighAccuracy: !fallback,
+      timeout: fallback ? 20_000 : 15_000,
+      maximumAge: 5_000,
+    }),
+    [],
+  );
+
   const stopTracking = useCallback(() => {
     if (watchIdRef.current !== null && typeof navigator !== "undefined") {
       navigator.geolocation.clearWatch(watchIdRef.current);
@@ -153,6 +163,34 @@ export default function LiveTracker({
 
     setError(null);
     setTracking(true);
+
+    const onError = (err: GeolocationPositionError) => {
+      console.error("[LiveTracker] GPS error:", err.code, err.message);
+      if (err.code === err.PERMISSION_DENIED) {
+        setError("Location permission denied");
+      } else if (
+        err.code === err.POSITION_UNAVAILABLE &&
+        !highAccuracyFailedRef.current
+      ) {
+        // High accuracy failed — retry with fallback (lower accuracy, longer timeout)
+        highAccuracyFailedRef.current = true;
+        console.log("[LiveTracker] retrying GPS with fallback accuracy");
+        navigator.geolocation.getCurrentPosition(
+          (pos) => {
+            sendThrottled({
+              lat: pos.coords.latitude,
+              lng: pos.coords.longitude,
+            });
+          },
+          () => {
+            setError("Allow location access to broadcast your position");
+          },
+          getGpsOptions(true),
+        );
+      }
+    };
+
+    // Initial position fetch
     navigator.geolocation.getCurrentPosition(
       (position) => {
         sendThrottled({
@@ -160,16 +198,11 @@ export default function LiveTracker({
           lng: position.coords.longitude,
         });
       },
-      (err) => {
-        console.error("[LiveTracker] initial GPS error:", err.code, err.message);
-        if (err.code === err.PERMISSION_DENIED) {
-          setError("Location permission denied");
-        } else {
-          setError("Allow location access to broadcast your position");
-        }
-      },
-      { enableHighAccuracy: true, timeout: 15_000, maximumAge: 0 },
+      onError,
+      getGpsOptions(),
     );
+
+    // Continuous watch
     watchIdRef.current = navigator.geolocation.watchPosition(
       (position) => {
         sendThrottled({
@@ -177,15 +210,10 @@ export default function LiveTracker({
           lng: position.coords.longitude,
         });
       },
-      (positionError) => {
-        console.error("[LiveTracker] watch GPS error:", positionError.code, positionError.message);
-        if (positionError.code === positionError.PERMISSION_DENIED) {
-          setError("Location permission denied");
-        }
-      },
-      { enableHighAccuracy: true, timeout: 15_000, maximumAge: 0 },
+      onError,
+      getGpsOptions(),
     );
-  }, [sendThrottled]);
+  }, [sendThrottled, getGpsOptions]);
 
   useEffect(() => {
     activeRef.current = true;
@@ -218,6 +246,5 @@ export default function LiveTracker({
     };
   }, [ensureJoined, startTracking, stopTracking]);
 
-  // Render nothing — tracking runs silently in the background.
   return null;
 }

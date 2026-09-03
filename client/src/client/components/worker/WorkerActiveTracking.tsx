@@ -63,6 +63,7 @@ export default function WorkerActiveTracking({
 
   const lastCustomerLocRef = useRef<string | null>(null);
   const lastWorkerLocRef = useRef<string | null>(null);
+  const socketActiveRef = useRef(false);
 
   const refresh = useCallback(async () => {
     try {
@@ -147,30 +148,32 @@ export default function WorkerActiveTracking({
         );
       }
 
-      // Worker's own location — prefer live tracking data, fallback to stored profile location
-      const wLat =
-        trackBody?.data?.worker_lat ?? body.data?.worker?.location_lat;
-      const wLng =
-        trackBody?.data?.worker_lng ?? body.data?.worker?.location_lng;
-      if (typeof wLat === "number" && Number.isFinite(wLat) && typeof wLng === "number" && Number.isFinite(wLng)) {
-        const key = `${wLat.toFixed(6)},${wLng.toFixed(6)}`;
-        if (lastWorkerLocRef.current !== key) {
-          lastWorkerLocRef.current = key;
-          setWorkerLocation({ lat: wLat, lng: wLng });
+      // Worker's own location — skip if socket is delivering updates
+      if (!socketActiveRef.current) {
+        const wLat =
+          trackBody?.data?.worker_lat ?? body.data?.worker?.location_lat;
+        const wLng =
+          trackBody?.data?.worker_lng ?? body.data?.worker?.location_lng;
+        if (typeof wLat === "number" && Number.isFinite(wLat) && typeof wLng === "number" && Number.isFinite(wLng)) {
+          const key = `${wLat.toFixed(6)},${wLng.toFixed(6)}`;
+          if (lastWorkerLocRef.current !== key) {
+            lastWorkerLocRef.current = key;
+            setWorkerLocation({ lat: wLat, lng: wLng });
+          }
+          setDistanceKm(trackBody?.data?.distance_km);
+          setEtaMinutes(trackBody?.data?.eta_minutes ?? null);
+          setLastUpdate(new Date());
         }
-        setDistanceKm(trackBody?.data?.distance_km);
-        setEtaMinutes(trackBody?.data?.eta_minutes ?? null);
-        setLastUpdate(new Date());
-      }
 
-      // Customer location — only update if changed to prevent pin flicker
-      const cLat = trackBody?.data?.customer_lat;
-      const cLng = trackBody?.data?.customer_lng;
-      if (typeof cLat === "number" && Number.isFinite(cLat) && typeof cLng === "number" && Number.isFinite(cLng)) {
-        const cKey = `${cLat.toFixed(6)},${cLng.toFixed(6)}`;
-        if (lastCustomerLocRef.current !== cKey) {
-          lastCustomerLocRef.current = cKey;
-          setCustomerLocation({ lat: cLat, lng: cLng });
+        // Customer location — only update if changed to prevent pin flicker
+        const cLat = trackBody?.data?.customer_lat;
+        const cLng = trackBody?.data?.customer_lng;
+        if (typeof cLat === "number" && Number.isFinite(cLat) && typeof cLng === "number" && Number.isFinite(cLng)) {
+          const cKey = `${cLat.toFixed(6)},${cLng.toFixed(6)}`;
+          if (lastCustomerLocRef.current !== cKey) {
+            lastCustomerLocRef.current = cKey;
+            setCustomerLocation({ lat: cLat, lng: cLng });
+          }
         }
       }
     } catch {
@@ -180,7 +183,11 @@ export default function WorkerActiveTracking({
 
   useEffect(() => {
     void refresh();
-    const poll = setInterval(() => void refresh(), 5_000);
+    const poll = setInterval(() => {
+      // Reset socket-active flag so polling takes over if socket stalls
+      socketActiveRef.current = false;
+      void refresh();
+    }, 5_000);
     return () => clearInterval(poll);
   }, [refresh]);
 
@@ -214,6 +221,7 @@ export default function WorkerActiveTracking({
           setDistanceKm(data.distanceKm);
           setEtaMinutes(data.etaMinutes);
           setLastUpdate(new Date());
+          socketActiveRef.current = true;
         };
 
         const handleRouteComputed = (data: RouteComputedPayload) => {
@@ -244,6 +252,7 @@ export default function WorkerActiveTracking({
               lastCustomerLocRef.current = cKey;
               setCustomerLocation({ lat: data.lat, lng: data.lng });
             }
+            socketActiveRef.current = true;
           }
         };
 

@@ -8,7 +8,7 @@ let socket: Socket | null = null;
  * Maximum number of automatic reconnection attempts before giving up and
  * letting the caller decide (e.g. fall back to HTTP polling).
  */
-const MAX_RECONNECT_ATTEMPTS = 5;
+const MAX_RECONNECT_ATTEMPTS = 10;
 
 /**
  * Base delay (ms) for exponential back-off reconnection.
@@ -31,10 +31,12 @@ export function getSocket(): Socket {
   socket = io(url, {
     path: "/api/socketio",
     transports: ["websocket", "polling"],
+    upgrade: true,
     autoConnect: false,
     withCredentials: true,
-    // Disable the built-in reconnection so we can apply our own back-off logic.
     reconnection: false,
+    pingTimeout: 20_000,
+    pingInterval: 25_000,
   });
 
   return socket;
@@ -93,8 +95,6 @@ export function attachReconnectLogic(
   }
 
   function onDisconnect(reason: string) {
-    // "io server disconnect" means the server intentionally closed the
-    // connection (e.g. auth failure).  Don't retry in that case.
     if (!active || reason === "io server disconnect") return;
     scheduleReconnect();
   }

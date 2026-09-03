@@ -59,6 +59,9 @@ export default function TrackingPageClient({
     [number, number][] | null
   >(initialPrecomputedRoute);
   const lastWorkerLocRef = useRef<string | null>(null);
+  const lastCustomerLocRef = useRef<string | null>(null);
+  const socketActiveRef = useRef(false);
+  const pollTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   const handleLocationUpdate = useCallback(
     (data: {
@@ -67,10 +70,14 @@ export default function TrackingPageClient({
       distanceKm: number;
       etaMinutes: number;
     }) => {
-      setWorkerLocation({ lat: data.lat, lng: data.lng });
+      const key = `${data.lat.toFixed(6)},${data.lng.toFixed(6)}`;
+      const changed = lastWorkerLocRef.current !== key;
+      lastWorkerLocRef.current = key;
+      if (changed) setWorkerLocation({ lat: data.lat, lng: data.lng });
       setDistanceKm(data.distanceKm);
       setEtaMinutes(data.etaMinutes);
       setLastUpdate(new Date());
+      socketActiveRef.current = true;
     },
     [],
   );
@@ -125,7 +132,11 @@ export default function TrackingPageClient({
             typeof data.lat === "number" &&
             typeof data.lng === "number"
           ) {
-            setCustomerLocation({ lat: data.lat, lng: data.lng });
+            const cKey = `${data.lat.toFixed(6)},${data.lng.toFixed(6)}`;
+            if (lastCustomerLocRef.current !== cKey) {
+              lastCustomerLocRef.current = cKey;
+              setCustomerLocation({ lat: data.lat, lng: data.lng });
+            }
           }
         };
 
@@ -163,7 +174,7 @@ export default function TrackingPageClient({
     };
   }, [jobId, handleLocationUpdate]);
 
-  // Fetch initial tracking data
+  // Poll for tracking data — skip location update if socket is delivering
   useEffect(() => {
     async function fetchTracking() {
       try {
@@ -171,28 +182,37 @@ export default function TrackingPageClient({
         const body = await res.json();
         if (body?.success && body.data) {
           if (body.data.status) setJobStatus(body.data.status);
-          if (body.data.worker_lat != null && body.data.worker_lng != null) {
-            const wKey = `${body.data.worker_lat.toFixed(6)},${body.data.worker_lng.toFixed(6)}`;
-            if (lastWorkerLocRef.current !== wKey) {
-              lastWorkerLocRef.current = wKey;
-              setWorkerLocation({
-                lat: body.data.worker_lat,
-                lng: body.data.worker_lng,
-              });
+
+          // Only update location from polling if socket hasn't delivered recently
+          if (!socketActiveRef.current) {
+            if (body.data.worker_lat != null && body.data.worker_lng != null) {
+              const wKey = `${body.data.worker_lat.toFixed(6)},${body.data.worker_lng.toFixed(6)}`;
+              if (lastWorkerLocRef.current !== wKey) {
+                lastWorkerLocRef.current = wKey;
+                setWorkerLocation({
+                  lat: body.data.worker_lat,
+                  lng: body.data.worker_lng,
+                });
+              }
+            }
+            if (body.data.customer_lat != null && body.data.customer_lng != null) {
+              const cKey = `${body.data.customer_lat.toFixed(6)},${body.data.customer_lng.toFixed(6)}`;
+              if (lastCustomerLocRef.current !== cKey) {
+                lastCustomerLocRef.current = cKey;
+                setCustomerLocation({
+                  lat: body.data.customer_lat,
+                  lng: body.data.customer_lng,
+                });
+              }
+            }
+            if (body.data.distance_km !== undefined && body.data.distance_km !== null) {
+              setDistanceKm(body.data.distance_km);
+            }
+            if (body.data.eta_minutes !== undefined && body.data.eta_minutes !== null) {
+              setEtaMinutes(body.data.eta_minutes);
             }
           }
-          if (body.data.customer_lat != null && body.data.customer_lng != null) {
-            setCustomerLocation({
-              lat: body.data.customer_lat,
-              lng: body.data.customer_lng,
-            });
-          }
-          if (body.data.distance_km !== undefined && body.data.distance_km !== null) {
-            setDistanceKm(body.data.distance_km);
-          }
-          if (body.data.eta_minutes !== undefined && body.data.eta_minutes !== null) {
-            setEtaMinutes(body.data.eta_minutes);
-          }
+
           if (
             body.data.precomputed_route &&
             Array.isArray(body.data.precomputed_route)
@@ -207,9 +227,17 @@ export default function TrackingPageClient({
         // ignore
       }
     }
+
     void fetchTracking();
-    const poll = setInterval(() => void fetchTracking(), 5000);
-    return () => clearInterval(poll);
+    pollTimerRef.current = setInterval(() => {
+      // Reset socket-active flag so polling takes over if socket stalls
+      socketActiveRef.current = false;
+      void fetchTracking();
+    }, 5000);
+
+    return () => {
+      if (pollTimerRef.current) clearInterval(pollTimerRef.current);
+    };
   }, [jobId]);
 
   const isCancelled = jobStatus === "CANCELLED";

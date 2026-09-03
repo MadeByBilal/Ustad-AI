@@ -5,7 +5,7 @@ import type { Socket } from "socket.io-client";
 
 const LOCATION_PING_INTERVAL_MS = 3_000;
 /** How many consecutive socket failures before we switch to HTTP. */
-const SOCKET_FAIL_THRESHOLD = 3;
+const SOCKET_FAIL_THRESHOLD = 2;
 /** Interval for the HTTP fallback pings. */
 const HTTP_FALLBACK_INTERVAL_MS = 5_000;
 
@@ -29,6 +29,7 @@ export default function LiveCustomerLocation({
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const activeRef = useRef(true);
   const onLocationUpdateRef = useRef(onLocationUpdate);
+  const highAccuracyFailedRef = useRef(false);
   onLocationUpdateRef.current = onLocationUpdate;
 
   // Track consecutive socket errors so we can fall back to HTTP.
@@ -61,10 +62,9 @@ export default function LiveCustomerLocation({
   );
 
   const startHttpFallback = useCallback(() => {
-    if (httpIntervalRef.current) return; // already running
+    if (httpIntervalRef.current) return;
     useHttpFallbackRef.current = true;
 
-    // Send the most-recent known location immediately.
     const current = lastHttpLocationRef.current;
     if (current) void sendViaHttp(current);
 
@@ -98,8 +98,6 @@ export default function LiveCustomerLocation({
       joinedRef.current = true;
       socketFailCountRef.current = 0;
 
-      // Attach retry logic with callbacks to switch to HTTP fallback when
-      // the socket gives up, and back to socket on successful reconnection.
       cleanupReconnectRef.current = attachReconnectLogic(socket, {
         onReconnecting: () => {
           socketFailCountRef.current += 1;
@@ -137,19 +135,15 @@ export default function LiveCustomerLocation({
         clearTimeout(timerRef.current);
         timerRef.current = null;
       }
-      console.log("[LiveCustomerLocation] sending location:", location.lat, location.lng);
       onLocationUpdateRef.current?.(location);
 
-      // Always keep the latest location for the HTTP fallback.
       lastHttpLocationRef.current = location;
 
       if (useHttpFallbackRef.current) {
-        // HTTP path: send immediately (interval handles periodic resends).
         void sendViaHttp(location);
         return;
       }
 
-      // Socket path.
       void getSocket()
         .then((socket) => {
           if (socket && activeRef.current) {
@@ -188,6 +182,15 @@ export default function LiveCustomerLocation({
     [sendNow],
   );
 
+  const getGpsOptions = useCallback(
+    (fallback = false): PositionOptions => ({
+      enableHighAccuracy: !fallback,
+      timeout: fallback ? 20_000 : 15_000,
+      maximumAge: 5_000,
+    }),
+    [],
+  );
+
   useEffect(() => {
     activeRef.current = true;
     if (typeof navigator === "undefined" || !navigator.geolocation) {
@@ -197,23 +200,47 @@ export default function LiveCustomerLocation({
 
     setError(null);
     setSharing(true);
-    console.log("[LiveCustomerLocation] starting GPS watch for job:", jobId);
+
+    const onError = (err: GeolocationPositionError) => {
+      console.error("[LiveCustomerLocation] GPS error:", err.code, err.message);
+      if (err.code === err.PERMISSION_DENIED) {
+        if (activeRef.current) {
+          setSharing(false);
+          setError("Allow location access to share your live position");
+        }
+      } else if (
+        err.code === err.POSITION_UNAVAILABLE &&
+        !highAccuracyFailedRef.current
+      ) {
+        highAccuracyFailedRef.current = true;
+        console.log("[LiveCustomerLocation] retrying GPS with fallback accuracy");
+        navigator.geolocation.getCurrentPosition(
+          (pos) => {
+            publish({
+              lat: pos.coords.latitude,
+              lng: pos.coords.longitude,
+            });
+          },
+          () => {
+            if (activeRef.current) {
+              setSharing(false);
+              setError("Allow location access to share your live position");
+            }
+          },
+          getGpsOptions(true),
+        );
+      }
+    };
+
     const watchId = navigator.geolocation.watchPosition(
       (position) => {
-        console.log("[LiveCustomerLocation] GPS position received:", position.coords.latitude, position.coords.longitude);
         publish({
           lat: position.coords.latitude,
           lng: position.coords.longitude,
         });
       },
-      (err) => {
-        console.error("[LiveCustomerLocation] GPS error:", err.code, err.message);
-        if (activeRef.current) {
-          setSharing(false);
-          setError("Allow location access to share your live position");
-        }
-      },
-      { enableHighAccuracy: true, timeout: 15_000, maximumAge: 0 },
+      onError,
+      getGpsOptions(),
     );
 
     return () => {
@@ -230,7 +257,7 @@ export default function LiveCustomerLocation({
       useHttpFallbackRef.current = false;
       socketFailCountRef.current = 0;
     };
-  }, [jobId, publish]);
+  }, [jobId, publish, getGpsOptions]);
 
   return (
     <p

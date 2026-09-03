@@ -746,9 +746,10 @@ export async function workerUpdateJobStatus(
     await recordSystemMessage(jobId, systemMessage);
   }
 
-  // Fire-and-forget: pre-compute the OSRM route when worker starts en route.
-  // The result is stored on the Job document so the customer's map loads instantly.
-  if (status === "EN_ROUTE") {
+  // Fire-and-forget: pre-compute the OSRM route as soon as we know the worker
+  // and destination — both on ACCEPTED and EN_ROUTE.  The result is stored on
+  // the Job document so the customer's map loads instantly.
+  if (status === "ACCEPTED" || status === "EN_ROUTE") {
     const worker = await Worker.findOne({ _id: workerId })
       .select("location")
       .lean();
