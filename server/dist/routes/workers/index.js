@@ -5,10 +5,12 @@ import { fail, ok } from "../../lib/api.js";
 import { requireRole } from "../../lib/auth-middleware.js";
 import { FlowError } from "../../lib/job/flow.js";
 import { getWorkerDashboard } from "../../lib/worker/dashboard.js";
-import { haversineDistanceKm } from "../../lib/geo.js";
+import { haversineDistanceKm, estimateETAMinutes } from "../../lib/geo.js";
 import { getWorkerResults } from "../../lib/matching.js";
 import { photoUploadSchema } from "../../lib/photos.js";
-import { Worker, Upload } from "../../models/index.js";
+import { Worker, Upload, Job, Review, WORKER_CATEGORIES } from "../../models/index.js";
+import { getIO } from "../../lib/socket.js";
+import { getTrackingTarget } from "../../lib/tracking/realtime.js";
 const router = Router();
 const nearbyQuerySchema = z.object({
     lat: z.coerce.number().min(-90).max(90),
@@ -243,6 +245,34 @@ router.patch("/me/location", requireRole(["worker"]), async (req, res) => {
         if (!updated) {
             return fail(res, "Location is outside your service area", 403);
         }
+        // Broadcast to the active job's socket room so customers receive real-time
+        // updates even when the worker's socket transport falls back to HTTP.
+        const activeJobId = updated.active_job_id ? String(updated.active_job_id) : null;
+        if (activeJobId) {
+            const io = getIO();
+            if (io) {
+                const job = await Job.findById(activeJobId).lean();
+                if (job) {
+                    const target = getTrackingTarget(job);
+                    if (target) {
+                        const [targetLng, targetLat] = target;
+                        const distanceKm = haversineDistanceKm(parsed.data.lat, parsed.data.lng, targetLat, targetLng);
+                        io.to(`job:${activeJobId}`).emit("location-update", {
+                            jobId: activeJobId,
+                            workerId: String(worker._id),
+                            lat: parsed.data.lat,
+                            lng: parsed.data.lng,
+                            targetLat,
+                            targetLng,
+                            distanceKm: Math.round(distanceKm * 100) / 100,
+                            distanceMeters: Math.round(distanceKm * 1000),
+                            etaMinutes: estimateETAMinutes(distanceKm),
+                            timestamp: new Date().toISOString(),
+                        });
+                    }
+                }
+            }
+        }
         return ok({
             location: updated.location,
             location_updated_at: updated.location_updated_at,
@@ -250,6 +280,41 @@ router.patch("/me/location", requireRole(["worker"]), async (req, res) => {
     }
     catch (e) {
         console.error("[workers/me/location] error:", e);
+        return fail(res, "Internal error", 500);
+    }
+});
+const profileUpdateSchema = z.object({
+    name: z.string().trim().min(1).max(100).optional(),
+    category: z.enum(WORKER_CATEGORIES).optional(),
+    skills: z.array(z.string().trim().max(50)).max(10).optional(),
+});
+/**
+ * PATCH /me/profile — update worker profile details (name, category, skills).
+ */
+router.patch("/me/profile", requireRole(["worker"]), async (req, res) => {
+    const sessionUser = res.locals.sessionUser;
+    const parsed = profileUpdateSchema.safeParse(req.body ?? {});
+    if (!parsed.success) {
+        return fail(res, "Invalid request", 400, parsed.error.flatten().fieldErrors);
+    }
+    if (Object.keys(parsed.data).length === 0) {
+        return fail(res, "No fields to update", 400);
+    }
+    try {
+        await connectDB();
+        const worker = await Worker.findOneAndUpdate({ user_id: sessionUser.user._id }, { $set: parsed.data }, { new: true }).lean();
+        if (!worker) {
+            return fail(res, "Worker profile not found for this account", 404);
+        }
+        return ok({
+            id: String(worker._id),
+            name: worker.name,
+            category: worker.category,
+            skills: worker.skills ?? [],
+        })(res);
+    }
+    catch (error) {
+        console.error("[workers/me/profile] error:", error);
         return fail(res, "Internal error", 500);
     }
 });
@@ -277,6 +342,90 @@ router.patch("/me/availability", requireRole(["worker"]), async (req, res) => {
     }
     catch (error) {
         console.error("[workers/me/availability] error:", error);
+        return fail(res, "Internal error", 500);
+    }
+});
+/**
+ * GET /:id/completed-jobs — list of completed jobs with earnings for the worker.
+ */
+router.get("/:id/completed-jobs", requireRole(["worker"]), async (req, res) => {
+    const sessionUser = res.locals.sessionUser;
+    const workerId = String(req.params.id).trim();
+    if (!workerId) {
+        return fail(res, "Worker id is required", 400);
+    }
+    try {
+        await connectDB();
+        const worker = await Worker.findOne({ user_id: sessionUser.user._id }).lean();
+        if (!worker || String(worker._id) !== workerId) {
+            return fail(res, "Worker not found", 404);
+        }
+        const jobs = await Job.find({
+            "matching.selected_worker_id": worker._id,
+            status: { $in: ["COMPLETED", "AWAITING_CUSTOMER_CONFIRMATION"] },
+        })
+            .sort({ updated_at: -1 })
+            .lean();
+        const completed = jobs.map((job) => ({
+            id: String(job._id),
+            category: job.understanding?.category ?? "",
+            subcategory: job.understanding?.subcategory ?? "",
+            description: job.understanding?.description ?? "",
+            address_label: job.location?.address_label ?? "",
+            final_price: job.pricing?.final_price ?? job.pricing?.customer_offer ?? 0,
+            currency: job.pricing?.currency ?? "PKR",
+            status: job.status,
+            created_at: new Date(job.created_at).toISOString(),
+            completed_at: job.status === "COMPLETED"
+                ? new Date(job.updated_at).toISOString()
+                : null,
+        }));
+        return ok({ completed_jobs: completed })(res);
+    }
+    catch (e) {
+        console.error("[workers/:id/completed-jobs] error:", e);
+        return fail(res, "Internal error", 500);
+    }
+});
+/**
+ * GET /:id/reviews — list of reviews for the worker.
+ */
+router.get("/:id/reviews", requireRole(["worker"]), async (req, res) => {
+    const sessionUser = res.locals.sessionUser;
+    const workerId = String(req.params.id).trim();
+    if (!workerId) {
+        return fail(res, "Worker id is required", 400);
+    }
+    try {
+        await connectDB();
+        const worker = await Worker.findOne({ user_id: sessionUser.user._id }).lean();
+        if (!worker || String(worker._id) !== workerId) {
+            return fail(res, "Worker not found", 404);
+        }
+        const reviews = await Review.find({ worker_id: worker._id })
+            .sort({ created_at: -1 })
+            .limit(50)
+            .lean();
+        const reviewData = reviews.map((r) => ({
+            id: String(r._id),
+            job_id: String(r.job_id),
+            rating: r.rating,
+            tags: r.tags ?? [],
+            text: r.text ?? "",
+            created_at: new Date(r.created_at).toISOString(),
+        }));
+        const totalReviews = await Review.countDocuments({ worker_id: worker._id });
+        const avgRating = reviewData.length > 0
+            ? reviewData.reduce((sum, r) => sum + r.rating, 0) / reviewData.length
+            : 0;
+        return ok({
+            reviews: reviewData,
+            total_reviews: totalReviews,
+            average_rating: Math.round(avgRating * 10) / 10,
+        })(res);
+    }
+    catch (e) {
+        console.error("[workers/:id/reviews] error:", e);
         return fail(res, "Internal error", 500);
     }
 });

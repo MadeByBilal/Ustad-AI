@@ -1,4 +1,6 @@
 import { type JobDoc, type JobStatus } from "../../models/index.js";
+export declare const CUSTOMER_SCORE_CANCEL_PENALTY = 5;
+import { type JobActor } from "./state-machine.js";
 import type { UrgencyLevel, WorkerCategory } from "../../models/index.js";
 export declare class FlowError extends Error {
     readonly code: string;
@@ -26,6 +28,7 @@ export interface BroadcastResult {
     eligible_workers_count: number;
     acceptance_deadline: Date;
 }
+export declare function recordEvent(jobId: unknown, from_state: JobStatus, to_state: JobStatus, actor_id: string, actor_type: JobActor, metadata?: Record<string, unknown>): Promise<void>;
 /**
  * Creates a DRAFT job, runs the (pure, synchronous) analysis and settles
  * on WAITING_FOR_CUSTOMER with the lifecycle events recorded.

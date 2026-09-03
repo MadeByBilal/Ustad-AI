@@ -88,6 +88,7 @@ export interface DirectRequestView {
     my_counter_price: number | null;
     offer_status: string;
     address_label: string;
+    distance_km: number | null;
     created_at: string;
 }
 export interface WorkerDashboardData {

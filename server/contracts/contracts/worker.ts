@@ -167,3 +167,35 @@ export interface WorkerDashboardData {
   incoming_jobs: IncomingJobView[];
   direct_requests: DirectRequestView[];
 }
+
+// ─── Completed Job View (for stats/history) ──────────────────────────────────
+
+export interface CompletedJobView {
+  id: string;
+  category: string;
+  subcategory: string;
+  description: string;
+  address_label: string;
+  final_price: number;
+  currency: string;
+  status: string;
+  created_at: string;
+  completed_at: string | null;
+}
+
+// ─── Worker Review View ──────────────────────────────────────────────────────
+
+export interface WorkerReviewView {
+  id: string;
+  job_id: string;
+  rating: number;
+  tags: string[];
+  text: string;
+  created_at: string;
+}
+
+export interface WorkerReviewsData {
+  reviews: WorkerReviewView[];
+  total_reviews: number;
+  average_rating: number;
+}

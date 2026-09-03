@@ -18,6 +18,12 @@ declare const userSchema: mongoose.Schema<any, mongoose.Model<any, any, any, any
         coordinates: number[];
         type?: "Point" | null | undefined;
     } | null | undefined;
+    stats?: {
+        average_rating: number;
+        reviews_count: number;
+        trust_score: number;
+        cancellations: number;
+    } | null | undefined;
 }, mongoose.Document<unknown, {}, mongoose.FlatRecord<{
     [x: string]: NativeDate;
     role: "customer" | "worker" | "admin";
@@ -29,6 +35,12 @@ declare const userSchema: mongoose.Schema<any, mongoose.Model<any, any, any, any
     location?: {
         coordinates: number[];
         type?: "Point" | null | undefined;
+    } | null | undefined;
+    stats?: {
+        average_rating: number;
+        reviews_count: number;
+        trust_score: number;
+        cancellations: number;
     } | null | undefined;
 }>, {}, mongoose.MergeType<mongoose.DefaultSchemaOptions, {
     timestamps: {
@@ -46,6 +58,12 @@ declare const userSchema: mongoose.Schema<any, mongoose.Model<any, any, any, any
     location?: {
         coordinates: number[];
         type?: "Point" | null | undefined;
+    } | null | undefined;
+    stats?: {
+        average_rating: number;
+        reviews_count: number;
+        trust_score: number;
+        cancellations: number;
     } | null | undefined;
 }> & {
     _id: mongoose.Types.ObjectId;
@@ -65,6 +83,12 @@ export declare const User: mongoose.Model<{
         coordinates: number[];
         type?: "Point" | null | undefined;
     } | null | undefined;
+    stats?: {
+        average_rating: number;
+        reviews_count: number;
+        trust_score: number;
+        cancellations: number;
+    } | null | undefined;
 }, {}, {}, {}, mongoose.Document<unknown, {}, {
     [x: string]: NativeDate;
     role: "customer" | "worker" | "admin";
@@ -77,6 +101,12 @@ export declare const User: mongoose.Model<{
         coordinates: number[];
         type?: "Point" | null | undefined;
     } | null | undefined;
+    stats?: {
+        average_rating: number;
+        reviews_count: number;
+        trust_score: number;
+        cancellations: number;
+    } | null | undefined;
 }, {}, {}> & {
     [x: string]: NativeDate;
     role: "customer" | "worker" | "admin";
@@ -88,6 +118,12 @@ export declare const User: mongoose.Model<{
     location?: {
         coordinates: number[];
         type?: "Point" | null | undefined;
+    } | null | undefined;
+    stats?: {
+        average_rating: number;
+        reviews_count: number;
+        trust_score: number;
+        cancellations: number;
     } | null | undefined;
 } & {
     _id: mongoose.Types.ObjectId;

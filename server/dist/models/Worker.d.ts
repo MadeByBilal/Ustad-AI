@@ -11,6 +11,7 @@ declare const workerSchema: mongoose.Schema<any, mongoose.Model<any, any, any, a
 }, {
     [x: string]: NativeDate;
     name: string;
+    average_rating: number;
     user_id: mongoose.Types.ObjectId;
     category: "plumber" | "electrician" | "ac_technician" | "carpenter";
     skills: string[];
@@ -26,7 +27,6 @@ declare const workerSchema: mongoose.Schema<any, mongoose.Model<any, any, any, a
     confirmed_jobs: number;
     response_rate: number;
     cancellation_rate: number;
-    average_rating: number;
     repeat_customers: number;
     emergency_capabilities: string[];
     location?: {
@@ -269,6 +269,7 @@ declare const workerSchema: mongoose.Schema<any, mongoose.Model<any, any, any, a
 }, mongoose.Document<unknown, {}, mongoose.FlatRecord<{
     [x: string]: NativeDate;
     name: string;
+    average_rating: number;
     user_id: mongoose.Types.ObjectId;
     category: "plumber" | "electrician" | "ac_technician" | "carpenter";
     skills: string[];
@@ -284,7 +285,6 @@ declare const workerSchema: mongoose.Schema<any, mongoose.Model<any, any, any, a
     confirmed_jobs: number;
     response_rate: number;
     cancellation_rate: number;
-    average_rating: number;
     repeat_customers: number;
     emergency_capabilities: string[];
     location?: {
@@ -532,6 +532,7 @@ declare const workerSchema: mongoose.Schema<any, mongoose.Model<any, any, any, a
 }>> & mongoose.FlatRecord<{
     [x: string]: NativeDate;
     name: string;
+    average_rating: number;
     user_id: mongoose.Types.ObjectId;
     category: "plumber" | "electrician" | "ac_technician" | "carpenter";
     skills: string[];
@@ -547,7 +548,6 @@ declare const workerSchema: mongoose.Schema<any, mongoose.Model<any, any, any, a
     confirmed_jobs: number;
     response_rate: number;
     cancellation_rate: number;
-    average_rating: number;
     repeat_customers: number;
     emergency_capabilities: string[];
     location?: {
@@ -796,6 +796,7 @@ export type WorkerDoc = InferSchemaType<typeof workerSchema>;
 export declare const Worker: mongoose.Model<{
     [x: string]: NativeDate;
     name: string;
+    average_rating: number;
     user_id: mongoose.Types.ObjectId;
     category: "plumber" | "electrician" | "ac_technician" | "carpenter";
     skills: string[];
@@ -811,7 +812,6 @@ export declare const Worker: mongoose.Model<{
     confirmed_jobs: number;
     response_rate: number;
     cancellation_rate: number;
-    average_rating: number;
     repeat_customers: number;
     emergency_capabilities: string[];
     location?: {
@@ -1054,6 +1054,7 @@ export declare const Worker: mongoose.Model<{
 }, {}, {}, {}, mongoose.Document<unknown, {}, {
     [x: string]: NativeDate;
     name: string;
+    average_rating: number;
     user_id: mongoose.Types.ObjectId;
     category: "plumber" | "electrician" | "ac_technician" | "carpenter";
     skills: string[];
@@ -1069,7 +1070,6 @@ export declare const Worker: mongoose.Model<{
     confirmed_jobs: number;
     response_rate: number;
     cancellation_rate: number;
-    average_rating: number;
     repeat_customers: number;
     emergency_capabilities: string[];
     location?: {
@@ -1312,6 +1312,7 @@ export declare const Worker: mongoose.Model<{
 }, {}, {}> & {
     [x: string]: NativeDate;
     name: string;
+    average_rating: number;
     user_id: mongoose.Types.ObjectId;
     category: "plumber" | "electrician" | "ac_technician" | "carpenter";
     skills: string[];
@@ -1327,7 +1328,6 @@ export declare const Worker: mongoose.Model<{
     confirmed_jobs: number;
     response_rate: number;
     cancellation_rate: number;
-    average_rating: number;
     repeat_customers: number;
     emergency_capabilities: string[];
     location?: {

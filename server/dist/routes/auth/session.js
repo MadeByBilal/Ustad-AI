@@ -28,6 +28,12 @@ async function handleSession(req, res) {
                 name: user.name,
                 email: user.email,
                 language: user.language,
+                stats: {
+                    average_rating: user.stats?.average_rating ?? 5.0,
+                    reviews_count: user.stats?.reviews_count ?? 0,
+                    trust_score: user.stats?.trust_score ?? 100,
+                    cancellations: user.stats?.cancellations ?? 0,
+                },
             },
         })(res);
     }
