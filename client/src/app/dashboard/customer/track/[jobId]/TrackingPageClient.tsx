@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useState, useCallback, useRef } from "react";
 import Link from "next/link";
 import { motion } from "framer-motion";
 import TrackingMap from "@/client/components/tracking/dynamicTrackingMap";
@@ -58,6 +58,7 @@ export default function TrackingPageClient({
   const [precomputedRoute, setPrecomputedRoute] = useState<
     [number, number][] | null
   >(initialPrecomputedRoute);
+  const lastWorkerLocRef = useRef<string | null>(null);
 
   const handleLocationUpdate = useCallback(
     (data: {
@@ -171,10 +172,14 @@ export default function TrackingPageClient({
         if (body?.success && body.data) {
           if (body.data.status) setJobStatus(body.data.status);
           if (body.data.worker_lat != null && body.data.worker_lng != null) {
-            setWorkerLocation({
-              lat: body.data.worker_lat,
-              lng: body.data.worker_lng,
-            });
+            const wKey = `${body.data.worker_lat.toFixed(6)},${body.data.worker_lng.toFixed(6)}`;
+            if (lastWorkerLocRef.current !== wKey) {
+              lastWorkerLocRef.current = wKey;
+              setWorkerLocation({
+                lat: body.data.worker_lat,
+                lng: body.data.worker_lng,
+              });
+            }
           }
           if (body.data.customer_lat != null && body.data.customer_lng != null) {
             setCustomerLocation({

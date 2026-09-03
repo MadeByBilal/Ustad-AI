@@ -67,6 +67,7 @@ export default function LiveTracker({
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(location),
+        credentials: "include",
       });
       if (!response.ok) throw new Error("Location update failed");
     },
@@ -159,8 +160,15 @@ export default function LiveTracker({
           lng: position.coords.longitude,
         });
       },
-      () => setError("Allow location access to broadcast your position"),
-      { enableHighAccuracy: true, timeout: 10_000, maximumAge: 2_000 },
+      (err) => {
+        console.error("[LiveTracker] initial GPS error:", err.code, err.message);
+        if (err.code === err.PERMISSION_DENIED) {
+          setError("Location permission denied");
+        } else {
+          setError("Allow location access to broadcast your position");
+        }
+      },
+      { enableHighAccuracy: true, timeout: 15_000, maximumAge: 0 },
     );
     watchIdRef.current = navigator.geolocation.watchPosition(
       (position) => {
@@ -170,11 +178,12 @@ export default function LiveTracker({
         });
       },
       (positionError) => {
+        console.error("[LiveTracker] watch GPS error:", positionError.code, positionError.message);
         if (positionError.code === positionError.PERMISSION_DENIED) {
           setError("Location permission denied");
         }
       },
-      { enableHighAccuracy: true, timeout: 10_000, maximumAge: 2_000 },
+      { enableHighAccuracy: true, timeout: 15_000, maximumAge: 0 },
     );
   }, [sendThrottled]);
 

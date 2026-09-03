@@ -213,7 +213,7 @@ export default function LiveCustomerLocation({
           setError("Allow location access to share your live position");
         }
       },
-      { enableHighAccuracy: true, timeout: 10_000, maximumAge: 2_000 },
+      { enableHighAccuracy: true, timeout: 15_000, maximumAge: 0 },
     );
 
     return () => {

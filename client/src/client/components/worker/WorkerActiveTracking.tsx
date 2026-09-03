@@ -61,6 +61,9 @@ export default function WorkerActiveTracking({
   >(null);
   const activeJobIdRef = useRef<string | null>(null);
 
+  const lastCustomerLocRef = useRef<string | null>(null);
+  const lastWorkerLocRef = useRef<string | null>(null);
+
   const refresh = useCallback(async () => {
     try {
       const res = await fetch(`/api/workers/${workerId}/dashboard`, {
@@ -72,8 +75,8 @@ export default function WorkerActiveTracking({
       const activeJob = body.data?.active_job;
       if (!activeJob) {
         activeJobIdRef.current = null;
-      setJob(null);
-      window.location.href = "/dashboard/worker";
+        setJob(null);
+        window.location.href = "/dashboard/worker";
         setPrecomputedRoute(null);
         return;
       }
@@ -108,18 +111,6 @@ export default function WorkerActiveTracking({
             }
           : null,
       });
-
-      if (
-        typeof body.data?.worker?.location_lat === "number" &&
-        Number.isFinite(body.data.worker.location_lat) &&
-        typeof body.data?.worker?.location_lng === "number" &&
-        Number.isFinite(body.data.worker.location_lng)
-      ) {
-        setWorkerLocation({
-          lat: body.data.worker.location_lat,
-          lng: body.data.worker.location_lng,
-        });
-      }
 
       // Get destination from tracking API
       const trackRes = await fetch(`/api/jobs/${activeJob._id}/tracking`);
@@ -157,30 +148,31 @@ export default function WorkerActiveTracking({
       }
 
       // Worker's own location — prefer live tracking data, fallback to stored profile location
-       if (trackBody?.data?.worker_lat != null && trackBody?.data?.worker_lng != null) {
-        setWorkerLocation({
-          lat: trackBody.data.worker_lat,
-          lng: trackBody.data.worker_lng,
-        });
-        setDistanceKm(trackBody.data.distance_km);
-        setEtaMinutes(trackBody.data.eta_minutes);
+      const wLat =
+        trackBody?.data?.worker_lat ?? body.data?.worker?.location_lat;
+      const wLng =
+        trackBody?.data?.worker_lng ?? body.data?.worker?.location_lng;
+      if (typeof wLat === "number" && Number.isFinite(wLat) && typeof wLng === "number" && Number.isFinite(wLng)) {
+        const key = `${wLat.toFixed(6)},${wLng.toFixed(6)}`;
+        if (lastWorkerLocRef.current !== key) {
+          lastWorkerLocRef.current = key;
+          setWorkerLocation({ lat: wLat, lng: wLng });
+        }
+        setDistanceKm(trackBody?.data?.distance_km);
+        setEtaMinutes(trackBody?.data?.eta_minutes ?? null);
         setLastUpdate(new Date());
-       } else if (
-        body.data?.worker?.location_lat != null &&
-        body.data?.worker?.location_lng != null
-      ) {
-        setWorkerLocation({
-          lat: body.data.worker.location_lat,
-          lng: body.data.worker.location_lng,
-        });
-         setLastUpdate(new Date());
-       }
-       if (trackBody?.data?.customer_lat != null && trackBody?.data?.customer_lng != null) {
-         setCustomerLocation({
-           lat: trackBody.data.customer_lat,
-           lng: trackBody.data.customer_lng,
-         });
-       }
+      }
+
+      // Customer location — only update if changed to prevent pin flicker
+      const cLat = trackBody?.data?.customer_lat;
+      const cLng = trackBody?.data?.customer_lng;
+      if (typeof cLat === "number" && Number.isFinite(cLat) && typeof cLng === "number" && Number.isFinite(cLng)) {
+        const cKey = `${cLat.toFixed(6)},${cLng.toFixed(6)}`;
+        if (lastCustomerLocRef.current !== cKey) {
+          lastCustomerLocRef.current = cKey;
+          setCustomerLocation({ lat: cLat, lng: cLng });
+        }
+      }
     } catch {
       // ignore
     }
@@ -188,7 +180,7 @@ export default function WorkerActiveTracking({
 
   useEffect(() => {
     void refresh();
-    const poll = setInterval(() => void refresh(), 2_000);
+    const poll = setInterval(() => void refresh(), 5_000);
     return () => clearInterval(poll);
   }, [refresh]);
 
@@ -214,7 +206,11 @@ export default function WorkerActiveTracking({
           etaMinutes: number;
         }) => {
           if (!mounted || (data.jobId && data.jobId !== jobId)) return;
-          setWorkerLocation({ lat: data.lat, lng: data.lng });
+          const key = `${data.lat.toFixed(6)},${data.lng.toFixed(6)}`;
+          if (lastWorkerLocRef.current !== key) {
+            lastWorkerLocRef.current = key;
+            setWorkerLocation({ lat: data.lat, lng: data.lng });
+          }
           setDistanceKm(data.distanceKm);
           setEtaMinutes(data.etaMinutes);
           setLastUpdate(new Date());
@@ -243,7 +239,11 @@ export default function WorkerActiveTracking({
             typeof data.lat === "number" &&
             typeof data.lng === "number"
           ) {
-            setCustomerLocation({ lat: data.lat, lng: data.lng });
+            const cKey = `${data.lat.toFixed(6)},${data.lng.toFixed(6)}`;
+            if (lastCustomerLocRef.current !== cKey) {
+              lastCustomerLocRef.current = cKey;
+              setCustomerLocation({ lat: data.lat, lng: data.lng });
+            }
           }
         };
 
