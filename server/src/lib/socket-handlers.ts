@@ -528,6 +528,9 @@ export function registerSocketHandlers(io: Server): void {
           // Broadcast to room (excluding sender)
           emitTrackingUpdate(io, socket, jobId, identity.workerId, location, job);
 
+          // Resolve target once for deviation check and geofence detection
+          const target = getTrackingTarget(job);
+
           // Route deviation check: recompute route if worker strays from precomputed path
           if (job.status === "EN_ROUTE" || job.status === "ACCEPTED") {
             const existingRoute = job.route?.polyline;
@@ -536,7 +539,9 @@ export function registerSocketHandlers(io: Server): void {
               let minDeviation = Infinity;
               for (const pt of existingRoute) {
                 if (!Array.isArray(pt) || pt.length !== 2) continue;
-                const [ptLat, ptLng] = pt;
+                const ptLat = pt[0] as number;
+                const ptLng = pt[1] as number;
+                if (!Number.isFinite(ptLat) || !Number.isFinite(ptLng)) continue;
                 const devKm = haversineDistanceKm(location.lat, location.lng, ptLat, ptLng);
                 if (devKm < minDeviation) minDeviation = devKm;
               }
@@ -557,7 +562,6 @@ export function registerSocketHandlers(io: Server): void {
           }
 
           // Geofence arrival detection
-          const target = getTrackingTarget(job);
           if (
             target &&
             job.status === "EN_ROUTE" &&

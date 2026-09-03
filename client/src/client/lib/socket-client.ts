@@ -35,8 +35,6 @@ export function getSocket(): Socket {
     autoConnect: false,
     withCredentials: true,
     reconnection: false,
-    pingTimeout: 20_000,
-    pingInterval: 25_000,
   });
 
   return socket;
