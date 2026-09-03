@@ -296,8 +296,8 @@ export default function TrackingMap({
       lastPrecomputedRouteRef.current = null;
     }
 
-    // ── Destination marker — always show at the job destination ──
-    if (hasDest) {
+    // ── Destination marker — only show in worker perspective (customer IS the destination) ──
+    if (hasDest && perspective === "worker") {
       const targetIcon = getDestIcon(leaflet);
       const safeLabel = destination?.label
         ? destination.label.replace(/[<>&"']/g, (ch) =>
