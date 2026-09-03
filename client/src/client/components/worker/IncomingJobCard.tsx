@@ -152,7 +152,11 @@ export default function IncomingJobCard({
         <div className="rounded-lg bg-bg p-2">
           <dt className="text-muted">Distance</dt>
           <dd className="font-semibold text-text">
-            {job.distance_km != null ? `~${job.distance_km} km away` : "Calculating..."}
+            {job.distance_km != null
+              ? job.distance_km < 1
+                ? `~${Math.round(job.distance_km * 1000)} m away`
+                : `~${job.distance_km.toFixed(1)} km away`
+              : "Calculating..."}
           </dd>
         </div>
       </div>

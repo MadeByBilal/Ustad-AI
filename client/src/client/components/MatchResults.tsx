@@ -283,8 +283,11 @@ function WorkerMatchCard({
                 aria-label={`Distance ${worker.distance_km.toFixed(1)} km`}
               >
                 <IconMapPin size={14} stroke={1.6} className="text-muted" aria-hidden="true" />
-                <span className="font-mono text-text">{worker.distance_km.toFixed(1)}</span>
-                <span className="font-mono text-xs text-muted">km</span>
+                <span className="font-mono text-text">
+                  {worker.distance_km < 1
+                    ? `${Math.round(worker.distance_km * 1000)} m`
+                    : `${worker.distance_km.toFixed(1)} km`}
+                </span>
               </li>
             )}
           </ul>

@@ -226,7 +226,9 @@ function WorkerCard({
         <div className="mt-2 flex flex-wrap gap-2 text-xs text-[#93A396]">
           {worker.distance_km != null && (
             <span className="font-mono rounded-lg px-2 py-0.5" style={{ background: "rgba(255,255,255,0.05)" }}>
-              {worker.distance_km.toFixed(1)} km away
+              {worker.distance_km < 1
+                ? `${Math.round(worker.distance_km * 1000)} m away`
+                : `${worker.distance_km.toFixed(1)} km away`}
             </span>
           )}
           {worker.predicted_price != null && (

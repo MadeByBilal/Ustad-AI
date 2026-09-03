@@ -221,7 +221,11 @@ export default function WorkerResults({
               <span className="text-sm font-semibold">{worker.name}</span>
               <span className="font-mono text-sm text-muted"><Star className="h-3.5 w-3.5 text-warning inline" /> {worker.average_rating}</span>
               {responder.distance_km !== null && (
-                <span className="font-mono text-sm text-muted">{responder.distance_km.toFixed(1)} km</span>
+                <span className="font-mono text-sm text-muted">
+                  {responder.distance_km < 1
+                    ? `${Math.round(responder.distance_km * 1000)} m`
+                    : `${responder.distance_km.toFixed(1)} km`}
+                </span>
               )}
             </div>
             <p className="mt-1 text-xs text-muted">{worker.skills.join(", ")}</p>

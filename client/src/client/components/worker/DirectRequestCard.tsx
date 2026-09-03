@@ -116,7 +116,11 @@ export default function DirectRequestCard({
         <div className="rounded-lg bg-bg p-2">
           <dt className="text-muted">Distance</dt>
           <dd className="font-semibold text-text">
-            {req.distance_km != null ? `~${req.distance_km} km away` : "Calculating..."}
+            {req.distance_km != null
+              ? req.distance_km < 1
+                ? `~${Math.round(req.distance_km * 1000)} m away`
+                : `~${req.distance_km.toFixed(1)} km away`
+              : "Calculating..."}
           </dd>
         </div>
       </div>
