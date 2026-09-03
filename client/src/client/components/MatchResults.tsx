@@ -244,11 +244,6 @@ function WorkerMatchCard({
             : "border-white/[0.06] hover:border-white/[0.12]",
       )}
     >
-      {/* Best card gold top strip */}
-      {isBest && (
-        <div className="absolute top-0 left-0 right-0 h-[2px] bg-gradient-to-r from-transparent via-warning/50 to-transparent" />
-      )}
-
       <div className={cn("flex items-start gap-4", isBest && "gap-5")}>
         <Avatar name={worker.name} isBest={isBest} />
         <div className="min-w-0 flex-1">
@@ -256,7 +251,7 @@ function WorkerMatchCard({
           <div className="flex items-center gap-2.5">
             <h4 className={cn(
               "font-display font-semibold leading-tight text-text truncate",
-              isBest ? "text-lg" : "text-base",
+              isBest ? "text-xl" : "text-lg",
             )}>
               {worker.name}
             </h4>
@@ -269,15 +264,15 @@ function WorkerMatchCard({
           </div>
 
           {/* Category */}
-          <p className={cn("text-muted", isBest ? "mt-1 text-sm" : "mt-0.5 text-xs")}>
+          <p className={cn("text-muted", isBest ? "mt-1 text-base" : "mt-0.5 text-sm")}>
             {categoryLabel}
           </p>
 
           {/* Stats row */}
-          <div className={cn("flex items-center gap-3 text-xs", isBest ? "mt-3" : "mt-2.5")}>
+          <div className={cn("flex items-center gap-3 text-sm", isBest ? "mt-3" : "mt-2.5")}>
             {/* Distance — always exact */}
             <span className="flex items-center gap-1 text-text">
-              <IconMapPin size={13} stroke={1.8} className="text-muted" />
+              <IconMapPin size={15} stroke={1.8} className="text-muted" />
               {worker.distance_km != null
                 ? worker.distance_km < 1
                   ? `${Math.round(worker.distance_km * 1000)} m`
@@ -289,7 +284,7 @@ function WorkerMatchCard({
 
             {/* Completed jobs */}
             <span className="flex items-center gap-1 text-text">
-              <IconBriefcase size={13} stroke={1.8} className="text-muted" />
+              <IconBriefcase size={15} stroke={1.8} className="text-muted" />
               {worker.completed_jobs} jobs
             </span>
 
@@ -297,7 +292,7 @@ function WorkerMatchCard({
 
             {/* Rating */}
             <span className="flex items-center gap-1" aria-label={`Rating ${worker.average_rating.toFixed(1)} out of 5`}>
-              <IconStarFilled size={12} stroke={0} className="text-warning" />
+              <IconStarFilled size={14} stroke={0} className="text-warning" />
               <span className="text-text">{worker.average_rating.toFixed(1)}</span>
             </span>
           </div>
@@ -313,11 +308,11 @@ function Avatar({ name, isBest }: { name: string; isBest?: boolean }) {
       aria-hidden="true"
       className={`relative flex shrink-0 items-center justify-center rounded-full border ${
         isBest
-          ? "h-14 w-14 border-warning/30 bg-warning/10"
-          : "h-11 w-11 border-white/[0.06] bg-white/[0.04]"
+          ? "h-20 w-20 border-warning/30 bg-warning/10"
+          : "h-16 w-16 border-white/[0.06] bg-white/[0.04]"
       }`}
     >
-      <span className={`font-display font-semibold ${isBest ? "text-lg text-warning" : "text-sm text-text"}`}>
+      <span className={`font-display font-semibold ${isBest ? "text-2xl text-warning" : "text-lg text-text"}`}>
         {initials(name)}
       </span>
     </div>

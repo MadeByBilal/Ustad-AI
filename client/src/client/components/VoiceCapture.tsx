@@ -195,16 +195,21 @@ function WorkerCard({
           Best match
         </span>
       )}
-      <div className="flex items-center justify-between gap-3">
+      <div className="flex items-center gap-4">
+        <div className="relative flex h-16 w-16 shrink-0 items-center justify-center rounded-full border border-white/[0.06] bg-white/[0.04]">
+          <span className="font-display font-semibold text-lg text-[#F1F4F1]">
+            {worker.name.split(" ").map((n) => n[0]).join("").slice(0, 2).toUpperCase()}
+          </span>
+        </div>
         <div>
-          <p className="font-semibold text-[#F1F4F1]">{worker.name}</p>
-          <p className="text-xs text-[#93A396]">
+          <p className="font-semibold text-lg text-[#F1F4F1]">{worker.name}</p>
+          <p className="text-sm text-[#93A396]">
             {CATEGORY_LABELS[worker.category] ?? worker.category} · <Star className="h-3.5 w-3.5 inline" style={{ color: "#D4A24C" }} />{" "}
             <span className="font-mono">{worker.average_rating.toFixed(1)}</span> · {worker.completed_jobs} jobs ·{" "}
             {worker.verified ? "verified" : "unverified"}
           </p>
         </div>
-        <span className="shrink-0 rounded-lg px-2 py-1 text-xs font-bold" style={{ background: "#26A650", color: "#08240F" }}>
+        <span className="shrink-0 rounded-lg px-3 py-1.5 text-sm font-bold" style={{ background: "#26A650", color: "#08240F" }}>
           {worker.ustad_score}
         </span>
       </div>
@@ -222,7 +227,7 @@ function WorkerCard({
         </div>
       )}
       {(worker.distance_km != null || worker.predicted_price != null) && (
-        <div className="mt-2 flex flex-wrap gap-2 text-xs text-[#93A396]">
+        <div className="mt-2 flex flex-wrap gap-2 text-sm text-[#93A396]">
           {worker.distance_km != null && (
             <span className="font-mono rounded-lg px-2 py-0.5" style={{ background: "rgba(255,255,255,0.05)" }}>
               {worker.distance_km < 1
@@ -296,7 +301,7 @@ function ResultPanel({ data, location }: { data: UnderstandResponse; location?: 
             {u.required_skills.map((s) => (
               <span
                 key={s}
-                className="rounded-lg px-2 py-0.5 text-xs text-[#93A396]"
+              className="rounded-lg px-2 py-0.5 text-sm text-[#93A396]"
                 style={{ background: "rgba(255,255,255,0.05)" }}
               >
                 {s}
