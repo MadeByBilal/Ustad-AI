@@ -388,7 +388,7 @@ export default function WorkerActiveTracking({
   const nextAction = NEXT_ACTIONS[job.status];
 
   return (
-    <div className="relative flex min-h-0 flex-1 flex-col overflow-hidden bg-bg">
+    <div className="flex min-h-0 flex-1 flex-col bg-bg">
       {/* Header */}
       <div className="absolute left-0 right-0 top-0 z-30 flex items-center gap-3 bg-surface/95 px-4 py-3 backdrop-blur-lg">
         <Link
@@ -460,7 +460,7 @@ export default function WorkerActiveTracking({
       </div>
 
       {/* Bottom Panel */}
-      <div className="flex min-h-0 flex-1 flex-col bg-surface px-5 pt-4 pb-6">
+      <div className="flex min-h-0 flex-1 flex-col overflow-y-auto bg-surface px-5 pt-4 pb-32">
         <div className="flex items-center justify-between">
           <div>
             <p className={`text-lg font-bold ${statusInfo.color}`}>

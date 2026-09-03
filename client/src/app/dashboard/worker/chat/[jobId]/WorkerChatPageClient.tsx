@@ -1,7 +1,6 @@
 "use client";
 
 import { useState } from "react";
-import { useRouter } from "next/navigation";
 import WorkerChat from "@/client/components/worker/WorkerChat";
 import JobPhotoUpload from "@/client/components/worker/JobPhotoUpload";
 import { motion } from "framer-motion";
@@ -28,7 +27,6 @@ export default function WorkerChatPageClient({
     note?: string | null;
   } | null;
 }) {
-  const router = useRouter();
   const [jobStatus, setJobStatus] = useState(initialStatus);
   const [completion, setCompletion] = useState(initialCompletion);
   const [advancing, setAdvancing] = useState(false);
@@ -63,7 +61,6 @@ export default function WorkerChatPageClient({
   }
 
   function handlePhotoChanged() {
-    // Re-fetch job to get updated completion data
     fetch(`/api/jobs/${jobId}/tracking`)
       .then((r) => r.json())
       .then((body) => {
@@ -82,18 +79,14 @@ export default function WorkerChatPageClient({
     <div className="flex h-screen flex-col">
       {/* Header */}
       <div className="flex items-center gap-3 border-b border-divider bg-surface px-4 py-3">
-        <motion.button
-          type="button"
-          onClick={() => router.back()}
-          whileTap={{ scale: 0.95 }}
-          whileHover={{ y: -1 }}
-          transition={{ duration: 0.15, ease: "easeOut" }}
+        <a
+          href="/dashboard/worker/active"
           className="flex h-8 w-8 items-center justify-center rounded-full hover:bg-bg"
         >
           <svg className="h-5 w-5 text-muted" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
             <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 19.5L8.25 12l7.5-7.5" />
           </svg>
-        </motion.button>
+        </a>
         <div className="min-w-0 flex-1">
           <p className="text-sm font-bold text-text">Customer</p>
           <p className="truncate text-xs text-muted">{originalText}</p>
@@ -101,6 +94,12 @@ export default function WorkerChatPageClient({
         <span className="badge bg-accent text-bg">
           {jobStatus.replace(/_/g, " ")}
         </span>
+        <a
+          href="/dashboard/worker/active"
+          className="rounded-full border border-accent px-3 py-1.5 text-xs font-semibold text-accent transition-colors hover:bg-accent/10"
+        >
+          Tracking
+        </a>
       </div>
 
       {/* Photo uploads + Complete button */}

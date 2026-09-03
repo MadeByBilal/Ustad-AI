@@ -18,6 +18,15 @@ interface ChatMessage {
 
 const POLL_MS = 10000;
 
+const QUICK_MESSAGES = [
+  "On my way",
+  "Almost there",
+  "Running 5 min late",
+  "Where exactly is the problem?",
+  "Can you share a photo?",
+  "Done, please confirm",
+];
+
 /**
  * Simple job chat between the worker and the customer. Supports text,
  * photos and a shared live location. Lifecycle events arrive as system
@@ -195,7 +204,25 @@ export default function WorkerChat({ jobId }: { jobId: string }) {
 
       {error && <p className="mb-1 text-xs text-warning">{error}</p>}
 
-      <div className="mt-2 flex items-center gap-2 border-t border-divider pt-2">
+      {/* Quick Messages */}
+      <div className="mb-2 flex flex-wrap gap-1.5">
+        {QUICK_MESSAGES.map((msg) => (
+          <motion.button
+            key={msg}
+            type="button"
+            onClick={() => {
+              if (!busy) void send({ content: msg });
+            }}
+            disabled={busy}
+            className="rounded-full border border-divider bg-surface px-3 py-1 text-xs font-medium text-muted transition-colors hover:border-accent/30 hover:text-text disabled:opacity-60"
+            whileTap={{ scale: 0.95 }}
+          >
+            {msg}
+          </motion.button>
+        ))}
+      </div>
+
+      <div className="flex items-center gap-2 border-t border-divider pt-2">
         <motion.button
           type="button"
           onClick={() => fileRef.current?.click()}

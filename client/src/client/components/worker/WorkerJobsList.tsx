@@ -42,6 +42,22 @@ export default function WorkerJobsList({ workerId }: { workerId: string }) {
     };
   }, [refresh]);
 
+  // Auto-detect location on mount so distance can be calculated
+  useEffect(() => {
+    if (typeof navigator === "undefined" || !navigator.geolocation) return;
+    navigator.geolocation.getCurrentPosition(
+      (pos) => {
+        fetch("/api/workers/me/location", {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ lat: pos.coords.latitude, lng: pos.coords.longitude }),
+        }).then(() => void refresh());
+      },
+      () => {},
+      { timeout: 8000, maximumAge: 300000 },
+    );
+  }, [refresh]);
+
   const incomingJobs = data?.incoming_jobs ?? [];
   const directRequests = data?.direct_requests ?? [];
   const hasAny = incomingJobs.length > 0 || directRequests.length > 0;

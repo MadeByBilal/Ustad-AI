@@ -3,11 +3,21 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useLang } from "@/client/lib/i18n/context";
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import {
+  faHouse,
+  faMapPin,
+  faUser,
+  faChartColumn,
+  faBriefcase,
+  faScrewdriverWrench,
+} from "@fortawesome/free-solid-svg-icons";
+import { faUser as faUserRegular } from "@fortawesome/free-regular-svg-icons";
 
 interface NavItem {
   href: string;
   label: string;
-  icon: string;
+  icon: typeof faHouse;
 }
 
 export default function BottomNav({ role }: { role: "customer" | "worker" }) {
@@ -15,17 +25,17 @@ export default function BottomNav({ role }: { role: "customer" | "worker" }) {
   const { t, lang } = useLang();
 
   const customerNav: NavItem[] = [
-    { href: "/dashboard/customer", label: t("home"), icon: "fi fi-rr-home" },
-    { href: "/dashboard/customer/active", label: t("tracking"), icon: "fi fi-tr-map-location-track" },
-    { href: "/dashboard/customer/profile", label: t("profile"), icon: "fi fi-rr-user" },
+    { href: "/dashboard/customer", label: t("home"), icon: faHouse },
+    { href: "/dashboard/customer/active", label: t("tracking"), icon: faMapPin },
+    { href: "/dashboard/customer/profile", label: t("profile"), icon: faUserRegular },
   ];
 
   const workerNav: NavItem[] = [
-    { href: "/dashboard/worker", label: t("home"), icon: "fi fi-rr-home" },
-    { href: "/dashboard/worker/active", label: t("tracking"), icon: "fi fi-tr-map-location-track" },
-    { href: "/dashboard/worker/stats", label: t("stats"), icon: "fi fi-rr-chart-histogram" },
-    { href: "/dashboard/worker/jobs", label: t("jobs"), icon: "fi fi-rr-briefcase" },
-    { href: "/dashboard/worker/profile", label: t("profile"), icon: "fi fi-rr-user" },
+    { href: "/dashboard/worker", label: t("home"), icon: faHouse },
+    { href: "/dashboard/worker/active", label: t("tracking"), icon: faMapPin },
+    { href: "/dashboard/worker/stats", label: t("stats"), icon: faChartColumn },
+    { href: "/dashboard/worker/jobs", label: t("jobs"), icon: faScrewdriverWrench },
+    { href: "/dashboard/worker/profile", label: t("profile"), icon: faUserRegular },
   ];
 
   const items = role === "customer" ? customerNav : workerNav;
@@ -44,7 +54,7 @@ export default function BottomNav({ role }: { role: "customer" | "worker" }) {
               href={item.href}
               className={`bottom-nav-item ${isActive ? "active" : ""}`}
             >
-              <i className={`${item.icon} text-lg`} />
+              <FontAwesomeIcon icon={item.icon} className="h-5 w-5" />
               <span className={`text-[10px] ${lang === "ur" ? "font-urdu" : ""}`}>{item.label}</span>
             </Link>
           );

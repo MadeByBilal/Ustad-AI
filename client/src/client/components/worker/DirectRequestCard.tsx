@@ -98,8 +98,6 @@ export default function DirectRequestCard({
         </div>
       </div>
 
-      <p className="mt-1 line-clamp-2 text-sm text-muted">{req.description}</p>
-
       {req.required_skills.length > 0 && (
         <div className="mt-2 flex flex-wrap gap-1.5">
           {req.required_skills.map((skill) => (
@@ -116,8 +114,10 @@ export default function DirectRequestCard({
           <dd className="font-semibold text-text">{currency(req.customer_offer)}</dd>
         </div>
         <div className="rounded-lg bg-bg p-2">
-          <dt className="text-muted">Location</dt>
-          <dd className="truncate font-semibold text-text">{req.address_label || "Not shared"}</dd>
+          <dt className="text-muted">Distance</dt>
+          <dd className="font-semibold text-text">
+            {req.distance_km != null ? `~${req.distance_km} km away` : "Calculating..."}
+          </dd>
         </div>
       </div>
 

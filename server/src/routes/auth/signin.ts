@@ -53,10 +53,11 @@ router.post("/signin", async (req, res) => {
       expires_at: new Date(Date.now() + SESSION_TTL_DAYS * 24 * 60 * 60 * 1000),
     });
 
+    const isProduction = process.env.NODE_ENV === "production";
     res.cookie(SESSION_COOKIE_NAME, token, {
       httpOnly: true,
-      sameSite: "none",
-      secure: true,
+      sameSite: isProduction ? "none" : "lax",
+      secure: isProduction,
       path: "/",
       maxAge: SESSION_TTL_DAYS * 24 * 60 * 60 * 1000,
     });

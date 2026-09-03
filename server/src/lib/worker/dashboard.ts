@@ -94,6 +94,7 @@ export interface DirectRequestView {
   my_counter_price: number | null;
   offer_status: string;
   address_label: string;
+  distance_km: number | null;
   created_at: string;
 }
 
@@ -240,6 +241,21 @@ export async function getWorkerDashboard(
   for (const [jid, offer] of latestOfferByJob) {
     const job = directJobMap.get(jid);
     if (!job || job.status !== "BROADCASTING") continue;
+    const [jobLng, jobLat] =
+      job.location?.coordinates && job.location.coordinates.length === 2
+        ? job.location.coordinates
+        : [null, null];
+    const distance_km =
+      workerLat != null &&
+      workerLng != null &&
+      jobLat != null &&
+      jobLng != null
+        ? Number(
+            haversineDistanceKm(workerLat, workerLng, jobLat, jobLng).toFixed(
+              1,
+            ),
+          )
+        : null;
     direct_requests.push({
       offer_id: String(offer._id),
       job_id: jid,
@@ -253,6 +269,7 @@ export async function getWorkerDashboard(
         offer.type === "counter_offer" ? (offer.counter_price ?? null) : null,
       offer_status: offer.status,
       address_label: job.location?.address_label ?? "",
+      distance_km,
       created_at: new Date(offer.created_at).toISOString(),
     });
   }

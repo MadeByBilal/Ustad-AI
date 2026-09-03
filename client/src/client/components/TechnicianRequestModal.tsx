@@ -170,27 +170,7 @@ export default function TechnicianRequestModal({
                 disabled={busy}
               />
             </div>
-            {estMin > 0 && estMax > 0 && (
-              <p className="mt-1 text-xs text-muted">
-                AI estimate: {currency(estMin)} – {currency(estMax)}
-              </p>
-            )}
-            {worker.predicted_price != null && (
-              <p className="mt-1 text-xs font-semibold text-warning">
-                Predicted base for this ustad: {currency(worker.predicted_price)}
-                {worker.distance_km != null
-                  ? ` (${worker.distance_km.toFixed(1)} km travel included)`
-                  : ""}
-                {worker.travel_cost_pkr != null && worker.travel_cost_pkr > 0
-                  ? ` · petrol PKR ${worker.travel_cost_pkr.toLocaleString("en-PK")}`
-                  : ""}
-              </p>
-            )}
-            {understanding.inspection_fee && understanding.inspection_fee > 0 && (
-              <p className="mt-1 text-xs text-warning">
-                Visit &amp; check fee: {currency(understanding.inspection_fee)} paid first
-              </p>
-            )}
+            <p className="mt-1 text-xs text-muted">AI predicted price</p>
           </div>
 
           <div>

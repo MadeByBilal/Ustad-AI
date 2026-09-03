@@ -116,8 +116,6 @@ export default function IncomingJobCard({
         </span>
       </div>
 
-      <p className="mt-2 line-clamp-2 text-sm text-muted">{job.description}</p>
-
       {job.required_skills.length > 0 && (
         <div className="mt-2 flex flex-wrap gap-1.5">
           {job.required_skills.map((skill) => (
@@ -154,13 +152,7 @@ export default function IncomingJobCard({
         <div className="rounded-lg bg-bg p-2">
           <dt className="text-muted">Distance</dt>
           <dd className="font-semibold text-text">
-            {job.distance_km != null ? `~${job.distance_km} km` : "Unknown"}
-          </dd>
-        </div>
-        <div className="rounded-lg bg-bg p-2 sm:col-span-2">
-          <dt className="text-muted">Location</dt>
-          <dd className="truncate font-semibold text-text">
-            {job.address_label || "Area not shared"}
+            {job.distance_km != null ? `~${job.distance_km} km away` : "Calculating..."}
           </dd>
         </div>
       </div>

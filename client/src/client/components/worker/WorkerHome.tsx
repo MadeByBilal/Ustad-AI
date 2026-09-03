@@ -42,6 +42,22 @@ export default function WorkerHome({ workerId }: { workerId: string }) {
     return () => clearInterval(poll);
   }, [refresh]);
 
+  // Auto-detect location on mount
+  useEffect(() => {
+    if (typeof navigator === "undefined" || !navigator.geolocation) return;
+    navigator.geolocation.getCurrentPosition(
+      (pos) => {
+        fetch("/api/workers/me/location", {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ lat: pos.coords.latitude, lng: pos.coords.longitude }),
+        }).then(() => void refresh());
+      },
+      () => {},
+      { timeout: 8000, maximumAge: 300000 },
+    );
+  }, [refresh]);
+
   if (!data) {
     return (
       <div className="flex items-center justify-center py-16">
@@ -122,11 +138,7 @@ export default function WorkerHome({ workerId }: { workerId: string }) {
           <div className="min-w-0 flex-1">
             <p className="text-sm font-bold text-warning">{t("newJobsAvailable")}</p>
             <p className="mt-0.5 text-xs text-warning/80">
-              {incomingCount > 0 &&
-                t("nearby").replace("{count}", String(incomingCount))}
-              {incomingCount > 0 && directCount > 0 && " · "}
-              {directCount > 0 &&
-                t("directRequests").replace("{count}", String(directCount))}
+              {t("newJobsAvailable")}
             </p>
           </div>
           <ChevronRight className="h-5 w-5 shrink-0 text-warning" />

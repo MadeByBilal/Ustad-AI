@@ -337,7 +337,7 @@ export default function TrackingMap({
         customerMarkerRef.current = leaflet
           .marker([userLocation!.lat, userLocation!.lng], { icon: customerIcon })
           .addTo(map)
-          .bindTooltip("Customer", {
+          .bindTooltip(perspective === "customer" ? "You" : "Customer", {
             permanent: true,
             direction: "top",
             offset: [0, -30],
