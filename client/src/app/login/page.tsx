@@ -297,7 +297,7 @@ function AuthForm() {
 
 export default function LoginPage() {
   return (
-    <main className="dark-glass-theme flex min-h-screen items-center justify-center overflow-y-auto px-4 py-10" style={{ background: "#0B0F0C" }}>
+    <main className="dark-glass-theme flex min-h-screen items-start justify-center overflow-y-auto px-4 py-10 sm:items-center" style={{ background: "#0B0F0C" }}>
       <Suspense fallback={<div className="text-sm text-[#93A396]">Loading...</div>}>
         <AuthForm />
       </Suspense>

@@ -1,17 +1,12 @@
 "use client";
 
-import { useState } from "react";
 import Link from "next/link";
-import VoiceCapture from "@/client/components/VoiceCapture";
 import LanguageToggle from "@/client/components/LanguageToggle";
 import { useLang } from "@/client/lib/i18n/context";
-import { Droplets, Zap, Wrench, Hammer } from "lucide-react";
+import { Droplets, Zap, Wrench, Hammer, Mic } from "lucide-react";
 
 export default function HomePage() {
   const { t, lang } = useLang();
-  const [voiceStatus, setVoiceStatus] = useState<"idle" | "recording" | "processing" | "clarifying" | "done" | "error">("idle");
-
-  const isActive = voiceStatus === "recording" || voiceStatus === "processing";
 
   return (
     <main className="relative flex h-screen flex-col overflow-hidden bg-bg text-text">
@@ -20,9 +15,7 @@ export default function HomePage() {
 
       <nav className="relative z-10 flex w-full items-center justify-between border-b border-divider bg-[rgb(var(--bg))]/95 px-4 py-4 backdrop-blur-xl md:px-8">
         <div className="flex items-center gap-3">
-          <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-accent text-sm font-bold text-[rgb(var(--surface))]">
-            ا
-          </span>
+          <img src="/logo.png" alt="Ustad AI" className="h-9 w-9 rounded-xl object-contain" />
           <span className={`text-lg font-bold tracking-tight text-text ${lang === "ur" ? "font-urdu" : ""}`}>
             Ustad <span className="text-accent">AI</span>
           </span>
@@ -37,20 +30,36 @@ export default function HomePage() {
 
       <section className="relative z-10 mx-auto flex w-full max-w-6xl flex-1 flex-col items-center justify-center gap-6 overflow-y-auto px-4 pb-8 pt-4 sm:gap-10 sm:pb-12 sm:pt-8 md:flex-row md:gap-16 md:px-8 md:pb-0 md:pt-12">
         <div className="max-w-lg text-center md:text-left">
-          <div className={`transition-all duration-500 ${isActive ? "opacity-0 -translate-y-8 pointer-events-none" : "opacity-100 translate-y-0"}`}>
-            <h1 className="text-4xl font-bold tracking-tight text-text md:text-6xl">
-              {t("heroTitle")}
-            </h1>
-            <p className="mt-4 text-base text-muted md:text-lg">
-              {t("heroDesc")}
-            </p>
-          </div>
+          <h1 className="text-4xl font-bold tracking-tight text-text md:text-6xl">
+            {t("heroTitle")}
+          </h1>
+          <p className="mt-4 text-base text-muted md:text-lg">
+            {t("heroDesc")}
+          </p>
+
+          {/* Decorative mic button — visual only, no functionality */}
           <div className="mt-8 flex justify-center md:justify-start">
-            <VoiceCapture onStatusChange={setVoiceStatus} />
+            <div className="flex flex-col items-center">
+              <div className="relative flex items-center justify-center">
+                <span className="absolute -inset-3 rounded-full bg-accent/20 blur-md animate-pulse" />
+                <div
+                  className="relative flex h-28 w-28 items-center justify-center rounded-full text-[#08240F]"
+                  style={{
+                    background: "#26A650",
+                    boxShadow: "0 8px 32px rgba(38,166,80,0.3)",
+                  }}
+                >
+                  <Mic className="relative z-10 h-10 w-10" />
+                </div>
+              </div>
+              <p className="mt-4 text-sm font-medium text-muted">
+                {lang === "ur" ? "بولنے کے لیے دبائیں" : "Hold to speak"}
+              </p>
+            </div>
           </div>
         </div>
 
-        <div className={`transition-all duration-500 w-full max-w-sm glass-card p-4 md:max-w-md ${isActive ? "opacity-0 translate-x-12 pointer-events-none" : "opacity-100 translate-x-0"}`}>
+        <div className="w-full max-w-sm glass-card p-4 md:max-w-md">
           <div className="grid gap-3">
             {[
               { icon: Droplets, label: t("plumber") },
