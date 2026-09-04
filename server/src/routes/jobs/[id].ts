@@ -888,6 +888,15 @@ router.get("/:id/tracking", requireRole(["customer", "worker"]), async (req: Req
       etaMinutes = estimateETAMinutes(distanceKm);
     }
 
+    // Fetch any pending inspection offer for this job
+    const pendingInspectionOffer = await Offer.findOne({
+      job_id: jobId,
+      type: "inspection_offer",
+      status: "pending",
+    })
+      .sort({ created_at: -1 })
+      .lean();
+
     return ok({
       status: job.status,
       worker_name: worker?.name ?? "Ustad",
@@ -908,6 +917,9 @@ router.get("/:id/tracking", requireRole(["customer", "worker"]), async (req: Req
       precomputed_route: job.route?.polyline ?? null,
       route_distance_meters: job.route?.distance_meters ?? null,
       route_duration_seconds: job.route?.duration_seconds ?? null,
+      pending_inspection_offer: pendingInspectionOffer
+        ? { offer_id: String(pendingInspectionOffer._id), price: pendingInspectionOffer.offered_price }
+        : null,
     })(res);
   } catch (error) {
     console.error("[jobs/:id/tracking] error:", error);

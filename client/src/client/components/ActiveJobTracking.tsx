@@ -161,6 +161,12 @@ export default function ActiveJobTracking() {
             lng: jobBody.data.customer_lng,
           });
         }
+
+        // Pick up pending inspection offer from tracking API
+        const pio = jobBody?.data?.pending_inspection_offer;
+        if (pio && pio.offer_id && typeof pio.price === "number") {
+          setInspectionOffer((current) => current ?? { offerId: pio.offer_id, price: pio.price });
+        }
       } else {
         activeJobIdRef.current = null;
         setPrecomputedRoute(null);
