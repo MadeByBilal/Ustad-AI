@@ -14,14 +14,28 @@ import MicVisualizer from "./MicVisualizer";
 
 export interface UnderstandResponse extends AiUnderstandResult {
   transcript?: string;
-  workers: { best: WorkerOption | null; others: WorkerOption[]; ranked?: WorkerOption[] };
+  workers: {
+    best: WorkerOption | null;
+    others: WorkerOption[];
+    ranked?: WorkerOption[];
+  };
 }
 
-type Status = "idle" | "recording" | "processing" | "clarifying" | "done" | "error";
+type Status =
+  | "idle"
+  | "recording"
+  | "processing"
+  | "clarifying"
+  | "done"
+  | "error";
 
 type Coordinates = { lat: number; lng: number };
 type RunBody = FormData | { clarification?: string; text?: string };
-type LocationFailureReason = "unsupported" | "denied" | "unavailable" | "timeout";
+type LocationFailureReason =
+  | "unsupported"
+  | "denied"
+  | "unavailable"
+  | "timeout";
 
 type RecordingSession = {
   recorder: MediaRecorder;
@@ -52,7 +66,8 @@ const MOCK_RESPONSE: UnderstandResponse = {
   understanding: {
     category: "electrician",
     subcategory: "electrical_fault",
-    description: "Ghar mein bijli ki switches kaam nahi kar rahi — spark ho rahi hai jab on karte hain",
+    description:
+      "Ghar mein bijli ki switches kaam nahi kar rahi — spark ho rahi hai jab on karte hain",
     required_skills: ["electrical_fault", "switch_repair", "wiring"],
     urgency: "emergency",
     safety_flags: ["Electrical hazard — do not touch exposed wires"],
@@ -63,7 +78,8 @@ const MOCK_RESPONSE: UnderstandResponse = {
     inspection_fee: 350,
     complexity: "medium",
   },
-  transcript: "Mere ghar mein bijli ki switches kaam nahi kar rahi, jab on karte hain toh spark ho rahi hai",
+  transcript:
+    "Mere ghar mein bijli ki switches kaam nahi kar rahi, jab on karte hain toh spark ho rahi hai",
   workers: {
     best: {
       id: "mock-w1",
@@ -180,36 +196,47 @@ function WorkerCard({
         mass: 0.8,
         delay: index * 0.1,
       }}
-      className={
-        highlight
-          ? "glass-card p-4"
-          : "glass-card p-4"
-      }
+      className={highlight ? "glass-card p-4" : "glass-card p-4"}
       style={{
         border: highlight ? "1px solid rgba(38,166,80,0.5)" : undefined,
         boxShadow: highlight ? "0 8px 24px rgba(38,166,80,0.1)" : undefined,
       }}
     >
       {highlight && (
-        <span className="badge mb-2" style={{ background: "#26A650", color: "#08240F" }}>
+        <span
+          className="badge mb-2"
+          style={{ background: "#26A650", color: "#08240F" }}
+        >
           Best match
         </span>
       )}
       <div className="flex items-center gap-4">
         <div className="relative flex h-16 w-16 shrink-0 items-center justify-center rounded-full border border-white/[0.06] bg-white/[0.04]">
           <span className="font-display font-semibold text-lg text-[#F1F4F1]">
-            {worker.name.split(" ").map((n) => n[0]).join("").slice(0, 2).toUpperCase()}
+            {worker.name
+              .split(" ")
+              .map((n) => n[0])
+              .join("")
+              .slice(0, 2)
+              .toUpperCase()}
           </span>
         </div>
         <div>
           <p className="font-semibold text-lg text-[#F1F4F1]">{worker.name}</p>
           <p className="text-sm text-[#93A396]">
-            {CATEGORY_LABELS[worker.category] ?? worker.category} · <Star className="h-3.5 w-3.5 inline" style={{ color: "#D4A24C" }} />{" "}
-            <span className="font-mono">{worker.average_rating.toFixed(1)}</span> · {worker.completed_jobs} jobs ·{" "}
+            {CATEGORY_LABELS[worker.category] ?? worker.category} ·{" "}
+            <Star className="h-3.5 w-3.5 inline" style={{ color: "#D4A24C" }} />{" "}
+            <span className="font-mono">
+              {worker.average_rating.toFixed(1)}
+            </span>{" "}
+            · {worker.completed_jobs} jobs ·{" "}
             {worker.verified ? "verified" : "unverified"}
           </p>
         </div>
-        <span className="shrink-0 rounded-lg px-3 py-1.5 text-sm font-bold" style={{ background: "#26A650", color: "#08240F" }}>
+        <span
+          className="shrink-0 rounded-lg px-3 py-1.5 text-sm font-bold"
+          style={{ background: "#26A650", color: "#08240F" }}
+        >
           {worker.ustad_score}
         </span>
       </div>
@@ -219,7 +246,10 @@ function WorkerCard({
             <span
               key={s}
               className="rounded-lg px-2 py-0.5 text-xs text-[#93A396]"
-              style={{ background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.12)" }}
+              style={{
+                background: "rgba(255,255,255,0.05)",
+                border: "1px solid rgba(255,255,255,0.12)",
+              }}
             >
               {s}
             </span>
@@ -229,19 +259,28 @@ function WorkerCard({
       {(worker.distance_km != null || worker.predicted_price != null) && (
         <div className="mt-2 flex flex-wrap gap-2 text-sm text-[#93A396]">
           {worker.distance_km != null && (
-            <span className="font-mono rounded-lg px-2 py-0.5" style={{ background: "rgba(255,255,255,0.05)" }}>
+            <span
+              className="font-mono rounded-lg px-2 py-0.5"
+              style={{ background: "rgba(255,255,255,0.05)" }}
+            >
               {worker.distance_km < 1
                 ? `${Math.round(worker.distance_km * 1000)} m away`
                 : `${worker.distance_km.toFixed(1)} km away`}
             </span>
           )}
           {worker.predicted_price != null && (
-            <span className="font-mono rounded-lg px-2 py-0.5" style={{ background: "rgba(212,162,74,0.16)", color: "#D4A24C" }}>
+            <span
+              className="font-mono rounded-lg px-2 py-0.5"
+              style={{ background: "rgba(212,162,74,0.16)", color: "#D4A24C" }}
+            >
               Est. PKR {worker.predicted_price.toLocaleString("en-PK")}
             </span>
           )}
           {worker.travel_cost_pkr != null && worker.travel_cost_pkr > 0 && (
-            <span className="font-mono rounded-lg px-2 py-0.5" style={{ background: "rgba(255,255,255,0.05)" }}>
+            <span
+              className="font-mono rounded-lg px-2 py-0.5"
+              style={{ background: "rgba(255,255,255,0.05)" }}
+            >
               Travel PKR {worker.travel_cost_pkr.toLocaleString("en-PK")}
             </span>
           )}
@@ -251,7 +290,13 @@ function WorkerCard({
   );
 }
 
-function ResultPanel({ data, location }: { data: UnderstandResponse; location?: Coordinates | null }) {
+function ResultPanel({
+  data,
+  location,
+}: {
+  data: UnderstandResponse;
+  location?: Coordinates | null;
+}) {
   const u = data.understanding;
   const ranked = data.workers.ranked ?? [
     ...(data.workers.best ? [data.workers.best] : []),
@@ -267,7 +312,9 @@ function ResultPanel({ data, location }: { data: UnderstandResponse; location?: 
   const ctaHref = `/login?next=${encodeURIComponent(`/new-work?${nextParams.toString()}`)}`;
 
   // Landing-only modal state.
-  const [selectedWorker, setSelectedWorker] = useState<WorkerOption | null>(null);
+  const [selectedWorker, setSelectedWorker] = useState<WorkerOption | null>(
+    null,
+  );
   const [submittedJobId, setSubmittedJobId] = useState<string | null>(null);
 
   return (
@@ -280,9 +327,14 @@ function ResultPanel({ data, location }: { data: UnderstandResponse; location?: 
       <div className="glass-card p-4 text-left">
         <div className="flex flex-wrap items-center gap-x-3 gap-y-2 text-sm">
           <span className="font-semibold text-[#F1F4F1]">
-            {u.category ? CATEGORY_LABELS[u.category] ?? u.category : "Not sure yet"}
+            {u.category
+              ? (CATEGORY_LABELS[u.category] ?? u.category)
+              : "Not sure yet"}
           </span>
-          <span className="rounded-lg px-2 py-0.5 text-xs text-[#93A396]" style={{ background: "rgba(255,255,255,0.05)" }}>
+          <span
+            className="rounded-lg px-2 py-0.5 text-xs text-[#93A396]"
+            style={{ background: "rgba(255,255,255,0.05)" }}
+          >
             {URGENCY_LABELS[u.urgency] ?? u.urgency}
           </span>
           {u.confidence > 0 && (
@@ -301,7 +353,7 @@ function ResultPanel({ data, location }: { data: UnderstandResponse; location?: 
             {u.required_skills.map((s) => (
               <span
                 key={s}
-              className="rounded-lg px-2 py-0.5 text-sm text-[#93A396]"
+                className="rounded-lg px-2 py-0.5 text-sm text-[#93A396]"
                 style={{ background: "rgba(255,255,255,0.05)" }}
               >
                 {s}
@@ -310,8 +362,12 @@ function ResultPanel({ data, location }: { data: UnderstandResponse; location?: 
           </div>
         )}
         {u.safety_flags.length > 0 && (
-          <p className="mt-2 text-xs font-semibold" style={{ color: "#E0A461" }}>
-            <AlertTriangle className="h-3.5 w-3.5 inline" /> {u.safety_flags.join(", ")}
+          <p
+            className="mt-2 text-xs font-semibold"
+            style={{ color: "#E0A461" }}
+          >
+            <AlertTriangle className="h-3.5 w-3.5 inline" />{" "}
+            {u.safety_flags.join(", ")}
           </p>
         )}
       </div>
@@ -322,19 +378,42 @@ function ResultPanel({ data, location }: { data: UnderstandResponse; location?: 
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.4, ease: [0.22, 1, 0.36, 1], delay: 0.1 }}
           className="flex items-start gap-3 rounded-2xl p-3 text-left"
-          style={{ background: "rgba(38,166,80,0.08)", border: "1px solid rgba(38,166,80,0.2)" }}
+          style={{
+            background: "rgba(38,166,80,0.08)",
+            border: "1px solid rgba(38,166,80,0.2)",
+          }}
         >
-          <Mic className="mt-0.5 h-4 w-4 shrink-0" style={{ color: "#26A650" }} />
+          <Mic
+            className="mt-0.5 h-4 w-4 shrink-0"
+            style={{ color: "#26A650" }}
+          />
           <div className="min-w-0">
-            <p className="text-[10px] font-semibold uppercase tracking-wide" style={{ color: "#26A650" }}>You said</p>
-            <p className="mt-0.5 text-xs leading-relaxed text-[#F1F4F1]">{data.transcript}</p>
+            <p
+              className="text-[10px] font-semibold uppercase tracking-wide"
+              style={{ color: "#26A650" }}
+            >
+              You said
+            </p>
+            <p className="mt-0.5 text-xs leading-relaxed text-[#F1F4F1]">
+              {data.transcript}
+            </p>
           </div>
         </motion.div>
       )}
 
       {u.category && (
-        <div className="rounded-2xl p-4 text-left" style={{ background: "rgba(212,162,74,0.1)", border: "1px solid rgba(212,162,74,0.3)", borderLeft: "4px solid #D4A24C" }}>
-          <p className="text-xs font-semibold uppercase tracking-wide" style={{ color: "#D4A24C" }}>
+        <div
+          className="rounded-2xl p-4 text-left"
+          style={{
+            background: "rgba(212,162,74,0.1)",
+            border: "1px solid rgba(212,162,74,0.3)",
+            borderLeft: "4px solid #D4A24C",
+          }}
+        >
+          <p
+            className="text-xs font-semibold uppercase tracking-wide"
+            style={{ color: "#D4A24C" }}
+          >
             Price — set automatically
           </p>
           <p className="mt-1 text-2xl font-bold text-[#F1F4F1]">
@@ -344,10 +423,14 @@ function ResultPanel({ data, location }: { data: UnderstandResponse; location?: 
               : "after checking"}
           </p>
           <p className="mt-1 text-xs" style={{ color: "rgba(212,162,74,0.8)" }}>
-            آپ پہلے صرف معائنہ فیس دیتے ہیں — اصل مرمت کی قیمت اُستاد کے معائنے کے بعد طے ہوگی۔
+            آپ پہلے صرف معائنہ فیس دیتے ہیں — اصل مرمت کی قیمت اُستاد کے معائنے
+            کے بعد طے ہوگی۔
           </p>
           {u.complexity && (
-            <p className="mt-1 text-xs" style={{ color: "rgba(212,162,74,0.8)" }}>
+            <p
+              className="mt-1 text-xs"
+              style={{ color: "rgba(212,162,74,0.8)" }}
+            >
               Complexity: {u.complexity}
             </p>
           )}
@@ -355,7 +438,13 @@ function ResultPanel({ data, location }: { data: UnderstandResponse; location?: 
       )}
 
       {submittedJobId && (
-        <div className="rounded-2xl p-4 text-center" style={{ background: "rgba(38,166,80,0.15)", border: "1px solid rgba(38,166,80,0.4)" }}>
+        <div
+          className="rounded-2xl p-4 text-center"
+          style={{
+            background: "rgba(38,166,80,0.15)",
+            border: "1px solid rgba(38,166,80,0.4)",
+          }}
+        >
           <p className="text-sm font-semibold" style={{ color: "#26A650" }}>
             Request sent! Waiting for the technician to respond.
           </p>
@@ -364,7 +453,9 @@ function ResultPanel({ data, location }: { data: UnderstandResponse; location?: 
 
       {anyWorker ? (
         <div className="space-y-2 text-left">
-          {data.workers.best && <WorkerCard worker={data.workers.best} highlight index={0} />}
+          {data.workers.best && (
+            <WorkerCard worker={data.workers.best} highlight index={0} />
+          )}
           {data.workers.others.slice(0, 2).map((w, i) => (
             <WorkerCard key={w.id} worker={w} index={i + 1} />
           ))}
@@ -378,7 +469,11 @@ function ResultPanel({ data, location }: { data: UnderstandResponse; location?: 
       <Link
         href={ctaHref}
         className="block w-full rounded-xl py-2.5 text-center text-sm font-bold transition-all duration-200"
-        style={{ background: "#26A650", color: "#08240F", boxShadow: "0 4px 16px rgba(38,166,80,0.3)" }}
+        style={{
+          background: "#26A650",
+          color: "#08240F",
+          boxShadow: "0 4px 16px rgba(38,166,80,0.3)",
+        }}
       >
         Set price &amp; find workers
       </Link>
@@ -407,7 +502,10 @@ function ResultPanel({ data, location }: { data: UnderstandResponse; location?: 
   );
 }
 
-export default function VoiceCapture({ variant = "landing", onStatusChange }: VoiceCaptureProps) {
+export default function VoiceCapture({
+  variant = "landing",
+  onStatusChange,
+}: VoiceCaptureProps) {
   const router = useRouter();
   const [status, setStatus] = useState<Status>("idle");
   const [recording, setRecording] = useState(false);
@@ -416,10 +514,15 @@ export default function VoiceCapture({ variant = "landing", onStatusChange }: Vo
   const [error, setError] = useState("");
   const [result, setResult] = useState<UnderstandResponse | null>(null);
   const [clarificationAnswer, setClarificationAnswer] = useState("");
-  const [clarificationSelections, setClarificationSelections] = useState<string[]>([]);
+  const [clarificationSelections, setClarificationSelections] = useState<
+    string[]
+  >([]);
   const [busy, setBusy] = useState(false);
-  const [customerLocation, setCustomerLocation] = useState<Coordinates | null>(null);
-  const [locationFailure, setLocationFailure] = useState<LocationFailureReason | null>(null);
+  const [customerLocation, setCustomerLocation] = useState<Coordinates | null>(
+    null,
+  );
+  const [locationFailure, setLocationFailure] =
+    useState<LocationFailureReason | null>(null);
   const [locationPending, setLocationPending] = useState(false);
 
   const recorderRef = useRef<RecordingSession | null>(null);
@@ -489,10 +592,7 @@ export default function VoiceCapture({ variant = "landing", onStatusChange }: Vo
     locationRequestIdRef.current = requestId;
 
     const markUnavailable = (reason: LocationFailureReason) => {
-      if (
-        !mountedRef.current ||
-        requestId !== locationRequestIdRef.current
-      ) {
+      if (!mountedRef.current || requestId !== locationRequestIdRef.current) {
         return;
       }
       locationDecisionRef.current = "unavailable";
@@ -515,10 +615,7 @@ export default function VoiceCapture({ variant = "landing", onStatusChange }: Vo
         if (settled) return;
         settled = true;
 
-        if (
-          !mountedRef.current ||
-          requestId !== locationRequestIdRef.current
-        ) {
+        if (!mountedRef.current || requestId !== locationRequestIdRef.current) {
           resolve(null);
           return;
         }
@@ -548,17 +645,14 @@ export default function VoiceCapture({ variant = "landing", onStatusChange }: Vo
               lng: position.coords.longitude,
             }),
           rejectLocation,
-          { enableHighAccuracy: true, timeout: 15000, maximumAge: 30000 }
+          { enableHighAccuracy: true, timeout: 15000, maximumAge: 30000 },
         );
       } catch {
         markUnavailable("unavailable");
         resolveLocation(null);
       }
     }).finally(() => {
-      if (
-        mountedRef.current &&
-        requestId === locationRequestIdRef.current
-      ) {
+      if (mountedRef.current && requestId === locationRequestIdRef.current) {
         setLocationPending(false);
         locationPromiseRef.current = null;
       }
@@ -594,9 +688,11 @@ export default function VoiceCapture({ variant = "landing", onStatusChange }: Vo
       // To restore real audio recording, remove this block and uncomment
       // the real startRecording/stopRecording code.
       let body: RunBody = rawBody;
-      const isVoiceMock = rawBody instanceof FormData && (rawBody as any).__mock;
+      const isVoiceMock =
+        rawBody instanceof FormData && (rawBody as any).__mock;
       if (isVoiceMock) {
-        const mockText = "Mere ghar mein bijli ki switches kaam nahi kar rahi, jab on karte hain toh spark ho rahi hai";
+        const mockText =
+          "Mere ghar mein bijli ki switches kaam nahi kar rahi, jab on karte hain toh spark ho rahi hai";
         body = { text: mockText };
       }
       // ─── END MOCK ────────────────────────────────────────────────────────
@@ -654,7 +750,10 @@ export default function VoiceCapture({ variant = "landing", onStatusChange }: Vo
             });
           }
 
-          console.log("[run] Starting API call to /api/ai/understand. Type:", body instanceof FormData ? "FormData(audio)" : "JSON");
+          console.log(
+            "[run] Starting API call to /api/ai/understand. Type:",
+            body instanceof FormData ? "FormData(audio)" : "JSON",
+          );
           const apiData = await Promise.race([
             fetch("/api/ai/understand", requestInit).then((response) => {
               console.log("[run] API response status:", response.status);
@@ -682,7 +781,14 @@ export default function VoiceCapture({ variant = "landing", onStatusChange }: Vo
 
         if (!isCurrentRequest()) return;
 
-        console.log("[run] Response received. Source:", data.source, "Transcript:", data.transcript?.substring(0, 80), "Workers:", data.workers?.best?.name ?? "none");
+        console.log(
+          "[run] Response received. Source:",
+          data.source,
+          "Transcript:",
+          data.transcript?.substring(0, 80),
+          "Workers:",
+          data.workers?.best?.name ?? "none",
+        );
         setResult(data);
         setClarificationSelections([]);
         if (data.clarification_question || data.manual_fallback) {
@@ -692,7 +798,7 @@ export default function VoiceCapture({ variant = "landing", onStatusChange }: Vo
           try {
             sessionStorage.setItem(
               "voiceResult",
-              JSON.stringify({ data, location })
+              JSON.stringify({ data, location }),
             );
           } catch {
             // sessionStorage full or unavailable
@@ -702,21 +808,28 @@ export default function VoiceCapture({ variant = "landing", onStatusChange }: Vo
           }
         }
         pendingBodyRef.current = null;
-    } catch (err) {
-      console.error("[mic] startRecording failed:", err);
-      console.error("[run] API call failed:", err);
+      } catch (err) {
+        console.error("[mic] startRecording failed:", err);
+        console.error("[run] API call failed:", err);
         if (!isCurrentRequest()) return;
         if (timedOut) {
           setStatus("error");
-          setError("Understanding timed out. Please check your connection and try again.");
+          setError(
+            "Understanding timed out. Please check your connection and try again.",
+          );
           return;
         }
-        if (controller.signal.aborted || (err instanceof Error && err.name === "AbortError")) {
+        if (
+          controller.signal.aborted ||
+          (err instanceof Error && err.name === "AbortError")
+        ) {
           return;
         }
         setStatus("error");
         setError(
-          err instanceof Error ? err.message : "Something went wrong. Please try again."
+          err instanceof Error
+            ? err.message
+            : "Something went wrong. Please try again.",
         );
       } finally {
         if (timeoutId !== undefined) window.clearTimeout(timeoutId);
@@ -726,12 +839,15 @@ export default function VoiceCapture({ variant = "landing", onStatusChange }: Vo
         if (isCurrentRequest()) setBusy(false);
       }
     },
-    [getLocation]
+    [getLocation],
   );
 
   // Request location immediately when entering the dashboard
   useEffect(() => {
-    if (variant === "dashboard" && locationDecisionRef.current === "unresolved") {
+    if (
+      variant === "dashboard" &&
+      locationDecisionRef.current === "unresolved"
+    ) {
       void getLocation();
     }
   }, [variant, getLocation]);
@@ -774,7 +890,8 @@ export default function VoiceCapture({ variant = "landing", onStatusChange }: Vo
     // ─── END MOCK ────────────────────────────────────────────────────────────
 
     try {
-      if (!mountedRef.current || recordingGenerationRef.current !== generation) return;
+      if (!mountedRef.current || recordingGenerationRef.current !== generation)
+        return;
 
       // Request location upfront so it's ready by the time recording stops.
       if (locationDecisionRef.current === "unresolved") {
@@ -789,8 +906,12 @@ export default function VoiceCapture({ variant = "landing", onStatusChange }: Vo
       let mockPhase = 0;
       const mockLevelInterval = window.setInterval(() => {
         mockPhase += 0.15;
-        const fakeLevel = 0.15 + Math.sin(mockPhase) * 0.12 + Math.random() * 0.05;
-        if (mountedRef.current && recordingGenerationRef.current === generation) {
+        const fakeLevel =
+          0.15 + Math.sin(mockPhase) * 0.12 + Math.random() * 0.05;
+        if (
+          mountedRef.current &&
+          recordingGenerationRef.current === generation
+        ) {
           setMicLevel(fakeLevel);
         }
       }, LEVEL_SAMPLE_INTERVAL_MS);
@@ -798,7 +919,10 @@ export default function VoiceCapture({ variant = "landing", onStatusChange }: Vo
       // Store cleanup ref so stopRecording can clear the interval
       mockLevelCleanupRef.current = () => {
         window.clearInterval(mockLevelInterval);
-        if (mountedRef.current && recordingGenerationRef.current === generation) {
+        if (
+          mountedRef.current &&
+          recordingGenerationRef.current === generation
+        ) {
           setMicLevel(0);
         }
       };
@@ -949,7 +1073,11 @@ export default function VoiceCapture({ variant = "landing", onStatusChange }: Vo
             }`}
             style={{
               touchAction: "none",
-              background: recording ? "#E0A461" : status === "processing" ? "rgba(38,166,80,0.6)" : "#26A650",
+              background: recording
+                ? "#E0A461"
+                : status === "processing"
+                  ? "rgba(38,166,80,0.6)"
+                  : "#26A650",
               boxShadow: recording
                 ? "0 8px 32px rgba(224,164,97,0.4)"
                 : status === "processing"
@@ -1015,7 +1143,10 @@ export default function VoiceCapture({ variant = "landing", onStatusChange }: Vo
       {locationFailure && status === "done" && (
         <div
           className="mt-4 w-full space-y-2 rounded-2xl p-3 text-left"
-          style={{ background: "rgba(224,164,97,0.1)", border: "1px solid rgba(224,164,97,0.3)" }}
+          style={{
+            background: "rgba(224,164,97,0.1)",
+            border: "1px solid rgba(224,164,97,0.3)",
+          }}
           role="status"
           aria-live="polite"
         >
@@ -1055,6 +1186,7 @@ export default function VoiceCapture({ variant = "landing", onStatusChange }: Vo
                 />
               ))}
             </div>
+            //div
             <TextType
               text={[
                 "Ustad is understanding your problem…",
@@ -1083,54 +1215,73 @@ export default function VoiceCapture({ variant = "landing", onStatusChange }: Vo
             exit={{ opacity: 0, y: -20, scale: 0.97 }}
             transition={{ type: "spring", stiffness: 280, damping: 22 }}
             className="mt-6 w-full space-y-2 rounded-2xl p-4 text-left"
-            style={{ background: "rgba(212,162,74,0.1)", border: "1px solid rgba(212,162,74,0.3)" }}
+            style={{
+              background: "rgba(212,162,74,0.1)",
+              border: "1px solid rgba(212,162,74,0.3)",
+            }}
           >
             <p className="text-sm font-medium text-[#F1F4F1]">
               {result.clarification_question}
             </p>
-            {result.clarification_options && result.clarification_options.length > 0 && (
-              <div className="space-y-2">
-                {result.clarification_options.map((option) => (
-                  <label
-                    key={option}
-                    className="flex cursor-pointer items-center gap-2 rounded-xl px-3 py-2 text-sm text-[#F1F4F1]"
-                    style={{ background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.12)" }}
-                  >
-                    <input
-                      type="checkbox"
-                      checked={clarificationSelections.includes(option)}
-                      onChange={(event) => {
-                        setClarificationSelections((current) =>
-                          event.target.checked
-                            ? [...current, option]
-                            : current.filter((selected) => selected !== option)
-                        );
+            {result.clarification_options &&
+              result.clarification_options.length > 0 && (
+                <div className="space-y-2">
+                  {result.clarification_options.map((option) => (
+                    <label
+                      key={option}
+                      className="flex cursor-pointer items-center gap-2 rounded-xl px-3 py-2 text-sm text-[#F1F4F1]"
+                      style={{
+                        background: "rgba(255,255,255,0.05)",
+                        border: "1px solid rgba(255,255,255,0.12)",
                       }}
-                      className="h-4 w-4 accent-[#26A650]"
-                    />
-                    {option}
-                  </label>
-                ))}
-              </div>
-            )}
+                    >
+                      <input
+                        type="checkbox"
+                        checked={clarificationSelections.includes(option)}
+                        onChange={(event) => {
+                          setClarificationSelections((current) =>
+                            event.target.checked
+                              ? [...current, option]
+                              : current.filter(
+                                  (selected) => selected !== option,
+                                ),
+                          );
+                        }}
+                        className="h-4 w-4 accent-[#26A650]"
+                      />
+                      {option}
+                    </label>
+                  ))}
+                </div>
+              )}
             <input
               type="text"
               value={clarificationAnswer}
               onChange={(e) => setClarificationAnswer(e.target.value)}
               placeholder="Your answer, e.g. bijli ka masla hai"
               className="w-full rounded-xl px-3 py-2 text-sm text-[#F1F4F1] placeholder:text-[#93A396] outline-none transition-all duration-200 focus:ring-2 focus:ring-[#26A650]/30"
-              style={{ background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.12)" }}
+              style={{
+                background: "rgba(255,255,255,0.05)",
+                border: "1px solid rgba(255,255,255,0.12)",
+              }}
             />
             <button
               type="button"
               onClick={() =>
                 void run({
-                  clarification: [...clarificationSelections, clarificationAnswer.trim()]
+                  clarification: [
+                    ...clarificationSelections,
+                    clarificationAnswer.trim(),
+                  ]
                     .filter(Boolean)
                     .join(", "),
                 })
               }
-              disabled={busy || (!clarificationAnswer.trim() && clarificationSelections.length === 0)}
+              disabled={
+                busy ||
+                (!clarificationAnswer.trim() &&
+                  clarificationSelections.length === 0)
+              }
               className="w-full rounded-xl py-2 text-sm font-semibold transition-all duration-200 disabled:opacity-50"
               style={{ background: "#26A650", color: "#08240F" }}
             >
@@ -1150,9 +1301,14 @@ export default function VoiceCapture({ variant = "landing", onStatusChange }: Vo
             exit={{ opacity: 0, y: -20, scale: 0.97 }}
             transition={{ type: "spring", stiffness: 300, damping: 24 }}
             className="mt-5 w-full space-y-2 rounded-2xl p-4 text-left"
-            style={{ background: "rgba(224,164,97,0.1)", border: "1px solid rgba(224,164,97,0.3)" }}
+            style={{
+              background: "rgba(224,164,97,0.1)",
+              border: "1px solid rgba(224,164,97,0.3)",
+            }}
           >
-            <p className="text-sm" style={{ color: "#E0A461" }}>{error}</p>
+            <p className="text-sm" style={{ color: "#E0A461" }}>
+              {error}
+            </p>
             <button
               type="button"
               onClick={reset}
@@ -1173,7 +1329,12 @@ export default function VoiceCapture({ variant = "landing", onStatusChange }: Vo
             initial={{ opacity: 0, y: 60, scale: 0.97 }}
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: -30, scale: 0.98 }}
-            transition={{ type: "spring", stiffness: 260, damping: 22, mass: 0.9 }}
+            transition={{
+              type: "spring",
+              stiffness: 260,
+              damping: 22,
+              mass: 0.9,
+            }}
             className="mt-6 w-full"
           >
             <ResultPanel data={result} location={customerLocation} />
@@ -1186,7 +1347,10 @@ export default function VoiceCapture({ variant = "landing", onStatusChange }: Vo
               whileTap={{ scale: 0.95 }}
               whileHover={{ y: -1 }}
               className="mt-3 w-full rounded-xl py-2 text-sm font-semibold text-[#93A396] transition-all duration-200 hover:text-[#F1F4F1]"
-              style={{ background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.12)" }}
+              style={{
+                background: "rgba(255,255,255,0.05)",
+                border: "1px solid rgba(255,255,255,0.12)",
+              }}
             >
               New request
             </motion.button>
