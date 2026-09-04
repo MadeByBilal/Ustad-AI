@@ -6,12 +6,10 @@ export interface OfferValidation {
     max_allowed: number;
 }
 /**
- * Validates a customer's offer against the AI/historical estimate.
- * Offers must be at least 50% of estimate_min. Customers may enter any
- * higher amount because complexity, materials, and travel can exceed the AI
- * estimate. An empty estimate (0/0) is treated as unconstrained.
+ * Validates a customer's offer. Only checks that the amount is a positive
+ * number — no floor or ceiling is enforced so customers may offer any price.
  */
-export declare function validateCustomerOffer(amount: number, estimateMin: number, estimateMax: number): OfferValidation;
+export declare function validateCustomerOffer(amount: number, _estimateMin: number, _estimateMax: number): OfferValidation;
 export declare function roundTo50(n: number): number;
 /** Default offer used when price negotiation is skipped (emergency). */
 export declare function midpointOffer(estimateMin: number, estimateMax: number): number;

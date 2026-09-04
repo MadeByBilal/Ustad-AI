@@ -1,5 +1,6 @@
-export declare const PETROL_PRICE_PER_LITER_PKR = 350;
-export declare const BIKE_FUEL_EFFICIENCY_KM_PER_LITER = 40;
+export declare const PETROL_PRICE_PER_LITER_PKR = 346;
+export declare const BIKE_FUEL_EFFICIENCY_KM_PER_LITER = 50;
+export declare const BASE_WORK_FEE_PKR = 300;
 export type ComplexityLevel = "low" | "medium" | "high";
 export declare const COMPLEXITY_MULTIPLIERS: Record<ComplexityLevel, number>;
 export interface TravelCostEstimate {

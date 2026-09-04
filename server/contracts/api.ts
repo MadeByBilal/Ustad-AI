@@ -92,22 +92,14 @@ export interface OfferValidation {
 
 export function validateCustomerOffer(
   amount: number,
-  estimateMin: number,
-  estimateMax: number
+  _estimateMin: number,
+  _estimateMax: number
 ): OfferValidation {
-  void estimateMax;
   if (!Number.isFinite(amount) || amount <= 0) {
     return { valid: false, reason: "too_low", min_allowed: 1, max_allowed: 0 };
   }
 
-  const max_allowed = 0;
-  const min_allowed =
-    estimateMin > 0 ? Math.round(estimateMin * OFFER_LOW_FACTOR) : 0;
-
-  if (min_allowed > 0 && amount < min_allowed) {
-    return { valid: false, reason: "too_low", min_allowed, max_allowed };
-  }
-  return { valid: true, min_allowed, max_allowed };
+  return { valid: true, min_allowed: 0, max_allowed: 0 };
 }
 
 export function roundTo50(n: number): number {
