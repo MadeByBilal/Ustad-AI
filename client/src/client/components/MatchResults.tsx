@@ -237,13 +237,13 @@ function WorkerMatchCard({
       data-best-match={isBest ? "true" : "false"}
       onClick={onSelect}
       className={cn(
-        "glass-card cursor-pointer",
+        "glass-card",
         isBest ? "p-5 sm:p-5" : "p-4 sm:p-5",
         selected
-          ? "border-accent/30 ring-1 ring-accent/15"
+          ? "border-2 border-accent ring-2 ring-accent/40"
           : isBest
             ? "border-warning/25"
-            : "border-white/[0.06] hover:border-white/[0.12]",
+            : "border-white/[0.06]",
       )}
     >
       <div className={cn("flex items-start gap-4", isBest && "gap-5")}>
