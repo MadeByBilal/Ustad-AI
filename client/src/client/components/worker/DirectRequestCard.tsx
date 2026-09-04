@@ -4,6 +4,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { motion } from "framer-motion";
 import type { DirectRequestView } from "@contracts/worker";
+import { getApiErrorMessage } from "@/client/lib/api-client";
 
 async function postJson(url: string, body?: unknown): Promise<void> {
   const res = await fetch(url, {
@@ -11,12 +12,9 @@ async function postJson(url: string, body?: unknown): Promise<void> {
     headers: { "Content-Type": "application/json" },
     body: body === undefined ? undefined : JSON.stringify(body),
   });
-  const parsed = (await res.json().catch(() => null)) as {
-    success?: boolean;
-    error?: string;
-  } | null;
+  const parsed = await res.json().catch(() => null);
   if (!res.ok || !parsed?.success) {
-    throw new Error(parsed?.error ?? `Request failed (${res.status})`);
+    throw new Error(getApiErrorMessage(parsed, `Request failed (${res.status})`));
   }
 }
 

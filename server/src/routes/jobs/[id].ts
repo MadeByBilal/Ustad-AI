@@ -7,6 +7,7 @@ import {
   FlowError,
   reanalyzeJob,
   workerAcceptJob,
+  workerOffer,
   workerUpdateJobStatus,
   workerCancelJob,
   customerCancelJob,
@@ -19,7 +20,7 @@ import {
 } from "../../lib/job/flow.js";
 import { getJobDetail } from "../../lib/job/detail.js";
 import { listJobMessages, sendJobMessage } from "../../lib/job/chat.js";
-import { Job, JobEvent, Message, Review, Worker, SYSTEM_SENDER_ID } from "../../models/index.js";
+import { Job, JobEvent, Message, Review, Worker, Offer, SYSTEM_SENDER_ID } from "../../models/index.js";
 import { canTransition } from "../../lib/job/state-machine.js";
 import { getTrackingTarget } from "../../lib/tracking/realtime.js";
 
@@ -215,6 +216,99 @@ router.post("/:id/accept", requireRole(["worker"]), async (req: Request, res: Re
       return fail(res, e.message, e.statusCode, { code: e.code });
     }
     console.error("[jobs/:id/accept] error:", e);
+    return fail(res, "Internal error", 500);
+  }
+});
+
+/**
+ * POST /:id/decline — worker declines a broadcast job.
+ */
+const declineSchema = z.object({
+  type: z.literal("decline"),
+  message: z.string().max(500).optional(),
+});
+
+const customerOfferSchema = z.object({
+  type: z.literal("customer_offer"),
+  worker_id: z.string().min(1),
+  offer_price: z.number().min(1),
+  message: z.string().max(500).optional(),
+});
+
+router.post("/:id/decline", requireRole(["worker"]), async (req: Request, res: Response) => {
+  const sessionUser = res.locals.sessionUser;
+  const jobId = String(req.params.id).trim();
+  if (!jobId) {
+    return fail(res, "Job id is required", 400);
+  }
+
+  const parsed = declineSchema.safeParse(req.body ?? {});
+  if (!parsed.success) {
+    return fail(res, "Invalid request body", 400, parsed.error.flatten().fieldErrors);
+  }
+
+  try {
+    const worker = await Worker.findOne({ user_id: sessionUser.user._id }).lean();
+    if (!worker) {
+      return fail(res, "Worker profile not found for this account", 404);
+    }
+
+    const result = await workerOffer(jobId, String(worker._id), {
+      type: "decline",
+      message: parsed.data.message,
+    });
+    return ok(result)(res);
+  } catch (e) {
+    if (e instanceof FlowError) {
+      return fail(res, e.message, e.statusCode, { code: e.code });
+    }
+    console.error("[jobs/:id/decline] error:", e);
+    return fail(res, "Internal error", 500);
+  }
+});
+
+/**
+ * POST /:id/offer — customer sends a targeted offer to a specific worker.
+ */
+router.post("/:id/offer", requireRole(["customer"]), async (req: Request, res: Response) => {
+  const jobId = String(req.params.id).trim();
+  if (!jobId) {
+    return fail(res, "Job id is required", 400);
+  }
+
+  const parsed = customerOfferSchema.safeParse(req.body ?? {});
+  if (!parsed.success) {
+    return fail(res, "Invalid request body", 400, parsed.error.flatten().fieldErrors);
+  }
+
+  try {
+    const job = await Job.findById(jobId).lean();
+    if (!job) {
+      return fail(res, "Job not found", 404);
+    }
+
+    const worker = await Worker.findById(parsed.data.worker_id).lean();
+    if (!worker) {
+      return fail(res, "Worker not found", 404);
+    }
+
+    const offer = await Offer.findOneAndUpdate(
+      { job_id: jobId, worker_id: parsed.data.worker_id },
+      {
+        job_id: jobId,
+        worker_id: parsed.data.worker_id,
+        type: "customer_offer" as const,
+        offered_price: parsed.data.offer_price,
+        counter_price: parsed.data.offer_price,
+        message: parsed.data.message ?? "",
+        status: "pending" as const,
+      },
+      { upsert: true, new: true },
+    ).lean();
+
+    return ok({ offer_id: String(offer._id) })(res);
+  } catch (e) {
+    console.error("[jobs/:id/offer] error:", e);
     return fail(res, "Internal error", 500);
   }
 });

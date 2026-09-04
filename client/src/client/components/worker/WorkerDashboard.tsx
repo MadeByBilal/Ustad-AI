@@ -13,7 +13,7 @@ import ActiveJobPanel from "./ActiveJobPanel";
 import { Star, Check } from "lucide-react";
 import { getApiErrorMessage } from "@/client/lib/api-client";
 
-const POLL_MS = 15000;
+const POLL_MS = 5000;
 
 export default function WorkerDashboard({ workerId }: { workerId: string }) {
   const { t } = useLang();
@@ -45,9 +45,14 @@ export default function WorkerDashboard({ workerId }: { workerId: string }) {
     void refresh();
     const poll = setInterval(() => void refresh(), POLL_MS);
     const clock = setInterval(() => setNow(Date.now()), 1000);
+    const onVisible = () => {
+      if (document.visibilityState === "visible") void refresh();
+    };
+    document.addEventListener("visibilitychange", onVisible);
     return () => {
       clearInterval(poll);
       clearInterval(clock);
+      document.removeEventListener("visibilitychange", onVisible);
     };
   }, [refresh]);
 

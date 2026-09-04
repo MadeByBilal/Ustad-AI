@@ -102,6 +102,11 @@ export default function IncomingJobCard({
           <p className="mt-2 font-urdu text-lg font-bold leading-relaxed text-text">
             {job.original_text}
           </p>
+          {job.description && (
+            <p className="mt-1 text-sm text-muted">
+              {job.description}
+            </p>
+          )}
         </div>
         <span
           className={`badge shrink-0 font-mono ${
@@ -159,6 +164,12 @@ export default function IncomingJobCard({
               : "Calculating..."}
           </dd>
         </div>
+        {job.address_label && (
+          <div className="rounded-lg bg-bg p-2 sm:col-span-2">
+            <dt className="text-muted">Location</dt>
+            <dd className="font-semibold text-text">{job.address_label}</dd>
+          </div>
+        )}
       </div>
 
       {pendingCounter && (
@@ -234,7 +245,7 @@ export default function IncomingJobCard({
               type="button"
               onClick={() =>
                 void act("decline", () =>
-                  postJson("/api/offers", { job_id: job.id, type: "decline" })
+                  postJson(`/api/jobs/${job.id}/decline`, { type: "decline" })
                 )
               }
               disabled={busy !== null}

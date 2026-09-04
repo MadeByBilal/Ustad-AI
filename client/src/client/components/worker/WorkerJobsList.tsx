@@ -7,7 +7,7 @@ import { useLang } from "@/client/lib/i18n/context";
 import IncomingJobCard from "./IncomingJobCard";
 import DirectRequestCard from "./DirectRequestCard";
 
-const POLL_MS = 15000;
+const POLL_MS = 5000;
 
 export default function WorkerJobsList({ workerId }: { workerId: string }) {
   const { t } = useLang();
@@ -36,9 +36,14 @@ export default function WorkerJobsList({ workerId }: { workerId: string }) {
     void refresh();
     const poll = setInterval(() => void refresh(), POLL_MS);
     const clock = setInterval(() => setNow(Date.now()), 1000);
+    const onVisible = () => {
+      if (document.visibilityState === "visible") void refresh();
+    };
+    document.addEventListener("visibilitychange", onVisible);
     return () => {
       clearInterval(poll);
       clearInterval(clock);
+      document.removeEventListener("visibilitychange", onVisible);
     };
   }, [refresh]);
 

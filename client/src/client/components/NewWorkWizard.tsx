@@ -6,6 +6,7 @@ import { motion } from "framer-motion";
 import PhotoPicker from "./PhotoPicker";
 import WorkerResults from "./WorkerResults";
 import { MapPin } from "lucide-react";
+import { getApiErrorMessage } from "@/client/lib/api-client";
 
 const DEMO_COORDS = { lat: 24.8607, lng: 67.0011 };
 
@@ -76,9 +77,9 @@ function humanize(value: string): string {
 }
 
 async function parseJson<T>(res: Response): Promise<T> {
-  const body = (await res.json().catch(() => null)) as { success?: boolean; error?: string; data?: T } | null;
+  const body = await res.json().catch(() => null);
   if (!res.ok || !body?.success) {
-    throw new Error(body?.error ?? `Request failed (${res.status})`);
+    throw new Error(getApiErrorMessage(body, `Request failed (${res.status})`));
   }
   return body.data as T;
 }

@@ -9,7 +9,7 @@ import { useLang } from "@/client/lib/i18n/context";
 import { getApiErrorMessage } from "@/client/lib/api-client";
 import { Wrench, ChevronRight, Bell } from "lucide-react";
 
-const POLL_MS = 10000;
+const POLL_MS = 5000;
 
 export default function WorkerHome({ workerId }: { workerId: string }) {
   const [data, setData] = useState<WorkerDashboardData | null>(null);
@@ -39,7 +39,14 @@ export default function WorkerHome({ workerId }: { workerId: string }) {
   useEffect(() => {
     void refresh();
     const poll = setInterval(() => void refresh(), POLL_MS);
-    return () => clearInterval(poll);
+    const onVisible = () => {
+      if (document.visibilityState === "visible") void refresh();
+    };
+    document.addEventListener("visibilitychange", onVisible);
+    return () => {
+      clearInterval(poll);
+      document.removeEventListener("visibilitychange", onVisible);
+    };
   }, [refresh]);
 
   // Auto-detect location on mount

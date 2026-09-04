@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { validateCustomerOffer } from "@/client/lib/validation";
+import { getApiErrorMessage } from "@/client/lib/api-client";
 
 export default function CustomerOfferModal({
   jobId,
@@ -60,13 +61,10 @@ export default function CustomerOfferModal({
         }),
       });
 
-      const body = (await res.json().catch(() => null)) as {
-        success?: boolean;
-        error?: string;
-      } | null;
+      const body = await res.json().catch(() => null);
 
       if (!res.ok || !body?.success) {
-        throw new Error(body?.error ?? "Offer failed");
+        throw new Error(getApiErrorMessage(body, "Offer failed"));
       }
 
       onSubmitted();

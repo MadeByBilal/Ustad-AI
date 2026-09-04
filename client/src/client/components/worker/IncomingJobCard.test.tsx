@@ -52,7 +52,7 @@ describe("IncomingJobCard", () => {
     expect(screen.getByText(/Rs 1,500/)).toBeInTheDocument();
     expect(screen.getByText(/~2.3 km/)).toBeInTheDocument();
     expect(screen.getByText(/Gulshan-e-Iqbal, Karachi/)).toBeInTheDocument();
-    expect(screen.getByText(/⏱/)).toBeInTheDocument();
+    expect(screen.getByText(/\d+:\d+/)).toBeInTheDocument();
     expect(screen.getByAltText("Problem photo")).toHaveAttribute(
       "src",
       "/api/photos/photo-1"
@@ -85,7 +85,7 @@ describe("IncomingJobCard", () => {
     expect(acceptCall).toBeDefined();
   });
 
-  it("declines the job via POST /api/offers", async () => {
+  it("declines the job via POST /api/jobs/:id/decline", async () => {
     okResponse({ success: true, data: {} });
     const onChanged = vi.fn();
     render(<IncomingJobCard job={JOB} now={NOW} onChanged={onChanged} />);
@@ -94,11 +94,10 @@ describe("IncomingJobCard", () => {
     await waitFor(() => expect(onChanged).toHaveBeenCalled());
 
     const declineCall = fetchMock.mock.calls.find(
-      ([url, init]) => url === "/api/offers" && init?.method === "POST"
+      ([url, init]) => url === "/api/jobs/job-1/decline" && init?.method === "POST"
     );
     expect(declineCall).toBeDefined();
     expect(JSON.parse((declineCall![1] as RequestInit).body as string)).toEqual({
-      job_id: "job-1",
       type: "decline",
     });
   });
@@ -119,11 +118,10 @@ describe("IncomingJobCard", () => {
     await waitFor(() => expect(onChanged).toHaveBeenCalled());
 
     const counterCall = fetchMock.mock.calls.find(
-      ([url, init]) => url === "/api/offers" && init?.method === "POST"
+      ([url, init]) => url === "/api/jobs/job-1/offer" && init?.method === "POST"
     );
     expect(counterCall).toBeDefined();
     expect(JSON.parse((counterCall![1] as RequestInit).body as string)).toEqual({
-      job_id: "job-1",
       type: "counter_offer",
       counter_price: 1800,
       message: "Additional parts required",

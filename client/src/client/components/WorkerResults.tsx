@@ -72,6 +72,7 @@ export default function WorkerResults({
   const [hired, setHired] = useState<ResponderWorker | null>(null);
   const [finalPrice, setFinalPrice] = useState<number | null>(null);
   const [busy, setBusy] = useState(false);
+  const [busyWorkerId, setBusyWorkerId] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
 
   const deadlinePassed = Date.now() > new Date(acceptanceDeadline).getTime();
@@ -122,6 +123,7 @@ export default function WorkerResults({
 
   async function hire(worker: ResponderWorker) {
     setBusy(true);
+    setBusyWorkerId(worker.id);
     setError(null);
     try {
       const body = await parseApiResponse<{
@@ -141,6 +143,7 @@ export default function WorkerResults({
       setError(e instanceof Error ? e.message : "Could not hire the ustad");
     } finally {
       setBusy(false);
+      setBusyWorkerId(null);
     }
   }
 
@@ -202,7 +205,11 @@ export default function WorkerResults({
         return (
           <div
             key={worker.id}
-            className="glass-card p-4"
+            className={`glass-card p-4 transition-all duration-200 ${
+              busyWorkerId === worker.id
+                ? "ring-2 ring-accent ring-offset-2 ring-offset-bg"
+                : ""
+            }`}
           >
             <div className="flex flex-wrap items-center gap-2">
               <span className="rounded-full bg-accent px-2 py-0.5 text-xs font-bold text-bg">

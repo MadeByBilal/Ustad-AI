@@ -4,6 +4,7 @@ import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import type { IncomingJobView } from "@contracts/worker";
 import { X } from "lucide-react";
+import { getApiErrorMessage } from "@/client/lib/api-client";
 
 /**
  * Counter-offer dialog: worker enters their price plus an optional note
@@ -33,22 +34,18 @@ export default function CounterOfferModal({
     setBusy(true);
     setError(null);
     try {
-      const res = await fetch("/api/offers", {
+      const res = await fetch(`/api/jobs/${job.id}/offer`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          job_id: job.id,
           type: "counter_offer",
           counter_price,
           message: message.trim() || undefined,
         }),
       });
-      const body = (await res.json().catch(() => null)) as {
-        success?: boolean;
-        error?: string;
-      } | null;
+      const body = await res.json().catch(() => null);
       if (!res.ok || !body?.success) {
-        throw new Error(body?.error ?? "Counter offer failed");
+        throw new Error(getApiErrorMessage(body, "Counter offer failed"));
       }
       onSubmitted();
     } catch (e) {
