@@ -9,7 +9,7 @@ export default function HomePage() {
   const { t, lang } = useLang();
 
   return (
-    <main className="relative flex h-screen flex-col overflow-hidden bg-bg text-text">
+    <main className="relative flex h-dvh flex-col overflow-y-auto bg-bg text-text">
       <div className="pointer-events-none absolute -right-20 -top-20 h-72 w-72 rounded-full bg-accent/15 blur-3xl" />
       <div className="pointer-events-none absolute -bottom-24 -left-10 h-64 w-64 rounded-full bg-warning/15 blur-3xl" />
 
@@ -28,7 +28,7 @@ export default function HomePage() {
         </div>
       </nav>
 
-      <section className="relative z-10 mx-auto flex w-full max-w-6xl flex-1 flex-col items-center justify-center gap-6 overflow-y-auto px-4 pb-8 pt-4 sm:gap-10 sm:pb-12 sm:pt-8 md:flex-row md:gap-16 md:px-8 md:pb-0 md:pt-12">
+      <section className="relative z-10 mx-auto flex w-full max-w-6xl flex-1 flex-col items-center justify-center gap-6 px-4 pb-8 pt-4 sm:gap-10 sm:pb-12 sm:pt-8 md:flex-row md:gap-16 md:px-8 md:pb-0 md:pt-12">
         <div className="max-w-lg text-center md:text-left">
           <h1 className="text-4xl font-bold tracking-tight text-text md:text-6xl">
             {t("heroTitle")}
