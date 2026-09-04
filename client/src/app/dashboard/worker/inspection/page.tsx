@@ -98,7 +98,7 @@ export default function WorkerInspectionPage() {
       <div className="page-header">
         <h1 className="text-lg font-bold text-text">Inspection</h1>
       </div>
-      <div className="page-content">
+      <div className="page-content page-bottom-safe-inline">
         {!activeJob ? (
           <div className="card flex flex-col items-center gap-3 py-12 text-center">
             <div className="flex h-16 w-16 items-center justify-center rounded-full bg-surface">

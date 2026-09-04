@@ -191,6 +191,18 @@ option {
     background: rgba(11, 15, 12, 0.95) !important;
     border-top: 1px solid rgba(255, 255, 255, 0.12);
   }
+
+  /* BottomNav height (py-2.5*2 + icon h-5 + label ~12px + gap) ≈ 56px + safe-area */
+  /* Use this on any scrollable content that lives above the bottom nav */
+  .page-bottom-safe {
+    /* 4rem = 64px (generous nav clearance) + safe-area-inset-bottom for notched devices */
+    padding-bottom: calc(4rem + env(safe-area-inset-bottom, 0px));
+  }
+  /* For screens with their own inline bottom panel (not fixed), use less aggressive padding */
+  .page-bottom-safe-inline {
+    /* 2rem = 32px for scrollable panels that have buttons at the very end */
+    padding-bottom: calc(2rem + env(safe-area-inset-bottom, 0px));
+  }
   .bottom-nav-item {
     @apply flex flex-1 flex-col items-center gap-0.5 py-2.5 text-[10px] font-medium transition-colors;
     color: #93A396;

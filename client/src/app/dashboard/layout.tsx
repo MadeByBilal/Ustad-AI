@@ -109,7 +109,7 @@ export default function DashboardLayout({
       <LiquidGlassToastContainer />
       <DesktopNav role={role} userName={userName} />
       <div className="page-scroll md:pt-0">
-        <main className="flex min-h-0 flex-1 flex-col pb-16 md:pb-0">{children}</main>
+        <main className="flex min-h-0 flex-1 flex-col page-bottom-safe md:pb-0">{children}</main>
       </div>
       <BottomNav role={role} />
     </div>

@@ -547,7 +547,7 @@ export default function ActiveJobTracking() {
       />
 
       {/* Bottom Panel */}
-      <div className="flex-1 bg-surface px-5 pt-4 pb-6">
+      <div className="flex-1 overflow-y-auto bg-surface px-5 pt-4 page-bottom-safe-inline">
         {/* Status + Distance */}
         <div className="flex items-center justify-between">
           <div>

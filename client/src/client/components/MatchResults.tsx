@@ -12,6 +12,7 @@ import {
 import type { WorkerCategory, WorkerOption } from "@contracts/worker";
 import type { AiUnderstandResult } from "@contracts/ai";
 import { cn } from "@/client/lib/cn";
+import { BOTTOM_NAV_BOTTOM_OFFSET } from "@/client/lib/layout-constants";
 import SplitText from "./SplitText";
 import TechnicianRequestModal from "./TechnicianRequestModal";
 
@@ -173,7 +174,8 @@ export default function MatchResults({ data, location, onRequestSent }: MatchRes
             animate={{ y: 0, opacity: 1 }}
             exit={{ y: 80, opacity: 0 }}
             transition={{ type: "spring", stiffness: 400, damping: 30 }}
-            className="fixed inset-x-0 bottom-16 z-50 flex justify-center p-4 pb-[max(1rem,env(safe-area-inset-bottom))]"
+            className="fixed inset-x-0 z-50 flex justify-center p-4"
+            style={{ bottom: BOTTOM_NAV_BOTTOM_OFFSET }}
           >
             <button
               type="button"

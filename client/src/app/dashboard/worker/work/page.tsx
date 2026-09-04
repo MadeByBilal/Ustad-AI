@@ -96,7 +96,7 @@ export default function WorkerWorkPage() {
       <div className="page-header">
         <TranslatedHeading translationKey="work" />
       </div>
-      <div className="page-content">
+      <div className="page-content page-bottom-safe-inline">
         {!activeJob ? (
           <div className="card flex flex-col items-center gap-3 py-12 text-center">
             <div className="flex h-16 w-16 items-center justify-center rounded-full bg-surface">
