@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { motion } from "framer-motion";
+import { getApiErrorMessage } from "@/client/lib/api-client";
 
 interface ReviewScreenProps {
   jobId: string;
@@ -33,7 +34,7 @@ export default function ReviewScreen({ jobId, workerName, onDone }: ReviewScreen
       });
       const body = await res.json().catch(() => null);
       if (!res.ok || !body?.success) {
-        throw new Error(body?.error ?? "Failed to submit review");
+        throw new Error(getApiErrorMessage(body, "Failed to submit review"));
       }
       setSubmitted(true);
     } catch (e) {

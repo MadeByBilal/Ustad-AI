@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { motion } from "framer-motion";
 import { Check } from "lucide-react";
+import { getApiErrorMessage } from "@/client/lib/api-client";
 
 export default function AcceptJobButton({ jobId }: { jobId: string }) {
   const [busy, setBusy] = useState(false);
@@ -16,10 +17,10 @@ export default function AcceptJobButton({ jobId }: { jobId: string }) {
       const res = await fetch(`/api/jobs/${jobId}/accept`, { method: "POST" });
       const body = (await res.json().catch(() => null)) as {
         success?: boolean;
-        error?: string;
+        error?: unknown;
       } | null;
       if (!res.ok || !body?.success) {
-        throw new Error(body?.error ?? `Request failed (${res.status})`);
+        throw new Error(getApiErrorMessage(body, `Request failed (${res.status})`));
       }
       setAccepted(true);
     } catch (e) {

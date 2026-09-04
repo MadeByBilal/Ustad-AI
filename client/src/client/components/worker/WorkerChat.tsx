@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { motion } from "framer-motion";
 import { fileToPhotoBase64 } from "@/client/lib/image";
+import { getApiErrorMessage } from "@/client/lib/api-client";
 import { useJobStream } from "@/client/hooks/useJobStream";
 import { MapPin, Camera } from "lucide-react";
 
@@ -46,11 +47,11 @@ export default function WorkerChat({ jobId }: { jobId: string }) {
       const res = await fetch(`/api/jobs/${jobId}/messages`, { cache: "no-store" });
       const body = (await res.json().catch(() => null)) as {
         success?: boolean;
-        error?: string;
+        error?: unknown;
         data?: { messages?: ChatMessage[] };
       } | null;
       if (!res.ok || !body?.success) {
-        throw new Error(body?.error ?? "Could not load messages");
+        throw new Error(getApiErrorMessage(body, "Could not load messages"));
       }
       setMessages(body.data?.messages ?? []);
       setError(null);
@@ -86,10 +87,10 @@ export default function WorkerChat({ jobId }: { jobId: string }) {
       });
       const parsed = (await res.json().catch(() => null)) as {
         success?: boolean;
-        error?: string;
+        error?: unknown;
       } | null;
       if (!res.ok || !parsed?.success) {
-        throw new Error(parsed?.error ?? "Message failed");
+        throw new Error(getApiErrorMessage(parsed, "Message failed"));
       }
       setDraft("");
       await load();
@@ -111,11 +112,11 @@ export default function WorkerChat({ jobId }: { jobId: string }) {
       });
       const body = (await res.json().catch(() => null)) as {
         success?: boolean;
-        error?: string;
+        error?: unknown;
         data?: { photo_id?: string };
       } | null;
       if (!res.ok || !body?.success || !body.data?.photo_id) {
-        throw new Error(body?.error ?? "Photo upload failed");
+        throw new Error(getApiErrorMessage(body, "Photo upload failed"));
       }
       await send({ photo_ids: [body.data.photo_id] });
     } catch (e) {

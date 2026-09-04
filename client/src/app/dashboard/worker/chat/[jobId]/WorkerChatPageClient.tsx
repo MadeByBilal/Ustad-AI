@@ -4,6 +4,7 @@ import { useState } from "react";
 import WorkerChat from "@/client/components/worker/WorkerChat";
 import JobPhotoUpload from "@/client/components/worker/JobPhotoUpload";
 import { motion } from "framer-motion";
+import { getApiErrorMessage } from "@/client/lib/api-client";
 
 const NEXT_ACTIONS: Record<string, { label: string; to: string }> = {
   ACCEPTED: { label: "On the way", to: "EN_ROUTE" },
@@ -47,10 +48,10 @@ export default function WorkerChatPageClient({
       });
       const body = (await res.json().catch(() => null)) as {
         success?: boolean;
-        error?: string;
+        error?: unknown;
       } | null;
       if (!res.ok || !body?.success) {
-        throw new Error(body?.error ?? "Status update failed");
+        throw new Error(getApiErrorMessage(body, "Status update failed"));
       }
       setJobStatus(nextAction.to);
     } catch (e) {

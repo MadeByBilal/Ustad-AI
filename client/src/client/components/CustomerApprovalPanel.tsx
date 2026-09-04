@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useState } from "react";
 import { motion } from "framer-motion";
-import { parseApiResponse } from "@/client/lib/api-client";
+import { parseApiResponse, getApiErrorMessage } from "@/client/lib/api-client";
 
 const POLL_MS = 5000;
 
@@ -55,10 +55,10 @@ export default function CustomerApprovalPanel() {
       });
       const body = (await res.json().catch(() => null)) as {
         success?: boolean;
-        error?: string;
+        error?: unknown;
       } | null;
       if (!res.ok || !body?.success) {
-        throw new Error(body?.error ?? "Action failed");
+        throw new Error(getApiErrorMessage(body, "Action failed"));
       }
       setMessage({
         ok: true,

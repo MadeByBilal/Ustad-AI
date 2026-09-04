@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
 import { motion } from "framer-motion";
-import { parseApiResponse } from "@/client/lib/api-client";
+import { parseApiResponse, getApiErrorMessage } from "@/client/lib/api-client";
 
 const POLL_MS = 10000;
 
@@ -59,10 +59,10 @@ async function postJson(url: string, body: unknown): Promise<void> {
   });
   const parsed = (await res.json().catch(() => null)) as {
     success?: boolean;
-    error?: string;
+    error?: unknown;
   } | null;
   if (!res.ok || !parsed?.success) {
-    throw new Error(parsed?.error ?? `Request failed (${res.status})`);
+    throw new Error(getApiErrorMessage(parsed, `Request failed (${res.status})`));
   }
 }
 

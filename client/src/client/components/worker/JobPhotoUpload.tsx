@@ -3,6 +3,7 @@
 import { useRef, useState } from "react";
 import { motion } from "framer-motion";
 import { fileToPhotoBase64 } from "@/client/lib/image";
+import { getApiErrorMessage } from "@/client/lib/api-client";
 import { Camera } from "lucide-react";
 
 /**
@@ -47,11 +48,11 @@ export default function JobPhotoUpload({
       });
       const uploadBody = (await uploadRes.json().catch(() => null)) as {
         success?: boolean;
-        error?: string;
+        error?: unknown;
         data?: { photo_id?: string };
       } | null;
       if (!uploadRes.ok || !uploadBody?.success || !uploadBody.data?.photo_id) {
-        throw new Error(uploadBody?.error ?? "Photo upload failed");
+        throw new Error(getApiErrorMessage(uploadBody, "Photo upload failed"));
       }
 
       const attachRes = await fetch(`/api/jobs/${jobId}/media`, {
@@ -65,10 +66,10 @@ export default function JobPhotoUpload({
       });
       const attachBody = (await attachRes.json().catch(() => null)) as {
         success?: boolean;
-        error?: string;
+        error?: unknown;
       } | null;
       if (!attachRes.ok || !attachBody?.success) {
-        throw new Error(attachBody?.error ?? "Photo attach failed");
+        throw new Error(getApiErrorMessage(attachBody, "Photo attach failed"));
       }
 
       setPreview(URL.createObjectURL(file));

@@ -93,7 +93,7 @@ export default function WorkerWorkPageClient({
       });
       const body = (await res.json().catch(() => null)) as {
         success?: boolean;
-        error?: string | { code: string; message: string };
+        error?: unknown;
       } | null;
       if (!res.ok || !body?.success) {
         throw new Error(getApiErrorMessage(body, "Status update failed"));

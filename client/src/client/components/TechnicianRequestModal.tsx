@@ -5,6 +5,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { Star, X } from "lucide-react";
 import type { WorkerOption } from "@contracts/worker";
 import type { UnderstandResponse } from "@/client/components/VoiceCapture";
+import { getApiErrorMessage } from "@/client/lib/api-client";
 
 const CATEGORY_LABELS: Record<string, string> = {
   plumber: "Plumber",
@@ -82,14 +83,10 @@ export default function TechnicianRequestModal({
         }),
       });
 
-      const body = (await res.json().catch(() => null)) as {
-        success?: boolean;
-        error?: string;
-        data?: { job_id: string; offer_id: string };
-      } | null;
+      const body = await res.json().catch(() => null);
 
       if (!res.ok || !body?.success) {
-        throw new Error(body?.error ?? "Request failed");
+        throw new Error(getApiErrorMessage(body, "Request failed"));
       }
 
       onSubmitted(body.data!);
