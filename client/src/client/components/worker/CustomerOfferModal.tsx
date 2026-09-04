@@ -50,11 +50,10 @@ export default function CustomerOfferModal({
     setError(null);
 
     try {
-      const res = await fetch("/api/jobs/offer", {
+      const res = await fetch(`/api/jobs/${jobId}/offer`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          job_id: jobId,
           worker_id: workerId,
           offer_price: offerPrice,
           message: message.trim() || undefined,
