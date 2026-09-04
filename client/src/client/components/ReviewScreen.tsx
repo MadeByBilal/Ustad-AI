@@ -46,7 +46,7 @@ export default function ReviewScreen({ jobId, workerName, onDone }: ReviewScreen
 
   if (submitted) {
     return (
-    <div className="flex min-h-screen flex-col items-center justify-center bg-bg px-5 page-bottom-safe">
+    <div className="flex h-dvh flex-col items-center justify-center bg-bg px-5 page-bottom-safe overflow-y-auto">
         <div className="flex h-20 w-20 items-center justify-center rounded-full bg-success">
           <svg className="h-10 w-10 text-success-fg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
             <path strokeLinecap="round" strokeLinejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
@@ -64,7 +64,7 @@ export default function ReviewScreen({ jobId, workerName, onDone }: ReviewScreen
   }
 
   return (
-    <div className="flex min-h-screen flex-col items-center justify-center bg-bg px-5">
+    <div className="flex h-dvh flex-col items-center justify-center bg-bg px-5 overflow-y-auto">
       {/* Worker Avatar */}
       <div className="flex h-20 w-20 items-center justify-center rounded-full bg-accent">
         <span className="text-3xl font-bold text-bg">

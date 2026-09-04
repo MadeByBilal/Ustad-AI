@@ -11,7 +11,7 @@ export default function CustomerChatPageClient({
   originalText: string;
 }) {
   return (
-    <div className="flex h-screen flex-col">
+    <div className="flex h-dvh flex-col">
       {/* Header */}
       <div className="flex items-center gap-3 border-b border-divider bg-surface px-4 py-3">
         <a
