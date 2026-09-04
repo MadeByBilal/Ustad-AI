@@ -4,6 +4,7 @@ export const OFFER_TYPES = [
     "counter_offer",
     "decline",
     "customer_offer",
+    "inspection_offer",
 ];
 export const OFFER_STATUSES = [
     "pending",
@@ -39,7 +40,7 @@ const offerSchema = new Schema({
 }, {
     timestamps: { createdAt: "created_at", updatedAt: "updated_at" },
 });
-offerSchema.index({ job_id: 1, worker_id: 1 }, { unique: true });
+offerSchema.index({ job_id: 1, worker_id: 1, type: 1 });
 offerSchema.index({ worker_id: 1, status: 1, created_at: -1 });
 export const Offer = mongoose.models.Offer ??
     mongoose.model("Offer", offerSchema);

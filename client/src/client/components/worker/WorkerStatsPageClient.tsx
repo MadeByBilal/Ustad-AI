@@ -126,7 +126,7 @@ export default function WorkerStatsPageClient({
             onClick={() => setTimeFilter(filter)}
             className={`rounded-xl px-3 py-1.5 text-xs font-medium transition-colors ${
               timeFilter === filter
-                ? "bg-success text-success-fg"
+                ? "bg-success text-white"
                 : "bg-surface text-muted hover:text-text"
             }`}
           >

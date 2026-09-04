@@ -40,7 +40,7 @@ const STATUS_LABELS: Record<string, { label: string; style: string }> = {
     label: "Awaiting customer approval",
     style: "bg-surface text-muted",
   },
-  ACCEPTED: { label: "Job accepted", style: "bg-success text-success-fg" },
+  ACCEPTED: { label: "Job accepted", style: "bg-success text-white" },
   EN_ROUTE: { label: "On the way", style: "bg-accent/15 text-accent" },
   ARRIVED: { label: "Arrived", style: "bg-accent/15 text-accent" },
   IN_PROGRESS: { label: "Work in progress", style: "bg-accent/15 text-accent" },

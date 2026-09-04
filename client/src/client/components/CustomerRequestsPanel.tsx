@@ -44,7 +44,7 @@ interface ListResponse {
 const STATUS_LABELS: Record<string, { label: string; color: string }> = {
   BROADCASTING: { label: "Waiting for response", color: "bg-warning/10 text-warning" },
   WORKER_RESPONSES: { label: "Negotiating", color: "bg-surface text-muted" },
-  ACCEPTED: { label: "Confirmed", color: "bg-success text-success-fg" },
+  ACCEPTED: { label: "Confirmed", color: "bg-success text-white" },
   EN_ROUTE: { label: "On the way", color: "bg-accent/15 text-accent" },
   ARRIVED: { label: "Arrived", color: "bg-accent/15 text-accent" },
   IN_PROGRESS: { label: "Work in progress", color: "bg-accent/15 text-accent" },

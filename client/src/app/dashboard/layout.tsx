@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import BottomNav from "@/client/components/BottomNav";
 import DesktopNav from "@/client/components/DesktopNav";
+import LiquidGlassToastContainer from "@/client/components/LiquidGlassToast";
 import "@/app/dark-glass-theme.css";
 
 const TRACKING_STATUSES = new Set(["ACCEPTED", "EN_ROUTE", "ARRIVED", "IN_PROGRESS", "AWAITING_CUSTOMER_CONFIRMATION"]);
@@ -105,6 +106,7 @@ export default function DashboardLayout({
 
   return (
     <div className="page">
+      <LiquidGlassToastContainer />
       <DesktopNav role={role} userName={userName} />
       <div className="page-scroll md:pt-0">
         <main className="flex min-h-0 flex-1 flex-col pb-16 md:pb-0">{children}</main>

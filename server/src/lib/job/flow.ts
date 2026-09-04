@@ -711,7 +711,8 @@ export async function workerUpdateJobStatus(
   }
   if (
     status === "AWAITING_CUSTOMER_CONFIRMATION" &&
-    !job.completion?.after_photo_id
+    !job.completion?.after_photo_id &&
+    note !== "inspection_only"
   ) {
     throw new FlowError(
       "after_photo_required",

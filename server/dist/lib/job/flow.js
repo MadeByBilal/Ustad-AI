@@ -421,7 +421,8 @@ export async function workerUpdateJobStatus(jobId, workerId, status, note) {
         throw new FlowError("before_photo_required", "Upload a before photo before starting work", 400);
     }
     if (status === "AWAITING_CUSTOMER_CONFIRMATION" &&
-        !job.completion?.after_photo_id) {
+        !job.completion?.after_photo_id &&
+        note !== "inspection_only") {
         throw new FlowError("after_photo_required", "Upload an after photo before completing the job", 400);
     }
     const updated = await Job.findOneAndUpdate({ _id: jobId, status: job.status }, { $set: { status } }, { new: true });

@@ -1,12 +1,13 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import type { WorkerDashboardData } from "@contracts/worker";
 import { motion } from "framer-motion";
 import WorkerAvailability from "@/client/components/WorkerAvailability";
 import LocationUpdater from "./LocationUpdater";
 import { useLang } from "@/client/lib/i18n/context";
 import { getApiErrorMessage } from "@/client/lib/api-client";
+import { showToast } from "@/client/components/LiquidGlassToast";
 import { Wrench, ChevronRight, Bell } from "lucide-react";
 
 const POLL_MS = 5000;
@@ -15,6 +16,7 @@ export default function WorkerHome({ workerId }: { workerId: string }) {
   const [data, setData] = useState<WorkerDashboardData | null>(null);
   const [error, setError] = useState<string | null>(null);
   const { t, lang } = useLang();
+  const prevPendingRef = useRef(0);
 
   const refresh = useCallback(async () => {
     try {
@@ -64,6 +66,27 @@ export default function WorkerHome({ workerId }: { workerId: string }) {
       { timeout: 8000, maximumAge: 300000 },
     );
   }, [refresh]);
+
+  // Toast when new jobs arrive
+  useEffect(() => {
+    if (!data) return;
+    const incomingCount = data.incoming_jobs.length;
+    const directCount = data.direct_requests.length;
+    const pendingCount = incomingCount + directCount;
+    const hasActiveJob = !!data.active_job;
+
+    if (pendingCount > prevPendingRef.current && !hasActiveJob && prevPendingRef.current > 0) {
+      const latest = data.incoming_jobs[0] ?? data.direct_requests[0];
+      showToast({
+        title: t("newJobsAvailable"),
+        description: latest?.original_text ?? latest?.description,
+        type: "info",
+        duration: 8000,
+        onClick: () => { window.location.href = "/dashboard/worker/jobs"; },
+      });
+    }
+    prevPendingRef.current = pendingCount;
+  }, [data, t]);
 
   if (!data) {
     return (

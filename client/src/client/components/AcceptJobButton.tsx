@@ -32,7 +32,7 @@ export default function AcceptJobButton({ jobId }: { jobId: string }) {
 
   if (accepted) {
     return (
-      <span className="badge shrink-0 bg-success text-success-fg">
+      <span className="badge shrink-0 bg-success text-white">
         <Check className="h-3.5 w-3.5 inline mr-1" /> Accepted
       </span>
     );

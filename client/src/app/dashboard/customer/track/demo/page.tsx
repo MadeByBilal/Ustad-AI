@@ -65,7 +65,7 @@ export default function TrackingDemoPage() {
             isArrived
               ? "!bg-accent/15 !text-accent"
               : isAccepted
-                ? "!bg-success !text-success-fg"
+                ? "!bg-success !text-white"
                 : "!bg-accent/15 !text-accent"
           }`}
         >
@@ -156,7 +156,7 @@ export default function TrackingDemoPage() {
             type="button"
             onClick={() => simulate("ACCEPTED", 5.2, 15, { lat: 33.6990, lng: 73.0300 })}
             className={`rounded-lg px-3 py-2 text-xs font-medium transition-colors ${
-              status === "ACCEPTED" ? "bg-success text-success-fg" : "bg-bg text-muted hover:text-text"
+              status === "ACCEPTED" ? "bg-success text-white" : "bg-bg text-muted hover:text-text"
             }`}
           >
             Accepted

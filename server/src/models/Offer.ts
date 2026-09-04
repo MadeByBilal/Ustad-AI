@@ -5,6 +5,7 @@ export const OFFER_TYPES = [
   "counter_offer",
   "decline",
   "customer_offer",
+  "inspection_offer",
 ] as const;
 export const OFFER_STATUSES = [
   "pending",
@@ -45,7 +46,7 @@ const offerSchema = new Schema(
   },
 );
 
-offerSchema.index({ job_id: 1, worker_id: 1 }, { unique: true });
+offerSchema.index({ job_id: 1, worker_id: 1, type: 1 });
 offerSchema.index({ worker_id: 1, status: 1, created_at: -1 });
 
 export type OfferDoc = InferSchemaType<typeof offerSchema>;

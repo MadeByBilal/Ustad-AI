@@ -102,7 +102,7 @@ export default function InspectionPageClient({
       const res = await fetch(`/api/jobs/${jobId}/status`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ status: "AWAITING_CUSTOMER_CONFIRMATION" }),
+        body: JSON.stringify({ status: "AWAITING_CUSTOMER_CONFIRMATION", note: "inspection_only" }),
       });
       const body = await res.json().catch(() => null);
       if (!res.ok || !body?.success) {
@@ -126,30 +126,14 @@ export default function InspectionPageClient({
     setSendingOffer(true);
     setAdvanceError(null);
     try {
-      // Advance to IN_PROGRESS first if needed
-      if (jobStatus === "ARRIVED") {
-        const res = await fetch(`/api/jobs/${jobId}/status`, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ status: "IN_PROGRESS" }),
-        });
-        const body = await res.json().catch(() => null);
-        if (!res.ok || !body?.success) {
-          throw new Error(getApiErrorMessage(body, "Status update failed"));
-        }
-      }
-
-      // Send counter offer via chat
-      const msgRes = await fetch(`/api/jobs/${jobId}/messages`, {
+      const res = await fetch(`/api/jobs/${jobId}/inspection-offer`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          content: `Inspection complete. This job needs additional work. My offer: Rs ${price.toLocaleString("en-PK")}`,
-        }),
+        body: JSON.stringify({ price }),
       });
-      const msgBody = await msgRes.json().catch(() => null);
-      if (!msgRes.ok || !msgBody?.success) {
-        throw new Error(getApiErrorMessage(msgBody, "Failed to send offer"));
+      const body = await res.json().catch(() => null);
+      if (!res.ok || !body?.success) {
+        throw new Error(getApiErrorMessage(body, "Failed to send offer"));
       }
 
       setOfferSent(true);

@@ -9,6 +9,7 @@ import { listJobMessages, sendJobMessage } from "../../lib/job/chat.js";
 import { Job, JobEvent, Message, Review, Worker, Offer, SYSTEM_SENDER_ID } from "../../models/index.js";
 import { canTransition } from "../../lib/job/state-machine.js";
 import { getTrackingTarget } from "../../lib/tracking/realtime.js";
+import { getIO } from "../../lib/socket.js";
 const router = Router();
 const TRACKING_STATUSES = new Set([
     "ACCEPTED",
@@ -77,6 +78,12 @@ const approveSchema = z.object({
 const reviewSchema = z.object({
     rating: z.number().int().min(1).max(5),
     text: z.string().max(500).optional(),
+});
+const inspectionOfferSchema = z.object({
+    price: z.number().int().min(1),
+});
+const inspectionOfferRespondSchema = z.object({
+    action: z.enum(["accept", "decline"]),
 });
 const mediaSchema = z.object({
     type: z.enum(["before", "after"]),
@@ -867,6 +874,146 @@ router.get("/:id/stream", requireRole(["customer", "worker"]), async (req, res) 
             return fail(res, e.message, e.statusCode, { code: e.code });
         }
         console.error("[jobs/:id/stream] error:", e);
+        return fail(res, "Internal error", 500);
+    }
+});
+/**
+ * POST /:id/inspection-offer — worker sends a price offer after inspection.
+ */
+router.post("/:id/inspection-offer", requireRole(["worker"]), async (req, res) => {
+    const sessionUser = res.locals.sessionUser;
+    const jobId = String(req.params.id).trim();
+    if (!jobId) {
+        return fail(res, "Job id is required", 400);
+    }
+    const parsed = inspectionOfferSchema.safeParse(req.body ?? {});
+    if (!parsed.success) {
+        return fail(res, "Invalid request", 400, parsed.error.flatten().fieldErrors);
+    }
+    try {
+        await connectDB();
+        const worker = await Worker.findOne({ user_id: sessionUser.user._id }).lean();
+        if (!worker) {
+            return fail(res, "Worker profile not found for this account", 404);
+        }
+        const job = await Job.findOne({ _id: jobId, "matching.selected_worker_id": String(worker._id) });
+        if (!job) {
+            return fail(res, "Job not found or you are not the assigned worker", 404);
+        }
+        if (!["ARRIVED", "IN_PROGRESS"].includes(job.status)) {
+            return fail(res, "Job is not in an inspectable state", 409);
+        }
+        // Upsert the inspection offer (one per worker per job)
+        const offer = await Offer.findOneAndUpdate({ job_id: jobId, worker_id: String(worker._id), type: "inspection_offer" }, {
+            $set: {
+                offered_price: parsed.data.price,
+                status: "pending",
+                message: `Inspection offer: Rs ${parsed.data.price.toLocaleString("en-PK")}`,
+            },
+        }, { upsert: true, new: true });
+        // Notify customer via socket
+        getIO()?.to(`job:${jobId}`).emit("inspection-offer", {
+            jobId,
+            offerId: String(offer._id),
+            price: parsed.data.price,
+            workerId: String(worker._id),
+        });
+        // Also send a chat message so customer sees it
+        await Message.create({
+            job_id: jobId,
+            sender_id: String(worker._id),
+            sender_type: "worker",
+            content: `Inspection complete. This job needs additional work. My offer: Rs ${parsed.data.price.toLocaleString("en-PK")}`,
+        });
+        return ok({ offer_id: String(offer._id), price: parsed.data.price })(res);
+    }
+    catch (e) {
+        console.error("[jobs/:id/inspection-offer] error:", e);
+        return fail(res, "Internal error", 500);
+    }
+});
+/**
+ * POST /:id/inspection-offer/respond — customer accepts or declines a worker's inspection offer.
+ */
+router.post("/:id/inspection-offer/respond", requireRole(["customer"]), async (req, res) => {
+    const sessionUser = res.locals.sessionUser;
+    const jobId = String(req.params.id).trim();
+    if (!jobId) {
+        return fail(res, "Job id is required", 400);
+    }
+    const parsed = inspectionOfferRespondSchema.safeParse(req.body ?? {});
+    if (!parsed.success) {
+        return fail(res, "Invalid request", 400, parsed.error.flatten().fieldErrors);
+    }
+    try {
+        await connectDB();
+        const job = await Job.findOne({ _id: jobId, customer_id: sessionUser.user._id });
+        if (!job) {
+            return fail(res, "Job not found", 404);
+        }
+        if (!["ARRIVED", "IN_PROGRESS"].includes(job.status)) {
+            return fail(res, "Job is not in an inspectable state", 409);
+        }
+        // Find the pending inspection offer
+        const offer = await Offer.findOne({
+            job_id: jobId,
+            type: "inspection_offer",
+            status: "pending",
+        }).sort({ created_at: -1 });
+        if (!offer) {
+            return fail(res, "No pending inspection offer found", 404);
+        }
+        if (parsed.data.action === "accept") {
+            // Accept: update offer status and transition job to AWAITING_CUSTOMER_CONFIRMATION
+            await Offer.updateOne({ _id: offer._id }, { $set: { status: "accepted" } });
+            // Advance job status if needed
+            if (job.status === "ARRIVED") {
+                await Job.findOneAndUpdate({ _id: jobId, status: "ARRIVED" }, { $set: { status: "IN_PROGRESS" } });
+            }
+            await Job.findOneAndUpdate({ _id: jobId, status: { $in: ["ARRIVED", "IN_PROGRESS"] } }, { $set: { status: "AWAITING_CUSTOMER_CONFIRMATION" } });
+            // Record event
+            await JobEvent.create({
+                job_id: jobId,
+                from_state: job.status,
+                to_state: "AWAITING_CUSTOMER_CONFIRMATION",
+                actor_id: String(sessionUser.user._id),
+                actor_type: "customer",
+                metadata: { action: "accept_inspection_offer", price: offer.offered_price },
+            });
+            // System message
+            await Message.create({
+                job_id: jobId,
+                sender_id: SYSTEM_SENDER_ID,
+                sender_type: "system",
+                content: `Customer accepted inspection offer of Rs ${offer.offered_price.toLocaleString("en-PK")}. Work can proceed.`,
+            });
+            // Notify worker via socket
+            getIO()?.to(`job:${jobId}`).emit("inspection-offer-accepted", {
+                jobId,
+                offerId: String(offer._id),
+                price: offer.offered_price,
+            });
+            return ok({ status: "accepted", price: offer.offered_price })(res);
+        }
+        else {
+            // Decline: update offer status
+            await Offer.updateOne({ _id: offer._id }, { $set: { status: "declined" } });
+            await Message.create({
+                job_id: jobId,
+                sender_id: SYSTEM_SENDER_ID,
+                sender_type: "system",
+                content: `Customer declined the inspection offer. Please discuss with the customer.`,
+            });
+            // Notify worker via socket
+            getIO()?.to(`job:${jobId}`).emit("inspection-offer-declined", {
+                jobId,
+                offerId: String(offer._id),
+            });
+            return ok({ status: "declined" })(res);
+        }
+    }
+    catch (e) {
+        console.error("[jobs/:id/inspection-offer/respond] error:", e);
         return fail(res, "Internal error", 500);
     }
 });

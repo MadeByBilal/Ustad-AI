@@ -1,5 +1,5 @@
 import mongoose, { type InferSchemaType } from "mongoose";
-export declare const OFFER_TYPES: readonly ["accept", "counter_offer", "decline", "customer_offer"];
+export declare const OFFER_TYPES: readonly ["accept", "counter_offer", "decline", "customer_offer", "inspection_offer"];
 export declare const OFFER_STATUSES: readonly ["pending", "accepted", "selected", "declined", "expired"];
 declare const offerSchema: mongoose.Schema<any, mongoose.Model<any, any, any, any, any, any>, {}, {}, {}, {}, {
     timestamps: {
@@ -9,7 +9,7 @@ declare const offerSchema: mongoose.Schema<any, mongoose.Model<any, any, any, an
 }, {
     [x: string]: NativeDate;
     message: string;
-    type: "customer_offer" | "accept" | "counter_offer" | "decline";
+    type: "customer_offer" | "accept" | "counter_offer" | "decline" | "inspection_offer";
     status: "pending" | "accepted" | "selected" | "declined" | "expired";
     job_id: mongoose.Types.ObjectId;
     worker_id: mongoose.Types.ObjectId;
@@ -19,7 +19,7 @@ declare const offerSchema: mongoose.Schema<any, mongoose.Model<any, any, any, an
 }, mongoose.Document<unknown, {}, mongoose.FlatRecord<{
     [x: string]: NativeDate;
     message: string;
-    type: "customer_offer" | "accept" | "counter_offer" | "decline";
+    type: "customer_offer" | "accept" | "counter_offer" | "decline" | "inspection_offer";
     status: "pending" | "accepted" | "selected" | "declined" | "expired";
     job_id: mongoose.Types.ObjectId;
     worker_id: mongoose.Types.ObjectId;
@@ -34,7 +34,7 @@ declare const offerSchema: mongoose.Schema<any, mongoose.Model<any, any, any, an
 }>> & mongoose.FlatRecord<{
     [x: string]: NativeDate;
     message: string;
-    type: "customer_offer" | "accept" | "counter_offer" | "decline";
+    type: "customer_offer" | "accept" | "counter_offer" | "decline" | "inspection_offer";
     status: "pending" | "accepted" | "selected" | "declined" | "expired";
     job_id: mongoose.Types.ObjectId;
     worker_id: mongoose.Types.ObjectId;
@@ -50,7 +50,7 @@ export type OfferDoc = InferSchemaType<typeof offerSchema>;
 export declare const Offer: mongoose.Model<{
     [x: string]: NativeDate;
     message: string;
-    type: "customer_offer" | "accept" | "counter_offer" | "decline";
+    type: "customer_offer" | "accept" | "counter_offer" | "decline" | "inspection_offer";
     status: "pending" | "accepted" | "selected" | "declined" | "expired";
     job_id: mongoose.Types.ObjectId;
     worker_id: mongoose.Types.ObjectId;
@@ -60,7 +60,7 @@ export declare const Offer: mongoose.Model<{
 }, {}, {}, {}, mongoose.Document<unknown, {}, {
     [x: string]: NativeDate;
     message: string;
-    type: "customer_offer" | "accept" | "counter_offer" | "decline";
+    type: "customer_offer" | "accept" | "counter_offer" | "decline" | "inspection_offer";
     status: "pending" | "accepted" | "selected" | "declined" | "expired";
     job_id: mongoose.Types.ObjectId;
     worker_id: mongoose.Types.ObjectId;
@@ -70,7 +70,7 @@ export declare const Offer: mongoose.Model<{
 }, {}, {}> & {
     [x: string]: NativeDate;
     message: string;
-    type: "customer_offer" | "accept" | "counter_offer" | "decline";
+    type: "customer_offer" | "accept" | "counter_offer" | "decline" | "inspection_offer";
     status: "pending" | "accepted" | "selected" | "declined" | "expired";
     job_id: mongoose.Types.ObjectId;
     worker_id: mongoose.Types.ObjectId;

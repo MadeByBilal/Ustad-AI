@@ -277,7 +277,7 @@ export default function WorkerProfile({ workerId }: { workerId: string }) {
           <span
             className={`badge ${
               w.verification_level === "documents_verified"
-                ? "bg-success text-success-fg"
+                ? "bg-success text-white"
                 : "bg-warning/10 text-warning"
             }`}
           >

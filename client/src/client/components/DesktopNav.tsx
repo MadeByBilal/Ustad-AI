@@ -66,9 +66,7 @@ export default function DesktopNav({
     <nav className="desktop-nav">
       <div className="desktop-nav-inner">
         <Link href="/dashboard" className="desktop-nav-brand">
-          <span className="flex h-8 w-8 items-center justify-center rounded-xl bg-accent text-xs font-bold text-[rgb(var(--surface))]">
-            ا
-          </span>
+          <img src="/logo.png" alt="Ustad AI" className="h-8 w-8 rounded-xl object-cover" />
           <span className={`text-base font-bold text-text ${lang === "ur" ? "font-urdu" : ""}`}>Ustad AI</span>
         </Link>
 

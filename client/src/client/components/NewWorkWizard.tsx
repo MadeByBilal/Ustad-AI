@@ -270,7 +270,7 @@ export default function NewWorkWizard() {
               <span
                 className={`flex h-7 w-7 items-center justify-center rounded-full text-xs font-bold ${
                   step > i + 1
-                    ? "bg-success text-success-fg"
+                    ? "bg-success text-white"
                     : step === i + 1
                       ? "bg-accent/15 text-accent ring-2 ring-accent/30"
                       : "bg-surface text-muted"

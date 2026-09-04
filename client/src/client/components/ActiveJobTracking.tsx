@@ -52,6 +52,11 @@ export default function ActiveJobTracking() {
     [number, number][] | null
   >(null);
   const activeJobIdRef = useRef<string | null>(null);
+  const [inspectionOffer, setInspectionOffer] = useState<{
+    offerId: string;
+    price: number;
+  } | null>(null);
+  const [respondingOffer, setRespondingOffer] = useState(false);
 
   // Fetch active job
   const refresh = useCallback(async () => {
@@ -248,11 +253,34 @@ export default function ActiveJobTracking() {
           );
         };
 
+        const handleInspectionOffer = (data: {
+          jobId?: string;
+          offerId: string;
+          price: number;
+        }) => {
+          if (!mounted || (data.jobId && data.jobId !== jobId)) return;
+          setInspectionOffer({ offerId: data.offerId, price: data.price });
+        };
+
+        const handleInspectionOfferAccepted = () => {
+          if (!mounted) return;
+          setInspectionOffer(null);
+          void refresh();
+        };
+
+        const handleInspectionOfferDeclined = () => {
+          if (!mounted) return;
+          setInspectionOffer(null);
+        };
+
         socket.on("location-update", handleLocationUpdate);
         socket.on("route-computed", handleRouteComputed);
         socket.on("worker-arrived", handleWorkerArrived);
         socket.on("customer-location-update", handleCustomerLocationUpdate);
         socket.on("job-status-update", handleStatusUpdate);
+        socket.on("inspection-offer", handleInspectionOffer);
+        socket.on("inspection-offer-accepted", handleInspectionOfferAccepted);
+        socket.on("inspection-offer-declined", handleInspectionOfferDeclined);
         cleanup = () => {
           socket.emit("leave-job", { jobId });
           socket.off("location-update", handleLocationUpdate);
@@ -260,6 +288,9 @@ export default function ActiveJobTracking() {
           socket.off("worker-arrived", handleWorkerArrived);
           socket.off("customer-location-update", handleCustomerLocationUpdate);
           socket.off("job-status-update", handleStatusUpdate);
+          socket.off("inspection-offer", handleInspectionOffer);
+          socket.off("inspection-offer-accepted", handleInspectionOfferAccepted);
+          socket.off("inspection-offer-declined", handleInspectionOfferDeclined);
         };
       } catch {
         // Socket not available
@@ -272,6 +303,32 @@ export default function ActiveJobTracking() {
       cleanup?.();
     };
   }, [activeJobId, refresh]);
+
+  // Respond to inspection offer
+  async function handleInspectionOfferResponse(action: "accept" | "decline") {
+    if (!job || !inspectionOffer) return;
+    setRespondingOffer(true);
+    try {
+      const res = await fetch(`/api/jobs/${job.job_id}/inspection-offer/respond`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ action }),
+      });
+      const body = await res.json().catch(() => null);
+      if (!res.ok || !body?.success) {
+        throw new Error(getApiErrorMessage(body, "Failed"));
+      }
+      setInspectionOffer(null);
+      void refresh();
+    } catch (e) {
+      setMessage({
+        ok: false,
+        text: e instanceof Error ? e.message : "Failed to respond",
+      });
+    } finally {
+      setRespondingOffer(false);
+    }
+  }
 
   // Approve work
   async function handleApprove(action: "approve" | "dispute") {
@@ -522,6 +579,38 @@ export default function ActiveJobTracking() {
           >
             {message.text}
           </p>
+        )}
+
+        {/* Inspection Offer */}
+        {inspectionOffer && (
+          <div className="mt-3 rounded-xl border border-accent/30 bg-accent/10 px-4 py-3">
+            <p className="text-sm font-bold text-text">
+              Worker offers Rs {inspectionOffer.price.toLocaleString("en-PK")}
+            </p>
+            <p className="mt-0.5 text-xs text-muted">
+              Additional work needed — accept or decline
+            </p>
+            <div className="mt-3 flex gap-2">
+              <motion.button
+                type="button"
+                onClick={() => void handleInspectionOfferResponse("accept")}
+                disabled={respondingOffer}
+                whileTap={{ scale: 0.95 }}
+                className="flex-1 rounded-xl bg-success px-3 py-2 text-sm font-bold text-white transition-colors hover:bg-success/90 disabled:opacity-60"
+              >
+                {respondingOffer ? "..." : "Accept"}
+              </motion.button>
+              <motion.button
+                type="button"
+                onClick={() => void handleInspectionOfferResponse("decline")}
+                disabled={respondingOffer}
+                whileTap={{ scale: 0.95 }}
+                className="flex-1 rounded-xl border border-warning px-3 py-2 text-sm font-semibold text-warning transition-colors hover:bg-warning/10 disabled:opacity-60"
+              >
+                {respondingOffer ? "..." : "Decline"}
+              </motion.button>
+            </div>
+          </div>
         )}
 
         {/* Action Buttons */}
