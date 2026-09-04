@@ -91,7 +91,7 @@ function AuthForm() {
   const availableSkills = CANONICAL_SKILLS[category];
 
   return (
-    <div className="w-full max-w-md mx-auto px-4">
+    <div className="w-full max-w-md mx-auto px-4 my-auto">
       {/* Top bar */}
       <div className="flex items-center justify-between mb-8">
         <Link
@@ -297,7 +297,7 @@ function AuthForm() {
 
 export default function LoginPage() {
   return (
-    <main className="dark-glass-theme flex min-h-screen items-start justify-center overflow-y-auto px-4 py-10 sm:items-center" style={{ background: "#0B0F0C" }}>
+    <main className="dark-glass-theme flex h-dvh overflow-y-auto px-4 py-6 sm:py-10" style={{ background: "#0B0F0C" }}>
       <Suspense fallback={<div className="text-sm text-[#93A396]">Loading...</div>}>
         <AuthForm />
       </Suspense>
