@@ -1,0 +1,452 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Ustad AI — Apne qareebi ustad dhoondein</title>
+  <style>
+    @font-face {
+      font-family: "Noto Nastaliq Urdu";
+      font-weight: 500;
+      src: url("https://fonts.gstatic.com/s/notonastaliqurdu/v20/LhWNMUPbN-oZdd-5Gd68CmuQorWGJg.ttf") format("truetype");
+    }
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg: #0B0F0C;
+      --surface: #121613;
+      --text: #F1F4F1;
+      --muted: #93A396;
+      --accent: #26A650;
+      --accent-rgb: 38, 166, 80;
+      --warning: #D4A24C;
+      --warning-rgb: 212, 162, 74;
+      --divider: rgba(255, 255, 255, 0.12);
+      --card-bg: rgba(255, 255, 255, 0.04);
+      --card-border: rgba(255, 255, 255, 0.08);
+    }
+
+    html {
+      scroll-behavior: smooth;
+      overflow-x: hidden;
+      height: 100%;
+    }
+
+    body {
+      font-family: "Calibri", "Segoe UI", system-ui, -apple-system, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100%;
+      height: 100%;
+      overflow-x: hidden;
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
+      line-height: 1.5;
+    }
+
+    /* ─── MAIN LAYOUT ─────────────────────────────────────────────────── */
+    .page {
+      position: relative;
+      display: flex;
+      flex-direction: column;
+      min-height: 100vh;
+      min-height: 100dvh;
+      overflow-y: auto;
+    }
+
+    .glow-1 {
+      position: absolute;
+      width: 288px; height: 288px;
+      top: -80px; right: -80px;
+      border-radius: 50%;
+      background: rgba(var(--accent-rgb), 0.15);
+      filter: blur(80px);
+      pointer-events: none;
+    }
+    .glow-2 {
+      position: absolute;
+      width: 256px; height: 256px;
+      bottom: -96px; left: -40px;
+      border-radius: 50%;
+      background: rgba(var(--warning-rgb), 0.15);
+      filter: blur(80px);
+      pointer-events: none;
+    }
+
+    /* ─── NAVBAR ──────────────────────────────────────────────────────── */
+    .navbar {
+      position: relative;
+      z-index: 10;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      width: 100%;
+      padding: 16px 24px;
+      background: rgba(11, 15, 12, 0.95);
+      backdrop-filter: blur(24px);
+      -webkit-backdrop-filter: blur(24px);
+      border-bottom: 1px solid var(--divider);
+    }
+    @media (min-width: 768px) { .navbar { padding: 16px 32px; } }
+
+    .nav-left { display: flex; align-items: center; gap: 12px; }
+
+    .nav-logo {
+      width: 36px; height: 36px;
+      border-radius: 10px;
+      object-fit: contain;
+    }
+
+    .nav-brand {
+      font-size: 18px;
+      font-weight: 700;
+      letter-spacing: -0.02em;
+      color: var(--text);
+    }
+    .nav-brand span { color: var(--accent); }
+
+    .nav-right { display: flex; align-items: center; gap: 8px; }
+
+    /* ─── BUTTONS ─────────────────────────────────────────────────────── */
+    .btn-primary {
+      display: inline-flex; align-items: center; justify-content: center;
+      border-radius: 14px; padding: 10px 20px;
+      font-size: 12px; font-weight: 600;
+      background: var(--accent); color: #08240F;
+      box-shadow: 0 2px 8px rgba(var(--accent-rgb), 0.3);
+      border: none; cursor: pointer;
+      text-decoration: none;
+      transition: background 0.2s, transform 0.15s, box-shadow 0.2s;
+    }
+    .btn-primary:hover {
+      background: #2bb85a;
+      box-shadow: 0 4px 16px rgba(var(--accent-rgb), 0.4);
+    }
+    .btn-primary:active { transform: scale(0.97); }
+
+    .btn-lang {
+      display: inline-flex; align-items: center; gap: 4px;
+      padding: 6px 12px; border-radius: 10px;
+      font-size: 12px; font-weight: 600;
+      background: rgba(255,255,255,0.05);
+      border: 1px solid rgba(255,255,255,0.12);
+      color: var(--muted); cursor: pointer;
+      transition: color 0.2s, background 0.2s;
+    }
+    .btn-lang:hover {
+      background: rgba(255,255,255,0.08);
+      color: var(--text);
+    }
+
+    /* ─── HERO SECTION ────────────────────────────────────────────────── */
+    .hero {
+      position: relative;
+      z-index: 10;
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 48px;
+      padding: 32px 16px 80px;
+      max-width: 1200px;
+      width: 100%;
+      margin: 0 auto;
+    }
+    @media (min-width: 768px) {
+      .hero {
+        flex-direction: row;
+        gap: 64px;
+        padding: 48px 32px 48px;
+      }
+    }
+
+    /* ─── LEFT: TEXT + MIC ────────────────────────────────────────────── */
+    .hero-left {
+      max-width: 520px;
+      text-align: center;
+    }
+    @media (min-width: 768px) {
+      .hero-left { text-align: left; }
+    }
+
+    .hero-title {
+      font-size: 40px;
+      font-weight: 700;
+      letter-spacing: -0.03em;
+      line-height: 1.12;
+      color: var(--text);
+    }
+    @media (min-width: 768px) { .hero-title { font-size: 56px; } }
+
+    .hero-desc {
+      margin-top: 16px;
+      font-size: 16px;
+      color: var(--muted);
+      line-height: 1.6;
+    }
+    @media (min-width: 768px) { .hero-desc { font-size: 18px; } }
+
+    /* ─── MIC BUTTON ──────────────────────────────────────────────────── */
+    .mic-area {
+      margin-top: 32px;
+      display: flex;
+      justify-content: center;
+    }
+    @media (min-width: 768px) { .mic-area { justify-content: flex-start; } }
+
+    .mic-wrap {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+
+    .mic-ring {
+      position: relative;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .mic-glow {
+      position: absolute;
+      inset: -12px;
+      border-radius: 50%;
+      background: rgba(var(--accent-rgb), 0.20);
+      filter: blur(20px);
+      animation: mic-pulse 3s ease-in-out infinite;
+    }
+
+    @keyframes mic-pulse {
+      0%, 100% { opacity: 0.5; transform: scale(0.95); }
+      50% { opacity: 1; transform: scale(1.05); }
+    }
+
+    .mic-btn {
+      position: relative;
+      width: 112px; height: 112px;
+      border-radius: 50%;
+      background: var(--accent);
+      border: none; cursor: pointer;
+      display: flex; align-items: center; justify-content: center;
+      box-shadow: 0 8px 32px rgba(var(--accent-rgb), 0.3);
+      color: #08240F;
+      transition: transform 0.2s, box-shadow 0.2s;
+    }
+    .mic-btn:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 12px 40px rgba(var(--accent-rgb), 0.4);
+    }
+    .mic-btn:active { transform: scale(0.95); }
+    .mic-btn svg { width: 40px; height: 40px; position: relative; z-index: 1; }
+
+    .mic-label {
+      margin-top: 16px;
+      font-size: 14px; font-weight: 500;
+      color: var(--muted);
+    }
+
+    /* ─── RIGHT: SERVICES CARD ────────────────────────────────────────── */
+    .glass-card {
+      background: var(--card-bg);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      border-radius: 16px;
+      border: 1px solid var(--card-border);
+      position: relative;
+      overflow: hidden;
+      transition: border-color 0.2s, box-shadow 0.2s;
+    }
+    .glass-card::before {
+      content: '';
+      position: absolute;
+      top: 0; left: 0; right: 0;
+      height: 50%;
+      background: linear-gradient(180deg, rgba(255,255,255,0.04) 0%, rgba(255,255,255,0) 100%);
+      pointer-events: none;
+      z-index: 0;
+    }
+    .glass-card > * { position: relative; z-index: 1; }
+
+    .services {
+      max-width: 384px;
+      width: 100%;
+      padding: 16px;
+    }
+
+    .services-list {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .svc {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 12px 16px;
+      border-radius: 14px;
+      background: var(--card-bg);
+      border: 1px solid var(--card-border);
+      transition: border-color 0.2s, background 0.2s;
+      cursor: default;
+    }
+    .svc:hover {
+      border-color: rgba(255,255,255,0.12);
+      background: rgba(255,255,255,0.06);
+    }
+
+    .svc-icon {
+      width: 44px; height: 44px; flex-shrink: 0;
+      border-radius: 12px;
+      background: rgba(var(--accent-rgb), 0.10);
+      display: flex; align-items: center; justify-content: center;
+    }
+    .svc-icon svg { width: 20px; height: 20px; color: var(--accent); }
+
+    .svc-label {
+      font-size: 14px; font-weight: 600;
+      color: var(--text);
+    }
+
+    /* ─── BOTTOM NAV (MOBILE) ─────────────────────────────────────────── */
+    .bottom-nav {
+      position: fixed;
+      bottom: 0; left: 0; right: 0;
+      z-index: 50;
+      display: flex; align-items: center; justify-content: space-around;
+      padding: 8px 0;
+      padding-bottom: max(8px, env(safe-area-inset-bottom, 0px));
+      background: rgba(11, 15, 12, 0.95);
+      backdrop-filter: blur(24px);
+      border-top: 1px solid var(--divider);
+    }
+    @media (min-width: 768px) { .bottom-nav { display: none; } }
+
+    .bnav {
+      display: flex; flex-direction: column; align-items: center;
+      gap: 2px; padding: 8px 16px;
+      font-size: 10px; font-weight: 500;
+      color: var(--muted); text-decoration: none;
+      transition: color 0.2s; flex: 1;
+    }
+    .bnav.active { color: var(--accent); }
+    .bnav:hover { color: var(--text); }
+    .bnav svg { width: 20px; height: 20px; }
+  </style>
+</head>
+<body>
+
+  <main class="page">
+    <div class="glow-1"></div>
+    <div class="glow-2"></div>
+
+    <!-- Navbar -->
+    <nav class="navbar">
+      <div class="nav-left">
+        <img src="/logo.png" alt="Ustad AI" class="nav-logo" onerror="this.style.display='none'" />
+        <span class="nav-brand">Ustad <span>AI</span></span>
+      </div>
+      <div class="nav-right">
+        <button class="btn-lang" type="button">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>
+          EN
+        </button>
+        <a href="/login" class="btn-primary">Sign in</a>
+      </div>
+    </nav>
+
+    <!-- Hero -->
+    <section class="hero">
+      <div class="hero-left">
+        <h1 class="hero-title">Find trusted technicians nearby</h1>
+        <p class="hero-desc">Tap the mic and describe what's broken — we'll find a nearby technician.</p>
+
+        <div class="mic-area">
+          <div class="mic-wrap">
+            <div class="mic-ring">
+              <span class="mic-glow"></span>
+              <button class="mic-btn" type="button" aria-label="Hold to speak">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/>
+                  <path d="M19 10v2a7 7 0 0 1-14 0v-2"/>
+                  <line x1="12" y1="19" x2="12" y2="23"/>
+                  <line x1="8" y1="23" x2="16" y2="23"/>
+                </svg>
+              </button>
+            </div>
+            <p class="mic-label">Hold to speak</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="glass-card services">
+        <div class="services-list">
+          <!-- Plumber -->
+          <div class="svc">
+            <div class="svc-icon">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M6 3v12"/><path d="M18 9a3 3 0 1 0 0-6 3 3 0 0 0 0 6z"/>
+                <path d="M6 21a3 3 0 1 0 0-6 3 3 0 0 0 0 6z"/>
+                <path d="M15 6a9 9 0 0 0-9 9"/><path d="M12 12v9"/>
+                <path d="m8 21 4-4 4 4"/>
+              </svg>
+            </div>
+            <span class="svc-label">Plumber</span>
+          </div>
+          <!-- Electrician -->
+          <div class="svc">
+            <div class="svc-icon">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/>
+              </svg>
+            </div>
+            <span class="svc-label">Electrician</span>
+          </div>
+          <!-- AC Technician -->
+          <div class="svc">
+            <div class="svc-icon">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M4 14.899A7 7 0 1 1 15.71 8h1.79a4.5 4.5 0 0 1 2.5 8.242"/>
+                <path d="M12 12v9"/><path d="m8 21 4-4 4 4"/>
+              </svg>
+            </div>
+            <span class="svc-label">AC Technician</span>
+          </div>
+          <!-- Carpenter -->
+          <div class="svc">
+            <div class="svc-icon">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/>
+              </svg>
+            </div>
+            <span class="svc-label">Carpenter</span>
+          </div>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <!-- Mobile Bottom Nav -->
+  <nav class="bottom-nav">
+    <a href="/" class="bnav active">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+      Home
+    </a>
+    <a href="/dashboard/customer/new-work" class="bnav">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+      New Work
+    </a>
+    <a href="/dashboard/customer/jobs" class="bnav">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="7" width="20" height="14" rx="2" ry="2"/><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"/></svg>
+      Jobs
+    </a>
+    <a href="/dashboard/customer/profile" class="bnav">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+      Profile
+    </a>
+  </nav>
+
+</body>
+</html>
