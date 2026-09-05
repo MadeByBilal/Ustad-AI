@@ -775,19 +775,22 @@ router.post("/:id/messages", requireRole(["customer", "worker"]), async (req: Re
       role = "worker";
     }
     const message = await sendJobMessage(jobId, senderId, role, parsed.data);
-    return ok(
-      {
-        message: {
-          id: String(message._id),
-          sender_type: message.sender_type,
-          content: message.content,
-          media_ids: message.media_ids,
-          location: message.location ?? null,
-          created_at: new Date(message.created_at).toISOString(),
-        },
-      },
-      201
-    )(res);
+    const msgView = {
+      id: String(message._id),
+      sender_type: message.sender_type,
+      content: message.content,
+      media_ids: message.media_ids,
+      location: message.location ?? null,
+      created_at: new Date(message.created_at).toISOString(),
+    };
+
+    // Emit via socket so native app receives real-time messages
+    const io = getIO();
+    if (io) {
+      io.to(`job:${jobId}`).emit("message", [msgView]);
+    }
+
+    return ok({ message: msgView }, 201)(res);
   } catch (e) {
     if (e instanceof FlowError) {
       return fail(res, e.message, e.statusCode, { code: e.code });
@@ -1179,26 +1182,22 @@ router.post("/:id/inspection-offer/respond", requireRole(["customer"]), async (r
     }
 
     if (parsed.data.action === "accept") {
-      // Accept: update offer status and transition job to AWAITING_CUSTOMER_CONFIRMATION
+      // Accept: update offer status and advance to IN_PROGRESS if needed
+      // Job stays at IN_PROGRESS so worker can do the work and upload photos
       await Offer.updateOne({ _id: offer._id }, { $set: { status: "accepted" } });
 
-      // Advance job status if needed
+      // Advance job to IN_PROGRESS if still at ARRIVED
       if (job.status === "ARRIVED") {
         await Job.findOneAndUpdate(
           { _id: jobId, status: "ARRIVED" },
           { $set: { status: "IN_PROGRESS" } },
         );
       }
-      await Job.findOneAndUpdate(
-        { _id: jobId, status: { $in: ["ARRIVED", "IN_PROGRESS"] } },
-        { $set: { status: "AWAITING_CUSTOMER_CONFIRMATION" } },
-      );
-
-      // Record event
+      // Record event — job stays at IN_PROGRESS, NOT AWAITING_CUSTOMER_CONFIRMATION
       await JobEvent.create({
         job_id: jobId,
         from_state: job.status,
-        to_state: "AWAITING_CUSTOMER_CONFIRMATION",
+        to_state: "IN_PROGRESS",
         actor_id: String(sessionUser.user._id),
         actor_type: "customer",
         metadata: { action: "accept_inspection_offer", price: offer.offered_price },
@@ -1209,16 +1208,21 @@ router.post("/:id/inspection-offer/respond", requireRole(["customer"]), async (r
         job_id: jobId,
         sender_id: SYSTEM_SENDER_ID,
         sender_type: "system",
-        content: `Customer accepted inspection offer of Rs ${offer.offered_price.toLocaleString("en-PK")}. Work can proceed.`,
+        content: `Customer accepted inspection offer of Rs ${offer.offered_price.toLocaleString("en-PK")}. You can now proceed with the work.`,
       });
 
-      // Notify worker via socket
+      // Notify worker via socket — job is IN_PROGRESS, worker should do the work
       const io1 = getIO();
       if (io1) {
         io1.to(`job:${jobId}`).emit("inspection-offer-accepted", {
           jobId,
           offerId: String(offer._id),
           price: offer.offered_price,
+        });
+        // Also emit status update so worker page refreshes
+        io1.to(`job:${jobId}`).emit("job-status-update", {
+          jobId,
+          status: "IN_PROGRESS",
         });
       }
 
