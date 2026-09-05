@@ -80,35 +80,37 @@ export default function InspectionPageClient({
     setInspectionDone(true);
   }
 
+  // Advance job through required states until we reach the target
+  async function advanceToStatus(targetStatus: string, note?: string) {
+    const path: Record<string, string> = {
+      ACCEPTED: "EN_ROUTE",
+      EN_ROUTE: "ARRIVED",
+      ARRIVED: "IN_PROGRESS",
+      IN_PROGRESS: "AWAITING_CUSTOMER_CONFIRMATION",
+    };
+    let current = jobStatus;
+    while (current !== targetStatus && path[current]) {
+      const next = path[current];
+      const res = await fetch(`/api/jobs/${jobId}/status`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ status: next, ...(next === "AWAITING_CUSTOMER_CONFIRMATION" && note ? { note } : {}) }),
+      });
+      const body = await res.json().catch(() => null);
+      if (!res.ok || !body?.success) {
+        throw new Error(getApiErrorMessage(body, `Failed to advance to ${next}`));
+      }
+      setJobStatus(next);
+      current = next;
+    }
+  }
+
   // Choice 1: Just inspection — advance to AWAITING_CUSTOMER_CONFIRMATION
   async function handleJustInspection() {
     setAdvancing(true);
     setAdvanceError(null);
     try {
-      // If at ARRIVED, must go through IN_PROGRESS first
-      if (jobStatus === "ARRIVED") {
-        const res = await fetch(`/api/jobs/${jobId}/status`, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ status: "IN_PROGRESS" }),
-        });
-        const body = await res.json().catch(() => null);
-        if (!res.ok || !body?.success) {
-          throw new Error(getApiErrorMessage(body, "Status update failed"));
-        }
-      }
-
-      // Now go to AWAITING_CUSTOMER_CONFIRMATION
-      const res = await fetch(`/api/jobs/${jobId}/status`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ status: "AWAITING_CUSTOMER_CONFIRMATION", note: "inspection_only" }),
-      });
-      const body = await res.json().catch(() => null);
-      if (!res.ok || !body?.success) {
-        throw new Error(getApiErrorMessage(body, "Status update failed"));
-      }
-
+      await advanceToStatus("AWAITING_CUSTOMER_CONFIRMATION", "inspection_only");
       window.location.href = `/dashboard/worker/work`;
     } catch (e) {
       setAdvanceError(e instanceof Error ? e.message : "Failed");
@@ -116,16 +118,18 @@ export default function InspectionPageClient({
     }
   }
 
-  // Choice 2: Needs work — send price offer to customer
   async function handleNeedsWork() {
     const price = parseInt(offerPrice, 10);
     if (!price || price <= 0) {
-      setAdvanceError("Please enter a valid price");
+      setAdvanceError("Please enter a valid price (Rs 1 or more)");
       return;
     }
     setSendingOffer(true);
     setAdvanceError(null);
     try {
+      if (!["ARRIVED", "IN_PROGRESS"].includes(jobStatus)) {
+        await advanceToStatus("IN_PROGRESS");
+      }
       const res = await fetch(`/api/jobs/${jobId}/inspection-offer`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -133,12 +137,12 @@ export default function InspectionPageClient({
       });
       const body = await res.json().catch(() => null);
       if (!res.ok || !body?.success) {
-        throw new Error(getApiErrorMessage(body, "Failed to send offer"));
+        throw new Error(getApiErrorMessage(body, `Server error ${res.status}`));
       }
-
       setOfferSent(true);
+      setTimeout(() => { window.location.href = `/dashboard/worker/work`; }, 3000);
     } catch (e) {
-      setAdvanceError(e instanceof Error ? e.message : "Failed");
+      setAdvanceError(e instanceof Error ? e.message : "Failed to send offer");
     } finally {
       setSendingOffer(false);
     }
@@ -205,7 +209,7 @@ export default function InspectionPageClient({
     );
   }
 
-  // Offer sent confirmation
+  // Offer sent — redirect to work page
   if (offerSent) {
     return (
       <div className="space-y-4">
@@ -225,9 +229,14 @@ export default function InspectionPageClient({
               Waiting for customer to accept your offer of Rs {parseInt(offerPrice, 10).toLocaleString("en-PK")}
             </p>
           </div>
-          <Link href={`/dashboard/worker/chat/${jobId}`} className="btn-primary !rounded-xl !px-6 !py-2.5 text-sm">
-            Open Chat
-          </Link>
+          <div className="flex gap-3">
+            <Link href={`/dashboard/worker/chat/${jobId}`} className="btn-primary !rounded-xl !px-6 !py-2.5 text-sm">
+              Open Chat
+            </Link>
+            <Link href="/dashboard/worker/work" className="rounded-xl border border-divider px-6 py-2.5 text-sm font-semibold text-muted transition-colors hover:bg-surface">
+              Back to Work
+            </Link>
+          </div>
         </motion.div>
       </div>
     );
@@ -237,31 +246,17 @@ export default function InspectionPageClient({
   if (inspectionDone) {
     return (
       <div className="space-y-4">
-        <motion.div
-          className="card"
-          initial={{ opacity: 0, y: 10 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.3 }}
-        >
+        <div className="card">
           <p className="text-sm font-bold text-text">What happens next?</p>
           <p className="mt-1 text-xs text-muted">Choose how to proceed with this job</p>
-        </motion.div>
-
-        {advanceError && (
-          <div className="rounded-xl border border-warning/40 bg-warning/10 px-4 py-3 text-sm text-warning">
-            {advanceError}
-          </div>
-        )}
+        </div>
 
         {/* Choice 1: Just Inspection */}
-        <motion.button
+        <button
           type="button"
           onClick={() => void handleJustInspection()}
           disabled={advancing}
-          whileTap={{ scale: 0.97 }}
-          whileHover={{ y: -2 }}
-          transition={{ duration: 0.15, ease: "easeOut" }}
-          className="card w-full text-left transition-colors hover:bg-accent/5 disabled:opacity-60"
+          className="card w-full text-left transition-colors hover:bg-accent/5 active:scale-[0.98] disabled:opacity-60"
         >
           <div className="flex items-center gap-4">
             <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-success/15">
@@ -276,14 +271,10 @@ export default function InspectionPageClient({
               </p>
             </div>
           </div>
-        </motion.button>
+        </button>
 
         {/* Choice 2: Needs Work */}
-        <motion.div
-          className="card transition-colors"
-          whileHover={{ y: -2 }}
-          transition={{ duration: 0.15, ease: "easeOut" }}
-        >
+        <div className="card">
           <div className="flex items-center gap-4">
             <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-accent/15">
               <svg className="h-6 w-6 text-accent" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
@@ -304,29 +295,32 @@ export default function InspectionPageClient({
               value={offerPrice}
               onChange={(e) => setOfferPrice(e.target.value)}
               placeholder="Enter price"
-              min="0"
+              min="1"
               className="flex-1 rounded-xl border border-divider bg-bg px-4 py-2.5 text-sm text-text outline-none focus:border-accent"
             />
-            <motion.button
+            <button
               type="button"
-              onClick={() => void handleNeedsWork()}
-              disabled={sendingOffer || !offerPrice}
-              whileTap={{ scale: 0.97 }}
-              className="rounded-xl bg-accent px-4 py-2.5 text-sm font-bold text-bg transition-colors hover:bg-accent/90 disabled:opacity-50"
+              onClick={handleNeedsWork}
+              disabled={sendingOffer}
+              className="rounded-xl bg-accent px-4 py-2.5 text-sm font-bold text-bg transition-colors hover:bg-accent/90 active:scale-[0.97] disabled:opacity-50"
             >
               {sendingOffer ? "Sending..." : "Send Offer"}
-            </motion.button>
+            </button>
           </div>
-        </motion.div>
+          {advanceError && (
+            <div className="mt-2 rounded-lg border border-warning/40 bg-warning/10 px-3 py-2 text-xs text-warning">
+              {advanceError}
+            </div>
+          )}
+        </div>
 
-        <motion.button
+        <button
           type="button"
           onClick={() => setInspectionDone(false)}
-          whileTap={{ scale: 0.97 }}
-          className="w-full rounded-xl border border-divider px-4 py-3 text-sm font-semibold text-muted transition-colors hover:bg-surface"
+          className="w-full rounded-xl border border-divider px-4 py-3 text-sm font-semibold text-muted transition-colors hover:bg-surface active:scale-[0.98]"
         >
           Go Back
-        </motion.button>
+        </button>
       </div>
     );
   }

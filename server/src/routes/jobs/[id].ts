@@ -1077,39 +1077,66 @@ router.post("/:id/inspection-offer", requireRole(["worker"]), async (req: Reques
       return fail(res, "Job is not in an inspectable state", 409);
     }
 
-    // Upsert the inspection offer (one per worker per job)
-    const offer = await Offer.findOneAndUpdate(
-      { job_id: jobId, worker_id: String(worker._id), type: "inspection_offer" },
-      {
-        $set: {
-          offered_price: parsed.data.price,
+    const workerIdStr = String(worker._id);
+    const price = parsed.data.price;
+
+    let offer;
+    try {
+      const existing = await Offer.findOne({ job_id: jobId, worker_id: workerIdStr }).sort({ created_at: -1 }).lean();
+      if (existing) {
+        offer = await Offer.findByIdAndUpdate(
+          existing._id,
+          { $set: { type: "inspection_offer", offered_price: price, status: "pending", message: `Inspection offer: Rs ${price.toLocaleString("en-PK")}` } },
+          { new: true },
+        );
+      } else {
+        offer = await Offer.create({
+          job_id: jobId,
+          worker_id: workerIdStr,
+          type: "inspection_offer",
+          offered_price: price,
           status: "pending",
-          message: `Inspection offer: Rs ${parsed.data.price.toLocaleString("en-PK")}`,
-        },
-      },
-      { upsert: true, new: true },
-    );
+          message: `Inspection offer: Rs ${price.toLocaleString("en-PK")}`,
+        });
+      }
+    } catch (offerErr) {
+      console.error("[jobs/:id/inspection-offer] Offer save failed:", offerErr);
+      return fail(res, "Failed to save offer: " + (offerErr instanceof Error ? offerErr.message : String(offerErr)), 500);
+    }
 
-    // Notify customer via socket
-    getIO()?.to(`job:${jobId}`).emit("inspection-offer", {
-      jobId,
-      offerId: String(offer._id),
-      price: parsed.data.price,
-      workerId: String(worker._id),
-    });
+    if (!offer) {
+      return fail(res, "Failed to save offer", 500);
+    }
 
-    // Also send a chat message so customer sees it
-    await Message.create({
-      job_id: jobId,
-      sender_id: String(worker._id),
-      sender_type: "worker",
-      content: `Inspection complete. This job needs additional work. My offer: Rs ${parsed.data.price.toLocaleString("en-PK")}`,
-    });
+    try {
+      const io = getIO();
+      if (io) {
+        io.to(`job:${jobId}`).emit("inspection-offer", {
+          jobId,
+          offerId: String(offer._id),
+          price,
+          workerId: workerIdStr,
+        });
+      }
+    } catch (socketErr) {
+      console.error("[jobs/:id/inspection-offer] Socket emit failed (non-fatal):", socketErr);
+    }
 
-    return ok({ offer_id: String(offer._id), price: parsed.data.price })(res);
+    try {
+      await Message.create({
+        job_id: jobId,
+        sender_id: workerIdStr,
+        sender_type: "worker",
+        content: `Inspection complete. This job needs additional work. My offer: Rs ${price.toLocaleString("en-PK")}`,
+      });
+    } catch (msgErr) {
+      console.error("[jobs/:id/inspection-offer] Message create failed (non-fatal):", msgErr);
+    }
+
+    return ok({ offer_id: String(offer._id), price })(res);
   } catch (e) {
     console.error("[jobs/:id/inspection-offer] error:", e);
-    return fail(res, "Internal error", 500);
+    return fail(res, e instanceof Error ? e.message : "Internal error", 500);
   }
 });
 
@@ -1143,7 +1170,7 @@ router.post("/:id/inspection-offer/respond", requireRole(["customer"]), async (r
     // Find the pending inspection offer
     const offer = await Offer.findOne({
       job_id: jobId,
-      type: "inspection_offer",
+      worker_id: job.matching?.selected_worker_id,
       status: "pending",
     }).sort({ created_at: -1 });
 
@@ -1186,11 +1213,14 @@ router.post("/:id/inspection-offer/respond", requireRole(["customer"]), async (r
       });
 
       // Notify worker via socket
-      getIO()?.to(`job:${jobId}`).emit("inspection-offer-accepted", {
-        jobId,
-        offerId: String(offer._id),
-        price: offer.offered_price,
-      });
+      const io1 = getIO();
+      if (io1) {
+        io1.to(`job:${jobId}`).emit("inspection-offer-accepted", {
+          jobId,
+          offerId: String(offer._id),
+          price: offer.offered_price,
+        });
+      }
 
       return ok({ status: "accepted", price: offer.offered_price })(res);
     } else {
@@ -1205,10 +1235,13 @@ router.post("/:id/inspection-offer/respond", requireRole(["customer"]), async (r
       });
 
       // Notify worker via socket
-      getIO()?.to(`job:${jobId}`).emit("inspection-offer-declined", {
-        jobId,
-        offerId: String(offer._id),
-      });
+      const io2 = getIO();
+      if (io2) {
+        io2.to(`job:${jobId}`).emit("inspection-offer-declined", {
+          jobId,
+          offerId: String(offer._id),
+        });
+      }
 
       return ok({ status: "declined" })(res);
     }

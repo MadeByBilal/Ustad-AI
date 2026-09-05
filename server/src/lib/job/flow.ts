@@ -82,13 +82,16 @@ export async function recordEvent(
     metadata,
   });
 
-  getIO()?.to(`job:${String(jobId)}`).emit("job-status-update", {
-    jobId: String(jobId),
-    fromStatus: from_state,
-    status: to_state,
-    actorType: actor_type,
-    timestamp: new Date().toISOString(),
-  });
+  const io = getIO();
+  if (io) {
+    io.to(`job:${String(jobId)}`).emit("job-status-update", {
+      jobId: String(jobId),
+      fromStatus: from_state,
+      status: to_state,
+      actorType: actor_type,
+      timestamp: new Date().toISOString(),
+    });
+  }
 }
 
 /**
@@ -719,6 +722,25 @@ export async function workerUpdateJobStatus(
       "Upload an after photo before completing the job",
       400,
     );
+  }
+
+  // BLOCK: Cannot advance to AWAITING_CUSTOMER_CONFIRMATION if there is a
+  // pending inspection offer that the customer hasn't responded to yet.
+  // The worker must wait for the customer to accept or decline first.
+  if (status === "AWAITING_CUSTOMER_CONFIRMATION") {
+    const { Offer } = await import("../../models/index.js");
+    const pendingOffer = await Offer.findOne({
+      job_id: jobId,
+      worker_id: workerId,
+      status: "pending",
+    }).lean();
+    if (pendingOffer) {
+      throw new FlowError(
+        "pending_inspection_offer",
+        "Cannot finish job while a pending inspection offer exists — wait for the customer to respond",
+        409,
+      );
+    }
   }
 
   const updated = await Job.findOneAndUpdate(

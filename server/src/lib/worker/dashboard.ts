@@ -287,7 +287,7 @@ export async function getWorkerDashboard(
       emergency_available: Boolean(worker.emergency_available),
       ustad_score: worker.ustad_score ?? 0,
       completed_jobs: worker.completed_jobs ?? 0,
-      average_rating: worker.average_rating ?? 0,
+      average_rating: worker.average_rating || 4,
       response_rate: worker.response_rate ?? 0,
       cancellation_rate: worker.cancellation_rate ?? 0,
       repeat_customers: worker.repeat_customers ?? 0,

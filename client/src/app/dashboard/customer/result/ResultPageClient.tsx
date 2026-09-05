@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { motion } from "framer-motion";
 import { ArrowLeft } from "lucide-react";
@@ -14,6 +15,7 @@ interface StoredResult {
 
 export default function ResultPageClient() {
   const [stored, setStored] = useState<StoredResult | null>(null);
+  const router = useRouter();
 
   useEffect(() => {
     try {
@@ -80,6 +82,10 @@ export default function ResultPageClient() {
         <MatchResults
           data={stored.data}
           location={stored.location}
+          onRequestSent={(jobId) => {
+            sessionStorage.removeItem("voiceResult");
+            router.push(`/dashboard/customer/track/${jobId}`);
+          }}
         />
         <div className="mt-4 flex gap-3 pb-4">
           <Link

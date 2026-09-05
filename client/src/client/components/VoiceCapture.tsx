@@ -1186,7 +1186,6 @@ export default function VoiceCapture({
                 />
               ))}
             </div>
-            //div
             <TextType
               text={[
                 "Ustad is understanding your problem…",
