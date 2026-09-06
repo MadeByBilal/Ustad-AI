@@ -48,7 +48,7 @@ export default function CustomerHomeContent() {
             {t("tapToStart")}
           </p>
         </div>
-        <div className="mt-10">
+        <div className="mt-14">
           <VoiceCapture variant="dashboard" onStatusChange={setVoiceStatus} />
         </div>
       </div>

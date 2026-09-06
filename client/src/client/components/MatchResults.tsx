@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
+  IconStar,
   IconStarFilled,
   IconMapPin,
   IconMicrophone,
@@ -294,7 +295,15 @@ function WorkerMatchCard({
 
             {/* Rating */}
             <span className="flex items-center gap-1" aria-label={`Rating ${worker.average_rating.toFixed(1)} out of 5`}>
-              <IconStarFilled size={14} stroke={0} className="text-warning" />
+              <span className="flex items-center gap-0.5">
+                {[1, 2, 3, 4, 5].map((s) =>
+                  s <= Math.round(worker.average_rating) ? (
+                    <IconStarFilled key={s} size={14} stroke={0} className="text-warning" />
+                  ) : (
+                    <IconStar key={s} size={14} stroke={1.5} className="text-muted/40" />
+                  )
+                )}
+              </span>
               <span className="text-text">{worker.average_rating.toFixed(1)}</span>
             </span>
           </div>

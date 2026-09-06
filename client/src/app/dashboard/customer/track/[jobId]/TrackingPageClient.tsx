@@ -560,7 +560,7 @@ export default function TrackingPageClient({
   return (
     <div className="relative h-[100dvh] w-full overflow-hidden bg-bg">
       {/* Map fills entire viewport */}
-      <div className="absolute inset-0">
+      <div className="absolute inset-0 z-0">
         <TrackingMap
           workerLocation={workerLocation}
           userLocation={customerLocation}

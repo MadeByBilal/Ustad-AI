@@ -7,7 +7,7 @@ interface MicVisualizerProps {
   ringCount?: number;
 }
 
-export default function MicVisualizer({ micLevel, active, ringCount = 6 }: MicVisualizerProps) {
+export default function MicVisualizer({ micLevel, active, ringCount = 3 }: MicVisualizerProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const animRef = useRef(0);
   const ringsRef = useRef<number[]>(new Array(ringCount).fill(0));
