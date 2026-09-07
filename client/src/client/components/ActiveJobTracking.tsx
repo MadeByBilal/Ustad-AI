@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useState, useRef } from "react";
+import { useCallback, useEffect, useState, useRef, type PointerEvent as ReactPointerEvent } from "react";
 import Link from "next/link";
 import ReviewScreen from "./ReviewScreen";
 import { motion } from "framer-motion";
@@ -58,6 +58,33 @@ export default function ActiveJobTracking() {
     price: number;
   } | null>(null);
   const [respondingOffer, setRespondingOffer] = useState(false);
+
+  const [mapHeightPct, setMapHeightPct] = useState(72);
+  const dragRef = useRef({ dragging: false, startY: 0, startPct: 0 });
+
+  const onDragStart = useCallback((e: ReactPointerEvent) => {
+    e.preventDefault();
+    dragRef.current = { dragging: true, startY: e.clientY, startPct: mapHeightPct };
+    const onMove = (ev: PointerEvent) => {
+      if (!dragRef.current.dragging) return;
+      const delta = dragRef.current.startY - ev.clientY;
+      const vh = window.innerHeight;
+      const deltaPct = (delta / vh) * 100;
+      const next = Math.min(85, Math.max(40, dragRef.current.startPct + deltaPct));
+      setMapHeightPct(Math.round(next));
+    };
+    const onUp = () => {
+      dragRef.current.dragging = false;
+      window.removeEventListener("pointermove", onMove);
+      window.removeEventListener("pointerup", onUp);
+      document.body.style.userSelect = "";
+      document.body.style.cursor = "";
+    };
+    window.addEventListener("pointermove", onMove);
+    window.addEventListener("pointerup", onUp);
+    document.body.style.userSelect = "none";
+    document.body.style.cursor = "grabbing";
+  }, [mapHeightPct]);
 
   // Fetch active job
   const refresh = useCallback(async () => {
@@ -536,7 +563,7 @@ export default function ActiveJobTracking() {
       </div>
 
       {/* Map - Always render, show waiting message inside */}
-      <div className="h-[65vh] w-full shrink-0">
+      <div className="w-full shrink-0" style={{ height: `${mapHeightPct}vh` }}>
         <TrackingMap
           workerLocation={workerLocation}
           userLocation={customerLocation}
@@ -546,6 +573,14 @@ export default function ActiveJobTracking() {
           className="h-full w-full"
           precomputedRoute={precomputedRoute}
         />
+      </div>
+
+      {/* Drag handle */}
+      <div
+        onPointerDown={onDragStart}
+        className="relative z-10 flex h-5 w-full cursor-grab items-center justify-center bg-surface active:cursor-grabbing touch-none select-none"
+      >
+        <div className="h-1 w-10 rounded-full bg-divider" />
       </div>
 
       <LiveCustomerLocation
