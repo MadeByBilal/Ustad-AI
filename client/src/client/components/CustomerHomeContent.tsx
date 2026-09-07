@@ -5,12 +5,22 @@ import Link from "next/link";
 import { useLang } from "@/client/lib/i18n/context";
 import VoiceCapture from "@/client/components/VoiceCapture";
 import ActiveJobStatusBar from "@/client/components/ActiveJobStatusBar";
-import { ArrowLeft } from "lucide-react";
+import { ArrowLeft, Droplets, Zap, Snowflake, Fan, Lightbulb, Lock } from "lucide-react";
+
+const EXAMPLES = [
+  { key: "fan", icon: Fan, en: "Fan running slow", ur: "پنہا سست چل رہا ہے" },
+  { key: "tap", icon: Droplets, en: "Tap is leaking", ur: "ٹپ سے پانی ٹپک رہا ہے" },
+  { key: "ac", icon: Snowflake, en: "AC not cooling", ur: "ای سی ٹھنڈ نہیں کر رہی" },
+  { key: "switch", icon: Zap, en: "Switch sparking", ur: "سوئچ چنگاڑھا مار رہا ہے" },
+  { key: "pump", icon: Droplets, en: "Water pump broken", ur: "پانی کا پمپ خراب ہے" },
+  { key: "lock", icon: Lock, en: "Door lock jammed", ur: "تال جم گیا ہے" },
+];
 
 export default function CustomerHomeContent() {
   const { t, lang } = useLang();
   const [voiceStatus, setVoiceStatus] = useState<"idle" | "recording" | "processing" | "clarifying" | "done" | "error">("idle");
   const [hasResults, setHasResults] = useState(false);
+  const [selectedExample, setSelectedExample] = useState<string | null>(null);
 
   useEffect(() => {
     try {
@@ -40,17 +50,61 @@ export default function CustomerHomeContent() {
             Back to results
           </Link>
         )}
+
+        {/* Headline — hides when voice is active */}
         <div className={`transition-all duration-500 ${isActive ? "opacity-0 -translate-y-8 pointer-events-none" : "opacity-100 translate-y-0"}`}>
           <p className="text-center text-3xl font-bold text-[#F1F4F1] sm:text-4xl">
             {t("whatsBroken")}
           </p>
-          <p className="mt-3 text-center text-base text-[#93A396]">
-            {lang === "ur" ? "مثال: میرا پنہا سست چل رہا ہے" : "e.g. my fan is running slow"}
+        </div>
+
+        {/* Example cards grid — hides when voice is active */}
+        {!selectedExample && (
+          <div className={`mt-6 grid w-full max-w-md grid-cols-2 gap-3 transition-all duration-500 sm:grid-cols-3 ${isActive ? "opacity-0 pointer-events-none" : "opacity-100"}`}>
+            {EXAMPLES.map((ex) => {
+              const Icon = ex.icon;
+              return (
+                <button
+                  key={ex.key}
+                  onClick={() => setSelectedExample(ex.key)}
+                  className="flex items-center gap-3 rounded-2xl px-3 py-3 text-left transition-all active:scale-[0.97]"
+                  style={{
+                    background: "rgba(255,255,255,0.04)",
+                    border: "1px solid rgba(255,255,255,0.08)",
+                    backdropFilter: "blur(12px)",
+                  }}
+                >
+                  <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-[#26A650]/10">
+                    <Icon className="h-4 w-4 text-[#26A650]" />
+                  </div>
+                  <span className="text-sm font-medium text-[#F1F4F1] leading-tight">
+                    {lang === "ur" ? ex.ur : ex.en}
+                  </span>
+                </button>
+              );
+            })}
+          </div>
+        )}
+
+        {/* VoiceCapture — shows mic OR auto-submits prefilled text */}
+        <div className={`mt-6 ${selectedExample ? "" : ""}`}>
+          {selectedExample ? (
+            <VoiceCapture
+              variant="dashboard"
+              onStatusChange={setVoiceStatus}
+              prefilledText={EXAMPLES.find((e) => e.key === selectedExample)?.en ?? ""}
+            />
+          ) : (
+            <VoiceCapture variant="dashboard" onStatusChange={setVoiceStatus} />
+          )}
+        </div>
+
+        {/* "Or hold to speak" hint — only when no example selected */}
+        {!selectedExample && !isActive && (
+          <p className="mt-4 text-sm text-[#93A396]">
+            {lang === "ur" ? "یا بولنے کے لیے دبائیں" : "or hold to speak"}
           </p>
-        </div>
-        <div className="mt-14">
-          <VoiceCapture variant="dashboard" onStatusChange={setVoiceStatus} />
-        </div>
+        )}
       </div>
 
       <ActiveJobStatusBar />

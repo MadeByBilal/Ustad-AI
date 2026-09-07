@@ -159,6 +159,8 @@ export interface VoiceCaptureProps {
   variant?: "landing" | "dashboard";
   /** Callback to notify parent when status changes */
   onStatusChange?: (status: Status) => void;
+  /** Pre-filled problem text — auto-submits on mount to start the wizard immediately */
+  prefilledText?: string;
 }
 
 const CATEGORY_LABELS: Record<WorkerCategory, string> = {
@@ -505,6 +507,7 @@ function ResultPanel({
 export default function VoiceCapture({
   variant = "landing",
   onStatusChange,
+  prefilledText,
 }: VoiceCaptureProps) {
   const router = useRouter();
   const [status, setStatus] = useState<Status>("idle");
@@ -573,6 +576,12 @@ export default function VoiceCapture({
       session.cleanup();
     };
   }, []);
+
+  // Auto-submit pre-filled text from example cards (no mic required)
+  useEffect(() => {
+    if (!prefilledText || busy || status !== "idle") return;
+    void run({ text: prefilledText });
+  }, [prefilledText]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const voiceSupported = useCallback(() => {
     return (
