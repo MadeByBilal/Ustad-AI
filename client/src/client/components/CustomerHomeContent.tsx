@@ -26,9 +26,10 @@ export default function CustomerHomeContent() {
 
   return (
     <div className="relative flex min-h-0 flex-1 flex-col overflow-hidden" style={{ background: "#0B0F0C" }}>
-      {/* Subtle ambient glow */}
-      <div className="pointer-events-none absolute -right-24 -top-24 h-72 w-72 rounded-full blur-3xl" style={{ background: "rgba(38,166,80,0.06)" }} />
-      <div className="pointer-events-none absolute -bottom-32 -left-16 h-64 w-64 rounded-full blur-3xl" style={{ background: "rgba(212,162,74,0.04)" }} />
+      {/* Ambient glows */}
+      <div className="pointer-events-none absolute -right-20 -top-20 h-80 w-80 rounded-full blur-3xl" style={{ background: "rgba(38,166,80,0.08)" }} />
+      <div className="pointer-events-none absolute -bottom-28 -left-12 h-72 w-72 rounded-full blur-3xl" style={{ background: "rgba(38,166,80,0.04)" }} />
+      <div className="pointer-events-none absolute left-1/2 top-1/3 h-96 w-96 -translate-x-1/2 -translate-y-1/2 rounded-full blur-[120px]" style={{ background: "rgba(38,166,80,0.03)" }} />
 
       <div className="page-content relative flex flex-1 flex-col items-center justify-center">
         {hasResults && !isActive && (
@@ -40,30 +41,40 @@ export default function CustomerHomeContent() {
             Back to results
           </Link>
         )}
-        <div className={`transition-all duration-500 ${isActive ? "opacity-0 -translate-y-8 pointer-events-none" : "opacity-100 translate-y-0"}`}>
-          <p className="text-center text-3xl font-bold text-[#F1F4F1] sm:text-4xl">
+
+        {/* Headline */}
+        <div className={`text-center transition-all duration-500 ${isActive ? "opacity-0 -translate-y-6 pointer-events-none" : "opacity-100 translate-y-0"}`}>
+          <h1 className="text-4xl font-bold tracking-tight text-[#F1F4F1] sm:text-5xl">
             {t("whatsBroken")}
-          </p>
-          <p className="mt-3 text-center text-base text-[#93A396]">
-            {lang === "ur" ? "مثال: میرا پنہا سست چل رہا ہے" : "e.g. my fan is running slow"}
+          </h1>
+          <p className="mt-3 text-sm text-[#93A396] sm:text-base">
+            {lang === "ur" ? "铥ائیک دبائیں اور بتائیں کیا خراب ہے" : "Hold the mic and tell us what's wrong"}
           </p>
         </div>
-        <div className="mt-14">
+
+        {/* Mic */}
+        <div className="mt-10">
           <VoiceCapture variant="dashboard" onStatusChange={setVoiceStatus} />
         </div>
 
-        {/* How it works — hides when voice is active */}
-        <div className={`mt-8 flex items-center gap-3 transition-all duration-500 ${isActive ? "opacity-0 pointer-events-none" : "opacity-100"}`}>
+        {/* How it works */}
+        <div className={`mt-10 flex items-center gap-4 transition-all duration-500 ${isActive ? "opacity-0 pointer-events-none" : "opacity-100"}`}>
           {[
-            { icon: Mic, label: lang === "ur" ? "بولیں" : "Speak" },
-            { icon: Search, label: lang === "ur" ? "ہم تلاش کریں گے" : "We find" },
-            { icon: Wrench, label: lang === "ur" ? "وہ درست کریں گے" : "They fix" },
+            { num: "1", icon: Mic, label: lang === "ur" ? "بولیں" : "Speak" },
+            { num: "2", icon: Search, label: lang === "ur" ? "تلاش" : "Find" },
+            { num: "3", icon: Wrench, label: lang === "ur" ? ".fix" : "Fix" },
           ].map((step, i) => (
-            <div key={i} className="flex items-center gap-3">
-              {i > 0 && <span className="text-xs text-[#93A396]/40">→</span>}
-              <div className="flex items-center gap-1.5">
-                <step.icon className="h-3.5 w-3.5 text-[#93A396]/60" />
-                <span className="text-xs text-[#93A396]/60">{step.label}</span>
+            <div key={i} className="flex items-center gap-4">
+              {i > 0 && (
+                <div className="flex h-px w-6 items-center">
+                  <div className="h-px w-full bg-gradient-to-r from-[#26A650]/30 to-[#26A650]/10" />
+                </div>
+              )}
+              <div className="flex flex-col items-center gap-1.5">
+                <div className="relative flex h-8 w-8 items-center justify-center rounded-full bg-[#26A650]/10 ring-1 ring-[#26A650]/20">
+                  <step.icon className="h-3.5 w-3.5 text-[#26A650]/70" />
+                </div>
+                <span className="text-[11px] font-medium text-[#93A396]/70">{step.label}</span>
               </div>
             </div>
           ))}
