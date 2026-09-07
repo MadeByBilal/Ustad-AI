@@ -1125,7 +1125,7 @@ export default function VoiceCapture({
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: -20, scale: 0.95 }}
             transition={{ type: "spring", stiffness: 300, damping: 25 }}
-            className="mt-6 flex flex-col items-center gap-2"
+            className="mt-16 flex flex-col items-center gap-2"
           >
             <div className="flex items-center gap-2">
               <span className="relative flex h-2.5 w-2.5">

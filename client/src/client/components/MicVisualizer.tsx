@@ -36,8 +36,16 @@ export default function MicVisualizer({ micLevel, active, ringCount = 6 }: MicVi
     const cy = size / 2;
     const baseRadius = 56;
 
-    // Color palette: warm orange → amber → gold
-    const palette = [
+    // Color palettes
+    const greenPalette = [
+      { h: 142, s: 80, l: 55 }, // green
+      { h: 148, s: 78, l: 52 }, // mid green
+      { h: 154, s: 75, l: 50 }, // teal-green
+      { h: 142, s: 80, l: 48 }, // deep green
+      { h: 148, s: 78, l: 45 }, // darker green
+      { h: 154, s: 75, l: 43 }, // dark teal-green
+    ];
+    const goldPalette = [
       { h: 28, s: 85, l: 60 },  // orange
       { h: 32, s: 82, l: 58 },  // warm orange
       { h: 36, s: 80, l: 56 },  // amber
@@ -67,6 +75,7 @@ export default function MicVisualizer({ micLevel, active, ringCount = 6 }: MicVi
           rings[i] += (breathe - rings[i]) * 0.05;
         }
 
+        const palette = isActive ? goldPalette : greenPalette;
         const color = palette[i % palette.length];
         const r = baseRadius + i * 9 + rings[i] * 14;
 
