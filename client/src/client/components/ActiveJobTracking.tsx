@@ -583,13 +583,14 @@ export default function ActiveJobTracking() {
         <div className="h-1 w-10 rounded-full bg-divider" />
       </div>
 
-      <LiveCustomerLocation
-        jobId={job.job_id}
-        onLocationUpdate={setCustomerLocation}
-      />
-
       {/* Bottom Panel */}
       <div className="max-h-[35vh] flex-1 overflow-y-auto bg-surface px-5 pt-4 pb-2">
+
+        {/* Silent location broadcaster */}
+        <LiveCustomerLocation
+          jobId={job.job_id}
+          onLocationUpdate={setCustomerLocation}
+        />
         {/* Status + Distance */}
         <div className="flex items-center justify-between">
           <div>
