@@ -36,14 +36,14 @@ export default function MicVisualizer({ micLevel, active, ringCount = 6 }: MicVi
     const cy = size / 2;
     const baseRadius = 56;
 
-    // Color palette: green → teal → blue for depth
+    // Color palette: warm orange → amber → gold
     const palette = [
-      { h: 142, s: 80, l: 55 }, // green
-      { h: 160, s: 75, l: 50 }, // teal-green
-      { h: 175, s: 70, l: 48 }, // teal
-      { h: 190, s: 65, l: 45 }, // cyan-teal
-      { h: 205, s: 60, l: 42 }, // blue-cyan
-      { h: 220, s: 55, l: 40 }, // blue
+      { h: 28, s: 85, l: 60 },  // orange
+      { h: 32, s: 82, l: 58 },  // warm orange
+      { h: 36, s: 80, l: 56 },  // amber
+      { h: 40, s: 78, l: 54 },  // gold-amber
+      { h: 44, s: 75, l: 52 },  // gold
+      { h: 48, s: 72, l: 50 },  // deep gold
     ];
 
     const tick = () => {
