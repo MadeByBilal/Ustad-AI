@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useCallback, useRef } from "react";
+import { useEffect, useState, useCallback, useRef, type PointerEvent as ReactPointerEvent } from "react";
 import Link from "next/link";
 import TrackingMap from "@/client/components/tracking/dynamicTrackingMap";
 import LiveCustomerLocation from "@/client/components/tracking/LiveCustomerLocation";
@@ -73,6 +73,33 @@ export default function TrackingPageClient({
   const socketActiveRef = useRef(false);
   const pollTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const hasInspectionOfferRef = useRef(false);
+
+  const [mapHeightPct, setMapHeightPct] = useState(65);
+  const dragRef = useRef({ dragging: false, startY: 0, startPct: 0 });
+
+  const onDragStart = useCallback((e: ReactPointerEvent) => {
+    e.preventDefault();
+    dragRef.current = { dragging: true, startY: e.clientY, startPct: mapHeightPct };
+    const onMove = (ev: PointerEvent) => {
+      if (!dragRef.current.dragging) return;
+      const delta = dragRef.current.startY - ev.clientY;
+      const vh = window.innerHeight;
+      const deltaPct = (delta / vh) * 100;
+      const next = Math.min(85, Math.max(35, dragRef.current.startPct + deltaPct));
+      setMapHeightPct(Math.round(next));
+    };
+    const onUp = () => {
+      dragRef.current.dragging = false;
+      window.removeEventListener("pointermove", onMove);
+      window.removeEventListener("pointerup", onUp);
+      document.body.style.userSelect = "";
+      document.body.style.cursor = "";
+    };
+    window.addEventListener("pointermove", onMove);
+    window.addEventListener("pointerup", onUp);
+    document.body.style.userSelect = "none";
+    document.body.style.cursor = "grabbing";
+  }, [mapHeightPct]);
 
   const handleLocationUpdate = useCallback(
     (data: {
@@ -558,9 +585,27 @@ export default function TrackingPageClient({
 
   // ---- TRACKING STATE (normal tracking with map) ----
   return (
-    <div className="relative h-[100dvh] w-full overflow-hidden bg-bg">
-      {/* Map fills entire viewport */}
-      <div className="absolute inset-0 z-0">
+    <div className="relative flex min-h-0 flex-1 flex-col overflow-hidden bg-bg">
+      {/* Header */}
+      <div className="absolute left-0 right-0 top-0 z-30 flex items-center gap-3 bg-surface/95 px-4 py-3 backdrop-blur-lg" style={{ paddingTop: "max(0.75rem, env(safe-area-inset-top))" }}>
+        <Link href="/dashboard/customer" className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full hover:bg-surface">
+          <svg className="h-5 w-5 text-muted" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 19.5L8.25 12l7.5-7.5" />
+          </svg>
+        </Link>
+        <div className="min-w-0 flex-1">
+          <p className="text-sm font-bold text-text">{workerName}</p>
+          <p className={`text-xs font-medium ${statusInfo.color}`}>{statusInfo.label}</p>
+        </div>
+        <Link href={`/dashboard/customer/chat/${jobId}`} className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full hover:bg-surface">
+          <svg className="h-5 w-5 text-muted" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" d="M8.625 12a.375.375 0 11-.75 0 .375.375 0 01.75 0zm4.125 0a.375.375 0 11-.75 0 .375.375 0 01.75 0zm4.125 0a.375.375 0 11-.75 0 .375.375 0 01.75 0zM3.75 20.105V4.875A2.625 2.625 0 016.375 2.25h11.25A2.625 2.625 0 0120.25 4.875v10.5A2.625 2.625 0 0117.625 18H7.5l-3.75 2.105z" />
+          </svg>
+        </Link>
+      </div>
+
+      {/* Map */}
+      <div className="w-full shrink-0" style={{ height: `${mapHeightPct}vh` }}>
         <TrackingMap
           workerLocation={workerLocation}
           userLocation={customerLocation}
@@ -572,31 +617,23 @@ export default function TrackingPageClient({
         />
       </div>
 
-      {/* Header */}
-      <div className="absolute left-0 right-0 top-0 z-[1000] flex items-center gap-3 bg-surface/95 px-4 py-3 backdrop-blur-lg" style={{ paddingTop: "max(0.75rem, env(safe-area-inset-top))" }}>
-        <Link href="/dashboard/customer" className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-surface/80 backdrop-blur-sm">
-          <svg className="h-5 w-5 text-text" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
-            <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 19.5L8.25 12l7.5-7.5" />
-          </svg>
-        </Link>
-        <div className="min-w-0 flex-1">
-          <p className="text-sm font-bold text-text">{workerName}</p>
-          <p className={`text-xs font-medium ${statusInfo.color}`}>{statusInfo.label}</p>
-        </div>
-        <Link href={`/dashboard/customer/chat/${jobId}`} className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-surface/80 backdrop-blur-sm">
-          <svg className="h-5 w-5 text-text" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
-            <path strokeLinecap="round" strokeLinejoin="round" d="M8.625 12a.375.375 0 11-.75 0 .375.375 0 01.75 0zm4.125 0a.375.375 0 11-.75 0 .375.375 0 01.75 0zm4.125 0a.375.375 0 11-.75 0 .375.375 0 01.75 0zM3.75 20.105V4.875A2.625 2.625 0 016.375 2.25h11.25A2.625 2.625 0 0120.25 4.875v10.5A2.625 2.625 0 0117.625 18H7.5l-3.75 2.105z" />
-          </svg>
-        </Link>
+      {/* Drag handle */}
+      <div
+        onPointerDown={onDragStart}
+        className="relative z-10 flex h-5 w-full cursor-grab items-center justify-center bg-surface active:cursor-grabbing touch-none select-none"
+      >
+        <div className="h-1 w-10 rounded-full bg-divider" />
       </div>
 
-      {/* Live customer GPS */}
+      {/* Silent location broadcaster */}
       {!isCancelled && (
-        <LiveCustomerLocation jobId={jobId} onLocationUpdate={setCustomerLocation} />
+        <div className="sr-only" aria-hidden="true">
+          <LiveCustomerLocation jobId={jobId} onLocationUpdate={setCustomerLocation} />
+        </div>
       )}
 
       {/* Bottom Panel */}
-      <div className="absolute bottom-0 left-0 right-0 z-[1000] max-h-[40vh] overflow-y-auto rounded-t-2xl bg-surface px-5 pt-4 pb-28 shadow-[0_-4px_20px_rgba(0,0,0,0.3)]">
+      <div className="max-h-[35vh] flex-1 overflow-y-auto bg-surface px-5 pt-4 pb-28">
         <div className="flex items-center justify-between">
           <div>
             <p className={`text-lg font-bold ${statusInfo.color}`}>{statusInfo.label}</p>

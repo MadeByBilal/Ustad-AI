@@ -109,7 +109,8 @@ export default function TrackingPage() {
   }
 
   return (
-    <TrackingPageClient
+    <div className="h-dvh">
+      <TrackingPageClient
       jobId={jobId}
       jobStatus={data.jobStatus}
       workerName={data.workerName}
@@ -120,5 +121,6 @@ export default function TrackingPage() {
       originalText={data.originalText}
       category={data.category}
     />
+    </div>
   );
 }
