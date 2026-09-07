@@ -1,1 +1,0 @@
-{"version":3,"file":"route-types.d.ts","sourceRoot":"","sources":["../../src/lib/route-types.ts"],"names":[],"mappings":"AAAA,MAAM,MAAM,UAAU,GAAG,CAAC,MAAM,EAAE,MAAM,CAAC,CAAC;AAE1C,MAAM,WAAW,gBAAgB;IAC/B,QAAQ,EAAE,UAAU,EAAE,CAAC;IACvB,cAAc,EAAE,MAAM,GAAG,IAAI,CAAC;IAC9B,eAAe,EAAE,MAAM,GAAG,IAAI,CAAC;CAChC;AAED,MAAM,WAAW,oBAAqB,SAAQ,gBAAgB;IAC5D,KAAK,EAAE,MAAM,CAAC;CACf"}

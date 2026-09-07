@@ -17,6 +17,7 @@
 /client/.next/
 /client/node_modules/
 /server/node_modules/
+/server/dist/
 
 # production
 /build
@@ -31,7 +32,9 @@ yarn-debug.log*
 yarn-error.log*
 
 # local env files
+.env
 .env*.local
+.env.example
 
 # vercel
 .vercel

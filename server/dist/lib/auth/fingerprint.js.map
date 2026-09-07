@@ -1,1 +1,0 @@
-{"version":3,"file":"fingerprint.js","sourceRoot":"","sources":["../../../src/lib/auth/fingerprint.ts"],"names":[],"mappings":"AAAA,OAAO,EAAE,UAAU,EAAE,MAAM,aAAa,CAAC;AAEzC;;;;GAIG;AACH,MAAM,UAAU,WAAW,CAAC,SAAiB,EAAE,EAAU;IACvD,OAAO,UAAU,CAAC,QAAQ,CAAC;SACxB,MAAM,CAAC,GAAG,SAAS,IAAI,EAAE,EAAE,CAAC;SAC5B,MAAM,CAAC,KAAK,CAAC;SACb,KAAK,CAAC,CAAC,EAAE,EAAE,CAAC,CAAC;AAClB,CAAC"}

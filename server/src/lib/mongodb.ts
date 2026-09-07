@@ -1,7 +1,10 @@
 import mongoose from "mongoose";
 
-const MONGODB_URI =
-  process.env.MONGODB_URI ?? "mongodb+srv://stackonofficial_db_user:5G1ExjXipDyG4Xma@ustadai.cq2zfu2.mongodb.net/ustad_ai";
+const MONGODB_URI = process.env.MONGODB_URI;
+
+if (!MONGODB_URI) {
+  throw new Error("MONGODB_URI environment variable is required");
+}
 
 interface MongooseCache {
   conn: typeof mongoose | null;
