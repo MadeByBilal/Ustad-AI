@@ -504,7 +504,7 @@ export default function WorkerActiveTracking({
       </div>
 
       {/* Bottom Panel */}
-      <div className="flex min-h-0 flex-1 flex-col overflow-y-auto bg-surface px-5 pt-4 pb-32">
+      <div className="flex max-h-[45vh] min-h-0 flex-1 flex-col overflow-y-auto bg-surface px-5 pt-4 pb-32">
         <div className="flex items-center justify-between">
           <div>
             <p className={`text-lg font-bold ${statusInfo.color}`}>
