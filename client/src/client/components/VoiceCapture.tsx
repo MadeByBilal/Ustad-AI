@@ -21,13 +21,7 @@ export interface UnderstandResponse extends AiUnderstandResult {
   };
 }
 
-type Status =
-  | "idle"
-  | "recording"
-  | "processing"
-  | "clarifying"
-  | "done"
-  | "error";
+type Status = "idle" | "recording" | "processing" | "done" | "error";
 
 type Coordinates = { lat: number; lng: number };
 type RunBody = FormData | { clarification?: string; text?: string };
@@ -452,10 +446,6 @@ export default function VoiceCapture({
   const [micLevel, setMicLevel] = useState(0);
   const [error, setError] = useState("");
   const [result, setResult] = useState<UnderstandResponse | null>(null);
-  const [clarificationAnswer, setClarificationAnswer] = useState("");
-  const [clarificationSelections, setClarificationSelections] = useState<
-    string[]
-  >([]);
   const [busy, setBusy] = useState(false);
   const [customerLocation, setCustomerLocation] = useState<Coordinates | null>(
     null,
@@ -698,22 +688,17 @@ export default function VoiceCapture({
           data.workers?.best?.name ?? "none",
         );
         setResult(data);
-        setClarificationSelections([]);
-        if (data.clarification_question || data.manual_fallback) {
-          setStatus("clarifying");
-        } else {
-          setStatus("done");
-          try {
-            sessionStorage.setItem(
-              "voiceResult",
-              JSON.stringify({ data, location }),
-            );
-          } catch {
-            // sessionStorage full or unavailable
-          }
-          if (variant === "dashboard") {
-            router.push("/dashboard/customer/result");
-          }
+        setStatus("done");
+        try {
+          sessionStorage.setItem(
+            "voiceResult",
+            JSON.stringify({ data, location }),
+          );
+        } catch {
+          // sessionStorage full or unavailable
+        }
+        if (variant === "dashboard") {
+          router.push("/dashboard/customer/result");
         }
         pendingBodyRef.current = null;
       } catch (err) {
@@ -990,8 +975,6 @@ export default function VoiceCapture({
     setStatus("idle");
     setError("");
     setResult(null);
-    setClarificationAnswer("");
-    setClarificationSelections([]);
     setCustomerLocation(null);
     setLocationFailure(null);
     setLocationPending(false);
@@ -1181,92 +1164,6 @@ export default function VoiceCapture({
               showCursor={true}
               cursorCharacter="|"
             />
-          </motion.div>
-        )}
-      </AnimatePresence>
-
-      {/* Clarification round */}
-      <AnimatePresence>
-        {status === "clarifying" && result?.clarification_question && (
-          <motion.div
-            key="clarifying"
-            initial={{ opacity: 0, y: 50, scale: 0.96 }}
-            animate={{ opacity: 1, y: 0, scale: 1 }}
-            exit={{ opacity: 0, y: -20, scale: 0.97 }}
-            transition={{ type: "spring", stiffness: 280, damping: 22 }}
-            className="mt-6 w-full space-y-2 rounded-2xl p-4 text-left"
-            style={{
-              background: "rgba(212,162,74,0.1)",
-              border: "1px solid rgba(212,162,74,0.3)",
-            }}
-          >
-            <p className="text-sm font-medium text-[#F1F4F1]">
-              {result.clarification_question}
-            </p>
-            {result.clarification_options &&
-              result.clarification_options.length > 0 && (
-                <div className="space-y-2">
-                  {result.clarification_options.map((option) => (
-                    <label
-                      key={option}
-                      className="flex cursor-pointer items-center gap-2 rounded-xl px-3 py-2 text-sm text-[#F1F4F1]"
-                      style={{
-                        background: "rgba(255,255,255,0.05)",
-                        border: "1px solid rgba(255,255,255,0.12)",
-                      }}
-                    >
-                      <input
-                        type="checkbox"
-                        checked={clarificationSelections.includes(option)}
-                        onChange={(event) => {
-                          setClarificationSelections((current) =>
-                            event.target.checked
-                              ? [...current, option]
-                              : current.filter(
-                                  (selected) => selected !== option,
-                                ),
-                          );
-                        }}
-                        className="h-4 w-4 accent-[#26A650]"
-                      />
-                      {option}
-                    </label>
-                  ))}
-                </div>
-              )}
-            <input
-              type="text"
-              value={clarificationAnswer}
-              onChange={(e) => setClarificationAnswer(e.target.value)}
-              placeholder="Your answer, e.g. bijli ka masla hai"
-              className="w-full rounded-xl px-3 py-2 text-sm text-[#F1F4F1] placeholder:text-[#93A396] outline-none transition-all duration-200 focus:ring-2 focus:ring-[#26A650]/30"
-              style={{
-                background: "rgba(255,255,255,0.05)",
-                border: "1px solid rgba(255,255,255,0.12)",
-              }}
-            />
-            <button
-              type="button"
-              onClick={() =>
-                void run({
-                  clarification: [
-                    ...clarificationSelections,
-                    clarificationAnswer.trim(),
-                  ]
-                    .filter(Boolean)
-                    .join(", "),
-                })
-              }
-              disabled={
-                busy ||
-                (!clarificationAnswer.trim() &&
-                  clarificationSelections.length === 0)
-              }
-              className="w-full rounded-xl py-2 text-sm font-semibold transition-all duration-200 disabled:opacity-50"
-              style={{ background: "#26A650", color: "#08240F" }}
-            >
-              Continue
-            </button>
           </motion.div>
         )}
       </AnimatePresence>

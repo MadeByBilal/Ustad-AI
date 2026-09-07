@@ -442,6 +442,21 @@ export async function transcribeAudio(
   return text;
 }
 
+/** Clean raw transcript into a readable problem description. */
+function cleanDescription(raw: string): string {
+  if (!raw) return raw;
+  let cleaned = raw
+    .replace(/\b(haan|ji|bhai|yaar|acha|theek hai|ok|okay)\b/gi, "")
+    .replace(/\s{2,}/g, " ")
+    .trim();
+
+  if (cleaned.length > 0) {
+    cleaned = cleaned.charAt(0).toUpperCase() + cleaned.slice(1);
+  }
+
+  return cleaned.length > 5 ? cleaned : raw;
+}
+
 export async function understandJobInput(
   opts: AiUnderstandOptions,
 ): Promise<AiUnderstandResult> {
@@ -461,41 +476,50 @@ export async function understandJobInput(
 
   try {
     console.log("[ai] Calling Gemini understand. Text:", combined.substring(0, 100), "Has image:", !!opts.image);
-    const normalized = await geminiUnderstand(
+    let normalized = await geminiUnderstand(
       combined || "About the attached photo.",
       opts.image,
       apiKey,
     );
 
-    if (opts.clarification) {
-      // Round two: commit whatever came back, but flag manual fallback if still unclear.
-      console.log("[ai] Clarification round. Category:", normalized.category, "clarification_required:", normalized.clarification_required);
-      return {
-        source: "gemini",
-        understanding: normalized,
-        manual_fallback: normalized.clarification_required,
-        ...(normalized.clarification_required
-          ? {
-              clarification_question: "Choose the closest type of work to continue.",
-              clarification_options: normalized.clarification_options ?? DEFAULT_CLARIFICATION_OPTIONS,
-            }
-          : {}),
-      };
+    // If category is unknown or confidence is low, retry ONCE with a stronger nudge
+    if (!normalized.category || normalized.confidence < 0.5) {
+      console.log("[ai] Low confidence or unknown category. Retrying with nudge...");
+      const nudgeInput = `The user said: "${combined}". Classify this into exactly ONE category: plumber, electrician, ac_technician, or carpenter. Even if uncertain, pick the closest match. Do NOT return "unknown".`;
+      try {
+        const retry = await geminiUnderstand(
+          nudgeInput,
+          opts.image,
+          apiKey,
+        );
+        if (retry.category) {
+          normalized = retry;
+        }
+      } catch {
+        // Keep first attempt result
+      }
     }
 
-    if (normalized.clarification_required) {
-      console.log("[ai] Clarification needed. Question:", normalized.clarification_question);
-      return {
-        source: "gemini",
-        understanding: normalized,
-        clarification_question: normalized.clarification_question,
-        clarification_options:
-          normalized.clarification_options ?? DEFAULT_CLARIFICATION_OPTIONS,
-      };
+    // Force a category if still missing — pick the best guess from the keyword engine
+    if (!normalized.category) {
+      console.log("[ai] Still no category after retry. Using keyword fallback for category only.");
+      const keywordResult = analyzeJobInput(combined);
+      if (keywordResult.category) {
+        normalized = { ...normalized, category: keywordResult.category };
+      }
     }
 
-    console.log("[ai] Gemini success. Category:", normalized.category, "Confidence:", normalized.confidence);
-    return { source: "gemini", understanding: normalized };
+    // Clean up the description — make it a proper summary, not raw transcript
+    const cleanedDesc = cleanDescription(normalized.description || combined);
+
+    console.log("[ai] Final result. Category:", normalized.category, "Confidence:", normalized.confidence);
+    return {
+      source: "gemini",
+      understanding: {
+        ...normalized,
+        description: cleanedDesc,
+      },
+    };
   } catch (error) {
     console.error(
       "[ai] Gemini understand failed, falling back to keyword engine",
@@ -510,11 +534,5 @@ function fallbackResult(text: string): AiUnderstandResult {
   return {
     source: "fallback",
     understanding,
-    ...(understanding.clarification_required
-      ? {
-          clarification_question: "Aap kis qisam ka kaam karwana chahte hain?",
-          clarification_options: DEFAULT_CLARIFICATION_OPTIONS,
-        }
-      : {}),
   };
 }
