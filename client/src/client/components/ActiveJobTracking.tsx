@@ -29,63 +29,6 @@ const STATUS_LABELS: Record<string, { label: string; color: string }> = {
   },
 };
 
-const PROGRESS_STEPS = [
-  { key: "ACCEPTED", icon: "check" },
-  { key: "EN_ROUTE", icon: "navigation" },
-  { key: "ARRIVED", icon: "map-pin" },
-  { key: "IN_PROGRESS", icon: "tool" },
-  { key: "AWAITING_CUSTOMER_CONFIRMATION", icon: "check-circle" },
-];
-
-function ProgressStepper({ currentStatus }: { currentStatus: string }) {
-  const currentIdx = PROGRESS_STEPS.findIndex((s) => s.key === currentStatus);
-  return (
-    <div className="flex items-center justify-between px-1">
-      {PROGRESS_STEPS.map((step, i) => {
-        const isActive = currentIdx >= i;
-        const isCurrent = step.key === currentStatus;
-        return (
-          <div key={step.key} className="flex flex-1 items-center">
-            <div className="flex flex-col items-center">
-              <div
-                className={`flex h-8 w-8 items-center justify-center rounded-full border-2 transition-all duration-300 ${
-                  isCurrent
-                    ? "border-accent bg-accent/20 text-accent scale-110"
-                    : isActive
-                    ? "border-success bg-success/20 text-success-fg"
-                    : "border-divider text-muted"
-                }`}
-              >
-                <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" d={
-                    step.icon === "check" ? "M4.5 12.75l6 6 9-13.5" :
-                    step.icon === "navigation" ? "M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5M16.5 12L12 16.5m0 0L7.5 12m4.5 4.5V3" :
-                    step.icon === "map-pin" ? "M15 10.5a3 3 0 11-6 0 3 3 0 016 0z M19.5 10.5c0 7.142-7.5 11.25-7.5 11.25S4.5 17.642 4.5 10.5a7.5 7.5 0 1115 0z" :
-                    step.icon === "tool" ? "M11.42 15.17l-5.1-5.1m0 0L3.34 12.04m3.98 3.98L12 9.34m3.98 3.98l3.98-3.98m-3.98 3.98L12 18.34" :
-                    "M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
-                  } />
-                </svg>
-              </div>
-              <span className={`mt-1 text-[9px] font-semibold ${
-                isCurrent ? "text-accent" : isActive ? "text-success-fg" : "text-muted"
-              }`}>
-                {step.key === "ACCEPTED" ? "Accepted" :
-                 step.key === "EN_ROUTE" ? "En Route" :
-                 step.key === "ARRIVED" ? "Arrived" :
-                 step.key === "IN_PROGRESS" ? "Working" : "Confirm"}
-              </span>
-            </div>
-            {i < PROGRESS_STEPS.length - 1 && (
-              <div className={`mx-1 h-0.5 flex-1 rounded-full transition-all duration-300 ${
-                currentIdx > i ? "bg-success" : "bg-divider"
-              }`} />
-            )}
-          </div>
-        );
-      })}
-    </div>
-  );
-}
 
 export default function ActiveJobTracking() {
   const [job, setJob] = useState<ActiveJob | null>(null);
@@ -612,11 +555,6 @@ export default function ActiveJobTracking() {
 
       {/* Bottom Panel */}
       <div className="flex-1 overflow-y-auto bg-surface px-5 pt-4 pb-2">
-        {/* Progress Stepper */}
-        <div className="mb-4">
-          <ProgressStepper currentStatus={job.status} />
-        </div>
-
         {/* Status + Distance */}
         <div className="flex items-center justify-between">
           <div>
