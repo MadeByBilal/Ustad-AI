@@ -1,61 +1,140 @@
 # Ustad AI
 
-AI-powered home repair marketplace for Pakistan. Customers describe a problem in Roman Urdu, Urdu, or English — Ustad matches them with verified nearby workers and handles the full lifecycle from request to payment.
+AI-powered home repair marketplace for Pakistan. Customers speak their problem in Roman Urdu, Urdu, or English — Ustad understands it, finds the right worker, and tracks the job from request to completion.
 
 Built for the Alibaba AI Hackathon 2026.
 
 ---
 
-## What It Does
+## How It Works
 
-A customer holds a button, describes a leaking pipe or dead outlet in their own words. Ustad understands the problem using Gemini, determines the category (plumber, electrician, AC technician, carpenter), estimates urgency, and broadcasts the job to qualified workers within a configurable radius. Workers respond, the customer picks one, and both track each other in real time on a map until the job is done.
+### Customer Journey
+
+```
+  HOLD MIC           AI UNDERSTANDS         PICK A WORKER        TRACK LIVE
+     |                     |                     |                    |
+     v                     v                     v                    v
++----------+      +------------------+    +-----------+       +------------+
+| Record   | ---> | Gemini reads     |    | See ranked| --->  | Map shows  |
+| voice or |      | your words       |    | workers   |       | worker     |
+| type text|      | (Roman Urdu/Urdu/|    | with      |       | driving to |
++----------+      | English)         |    | prices &  |       | you in     |
+                  +------------------+    | ratings   |       | real time  |
+                         |                +-----------+       +------------+
+                         v                       |                    |
+                  +------------------+           v                    v
+                  | Knows: category, |    +-----------+       +------------+
+                  | skills needed,   |    | Worker    |       | Job done.  |
+                  | urgency, price   |    | accepts.  |       | Confirm &  |
+                  | range in PKR     |    | Deal made.|       | pay.       |
+                  +------------------+    +-----------+       +------------+
+```
+
+### Worker Journey
+
+```
+  GET ALERTED          RESPOND               NAVIGATE              FINISH
+       |                  |                      |                    |
+       v                  v                      v                    v
++-------------+    +-------------+        +-------------+      +-------------+
+| Push notif: |    | See job     |        | Map with    |      | Mark work   |
+| "New job     | -> | details +   | -----> | route to    | ---> | done.       |
+| near you"   |    | AI price    |        | customer.   |      | Upload      |
++-------------+    | estimate    |        | Drive there.|      | before/after|
+                   +-------------+        +-------------+      | photos.     |
+                          |                                    +-------------+
+                          v                                          |
+                   +-------------+                                  v
+                   | Counter or  |                           +-------------+
+                   | accept the  |                           | Customer    |
+                   | offer.      |                           | confirms &  |
+                   +-------------+                           | pays.       |
+                                                             +-------------+
+```
+
+### The AI Pipeline
+
+```
++------------------+      +------------------+      +------------------+
+|  YOUR VOICE      |      |  ASSEMBLYAI      |      |  GEMINI          |
+|  "Mera pipe      | ---> |  Transcribes to  | ---> |  Extracts:       |
+|  leak kar raha    |      |  text (Urdu/EN)  |      |  - Category      |
+|  hai"             |      |                  |      |  - Skills needed |
++------------------+      +------------------+      |  - Urgency       |
+                                                    |  - Price range   |
+                                                    |  - Safety flags  |
+                                                    +------------------+
+                                                             |
+                                                    +------------------+
+                                                    |  IF UNSURE:      |
+                                                    |  Asks you a      |
+                                                    |  question first  |
+                                                    |  ("Bijli/Pani/   |
+                                                    |   AC/Lakri?")    |
+                                                    +------------------+
+```
+
+---
+
+## The Complete Job Lifecycle
+
+```
+ 1. DESCRIBE         2. AI ANALYZES       3. MATCH             4. AGREE PRICE
+ +-----------+       +-----------+        +-----------+        +-----------+
+ | Voice or  | ----> | Category:  | ----> | Broadcast | ----> | Customer  |
+ | text      |       | plumber    |       | to nearby |       | offers    |
+ | input     |       | Skills:    |       | workers   |       | PKR 1200  |
+ +-----------+       | pipe repair|       | in 5km    |       |           |
+                     | Urgency:   |       | radius    |       | Worker    |
+                     | normal     |       |           |       | counters  |
+                     | Price:     |       | Workers   |       | PKR 1500  |
+                     | 800-1500   |       | respond   |       |           |
+                     +-----------+       +-----------+       +-----------+
+                                                                |
+ 8. COMPLETE         7. WORK DONE        6. ON THE JOB        5. GO
+ +-----------+       +-----------+       +-----------+        +-----------+
+ | Customer  | ----> | Worker     | ----> | Customer  | <---- | Worker    |
+ | confirms, |       | uploads    |       | watches   |       | drives to |
+ | rates,    |       | before/    |       | worker    |       | customer  |
+ | pays      |       | after      |       | live on   |       | on map    |
+ +-----------+       | photos     |       | map       |       +-----------+
+                     +-----------+       +-----------+
+```
 
 ---
 
 ## Features
 
-### Voice-First Job Creation
-Customers record audio or type text. AssemblyAI transcribes voice in Urdu or English; Gemini analyzes the transcript to extract category, skills, urgency, and price estimate. If confidence is low, Ustad asks a clarification question in Roman Urdu before proceeding.
+### Voice-First
+Hold the mic button, speak naturally in Roman Urdu, Urdu, or English. AssemblyAI transcribes it, Gemini understands it. No typing needed.
 
-### AI Job Understanding
-Two-round analysis pipeline:
-- **Round 1**: Gemini classifies the job into a category, extracts required skills, estimates urgency, and provides a PKR price range.
-- **Round 2** (optional): If the model is unsure, it asks the customer a short clarifying question with checkbox-friendly options.
-- **Fallback engine**: When Gemini or AssemblyAI is unavailable, a keyword-based analyzer classifies jobs from the same canonical skill taxonomy.
+### AI Understanding (Two Rounds)
+- **Round 1**: Gemini classifies the job, extracts skills, estimates urgency, gives a PKR price range.
+- **Round 2** (if needed): Asks a short clarifying question in Roman Urdu ("Bijli / Pani / AC / Lakri?").
+- **Fallback**: If Gemini is offline, a keyword-based engine handles classification.
 
-### Worker Matching & Ranking
-Weighted scoring across five dimensions:
-- Skill match (30%)
-- Distance (25%)
-- Reliability — completion rate, response rate, cancellation rate (20%)
-- Ustad score (15%)
-- Response rate (10%)
+### Smart Worker Matching
+Scored across 5 weighted dimensions:
 
-Emergency jobs get a +10 bonus for workers who opted into emergency service. Verified workers get a +5 bonus. The system handles geo-bounding-box queries via MongoDB 2dsphere indexes.
+| Dimension | Weight | What It Means |
+|-----------|--------|---------------|
+| Skill match | 30% | Worker has the exact skills needed |
+| Distance | 25% | How close they are (2dsphere geo query) |
+| Reliability | 20% | Completion rate, low cancellations |
+| Ustad score | 15% | Platform reputation score |
+| Response rate | 10% | How often they accept jobs |
 
-### Real-Time Tracking
-Both customer and worker see each other's live location on a Leaflet map with Socket.IO. Routes are precomputed using the OSRM public API. Adjustable map/panel split via draggable slider handle on all tracking pages.
+Emergency jobs: +10 bonus for emergency-available workers.
+Verified workers: +5 bonus.
 
-### Multi-Round Pricing
-- AI-estimated price range per category (e.g., plumber: 800–1500 PKR)
-- Customer makes an offer
-- Worker can counter (validated within 0.5x–2x of customer offer)
-- Final price agreed before work begins
-- Inspection fee charged upfront
+### Price Negotiation
+AI estimates a range. Customer offers. Worker counters (validated within 0.5x–2x). Deal struck before work begins. Inspection fee paid upfront.
 
-### Job State Machine
-14 states with actor-based transition permissions (customer, worker, system):
-
-```
-DRAFT → ANALYZING → WAITING_FOR_CUSTOMER → READY_TO_MATCH → BROADCASTING
-→ WORKER_RESPONSES → CUSTOMER_SELECTING → ACCEPTED → EN_ROUTE → ARRIVED
-→ IN_PROGRESS → AWAITING_CUSTOMER_CONFIRMATION → COMPLETED
-```
-
-Terminal states: COMPLETED, CANCELLED, EXPIRED, DISPUTED.
+### Live Tracking
+Leaflet map + Socket.IO. Customer watches worker en route. Worker navigates to customer. Both see real-time positions and route via OSRM.
 
 ### Profile Pictures
-Cloudinary unsigned upload for both customer and worker profiles. Profile images appear across match cards, review screens, and the active job tracking view.
+Cloudinary upload for both sides. Photos appear on match cards, review screens, and tracking views.
 
 ---
 
@@ -63,184 +142,114 @@ Cloudinary unsigned upload for both customer and worker profiles. Profile images
 
 ```
 ustad/
-├── contracts/          Shared TypeScript interfaces (Job, Worker, API, AI)
-├── server/             Express + Mongoose + Socket.IO
+├── contracts/              Shared TypeScript types (no runtime code)
+│   ├── job.ts              16 job statuses, pricing, matching interfaces
+│   ├── worker.ts           Worker categories, scoring, dashboard views
+│   ├── api.ts              Response envelope, haversine, bounding box
+│   └── ai.ts               AI result types
+│
+├── server/                 Express + Mongoose + Socket.IO
 │   └── src/
 │       ├── models/         User, Worker, Job, Offer, Review, Broadcast
-│       ├── routes/         auth, jobs, workers, requests, ai, photos, routes, health
+│       ├── routes/         auth, jobs, workers, requests, ai, photos, routes
 │       ├── lib/
-│       │   ├── job/        ai.ts (Gemini+AssemblyAI), analyze.ts (fallback), state-machine.ts, pricing.ts
-│       │   ├── matching.ts Worker scoring & geo queries
-│       │   ├── geo.ts      Haversine, bounding box
-│       │   ├── socket.ts   Socket.IO setup
-│       │   └── mongodb.ts  Mongoose connection
-│       └── scripts/        seed.ts
-├── client/             Next.js 14 + React 18 + Tailwind + Leaflet
-│   └── src/
-│       ├── app/            Next.js App Router pages
-│       │   ├── dashboard/
-│       │   │   ├── customer/   home, new-work, active, track, result, jobs, chat, profile, demo
-│       │   │   └── worker/     dashboard, active, inspection, work, jobs, stats, chat, profile
-│       │   └── login/
-│       └── client/
-│           ├── components/
-│           │   ├── tracking/   TrackingMap, LiveWorkerLocation, LiveCustomerLocation, JobRoute
-│           │   ├── matching/   MatchResults, ReviewScreen, WorkerCard
-│           │   ├── ProfileAvatar, CloudinaryUpload
-│           │   ├── MicVisualizer, VoiceCapture, AudioWaveform
-│           │   └── ui/         Button, Card, GlassCard, Badge, StatusBadge, etc.
-│           └── hooks/      useSocket, useAuth, useGeolocation, useWorkerLocation
+│       │   ├── job/        ai.ts (Gemini + AssemblyAI), state-machine.ts
+│       │   ├── matching.ts Weighted scoring + geo queries
+│       │   ├── geo.ts      Haversine distance, bounding box
+│       │   └── socket.ts   Real-time events
+│       └── scripts/        seed.ts (test data)
+│
+└── client/                 Next.js 14 + React 18 + Tailwind
+    └── src/
+        ├── app/
+        │   ├── dashboard/
+        │   │   ├── customer/   home, new-work, active, track/, result, profile
+        │   │   └── worker/     dashboard, active, inspection, work, stats, profile
+        │   └── login/
+        └── client/components/
+            ├── tracking/       TrackingMap, LiveWorkerLocation, LiveCustomerLocation
+            ├── matching/       MatchResults, ReviewScreen
+            ├── MicVisualizer   Voice recording UI with animated rings
+            └── ProfileAvatar   Cloudinary-backed profile images
 ```
-
-### Shared Contracts
-The `contracts/` package defines all TypeScript interfaces shared between server and client — job statuses, worker categories, API response envelopes, pricing validation, and geo utilities (haversine distance, bounding box, ETA estimation).
 
 ---
 
 ## Tech Stack
 
-| Layer | Technology |
-|-------|-----------|
-| Frontend | Next.js 14, React 18, TypeScript, Tailwind CSS |
-| Animations | Framer Motion, GSAP, CSS custom animations |
-| Maps | Leaflet + OpenStreetMap tiles |
-| Real-time | Socket.IO (client + server) |
-| Charts | Recharts |
-| Backend | Express 4, TypeScript, tsx |
-| Database | MongoDB + Mongoose 8 (2dsphere geo indexes) |
-| AI | Google Gemini (job understanding), AssemblyAI (speech-to-text) |
-| Media | Cloudinary (profile image upload) |
-| Routing | OSRM public API (job route computation) |
-| Validation | Zod |
-| Testing | Vitest |
-| Deployment | Vercel (client), Render (server) |
+| Layer | What | Why |
+|-------|------|-----|
+| Frontend | Next.js 14 + React 18 + TypeScript | App Router, SSR, type safety |
+| Styling | Tailwind CSS + Framer Motion + GSAP | Utility-first + animations |
+| Maps | Leaflet + OpenStreetMap | Free, no API key required |
+| Real-time | Socket.IO | Bidirectional location streaming |
+| Charts | Recharts | Worker stats dashboard |
+| Backend | Express 4 + TypeScript | Simple, fast to build |
+| Database | MongoDB + Mongoose | Geo queries (2dsphere), flexible schema |
+| AI | Google Gemini + AssemblyAI | Job understanding + voice transcription |
+| Uploads | Cloudinary | Profile images, unsigned upload |
+| Routes | OSRM public API | Free route computation |
+| Validation | Zod | Shared schemas, runtime checks |
+| Testing | Vitest | Fast unit tests |
+| Deploy | Vercel (client) + Render (server) | Free tier, zero config |
 
 ---
 
-## Getting Started
-
-### Prerequisites
-- Node.js 18+
-- MongoDB instance (local or Atlas)
-- API keys: Gemini, AssemblyAI, Cloudinary
-
-### 1. Clone and install
+## Quick Start
 
 ```bash
 git clone <repo-url> && cd ustad
-npm install
-cd server && npm install && cd ..
-cd client && npm install && cd ..
+cp .env.example .env    # fill in your API keys
+npm install && cd server && npm install && cd ../client && npm install && cd ..
+cd server && npm run seed && cd ..   # create test data
+cd server && npm run dev             # terminal 1: localhost:5000
+cd client && npm run dev             # terminal 2: localhost:3001
 ```
 
-### 2. Environment variables
-
-Copy the example and fill in your keys:
-
-```bash
-cp .env.example .env
-```
-
-Required variables:
+### Required Environment Variables
 
 ```env
-# MongoDB
-MONGODB_URI=mongodb+srv://<user>:<pass>@cluster.mongodb.net/ustad
-
-# Server
-PORT=5000
-CLIENT_URL=http://localhost:3001
-
-# AI
-GEMINI_API_KEY=<your-gemini-key>
-ASSEMBLYAI_API_KEY=<your-assemblyai-key>
-
-# Cloudinary
-CLOUDINARY_CLOUD_NAME=dbbrfcgpv
+MONGODB_URI=mongodb+srv://...          # MongoDB Atlas or local
+GEMINI_API_KEY=...                     # Google AI Studio
+ASSEMBLYAI_API_KEY=...                 # assemblyai.com
+CLOUDINARY_CLOUD_NAME=dbbrfcgpv        # Cloudinary
 CLOUDINARY_API_KEY=918617413785261
 CLOUDINARY_API_SECRET=g4rPd_qH_jcR3CjXrpzjw3z3dow
-
-# Client (NEXT_PUBLIC_ prefix for browser access)
 NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME=dbbrfcgpv
 NEXT_PUBLIC_CLOUDINARY_UPLOAD_PRESET=ustad_uploads
-NEXT_PUBLIC_CARTO_API_KEY=<optional, for basemap tiles>
 ```
-
-### 3. Seed the database
-
-```bash
-cd server && npm run seed && cd ..
-```
-
-Creates test users, workers across all four categories, and sample jobs.
-
-### 4. Run
-
-```bash
-# Terminal 1 — server
-cd server && npm run dev
-
-# Terminal 2 — client
-cd client && npm run dev
-```
-
-Server runs on `http://localhost:5000`, client on `http://localhost:3001`.
 
 ---
 
-## API Routes
+## API Endpoints
 
-| Method | Path | Purpose |
-|--------|------|---------|
+| Method | Endpoint | Purpose |
+|--------|----------|---------|
 | POST | `/api/auth/register` | Register (customer or worker) |
-| POST | `/api/auth/login` | Email + password login |
-| GET | `/api/auth/me` | Current session user |
-| PATCH | `/api/auth/profile-image` | Upload customer profile image |
+| POST | `/api/auth/login` | Login |
+| GET | `/api/auth/me` | Current session |
 | POST | `/api/jobs` | Create job from voice/text |
-| GET | `/api/jobs` | List jobs for current user |
-| GET | `/api/jobs/:id` | Get job detail |
-| POST | `/api/jobs/:id/offer` | Submit customer offer |
-| PATCH | `/api/jobs/:id/accept` | Accept a worker |
-| PATCH | `/api/jobs/:id/status` | Update job status |
-| GET | `/api/workers/dashboard` | Worker dashboard data |
-| PATCH | `/api/workers/me/profile-image` | Upload worker profile image |
-| PATCH | `/api/workers/me/location` | Update worker location |
-| POST | `/api/requests/offer` | Worker submits counter-offer |
-| POST | `/api/ai/understand` | Analyze job input (text/image) |
-| POST | `/api/ai/transcribe` | Transcribe audio file |
-| POST | `/api/photos/upload` | Upload job photo |
-| POST | `/api/routes/compute` | Compute route via OSRM |
+| GET | `/api/jobs/:id` | Job detail |
+| POST | `/api/jobs/:id/offer` | Customer makes offer |
+| PATCH | `/api/jobs/:id/status` | Update job state |
+| GET | `/api/workers/dashboard` | Worker dashboard |
+| POST | `/api/ai/understand` | Analyze job input |
+| POST | `/api/ai/transcribe` | Transcribe audio |
+| POST | `/api/routes/compute` | OSRM route |
 
 ---
 
-## Database Models
+## Database
 
-**User** — email, password_hash, role (customer/worker/admin), phone, language (ur/en), location (GeoJSON Point), profile_image, stats (rating, trust score, cancellations).
+**User** — email, password_hash, role (customer/worker/admin), phone, language (ur/en), location, profile_image.
 
-**Worker** — user_id (ref), name, profile_image, category (plumber/electrician/ac_technician/carpenter), skills[], is_online, is_available, emergency_available, verified, verification_level, location (GeoJSON Point), ustad_score, completed_jobs, response_rate, cancellation_rate, average_rating.
+**Worker** — name, category (plumber/electrician/ac_technician/carpenter), skills[], verified, location (GeoJSON Point), ustad_score, completed_jobs, average_rating.
 
-**Job** — customer_id (ref), status (14-state enum), input (type, original_text, transcript, photo_ids), understanding (category, subcategory, description, required_skills, urgency, safety_flags, confidence, complexity), location (GeoJSON Point + address_label), pricing (estimate_min/max, inspection_fee, customer_offer, worker_counter_offer, final_price, currency, status), matching (search_radius_km, broadcast_round, eligible_workers_count, selected_worker_id), completion (before/after photos, note, customer_confirmed), route (polyline, distance, duration).
+**Job** — status (14 states), input (voice/text/photo), understanding (AI-extracted category, skills, urgency, price), location, pricing (estimate, offer, counter, final), matching (broadcast, eligible workers, selected worker), route (polyline from OSRM).
 
-**Offer** — job_id, worker_id, type (broadcast_response/direct_request), status (pending/accepted/rejected/countered/expired), price, counter_price, message.
+**Offer** — worker response to a job (accept, counter, reject).
 
-**Review** — job_id, customer_id, worker_id, rating (1–5), tags[], text.
-
-**Broadcast** — job_id, search_radius_km, eligible_worker_ids[], round, status.
-
----
-
-## Deployment
-
-### Vercel (Client)
-- Framework: Next.js
-- Build command: `cd client && npm install && npm run build`
-- Output: `.next`
-- Env vars: `NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME`, `NEXT_PUBLIC_CLOUDINARY_UPLOAD_PRESET`
-
-### Render (Server)
-- Build command: `cd server && npm install && npm run build`
-- Start command: `cd server && node --import tsx/esm dist/index.js`
-- Env vars: all server-side vars from `.env.example`
+**Review** — customer rating (1–5) + text after job completion.
 
 ---
 
