@@ -19,7 +19,7 @@ interface ActiveJob {
 }
 
 const STATUS_LABELS: Record<string, { label: string; color: string }> = {
-  ACCEPTED: { label: "Worker accepted", color: "text-success-fg" },
+  ACCEPTED: { label: "Worker accepted", color: "text-accent" },
   EN_ROUTE: { label: "On the way", color: "text-accent" },
   ARRIVED: { label: "Arrived", color: "text-accent" },
   IN_PROGRESS: { label: "Work in progress", color: "text-accent" },
@@ -611,7 +611,7 @@ export default function ActiveJobTracking() {
       />
 
       {/* Bottom Panel */}
-      <div className="flex-1 overflow-y-auto bg-surface px-5 pt-4 page-bottom-safe-inline">
+      <div className="flex-1 overflow-y-auto bg-surface px-5 pt-4 pb-2">
         {/* Progress Stepper */}
         <div className="mb-4">
           <ProgressStepper currentStatus={job.status} />

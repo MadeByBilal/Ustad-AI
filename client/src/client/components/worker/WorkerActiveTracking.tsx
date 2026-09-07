@@ -17,7 +17,7 @@ interface ActiveJob {
 }
 
 const STATUS_LABELS: Record<string, { label: string; color: string }> = {
-  ACCEPTED: { label: "Ready to go", color: "text-success-fg" },
+  ACCEPTED: { label: "Ready to go", color: "text-accent" },
   EN_ROUTE: { label: "On the way", color: "text-accent" },
   ARRIVED: { label: "Arrived", color: "text-accent" },
   IN_PROGRESS: { label: "Working", color: "text-accent" },

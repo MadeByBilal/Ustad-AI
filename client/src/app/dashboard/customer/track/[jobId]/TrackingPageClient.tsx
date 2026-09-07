@@ -20,7 +20,7 @@ interface TrackingPageClientProps {
 }
 
 const STATUS_LABELS: Record<string, { label: string; color: string }> = {
-  ACCEPTED: { label: "Worker accepted", color: "text-success-fg" },
+  ACCEPTED: { label: "Worker accepted", color: "text-accent" },
   EN_ROUTE: { label: "On the way to you", color: "text-accent" },
   ARRIVED: { label: "Has arrived", color: "text-accent" },
   IN_PROGRESS: { label: "Working", color: "text-accent" },

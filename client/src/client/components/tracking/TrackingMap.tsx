@@ -242,18 +242,18 @@ export default function TrackingMap({
       return L.divIcon({
         html: `
           <div style="
-            width: 32px; height: 40px;
+            width: 28px; height: 36px;
             position: relative;
           ">
-            <svg viewBox="0 0 24 36" fill="none" xmlns="http://www.w3.org/2000/svg">
-              <path d="M12 0C5.4 0 0 5.4 0 12c0 9 12 24 12 24s12-15 12-24C24 5.4 18.6 0 12 0z" fill="#1a1a1a"/>
-              <circle cx="12" cy="12" r="5" fill="#F5EDE0"/>
+            <svg viewBox="0 0 24 32" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <path d="M4 1v30" stroke="#1a1a1a" stroke-width="2.5" stroke-linecap="round"/>
+              <path d="M4 2h14l-3 4.5L18 11H4V2z" fill="#1a1a1a"/>
             </svg>
           </div>
         `,
         className: "",
-        iconSize: [32, 40],
-        iconAnchor: [16, 40],
+        iconSize: [28, 36],
+        iconAnchor: [4, 36],
       });
     },
     [perspective],
