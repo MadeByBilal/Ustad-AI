@@ -651,8 +651,6 @@ export default function TrackingPageClient({
           </div>
         </div>
 
-        <p className="mt-3 font-urdu text-sm text-text/80 line-clamp-2">{originalText}</p>
-
         {!isCancelled && (
           <div className="mt-4 flex flex-col gap-3">
             <div className="flex gap-3">
