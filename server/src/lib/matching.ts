@@ -491,7 +491,7 @@ export async function getWorkerOptions(
 
   const candidates = await Worker.find(query)
       .select(
-        "_id name category skills ustad_score completed_jobs confirmed_jobs response_rate cancellation_rate average_rating emergency_available emergency_capabilities verification_level verified location"
+        "_id name profile_image category skills ustad_score completed_jobs confirmed_jobs response_rate cancellation_rate average_rating emergency_available emergency_capabilities verification_level verified location"
       )
     .lean();
 
@@ -556,6 +556,7 @@ export async function getWorkerOptions(
     return {
       id: String(doc._id),
       name: doc.name || "Ustad",
+      profile_image: (doc as any).profile_image ?? null,
       category: (doc.category ?? "plumber") as WorkerCategory,
       skills: doc.skills,
       verified: doc.verified === true,

@@ -24,6 +24,7 @@ const workerSchema = new Schema(
       index: true,
     },
     name: { type: String, required: true, trim: true },
+    profile_image: { type: String, default: null },
     category: {
       type: String,
       enum: WORKER_CATEGORIES,

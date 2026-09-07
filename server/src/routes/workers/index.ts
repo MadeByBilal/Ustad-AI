@@ -340,6 +340,10 @@ const profileUpdateSchema = z.object({
   skills: z.array(z.string().trim().max(50)).max(10).optional(),
 });
 
+const profileImageSchema = z.object({
+  profile_image: z.string().url().max(500).nullable(),
+});
+
 /**
  * PATCH /me/profile — update worker profile details (name, category, skills).
  */
@@ -375,6 +379,38 @@ router.patch("/me/profile", requireRole(["worker"]), async (req: Request, res: R
     })(res);
   } catch (error) {
     console.error("[workers/me/profile] error:", error);
+    return fail(res, "Internal error", 500);
+  }
+});
+
+/**
+ * PATCH /me/profile-image — update worker profile image URL (Cloudinary).
+ */
+router.patch("/me/profile-image", requireRole(["worker"]), async (req: Request, res: Response) => {
+  const sessionUser = res.locals.sessionUser;
+
+  const parsed = profileImageSchema.safeParse(req.body ?? {});
+  if (!parsed.success) {
+    return fail(res, "Invalid request", 400, parsed.error.flatten().fieldErrors);
+  }
+
+  try {
+    await connectDB();
+    const worker = await Worker.findOneAndUpdate(
+      { user_id: sessionUser.user._id },
+      { $set: { profile_image: parsed.data.profile_image } },
+      { new: true },
+    ).lean();
+
+    if (!worker) {
+      return fail(res, "Worker profile not found for this account", 404);
+    }
+
+    return ok({
+      profile_image: worker.profile_image ?? null,
+    })(res);
+  } catch (error) {
+    console.error("[workers/me/profile-image] error:", error);
     return fail(res, "Internal error", 500);
   }
 });

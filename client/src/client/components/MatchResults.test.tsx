@@ -29,6 +29,7 @@ function buildData(overrides: Partial<MatchResultsData> = {}): MatchResultsData 
       best: {
         id: "w1",
         name: "Muhammad Imran",
+        profile_image: null,
         category: "electrician",
         skills: ["electrical_fault", "switch_repair"],
         verified: true,
@@ -47,6 +48,7 @@ function buildData(overrides: Partial<MatchResultsData> = {}): MatchResultsData 
         {
           id: "w2",
           name: "Asad Mehmood",
+          profile_image: null,
           category: "electrician",
           skills: ["switch_repair"],
           verified: false,
@@ -227,6 +229,7 @@ describe("MatchResults — locked visual contract", () => {
         best: {
           id: "w1",
           name: "",
+          profile_image: null,
           category: "electrician",
           skills: [],
           verified: false,

@@ -38,6 +38,7 @@ async function handleSession(req: any, res: any) {
       name?: string;
       email: string;
       language: string;
+      profile_image?: string | null;
       stats?: {
         average_rating?: number;
         reviews_count?: number;
@@ -53,6 +54,7 @@ async function handleSession(req: any, res: any) {
         name: user.name,
         email: user.email,
         language: user.language,
+        profile_image: user.profile_image ?? null,
         stats: {
           average_rating: user.stats?.average_rating ?? 5.0,
           reviews_count: user.stats?.reviews_count ?? 0,

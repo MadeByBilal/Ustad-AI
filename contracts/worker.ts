@@ -28,6 +28,7 @@ export interface WorkerLocation {
 export interface WorkerOption {
   id: string;
   name: string;
+  profile_image: string | null;
   category: WorkerCategory;
   skills: string[];
   verified: boolean;
@@ -67,6 +68,7 @@ export interface WorkerResult {
 export interface WorkerView {
   id: string;
   name: string;
+  profile_image: string | null;
   category: string;
   skills: string[];
   verified: boolean;

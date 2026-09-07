@@ -1,9 +1,10 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
 import { useLang } from "@/client/lib/i18n/context";
 import LogoutButton from "@/client/components/LogoutButton";
+import CloudinaryUpload from "@/client/components/CloudinaryUpload";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import {
   faUser,
@@ -16,12 +17,14 @@ import {
   faChevronRight,
 } from "@fortawesome/free-solid-svg-icons";
 import { faStar as faStarRegular } from "@fortawesome/free-regular-svg-icons";
+import { getApiErrorMessage } from "@/client/lib/api-client";
 
 interface UserProfile {
   name: string;
   email: string;
   phone?: string;
   role: string;
+  profile_image?: string | null;
   stats?: {
     average_rating: number;
     reviews_count: number;
@@ -70,15 +73,51 @@ export default function CustomerProfilePage() {
     cancellations: 0,
   };
 
+  const handleImageUpload = useCallback(async (url: string) => {
+    try {
+      const res = await fetch("/api/auth/profile-image", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ profile_image: url }),
+      });
+      const body = await res.json().catch(() => null);
+      if (!res.ok || !body?.success) {
+        throw new Error(getApiErrorMessage(body, "Failed to update photo"));
+      }
+      setUser((prev) => prev ? { ...prev, profile_image: url } : prev);
+    } catch {
+      // ignore — will refresh on next load
+    }
+  }, []);
+
+  const handleImageRemove = useCallback(async () => {
+    try {
+      const res = await fetch("/api/auth/profile-image", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ profile_image: null }),
+      });
+      const body = await res.json().catch(() => null);
+      if (!res.ok || !body?.success) {
+        throw new Error(getApiErrorMessage(body, "Failed to remove photo"));
+      }
+      setUser((prev) => prev ? { ...prev, profile_image: null } : prev);
+    } catch {
+      // ignore
+    }
+  }, []);
+
   return (
     <div className="space-y-5 px-4 py-6">
       {/* Profile Header */}
       <div className="glass-sheen card flex items-center gap-4">
-        <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-full bg-success">
-          <span className="text-xl font-bold text-success-fg">
-            {user.name?.charAt(0) ?? "U"}
-          </span>
-        </div>
+        <CloudinaryUpload
+          currentImage={user.profile_image}
+          name={user.name}
+          onUploaded={handleImageUpload}
+          onRemoved={handleImageRemove}
+          size="lg"
+        />
         <div className="min-w-0 flex-1">
           <h2 className={`text-lg font-bold text-text ${lang === "ur" ? "font-urdu" : ""}`}>
             {user.name}

@@ -248,7 +248,7 @@ function WorkerMatchCard({
       )}
     >
       <div className={cn("flex items-start gap-4", isBest && "gap-5")}>
-        <Avatar name={worker.name} isBest={isBest} />
+        <Avatar name={worker.name} isBest={isBest} src={worker.profile_image} />
         <div className="min-w-0 flex-1">
           {/* Name + badge row */}
           <div className="flex flex-wrap items-center gap-2">
@@ -313,7 +313,22 @@ function WorkerMatchCard({
   );
 }
 
-function Avatar({ name, isBest }: { name: string; isBest?: boolean }) {
+function Avatar({ name, isBest, src }: { name: string; isBest?: boolean; src?: string | null }) {
+  if (src) {
+    return (
+      <img
+        src={src}
+        alt={name}
+        aria-hidden="true"
+        className={`relative shrink-0 rounded-full object-cover ${
+          isBest
+            ? "h-20 w-20 border-2 border-warning/30"
+            : "h-16 w-16 border border-white/[0.06]"
+        }`}
+      />
+    );
+  }
+
   return (
     <div
       aria-hidden="true"

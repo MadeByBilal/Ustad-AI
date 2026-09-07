@@ -37,6 +37,7 @@ const userSchema = new Schema(
         type: [Number],
       },
     },
+    profile_image: { type: String, default: null },
     stats: {
       average_rating: { type: Number, default: 5.0 },
       reviews_count: { type: Number, default: 0 },

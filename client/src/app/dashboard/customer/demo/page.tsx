@@ -23,6 +23,7 @@ const mockData: MatchResultsData = {
     best: {
       id: "w1",
       name: "Ahmed Khan",
+      profile_image: null,
       category: "electrician",
       skills: ["wiring", "inverter installation", "appliance repair"],
       verified: true,
@@ -41,6 +42,7 @@ const mockData: MatchResultsData = {
       {
         id: "w2",
         name: "Usman Ali",
+        profile_image: null,
         category: "electrician",
         skills: ["wiring", "lighting"],
         verified: true,
@@ -58,6 +60,7 @@ const mockData: MatchResultsData = {
       {
         id: "w3",
         name: "Bilal Ahmed",
+        profile_image: null,
         category: "electrician",
         skills: ["wiring", "ceiling fan", "switch board"],
         verified: false,

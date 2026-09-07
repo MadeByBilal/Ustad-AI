@@ -3,14 +3,16 @@
 import { useState } from "react";
 import { motion } from "framer-motion";
 import { getApiErrorMessage } from "@/client/lib/api-client";
+import ProfileAvatar from "./ProfileAvatar";
 
 interface ReviewScreenProps {
   jobId: string;
   workerName: string;
+  workerProfileImage?: string | null;
   onDone: () => void;
 }
 
-export default function ReviewScreen({ jobId, workerName, onDone }: ReviewScreenProps) {
+export default function ReviewScreen({ jobId, workerName, workerProfileImage, onDone }: ReviewScreenProps) {
   const [rating, setRating] = useState(0);
   const [hoveredStar, setHoveredStar] = useState(0);
   const [text, setText] = useState("");
@@ -66,11 +68,7 @@ export default function ReviewScreen({ jobId, workerName, onDone }: ReviewScreen
   return (
     <div className="flex h-dvh flex-col items-center justify-center bg-bg px-5 overflow-y-auto">
       {/* Worker Avatar */}
-      <div className="flex h-20 w-20 items-center justify-center rounded-full bg-accent">
-        <span className="text-3xl font-bold text-bg">
-          {workerName.charAt(0).toUpperCase()}
-        </span>
-      </div>
+      <ProfileAvatar src={workerProfileImage} name={workerName} size="xl" />
 
       <h1 className="mt-6 font-display text-2xl font-bold text-text">Rate your experience</h1>
       <p className="mt-2 text-base text-muted">How was {workerName}?</p>

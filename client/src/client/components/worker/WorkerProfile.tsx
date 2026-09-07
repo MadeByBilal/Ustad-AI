@@ -5,6 +5,7 @@ import { motion } from "framer-motion";
 import type { WorkerDashboardData, CompletedJobView, WorkerReviewView } from "@contracts/worker";
 import { useLang } from "@/client/lib/i18n/context";
 import LogoutButton from "@/client/components/LogoutButton";
+import CloudinaryUpload from "@/client/components/CloudinaryUpload";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import {
   faCheck,
@@ -88,6 +89,40 @@ export default function WorkerProfile({ workerId }: { workerId: string }) {
     setEditing(false);
     setSaveError(null);
   }
+
+  const handleImageUpload = useCallback(async (url: string) => {
+    try {
+      const res = await fetch("/api/workers/me/profile-image", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ profile_image: url }),
+      });
+      const body = await res.json().catch(() => null);
+      if (!res.ok || !body?.success) {
+        throw new Error(getApiErrorMessage(body, "Failed to update photo"));
+      }
+      void refresh();
+    } catch {
+      // ignore — avatar will refresh on next poll
+    }
+  }, [refresh]);
+
+  const handleImageRemove = useCallback(async () => {
+    try {
+      const res = await fetch("/api/workers/me/profile-image", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ profile_image: null }),
+      });
+      const body = await res.json().catch(() => null);
+      if (!res.ok || !body?.success) {
+        throw new Error(getApiErrorMessage(body, "Failed to remove photo"));
+      }
+      void refresh();
+    } catch {
+      // ignore
+    }
+  }, [refresh]);
 
   async function saveProfile() {
     setSaving(true);
@@ -203,11 +238,13 @@ export default function WorkerProfile({ workerId }: { workerId: string }) {
           </div>
         ) : (
           <div className="flex items-center gap-4">
-            <div className="flex h-16 w-16 shrink-0 items-center justify-center rounded-full glass-icon-circle">
-              <span className="text-2xl font-bold text-success">
-                {w.name?.charAt(0) ?? "U"}
-              </span>
-            </div>
+            <CloudinaryUpload
+              currentImage={w.profile_image}
+              name={w.name}
+              onUploaded={handleImageUpload}
+              onRemoved={handleImageRemove}
+              size="lg"
+            />
             <div className="min-w-0 flex-1">
               <div className="flex items-center gap-2">
                 <h2 className={`font-urdu text-lg font-bold text-text ${lang === "ur" ? "font-urdu" : ""}`}>{w.name}</h2>

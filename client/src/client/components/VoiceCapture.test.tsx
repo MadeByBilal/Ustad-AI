@@ -82,6 +82,7 @@ const WORKERS = {
   best: {
     id: "w1",
     name: "Muhammad Imran",
+    profile_image: null,
     category: "electrician",
     skills: ["electrical_fault", "switch_repair"],
     verified: true,

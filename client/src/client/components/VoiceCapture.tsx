@@ -84,6 +84,7 @@ const MOCK_RESPONSE: UnderstandResponse = {
     best: {
       id: "mock-w1",
       name: "Muhammad Imran",
+      profile_image: null,
       category: "electrician",
       skills: ["electrical_fault", "switch_repair", "wiring"],
       verified: true,
@@ -101,6 +102,7 @@ const MOCK_RESPONSE: UnderstandResponse = {
       {
         id: "mock-w2",
         name: "Ali Raza",
+        profile_image: null,
         category: "electrician",
         skills: ["electrical_fault", "wiring"],
         verified: true,

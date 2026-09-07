@@ -6,6 +6,7 @@ import { FlowError } from "../job/flow.js";
 export interface WorkerView {
   id: string;
   name: string;
+  profile_image: string | null;
   category: string;
   skills: string[];
   verified: boolean;
@@ -278,6 +279,7 @@ export async function getWorkerDashboard(
     worker: {
       id: String(worker._id),
       name: worker.name,
+      profile_image: worker.profile_image ?? null,
       category: String(worker.category),
       skills: worker.skills ?? [],
       verified: Boolean(worker.verified),
