@@ -5,7 +5,7 @@ import Link from "next/link";
 import { useLang } from "@/client/lib/i18n/context";
 import VoiceCapture from "@/client/components/VoiceCapture";
 import ActiveJobStatusBar from "@/client/components/ActiveJobStatusBar";
-import { ArrowLeft } from "lucide-react";
+import { ArrowLeft, Mic, Search, Wrench } from "lucide-react";
 
 export default function CustomerHomeContent() {
   const { t, lang } = useLang();
@@ -50,6 +50,23 @@ export default function CustomerHomeContent() {
         </div>
         <div className="mt-14">
           <VoiceCapture variant="dashboard" onStatusChange={setVoiceStatus} />
+        </div>
+
+        {/* How it works — hides when voice is active */}
+        <div className={`mt-8 flex items-center gap-3 transition-all duration-500 ${isActive ? "opacity-0 pointer-events-none" : "opacity-100"}`}>
+          {[
+            { icon: Mic, label: lang === "ur" ? "بولیں" : "Speak" },
+            { icon: Search, label: lang === "ur" ? "ہم تلاش کریں گے" : "We find" },
+            { icon: Wrench, label: lang === "ur" ? "وہ درست کریں گے" : "They fix" },
+          ].map((step, i) => (
+            <div key={i} className="flex items-center gap-3">
+              {i > 0 && <span className="text-xs text-[#93A396]/40">→</span>}
+              <div className="flex items-center gap-1.5">
+                <step.icon className="h-3.5 w-3.5 text-[#93A396]/60" />
+                <span className="text-xs text-[#93A396]/60">{step.label}</span>
+              </div>
+            </div>
+          ))}
         </div>
       </div>
 
