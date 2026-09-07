@@ -251,9 +251,9 @@ function WorkerMatchCard({
         <Avatar name={worker.name} isBest={isBest} />
         <div className="min-w-0 flex-1">
           {/* Name + badge row */}
-          <div className="flex items-center gap-2.5">
+          <div className="flex flex-wrap items-center gap-2">
             <h4 className={cn(
-              "font-display font-semibold leading-tight text-text truncate",
+              "font-display font-semibold leading-tight text-text min-w-0 shrink",
               isBest ? "text-xl" : "text-lg",
             )}>
               {worker.name}
@@ -272,7 +272,7 @@ function WorkerMatchCard({
           </p>
 
           {/* Stats row */}
-          <div className={cn("flex items-center gap-3 text-sm", isBest ? "mt-3" : "mt-2.5")}>
+          <div className={cn("flex flex-wrap items-center gap-x-3 gap-y-1 text-sm", isBest ? "mt-3" : "mt-2.5")}>
             {/* Distance — always exact */}
             <span className="flex items-center gap-1 text-text">
               <IconMapPin size={15} stroke={1.8} className="text-muted" />
@@ -283,7 +283,7 @@ function WorkerMatchCard({
                 : "—"}
             </span>
 
-            <span className="text-white/10">|</span>
+            <span className="text-white/10 hidden sm:inline">|</span>
 
             {/* Completed jobs */}
             <span className="flex items-center gap-1 text-text">
@@ -291,7 +291,7 @@ function WorkerMatchCard({
               {worker.completed_jobs} jobs
             </span>
 
-            <span className="text-white/10">|</span>
+            <span className="text-white/10 hidden sm:inline">|</span>
 
             {/* Rating */}
             <span className="flex items-center gap-1" aria-label={`Rating ${worker.average_rating.toFixed(1)} out of 5`}>
