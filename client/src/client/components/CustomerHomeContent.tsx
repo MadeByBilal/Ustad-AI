@@ -8,7 +8,7 @@ import ActiveJobStatusBar from "@/client/components/ActiveJobStatusBar";
 import { ArrowLeft } from "lucide-react";
 
 export default function CustomerHomeContent() {
-  const { t } = useLang();
+  const { t, lang } = useLang();
   const [voiceStatus, setVoiceStatus] = useState<"idle" | "recording" | "processing" | "clarifying" | "done" | "error">("idle");
   const [hasResults, setHasResults] = useState(false);
 
@@ -45,7 +45,7 @@ export default function CustomerHomeContent() {
             {t("whatsBroken")}
           </p>
           <p className="mt-3 text-center text-base text-[#93A396]">
-            {t("tapToStart")}
+            {lang === "ur" ? "مثال: میرا پنہا سست چل رہا ہے" : "e.g. my fan is running slow"}
           </p>
         </div>
         <div className="mt-14">
