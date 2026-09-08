@@ -155,7 +155,7 @@ export default function WorkerProfile({ workerId }: { workerId: string }) {
     }
   }
 
-  if (!data) {
+  if (!data || !data.worker) {
     return (
       <div className="flex items-center justify-center py-12">
         <div className="h-8 w-8 animate-spin rounded-full border-4 border-divider border-t-accent" />

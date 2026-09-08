@@ -10,24 +10,45 @@ export default function WorkerProfilePage() {
   const [workerId, setWorkerId] = useState<string | null>(null);
 
   useEffect(() => {
-    fetch("/api/auth/me")
-      .then((r) => r.json())
-      .then((body: { success?: boolean; data?: { user?: { id?: string } } }) => {
-        if (!body?.success || !body.data?.user) {
+    let cancelled = false;
+
+    async function load() {
+      try {
+        const meRes = await fetch("/api/auth/me");
+        const meBody = (await meRes.json()) as {
+          success?: boolean;
+          data?: { user?: { id?: string } };
+        };
+
+        if (cancelled) return;
+        if (!meBody?.success || !meBody.data?.user?.id) {
           router.push("/login");
           return;
         }
-        return fetch(`/api/workers/by-user/${body.data.user.id}`);
-      })
-      .then((r) => r?.json())
-      .then((body: { success?: boolean; data?: { _id?: string } } | undefined) => {
-        if (body?.success && body.data?._id) {
-          setWorkerId(body.data._id);
+
+        const workerRes = await fetch(
+          `/api/workers/by-user/${meBody.data.user.id}`,
+        );
+        const workerBody = (await workerRes.json()) as {
+          success?: boolean;
+          data?: { _id?: string };
+        };
+
+        if (cancelled) return;
+        if (workerBody?.success && workerBody.data?._id) {
+          setWorkerId(workerBody.data._id);
         } else {
           router.push("/login");
         }
-      })
-      .catch(() => router.push("/login"));
+      } catch {
+        if (!cancelled) router.push("/login");
+      }
+    }
+
+    void load();
+    return () => {
+      cancelled = true;
+    };
   }, [router]);
 
   if (!workerId) {
