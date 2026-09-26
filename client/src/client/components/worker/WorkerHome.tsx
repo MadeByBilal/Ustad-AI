@@ -105,14 +105,12 @@ export default function WorkerHome({ workerId }: { workerId: string }) {
 
   return (
     <div className="relative space-y-5 overflow-hidden">
-      <div className="pointer-events-none absolute -right-20 -top-20 h-64 w-64 rounded-full bg-accent/8 blur-3xl" />
-
       {/* Online Status */}
       <motion.div
         className={`card flex items-center justify-between gap-4 ${
           isOnline
-            ? "border-success/30 bg-success/10"
-            : "border-divider bg-surface"
+            ? "border-success/30"
+            : "border-divider"
         }`}
         whileHover={{ y: -1 }}
         transition={{ duration: 0.15 }}
@@ -140,7 +138,7 @@ export default function WorkerHome({ workerId }: { workerId: string }) {
       {hasActiveJob && (
         <a
           href="/dashboard/worker/active"
-          className="card flex items-center gap-4 border-accent/30 bg-accent/10 py-4 transition-all active:scale-[0.98]"
+          className="card flex items-center gap-4 border-accent/30 py-4 transition-all active:scale-[0.98]"
         >
           <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl glass-icon-circle">
             <Wrench className="h-6 w-6 text-success" />
@@ -159,7 +157,7 @@ export default function WorkerHome({ workerId }: { workerId: string }) {
       {pendingCount > 0 && !hasActiveJob && (
         <a
           href="/dashboard/worker/jobs"
-          className="card flex items-center gap-4 border-warning/40 bg-warning/10 py-4 transition-all active:scale-[0.98]"
+          className="card flex items-center gap-4 border-warning/40 py-4 transition-all active:scale-[0.98]"
         >
           <div className="relative flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-warning">
             <span className="text-lg font-bold text-bg">{pendingCount}</span>

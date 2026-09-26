@@ -31,10 +31,7 @@ export default function ResultPageClient() {
 
   if (!stored) {
     return (
-      <div className="relative bg-bg">
-        <div className="pointer-events-none absolute -right-20 -top-20 h-64 w-64 rounded-full bg-accent/6 blur-3xl" />
-        <div className="pointer-events-none absolute -bottom-24 -left-12 h-56 w-56 rounded-full bg-warning/4 blur-3xl" />
-        <div className="page-header">
+      <div className="relative bg-bg"><div className="page-header">
           <Link
             href="/dashboard/customer"
             className="flex items-center gap-2 text-sm font-medium text-muted hover:text-accent transition-colors"
@@ -66,10 +63,7 @@ export default function ResultPageClient() {
   }
 
   return (
-    <div className="relative bg-bg">
-      <div className="pointer-events-none absolute -right-20 -top-20 h-64 w-64 rounded-full bg-accent/6 blur-3xl" />
-      <div className="pointer-events-none absolute -bottom-24 -left-12 h-56 w-56 rounded-full bg-warning/4 blur-3xl" />
-      <div className="page-header">
+    <div className="relative bg-bg"><div className="page-header">
         <Link
           href="/dashboard/customer"
           className="flex items-center gap-2 text-sm font-medium text-muted hover:text-accent transition-colors"

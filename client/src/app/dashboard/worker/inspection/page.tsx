@@ -92,10 +92,7 @@ export default function WorkerInspectionPage() {
   }
 
   return (
-    <div className="relative">
-      <div className="pointer-events-none absolute -right-20 -top-20 h-64 w-64 rounded-full bg-accent/8 blur-3xl" />
-      <div className="pointer-events-none absolute -bottom-24 -left-12 h-56 w-56 rounded-full bg-warning/6 blur-3xl" />
-      <div className="page-header">
+    <div className="relative"><div className="page-header">
         <h1 className="text-lg font-bold text-text">Inspection</h1>
       </div>
       <div className="page-content page-bottom-safe-inline">

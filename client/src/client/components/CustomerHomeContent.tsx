@@ -26,11 +26,6 @@ export default function CustomerHomeContent() {
 
   return (
     <div className="relative flex min-h-0 flex-1 flex-col overflow-hidden" style={{ background: "#0B0F0C" }}>
-      {/* Ambient glows */}
-      <div className="pointer-events-none absolute -right-20 -top-20 h-80 w-80 rounded-full blur-3xl" style={{ background: "rgba(38,166,80,0.08)" }} />
-      <div className="pointer-events-none absolute -bottom-28 -left-12 h-72 w-72 rounded-full blur-3xl" style={{ background: "rgba(224,164,97,0.06)" }} />
-      <div className="pointer-events-none absolute left-1/2 top-1/3 h-96 w-96 -translate-x-1/2 -translate-y-1/2 rounded-full blur-[120px]" style={{ background: "rgba(38,166,80,0.03)" }} />
-
       <div className="page-content relative flex flex-1 flex-col items-center justify-center">
         {hasResults && !isActive && (
           <Link
@@ -47,7 +42,7 @@ export default function CustomerHomeContent() {
           <h1 className="text-4xl font-bold tracking-tight text-[#F1F4F1] sm:text-5xl">
             {t("whatsBroken")}
           </h1>
-          <p className="mt-3 text-sm text-[#E0A461]/80 sm:text-base">
+          <p className="mt-3 text-sm text-[#93A396] sm:text-base">
             {lang === "ur" ? "铥ائیک دبائیں اور بتائیں کیا خراب ہے" : "Hold the mic and tell us what's wrong"}
           </p>
         </div>
@@ -65,16 +60,12 @@ export default function CustomerHomeContent() {
             { num: "3", icon: Wrench, label: lang === "ur" ? ".fix" : "Fix" },
           ].map((step, i) => (
             <div key={i} className="flex items-center gap-4">
-              {i > 0 && (
-                <div className="flex h-px w-6 items-center">
-                  <div className="h-px w-full bg-gradient-to-r from-[#E0A461]/40 to-[#E0A461]/10" />
-                </div>
-              )}
+              {i > 0 && <div className="h-px w-6 bg-white/10" />}
               <div className="flex flex-col items-center gap-1.5">
-                <div className="relative flex h-8 w-8 items-center justify-center rounded-full bg-[#26A650]/10 ring-1 ring-[#E0A461]/25">
-                  <step.icon className="h-3.5 w-3.5 text-[#E0A461]/70" />
+                <div className="glass-icon-circle flex h-8 w-8 items-center justify-center rounded-full">
+                  <step.icon className="h-3.5 w-3.5 text-[#D4A24C]" />
                 </div>
-                <span className="text-[11px] font-medium text-[#E0A461]/50">{step.label}</span>
+                <span className="text-[11px] font-medium text-[#93A396]">{step.label}</span>
               </div>
             </div>
           ))}

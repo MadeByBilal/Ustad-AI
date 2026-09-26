@@ -119,7 +119,7 @@ export default function MatchResults({ data, location, onRequestSent }: MatchRes
           transition={{ type: "spring", stiffness: 260, damping: 20, delay: 0.15 }}
           className="flex items-start gap-3 rounded-2xl border border-accent/20 bg-accent/5 px-4 py-3"
         >
-          <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-accent/15">
+          <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full glass-icon-circle">
             <IconMicrophone size={16} className="text-accent" />
           </div>
           <div className="min-w-0 flex-1">

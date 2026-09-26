@@ -99,7 +99,7 @@ export default function DesktopNav({
               onClick={() => setOpen(!open)}
               className="flex items-center gap-1.5 rounded-xl border border-divider bg-[rgb(var(--surface))] px-2.5 py-1.5 text-xs font-medium text-text transition-colors hover:border-accent/30 hover:bg-bg"
             >
-              <div className="flex h-6 w-6 items-center justify-center rounded-full bg-accent/15 text-accent">
+              <div className="flex h-6 w-6 items-center justify-center rounded-full glass-icon-circle text-accent">
                 <FontAwesomeIcon icon={faUserRegular} className="h-3 w-3" />
               </div>
               <span className="hidden lg:inline max-w-[80px] truncate">{userName}</span>
