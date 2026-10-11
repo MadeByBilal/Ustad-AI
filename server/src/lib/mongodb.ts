@@ -1,10 +1,14 @@
 import mongoose from "mongoose";
 
-const MONGODB_URI = process.env.MONGODB_URI;
-
-if (!MONGODB_URI) {
-  throw new Error("MONGODB_URI environment variable is required");
+function requireEnv(name: string): string {
+  const value = process.env[name];
+  if (!value) {
+    throw new Error(`${name} environment variable is required`);
+  }
+  return value;
 }
+
+const MONGODB_URI = requireEnv("MONGODB_URI");
 
 interface MongooseCache {
   conn: typeof mongoose | null;
