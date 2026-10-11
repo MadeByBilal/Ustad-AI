@@ -1,0 +1,527 @@
+<!doctype html>
+<html>
+  <body style="margin:0; padding:0; background:#0B0F0C; overflow:hidden;">
+    <div
+      id="stage"
+      data-composition-id="root"
+      data-start="0"
+      data-duration="20"
+      data-width="1920"
+      data-height="1080"
+    >
+      <!-- ═══════════════════════════════════════════════════════════════
+           SCENE 1: HOOK — THE MIC (0–4s)
+           ═══════════════════════════════════════════════════════════════ -->
+      <div id="scene1" class="clip" data-start="0" data-duration="4" data-track-index="0"
+        style="position:absolute; top:0; left:0; width:1920px; height:1080px; display:flex; align-items:center; justify-content:center; background:#0B0F0C;">
+
+        <!-- Ambient glows -->
+        <div id="glow1" style="position:absolute; top:-120px; right:-120px; width:500px; height:500px; border-radius:50%; background:rgba(38,166,80,0.08); filter:blur(80px);"></div>
+        <div id="glow2" style="position:absolute; bottom:-150px; left:-80px; width:420px; height:420px; border-radius:50%; background:rgba(224,164,97,0.06); filter:blur(80px);"></div>
+
+        <!-- Mic button -->
+        <div id="mic-container" style="display:flex; flex-direction:column; align-items:center; gap:24px;">
+          <!-- Pulsing rings (no CSS transform — GSAP handles positioning) -->
+          <div id="mic-ring-outer" style="position:absolute; width:220px; height:220px; border-radius:50%; border:2px solid rgba(38,166,80,0.15); top:50%; left:50%;"></div>
+          <div id="mic-ring-inner" style="position:absolute; width:180px; height:180px; border-radius:50%; border:2px solid rgba(38,166,80,0.25); top:50%; left:50%;"></div>
+
+          <!-- The mic button -->
+          <div id="mic-btn" style="width:160px; height:160px; border-radius:50%; background:#26A650; display:flex; align-items:center; justify-content:center; box-shadow:0 8px 32px rgba(38,166,80,0.3); position:relative; z-index:2;">
+            <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#08240F" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3Z"/>
+              <path d="M19 10v2a7 7 0 0 1-14 0v-2"/>
+              <line x1="12" x2="12" y1="19" y2="22"/>
+            </svg>
+          </div>
+
+          <!-- "Hold to speak" label -->
+          <p id="mic-label" style="font-family:Calibri,sans-serif; font-size:18px; color:#93A396; margin:0; letter-spacing:0.5px;">Hold to speak</p>
+        </div>
+
+        <!-- Urdu text (no CSS opacity — GSAP handles it) -->
+        <div id="urdu-text" style="position:absolute; bottom:200px; left:50%; transform:translateX(-50%); text-align:center;">
+          <p style="font-family:Calibri,sans-serif; font-size:28px; color:#F1F4F1; margin:0; letter-spacing:1px;" id="urdu-line">Mera pipe leak kar raha hai</p>
+          <p style="font-family:Calibri,sans-serif; font-size:14px; color:#E0A461; margin:8px 0 0 0;" id="urdu-sub">Roman Urdu for "My pipe is leaking"</p>
+        </div>
+      </div>
+
+      <!-- ═══════════════════════════════════════════════════════════════
+           SCENE 2: AI PROCESSING (4–7s)
+           ═══════════════════════════════════════════════════════════════ -->
+      <div id="scene2" class="clip" data-start="4" data-duration="3" data-track-index="0"
+        style="position:absolute; top:0; left:0; width:1920px; height:1080px; display:none; align-items:center; justify-content:center; background:#0B0F0C;">
+
+        <div id="ai-card" style="width:600px; padding:48px; border-radius:20px; background:rgba(255,255,255,0.04); border:1px solid rgba(255,255,255,0.08); backdrop-filter:blur(16px); text-align:center;">
+          <!-- Bouncing dots -->
+          <div style="display:flex; justify-content:center; gap:12px; margin-bottom:32px;">
+            <div id="dot1" style="width:10px; height:10px; border-radius:50%; background:#26A650;"></div>
+            <div id="dot2" style="width:10px; height:10px; border-radius:50%; background:#26A650;"></div>
+            <div id="dot3" style="width:10px; height:10px; border-radius:50%; background:#26A650;"></div>
+          </div>
+
+          <!-- Typewriter text -->
+          <p id="ai-text" style="font-family:Calibri,sans-serif; font-size:22px; color:#F1F4F1; margin:0; min-height:32px;"></p>
+
+          <!-- Classification card -->
+          <div id="ai-classification" style="margin-top:32px; padding:24px; border-radius:16px; background:rgba(38,166,80,0.08); border:1px solid rgba(38,166,80,0.2); text-align:left;">
+            <div style="display:flex; justify-content:space-between; margin-bottom:12px;">
+              <span style="font-family:Calibri,sans-serif; font-size:14px; color:#93A396;">Category</span>
+              <span style="font-family:Calibri,sans-serif; font-size:14px; color:#F1F4F1; font-weight:600;">Plumber</span>
+            </div>
+            <div style="display:flex; justify-content:space-between; margin-bottom:12px;">
+              <span style="font-family:Calibri,sans-serif; font-size:14px; color:#93A396;">Skills</span>
+              <span style="font-family:Calibri,sans-serif; font-size:14px; color:#F1F4F1; font-weight:600;">pipe repair</span>
+            </div>
+            <div style="display:flex; justify-content:space-between; margin-bottom:12px;">
+              <span style="font-family:Calibri,sans-serif; font-size:14px; color:#93A396;">Urgency</span>
+              <span style="font-family:Calibri,sans-serif; font-size:14px; color:#F1F4F1; font-weight:600;">Normal</span>
+            </div>
+            <div style="display:flex; justify-content:space-between;">
+              <span style="font-family:Calibri,sans-serif; font-size:14px; color:#93A396;">Est. Price</span>
+              <span style="font-family:Calibri,sans-serif; font-size:14px; color:#D4A24C; font-weight:700;">PKR 800 – 1,500</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ═══════════════════════════════════════════════════════════════
+           SCENE 3: WORKER MATCHES (7–12s)
+           ═══════════════════════════════════════════════════════════════ -->
+      <div id="scene3" class="clip" data-start="7" data-duration="5" data-track-index="0"
+        style="position:absolute; top:0; left:0; width:1920px; height:1080px; display:none; align-items:center; justify-content:center; background:#0B0F0C;">
+
+        <div style="display:flex; flex-direction:column; align-items:center; gap:16px; width:680px;">
+          <!-- Header -->
+          <h2 id="match-header" style="font-family:Calibri,sans-serif; font-size:36px; color:#F1F4F1; margin:0 0 8px 0; font-weight:700;">Ustad Suggestions</h2>
+          <p id="match-count" style="font-family:Calibri,sans-serif; font-size:16px; color:#93A396; margin:0 0 24px 0;">3 ustads available</p>
+
+          <!-- Worker card 1 — Best Match -->
+          <div id="card1" style="width:100%; padding:20px 24px; border-radius:16px; background:rgba(255,255,255,0.04); border:1px solid rgba(38,166,80,0.5); backdrop-filter:blur(16px); display:flex; align-items:center; gap:16px;">
+            <div style="width:56px; height:56px; border-radius:50%; background:rgba(38,166,80,0.15); border:2px solid rgba(38,166,80,0.4); display:flex; align-items:center; justify-content:center; flex-shrink:0;">
+              <span style="font-family:Calibri,sans-serif; font-size:20px; font-weight:700; color:#26A650;">AK</span>
+            </div>
+            <div style="flex:1; min-width:0;">
+              <div style="display:flex; align-items:center; gap:8px;">
+                <span style="font-family:Calibri,sans-serif; font-size:18px; font-weight:600; color:#F1F4F1;">Ahmad Khan</span>
+                <span style="font-family:Calibri,sans-serif; font-size:10px; font-weight:700; color:#D4A24C; background:rgba(212,162,74,0.15); padding:2px 8px; border-radius:20px; text-transform:uppercase; letter-spacing:1px;">Best Match</span>
+              </div>
+              <p style="font-family:Calibri,sans-serif; font-size:14px; color:#93A396; margin:4px 0 0 0;">Plumber · ⭐ 4.8 · 47 jobs · verified</p>
+              <div style="display:flex; gap:8px; margin-top:8px;">
+                <span style="font-family:Calibri,sans-serif; font-size:12px; color:#93A396; background:rgba(255,255,255,0.05); padding:2px 8px; border-radius:8px;">2.3 km away</span>
+                <span style="font-family:Calibri,sans-serif; font-size:12px; color:#D4A24C; background:rgba(212,162,74,0.16); padding:2px 8px; border-radius:8px;">Est. PKR 1,200</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Worker card 2 -->
+          <div id="card2" style="width:100%; padding:20px 24px; border-radius:16px; background:rgba(255,255,255,0.04); border:1px solid rgba(255,255,255,0.08); backdrop-filter:blur(16px); display:flex; align-items:center; gap:16px;">
+            <div style="width:48px; height:48px; border-radius:50%; background:rgba(255,255,255,0.04); border:1px solid rgba(255,255,255,0.06); display:flex; align-items:center; justify-content:center; flex-shrink:0;">
+              <span style="font-family:Calibri,sans-serif; font-size:16px; font-weight:600; color:#F1F4F1;">SA</span>
+            </div>
+            <div style="flex:1; min-width:0;">
+              <span style="font-family:Calibri,sans-serif; font-size:16px; font-weight:600; color:#F1F4F1;">Sara Ali</span>
+              <p style="font-family:Calibri,sans-serif; font-size:13px; color:#93A396; margin:4px 0 0 0;">Plumber · ⭐ 4.6 · 32 jobs</p>
+              <div style="display:flex; gap:8px; margin-top:6px;">
+                <span style="font-family:Calibri,sans-serif; font-size:12px; color:#93A396; background:rgba(255,255,255,0.05); padding:2px 8px; border-radius:8px;">3.8 km</span>
+                <span style="font-family:Calibri,sans-serif; font-size:12px; color:#D4A24C; background:rgba(212,162,74,0.16); padding:2px 8px; border-radius:8px;">Est. PKR 1,000</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Worker card 3 -->
+          <div id="card3" style="width:100%; padding:20px 24px; border-radius:16px; background:rgba(255,255,255,0.04); border:1px solid rgba(255,255,255,0.08); backdrop-filter:blur(16px); display:flex; align-items:center; gap:16px;">
+            <div style="width:48px; height:48px; border-radius:50%; background:rgba(255,255,255,0.04); border:1px solid rgba(255,255,255,0.06); display:flex; align-items:center; justify-content:center; flex-shrink:0;">
+              <span style="font-family:Calibri,sans-serif; font-size:16px; font-weight:600; color:#F1F4F1;">RM</span>
+            </div>
+            <div style="flex:1; min-width:0;">
+              <span style="font-family:Calibri,sans-serif; font-size:16px; font-weight:600; color:#F1F4F1;">Raza Malik</span>
+              <p style="font-family:Calibri,sans-serif; font-size:13px; color:#93A396; margin:4px 0 0 0;">Plumber · ⭐ 4.5 · 28 jobs</p>
+              <div style="display:flex; gap:8px; margin-top:6px;">
+                <span style="font-family:Calibri,sans-serif; font-size:12px; color:#93A396; background:rgba(255,255,255,0.05); padding:2px 8px; border-radius:8px;">5.1 km</span>
+                <span style="font-family:Calibri,sans-serif; font-size:12px; color:#D4A24C; background:rgba(212,162,74,0.16); padding:2px 8px; border-radius:8px;">Est. PKR 1,400</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ═══════════════════════════════════════════════════════════════
+           SCENE 4: LIVE TRACKING MAP (12–17s)
+           ═══════════════════════════════════════════════════════════════ -->
+      <div id="scene4" class="clip" data-start="12" data-duration="5" data-track-index="0"
+        style="position:absolute; top:0; left:0; width:1920px; height:1080px; display:none; align-items:center; justify-content:center; background:#0B0F0C;">
+
+        <!-- Map container -->
+        <div id="map-frame" style="width:800px; height:500px; border-radius:28px; overflow:hidden; border:1px solid rgba(255,255,255,0.08); background:#f5f3ef; position:relative;">
+          <!-- Simulated map background -->
+          <div style="width:100%; height:100%; background:linear-gradient(135deg, #e8e4dc 0%, #f0ece4 30%, #e5e1d9 60%, #ede9e1 100%); position:relative;">
+            <!-- Road lines -->
+            <svg style="position:absolute; top:0; left:0; width:100%; height:100%; opacity:0.3;" viewBox="0 0 800 500">
+              <path d="M100,400 Q200,350 300,300 T500,200 T700,100" stroke="#ccc" stroke-width="3" fill="none"/>
+              <path d="M50,250 Q150,200 300,220 T600,180" stroke="#ddd" stroke-width="2" fill="none"/>
+              <path d="M200,450 Q350,380 500,300 T750,150" stroke="#c8c4bc" stroke-width="4" fill="none"/>
+            </svg>
+
+            <!-- Road polyline (orange) -->
+            <svg id="route-line" style="position:absolute; top:0; left:0; width:100%; height:100%;" viewBox="0 0 800 500">
+              <path id="route-path" d="M150,380 Q250,320 350,280 T550,180 T680,120" stroke="#C97A3D" stroke-width="5" fill="none" stroke-linecap="round" stroke-dasharray="2000" stroke-dashoffset="2000"/>
+            </svg>
+
+            <!-- Customer pin -->
+            <div id="customer-pin" style="position:absolute; bottom:80px; right:120px;">
+              <svg width="28" height="34" viewBox="0 0 24 36" fill="none">
+                <path d="M12 0C5.4 0 0 5.4 0 12c0 9 12 24 12 24s12-15 12-24C24 5.4 18.6 0 12 0z" fill="#2F6B5F"/>
+                <circle cx="12" cy="12" r="5" fill="#F5EDE0"/>
+              </svg>
+              <span style="position:absolute; top:-28px; left:50%; transform:translateX(-50%); font-family:Calibri,sans-serif; font-size:11px; font-weight:600; color:#F5EDE0; background:rgba(36,28,21,0.9); padding:3px 8px; border-radius:8px; white-space:nowrap;">You</span>
+            </div>
+
+            <!-- Worker marker -->
+            <div id="worker-marker" style="position:absolute; top:320px; left:120px;">
+              <div style="width:36px; height:36px; border-radius:50%; background:#C97A3D; border:3px solid #F5EDE0; display:flex; align-items:center; justify-content:center; box-shadow:0 0 0 3px rgba(201,122,61,0.25), 0 2px 8px rgba(0,0,0,0.3);">
+                <span style="font-size:18px;">🧑‍🔧</span>
+              </div>
+            </div>
+
+            <!-- Arrival zone -->
+            <div id="arrival-zone" style="position:absolute; bottom:60px; right:100px; width:80px; height:80px; border-radius:50%; border:2px dashed #C97A3D; background:rgba(201,122,61,0.08);"></div>
+
+            <!-- Distance badge -->
+            <div id="distance-badge" style="position:absolute; top:16px; left:16px; background:rgba(255,255,255,0.94); padding:8px 14px; border-radius:12px; box-shadow:0 4px 12px rgba(0,0,0,0.1);">
+              <p style="font-family:Calibri,sans-serif; font-size:18px; font-weight:700; color:#26211f; margin:0;" id="distance-text">2.3 km</p>
+              <p style="font-family:Calibri,sans-serif; font-size:11px; color:#93A396; margin:2px 0 0 0;">away</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- "Live tracking" label -->
+        <div id="tracking-label" style="position:absolute; bottom:140px; left:50%; transform:translateX(-50%);">
+          <p style="font-family:Calibri,sans-serif; font-size:16px; color:#93A396; margin:0; text-align:center;">Real-time tracking via Socket.IO</p>
+        </div>
+      </div>
+
+      <!-- ═══════════════════════════════════════════════════════════════
+           SCENE 5: OUTRO — USTAD AI (17–20s)
+           ═══════════════════════════════════════════════════════════════ -->
+      <div id="scene5" class="clip" data-start="17" data-duration="3" data-track-index="0"
+        style="position:absolute; top:0; left:0; width:1920px; height:1080px; display:none; align-items:center; justify-content:center; background:#0B0F0C;">
+
+        <div style="text-align:center;">
+          <!-- Logo / Product name -->
+          <h1 id="logo-text" style="font-family:Calibri,sans-serif; font-size:72px; font-weight:700; color:#F1F4F1; margin:0; letter-spacing:-1px;">
+            Ustad <span style="color:#26A650;">AI</span>
+          </h1>
+
+          <!-- Tagline -->
+          <p id="tagline" style="font-family:Calibri,sans-serif; font-size:24px; color:#93A396; margin:16px 0 0 0; letter-spacing:2px;">
+            Speak. Match. Fix.
+          </p>
+
+          <!-- Map pin icon -->
+          <div id="pin-icon" style="margin-top:24px;">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#26A650" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"/>
+              <circle cx="12" cy="10" r="3"/>
+            </svg>
+          </div>
+        </div>
+      </div>
+
+      <!-- ═══════════════════════════════════════════════════════════════
+           AUDIO
+           ═══════════════════════════════════════════════════════════════ -->
+      <audio id="bg-music" data-start="0" data-duration="20" data-track-index="10" data-volume="0.35" src="assets/music/happy-beats-business-moves-vol-12-by-ende-dot-app.mp3"></audio>
+
+      <!-- SFX -->
+      <audio id="sfx-click" data-start="0.3" data-duration="0.5" data-track-index="11" data-volume="0.7" src="assets/sfx/interface/click_001.ogg"></audio>
+      <audio id="sfx-drop" data-start="4.2" data-duration="0.5" data-track-index="12" data-volume="0.65" src="assets/sfx/interface/drop_001.ogg"></audio>
+      <audio id="sfx-card1" data-start="7.5" data-duration="0.4" data-track-index="13" data-volume="0.7" src="assets/sfx/casino/card-place-1.ogg"></audio>
+      <audio id="sfx-card2" data-start="8.0" data-duration="0.4" data-track-index="14" data-volume="0.65" src="assets/sfx/casino/card-place-1.ogg"></audio>
+      <audio id="sfx-card3" data-start="8.5" data-duration="0.4" data-track-index="15" data-volume="0.6" src="assets/sfx/casino/card-place-1.ogg"></audio>
+      <audio id="sfx-map" data-start="12.3" data-duration="0.6" data-track-index="16" data-volume="0.6" src="assets/sfx/impact/impactSoft_medium_000.ogg"></audio>
+      <audio id="sfx-logo" data-start="17.3" data-duration="1" data-track-index="17" data-volume="0.8" src="assets/sfx/impact/impactBell_heavy_000.ogg"></audio>
+    </div>
+
+    <!-- ═══════════════════════════════════════════════════════════════
+         GSAP ANIMATIONS
+         ═══════════════════════════════════════════════════════════════ -->
+    <script src="https://cdn.jsdelivr.net/npm/gsap@3.14.2/dist/gsap.min.js"></script>
+    <script>
+      window.__timelines = window.__timelines || {};
+
+      // Master timeline — all scene tweens go here
+      const master = gsap.timeline({ paused: true });
+
+      // ─── SCENE 1: Hook — The Mic (0–4s) ───────────────────────────────
+
+      // Mic button entrance
+      master.fromTo("#mic-btn",
+        { scale: 0.5, opacity: 0 },
+        { scale: 1, opacity: 1, duration: 0.8, ease: "back.out(1.7)" },
+        0.2
+      );
+
+      // Pulsing rings — use fromTo to avoid CSS transform conflict
+      master.fromTo("#mic-ring-inner",
+        { xPercent: -50, yPercent: -50, scale: 0.5, opacity: 0 },
+        { xPercent: -50, yPercent: -50, scale: 1, opacity: 1, duration: 0.6, ease: "power2.out" },
+        0.4
+      );
+      master.fromTo("#mic-ring-outer",
+        { xPercent: -50, yPercent: -50, scale: 0.5, opacity: 0 },
+        { xPercent: -50, yPercent: -50, scale: 1, opacity: 1, duration: 0.8, ease: "power2.out" },
+        0.5
+      );
+
+      // Ring pulse animation
+      master.to("#mic-ring-outer", {
+        xPercent: -50, yPercent: -50, scale: 1.3, opacity: 0, duration: 1.5,
+        ease: "power1.out", repeat: 2
+      }, 0.8);
+      master.to("#mic-ring-inner", {
+        xPercent: -50, yPercent: -50, scale: 1.15, opacity: 0, duration: 1.2,
+        ease: "power1.out", repeat: 2
+      }, 1.0);
+
+      // "Hold to speak" label
+      master.fromTo("#mic-label",
+        { opacity: 0, y: 10 },
+        { opacity: 1, y: 0, duration: 0.5, ease: "power2.out" },
+        0.6
+      );
+
+      // Urdu text appears
+      master.fromTo("#urdu-line",
+        { opacity: 0, y: 20 },
+        { opacity: 1, y: 0, duration: 0.6, ease: "power2.out" },
+        1.2
+      );
+      master.fromTo("#urdu-sub",
+        { opacity: 0, y: 10 },
+        { opacity: 1, y: 0, duration: 0.5, ease: "power2.out" },
+        1.6
+      );
+
+      // Mic turns amber (recording)
+      master.to("#mic-btn", {
+        backgroundColor: "#E0A461",
+        boxShadow: "0 8px 32px rgba(224,164,97,0.4)",
+        duration: 0.3,
+        ease: "power2.inOut"
+      }, 2.8);
+
+      // Ambient glows
+      master.fromTo("#glow1", { opacity: 0, scale: 0.5 }, { opacity: 1, scale: 1, duration: 1, ease: "power2.out" }, 0);
+      master.fromTo("#glow2", { opacity: 0, scale: 0.5 }, { opacity: 1, scale: 1, duration: 1, ease: "power2.out" }, 0.2);
+
+      // ─── SCENE 2: AI Processing (4–7s) ────────────────────────────────
+
+      // Show scene 2, hide scene 1
+      master.call(() => {
+        document.getElementById("scene1").style.display = "none";
+        document.getElementById("scene2").style.display = "flex";
+      }, null, 4);
+
+      // Card entrance
+      master.fromTo("#ai-card",
+        { scale: 0.9, opacity: 0 },
+        { scale: 1, opacity: 1, duration: 0.5, ease: "back.out(1.4)" },
+        4.1
+      );
+
+      // Bouncing dots
+      master.to("#dot1", { y: -12, duration: 0.3, ease: "power2.out", yoyo: true, repeat: 5 }, 4.3);
+      master.to("#dot2", { y: -12, duration: 0.3, ease: "power2.out", yoyo: true, repeat: 5 }, 4.45);
+      master.to("#dot3", { y: -12, duration: 0.3, ease: "power2.out", yoyo: true, repeat: 5 }, 4.6);
+
+      // Typewriter text
+      const aiTexts = [
+        "Ustad is understanding your problem…",
+        "Finding nearest workers…",
+        "Analyzing your requirements…"
+      ];
+      master.call(() => {
+        const el = document.getElementById("ai-text");
+        let textIdx = 0;
+        function typeNext() {
+          if (textIdx >= aiTexts.length) return;
+          const text = aiTexts[textIdx++];
+          el.textContent = "";
+          let i = 0;
+          const interval = setInterval(() => {
+            el.textContent = text.slice(0, ++i);
+            if (i >= text.length) { clearInterval(interval); setTimeout(typeNext, 600); }
+          }, 30);
+        }
+        typeNext();
+      }, null, 4.3);
+
+      // Classification card slides up
+      master.fromTo("#ai-classification",
+        { opacity: 0, y: 30 },
+        { opacity: 1, y: 0, duration: 0.6, ease: "power2.out" },
+        5.5
+      );
+
+      // ─── SCENE 3: Worker Matches (7–12s) ──────────────────────────────
+
+      // Show scene 3, hide scene 2
+      master.call(() => {
+        document.getElementById("scene2").style.display = "none";
+        document.getElementById("scene3").style.display = "flex";
+      }, null, 7);
+
+      // Header
+      master.fromTo("#match-header",
+        { opacity: 0, y: 30 },
+        { opacity: 1, y: 0, duration: 0.6, ease: "power2.out" },
+        7.1
+      );
+      master.fromTo("#match-count",
+        { opacity: 0, y: 15 },
+        { opacity: 1, y: 0, duration: 0.5, ease: "power2.out" },
+        7.3
+      );
+
+      // Card 1 — Best Match (slides in first)
+      master.fromTo("#card1",
+        { opacity: 0, x: 60 },
+        { opacity: 1, x: 0, duration: 0.6, ease: "back.out(1.2)" },
+        7.6
+      );
+
+      // Card 2
+      master.fromTo("#card2",
+        { opacity: 0, x: 60 },
+        { opacity: 1, x: 0, duration: 0.6, ease: "back.out(1.2)" },
+        7.9
+      );
+
+      // Card 3
+      master.fromTo("#card3",
+        { opacity: 0, x: 60 },
+        { opacity: 1, x: 0, duration: 0.6, ease: "back.out(1.2)" },
+        8.2
+      );
+
+      // Best match badge glow
+      master.fromTo("#card1",
+        { boxShadow: "0 0 0 rgba(38,166,80,0)" },
+        { boxShadow: "0 8px 24px rgba(38,166,80,0.15)", duration: 0.8, ease: "power2.out" },
+        8.6
+      );
+
+      // ─── SCENE 4: Live Tracking Map (12–17s) ──────────────────────────
+
+      // Show scene 4, hide scene 3
+      master.call(() => {
+        document.getElementById("scene3").style.display = "none";
+        document.getElementById("scene4").style.display = "flex";
+      }, null, 12);
+
+      // Map frame entrance
+      master.fromTo("#map-frame",
+        { opacity: 0, scale: 0.95 },
+        { opacity: 1, scale: 1, duration: 0.7, ease: "power2.out" },
+        12.1
+      );
+
+      // Route line draws
+      master.to("#route-path", {
+        strokeDashoffset: 0, duration: 2.5, ease: "power1.inOut"
+      }, 12.3);
+
+      // Customer pin
+      master.fromTo("#customer-pin",
+        { opacity: 0, y: -20 },
+        { opacity: 1, y: 0, duration: 0.5, ease: "back.out(1.5)" },
+        12.5
+      );
+
+      // Worker marker appears
+      master.fromTo("#worker-marker",
+        { opacity: 0, scale: 0.5 },
+        { opacity: 1, scale: 1, duration: 0.5, ease: "back.out(1.7)" },
+        12.8
+      );
+
+      // Worker moves along route (use transforms, not top/left)
+      master.to("#worker-marker", {
+        x: 460, y: -180, duration: 3, ease: "power1.inOut"
+      }, 13.2);
+
+      // Arrival zone pulse
+      master.fromTo("#arrival-zone",
+        { opacity: 0, scale: 0.5 },
+        { opacity: 0.8, scale: 1, duration: 0.8, ease: "power2.out" },
+        13.0
+      );
+      master.to("#arrival-zone", {
+        scale: 1.3, opacity: 0.3, duration: 1, ease: "power1.inOut",
+        repeat: 2, yoyo: true
+      }, 13.8);
+
+      // Distance badge
+      master.fromTo("#distance-badge",
+        { opacity: 0, x: -20 },
+        { opacity: 1, x: 0, duration: 0.5, ease: "power2.out" },
+        12.6
+      );
+
+      // Distance countdown
+      master.call(() => {
+        const el = document.getElementById("distance-text");
+        const distances = ["2.3 km", "1.8 km", "1.2 km", "0.6 km", "Arrived!"];
+        let i = 0;
+        const interval = setInterval(() => {
+          if (i < distances.length) { el.textContent = distances[i]; i++; }
+          else clearInterval(interval);
+        }, 800);
+      }, null, 13.5);
+
+      // Tracking label
+      master.fromTo("#tracking-label",
+        { opacity: 0, y: 15 },
+        { opacity: 1, y: 0, duration: 0.5, ease: "power2.out" },
+        13.0
+      );
+
+      // ─── SCENE 5: Outro — Ustad AI (17–20s) ───────────────────────────
+
+      // Show scene 5, hide scene 4
+      master.call(() => {
+        document.getElementById("scene4").style.display = "none";
+        document.getElementById("scene5").style.display = "flex";
+      }, null, 17);
+
+      // Logo slams in
+      master.fromTo("#logo-text",
+        { opacity: 0, scale: 0.7, y: 40 },
+        { opacity: 1, scale: 1, y: 0, duration: 0.7, ease: "back.out(1.5)" },
+        17.2
+      );
+
+      // Tagline fades up
+      master.fromTo("#tagline",
+        { opacity: 0, y: 20 },
+        { opacity: 1, y: 0, duration: 0.6, ease: "power2.out" },
+        17.7
+      );
+
+      // Pin icon
+      master.fromTo("#pin-icon",
+        { opacity: 0, scale: 0.5 },
+        { opacity: 1, scale: 1, duration: 0.5, ease: "back.out(2)" },
+        18.0
+      );
+
+      // Final fade to black (last scene only)
+      master.to("#scene5", {
+        opacity: 0, duration: 0.8, ease: "power2.inOut"
+      }, 19.2);
+
+      // Register the master timeline
+      window.__timelines["root"] = master;
+    </script>
+  </body>
+</html>

@@ -1,0 +1,5 @@
+Speak your problem in Urdu. AI finds the right worker. Track them to your door.
+
+Built for Pakistan. Made with Gemini + AssemblyAI + Socket.IO.
+
+#UstadAI #MadeInPakistan #AI #HomeRepair
