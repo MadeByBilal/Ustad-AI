@@ -52,6 +52,14 @@ describe("analyzeJobInput category routing", () => {
     expect(analyzeJobInput("نل سے پانی بہہ رہا ہے").category).toBe("plumber");
   });
 
+  it("understands inflected Urdu script forms", () => {
+    expect(analyzeJobInput("پنکھے کا کیپیسٹر خراب ہے").category).toBe(
+      "electrician"
+    );
+    expect(analyzeJobInput("نلکے سے پانی ٹپک رہا ہے").category).toBe("plumber");
+    expect(analyzeJobInput("دروازے کا تالا خراب ہے").category).toBe("carpenter");
+  });
+
   it("does not match keywords inside unrelated words", () => {
     // "final" must not trigger "nal", "acha" must not trigger "ac".
     expect(analyzeJobInput("final payment ka masla hai").category).toBeNull();

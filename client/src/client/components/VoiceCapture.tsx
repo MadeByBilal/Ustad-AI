@@ -51,9 +51,10 @@ const SUPPORTED_AUDIO_MIME_TYPES = [
   "audio/webm;codecs=opus",
   "audio/webm",
 ] as const;
-const ANALYSIS_TIMEOUT_MS = 60_000;
+const ANALYSIS_TIMEOUT_MS = 90_000;
 const LEVEL_SAMPLE_INTERVAL_MS = 100;
-const MIN_AUDIO_BYTES = 1_000;
+/** Only truly empty captures are rejected — anything else goes to the server. */
+const MIN_AUDIO_BYTES = 200;
 const MIN_AVERAGE_RMS = 0.012;
 const MIN_PEAK_RMS = 0.035;
 const MIN_ACTIVE_SAMPLE_RATIO = 0.05;
@@ -79,6 +80,19 @@ function getSupportedAudioMimeType(): string | null {
 
 function audioFileExtension(mimeType: string): "mp4" | "webm" {
   return mimeType.toLowerCase().includes("mp4") ? "mp4" : "webm";
+}
+
+/** A warm stream is only reusable while it still has live audio tracks. */
+function isLiveStream(stream: MediaStream | null | undefined): boolean {
+  if (!stream) return false;
+  const tracks =
+    typeof stream.getAudioTracks === "function"
+      ? stream.getAudioTracks()
+      : [];
+  return (
+    tracks.length > 0 &&
+    tracks.some((track) => !track.readyState || track.readyState === "live")
+  );
 }
 
 function locationFailureMessage(reason: LocationFailureReason): string {
@@ -472,6 +486,10 @@ export default function VoiceCapture({
   const requestIdRef = useRef(0);
   const requestAbortRef = useRef<AbortController | null>(null);
   const pendingBodyRef = useRef<RunBody | null>(null);
+  /** Kept alive between attempts so recording starts instantly on press. */
+  const warmStreamRef = useRef<MediaStream | null>(null);
+  /** Set when the user releases the mic before recording actually started. */
+  const pendingReleaseRef = useRef(false);
   const locationRef = useRef<Coordinates | null>(null);
   const locationDecisionRef = useRef<
     "unresolved" | "pending" | "available" | "unavailable" | "without"
@@ -511,17 +529,21 @@ export default function VoiceCapture({
       locationRequestIdRef.current += 1;
 
       const session = recorderRef.current;
-      if (!session) return;
-
-      session.cancelled = true;
-      if (session.recorder.state === "recording") {
-        try {
-          session.recorder.stop();
-        } catch {
-          // Cleanup below still releases the stream if the recorder is already inactive.
+      if (session) {
+        session.cancelled = true;
+        if (session.recorder.state === "recording") {
+          try {
+            session.recorder.stop();
+          } catch {
+            // Cleanup below still releases the stream if the recorder is already inactive.
+          }
         }
+        session.cleanup();
       }
-      session.cleanup();
+
+      // The warm stream outlives individual recordings; release it on unmount.
+      warmStreamRef.current?.getTracks().forEach((track) => track.stop());
+      warmStreamRef.current = null;
     };
   }, []);
 
@@ -533,6 +555,45 @@ export default function VoiceCapture({
       typeof navigator.mediaDevices?.getUserMedia === "function"
     );
   }, []);
+
+  const warmUpMicrophone = useCallback(async () => {
+    if (!voiceSupported() || isLiveStream(warmStreamRef.current)) return;
+
+    // Only pre-warm silently when microphone permission was already granted,
+    // so the user never gets an unprompted permission dialog.
+    const permissions = navigator.permissions;
+    if (typeof permissions?.query !== "function") return;
+    try {
+      const status = await permissions.query({
+        name: "microphone",
+      } as PermissionDescriptor);
+      if (status.state !== "granted") return;
+    } catch {
+      return; // Browser does not know the "microphone" permission name
+    }
+
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      if (!mountedRef.current || isLiveStream(warmStreamRef.current)) {
+        stream.getTracks().forEach((track) => track.stop());
+        return;
+      }
+      warmStreamRef.current = stream;
+      stream.getAudioTracks().forEach((track) => {
+        track.addEventListener?.("ended", () => {
+          if (warmStreamRef.current === stream) warmStreamRef.current = null;
+        });
+      });
+    } catch {
+      // The next mic press acquires the stream normally.
+    }
+  }, [voiceSupported]);
+
+  useEffect(() => {
+    // Warm the microphone up front: getUserMedia latency at press time is
+    // what made "hold, speak, release" lose the first words of the problem.
+    void warmUpMicrophone();
+  }, [warmUpMicrophone]);
 
   const getLocation = useCallback((): Promise<Coordinates | null> => {
     if (locationDecisionRef.current !== "unresolved") {
@@ -807,11 +868,33 @@ export default function VoiceCapture({
         void getLocation();
       }
 
-      stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      // Reuse the warm stream when we have one — acquiring at press time
+      // loses the first words of what the user is already saying.
+      const warm = warmStreamRef.current;
+      stream =
+        isLiveStream(warm) && warm
+          ? warm
+          : await navigator.mediaDevices.getUserMedia({ audio: true });
 
       if (!mountedRef.current || recordingGenerationRef.current !== generation) {
-        stream.getTracks().forEach((t) => t.stop());
+        if (stream !== warmStreamRef.current) {
+          stream.getTracks().forEach((t) => t.stop());
+        }
         return;
+      }
+
+      if (stream !== warmStreamRef.current) {
+        // Keep this stream warm so the next attempt starts instantly.
+        warmStreamRef.current = stream;
+        const audioTracks =
+          typeof stream.getAudioTracks === "function"
+            ? stream.getAudioTracks()
+            : [];
+        audioTracks.forEach((track) => {
+          track.addEventListener?.("ended", () => {
+            if (warmStreamRef.current === stream) warmStreamRef.current = null;
+          });
+        });
       }
 
       const mimeType = getSupportedAudioMimeType();
@@ -828,9 +911,10 @@ export default function VoiceCapture({
       let animFrame: number | null = null;
       let analyser: AnalyserNode | null = null;
       let dataArray: Uint8Array<ArrayBuffer> | null = null;
+      let audioCtx: AudioContext | null = null;
 
       try {
-        const audioCtx = new AudioContext();
+        audioCtx = new AudioContext();
         const source = audioCtx.createMediaStreamSource(stream);
         analyser = audioCtx.createAnalyser();
         analyser.fftSize = 256;
@@ -859,7 +943,11 @@ export default function VoiceCapture({
       const cleanup = () => {
         if (animFrame !== null) cancelAnimationFrame(animFrame);
         micLevelMV.set(0);
-        stream?.getTracks().forEach((t) => t.stop());
+        if (audioCtx && audioCtx.state !== "closed") {
+          void audioCtx.close().catch(() => undefined);
+        }
+        // The microphone stream stays warm for the next attempt;
+        // it is released when the component unmounts.
       };
 
       const session: RecordingSession = {
@@ -885,7 +973,7 @@ export default function VoiceCapture({
           if (mountedRef.current && generation === recordingGenerationRef.current) {
             setStatus("error");
             setError(
-              "Recording was too short or silent. Hold the button longer and speak clearly.",
+              "That recording was too short. Hold the button while you speak, then release.",
             );
           }
           cleanup();
@@ -909,11 +997,34 @@ export default function VoiceCapture({
       recorderRef.current = session;
       recorder.start(250); // collect data every 250ms
 
+      if (pendingReleaseRef.current) {
+        // The user let go before the mic was actually live. Recording now
+        // would only capture silence — cancel and let them retry. The warm
+        // stream makes the very next attempt start instantly.
+        pendingReleaseRef.current = false;
+        session.cancelled = true;
+        try {
+          recorder.stop();
+        } catch {
+          // onstop still fires and cleans up.
+        }
+        cleanup();
+        setRecording(false);
+        setStarting(false);
+        setStatus("error");
+        setError(
+          "The mic was still starting — please hold the button and speak again, it will be instant now.",
+        );
+        return;
+      }
+
       setRecording(true);
       setStarting(false);
       console.log("[mic] Recording started. MIME:", mimeType);
     } catch (err) {
-      stream?.getTracks().forEach((t) => t.stop());
+      if (stream && stream !== warmStreamRef.current) {
+        stream.getTracks().forEach((t) => t.stop());
+      }
       if (mountedRef.current && generation === recordingGenerationRef.current) {
         setRecording(false);
         setStatus("error");
@@ -959,20 +1070,46 @@ export default function VoiceCapture({
 
   const handleMicPointerDown = useCallback(
     (e: React.PointerEvent) => {
-      if (recording || starting || busy) return;
+      if (busy || starting) return;
       if (buttonRef.current) {
         buttonRef.current.setPointerCapture(e.pointerId);
       }
+      if (recording) {
+        // A tap during recording: releasing the pointer stops it below.
+        return;
+      }
+      pendingReleaseRef.current = false;
       void startRecording();
     },
     [busy, recording, startRecording, starting],
   );
 
   const handleMicLostPointerCapture = useCallback(() => {
-    if (recording) {
+    const active = recorderRef.current;
+    if (active && active.recorder.state === "recording") {
       stopRecording();
+      return;
     }
-  }, [recording, stopRecording]);
+    if (startInFlightRef.current) {
+      // Released while the mic was still starting; don't record silence.
+      pendingReleaseRef.current = true;
+    }
+  }, [stopRecording]);
+
+  const handleMicKeyClick = useCallback(
+    (e: React.MouseEvent) => {
+      // Keyboard Enter/Space fire a click with detail === 0. Pointer presses
+      // are handled by the pointer-capture handlers above.
+      if (e.detail !== 0 || busy || starting) return;
+      if (recording) {
+        stopRecording();
+        return;
+      }
+      pendingReleaseRef.current = false;
+      void startRecording();
+    },
+    [busy, recording, startRecording, starting, stopRecording],
+  );
 
   const reset = useCallback(() => {
     requestIdRef.current += 1;
@@ -996,6 +1133,7 @@ export default function VoiceCapture({
     }
 
     pendingBodyRef.current = null;
+    pendingReleaseRef.current = false;
     locationRef.current = null;
     locationDecisionRef.current = "unresolved";
     setStatus("idle");
@@ -1046,6 +1184,7 @@ export default function VoiceCapture({
             disabled={busy || starting}
             onPointerDown={handleMicPointerDown}
             onLostPointerCapture={handleMicLostPointerCapture}
+            onClick={handleMicKeyClick}
             onContextMenu={(e) => e.preventDefault()}
             whileHover={{ y: reduceMotion ? 0 : -1 }}
             className={`mic-btn relative flex h-28 w-28 items-center justify-center overflow-visible rounded-full text-5xl select-none disabled:cursor-not-allowed disabled:opacity-70 ${
@@ -1118,7 +1257,7 @@ export default function VoiceCapture({
               </span>
               <p className="text-sm font-medium text-warning">Listening…</p>
             </div>
-            <p className="text-xs text-muted">Release to stop</p>
+            <p className="text-xs text-muted">Release or tap to stop</p>
           </motion.div>
         )}
       </AnimatePresence>

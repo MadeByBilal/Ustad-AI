@@ -126,7 +126,7 @@ router.post("/understand", upload.single("audio"), async (req: Request, res: Res
       } catch {
         return fail(
           res,
-          "Could not understand the audio — it may be too short or unclear. Please type your request instead.",
+          "Could not hear that clearly — please try again and speak a little longer, or type your request instead.",
           422
         );
       }

@@ -101,7 +101,8 @@ const KEYWORD_RULES: KeywordRule[] = [
       "light", "bulb", "tube light", "pankha", "fan", "regulator", "bijli",
       "electric", "electricity", "shock", "current", "meter", "board",
       "breaker", "spark", "chingari", "power outage", "light band",
-      "بجلی", "لائٹ", "پنکھا", "سوئچ", "تار", "میٹر", "چنگاری",
+      "بجلی", "لائٹ", "پنکھا", "پنکھے", "پنکھوں", "فین", "بلب", "سوئچ",
+      "تار", "میٹر", "چنگاری", "شارٹ سرکٹ", "بریکر",
     ],
     subcategory: "electrical_fault",
     skills: ["fault finding", "wiring", "switchboard installation", "inverter installation", "lighting"],
@@ -113,7 +114,8 @@ const KEYWORD_RULES: KeywordRule[] = [
       "naali", "pani", "paani", "tank", "tanki", "pipe", "bathroom", "toilet",
       "commode", "flush", "basin", "shower", "sink", "geyser", "gizer",
       "geaser", "drain", "motor", "pump", "tapak", "boiler",
-      "پانی", "نل", "پائپ", "گیزر", "ٹنکی", "ٹونٹی", "بہہ",
+      "پانی", "نل", "نلکا", "نلکے", "نلی", "پائپ", "گیزر", "ٹنکی", "ٹونٹی",
+      "فلش", "موٹر", "بہہ",
     ],
     subcategory: "plumbing_fault",
     skills: ["pipe fitting", "faucet repair", "drain cleaning", "geyser installation", "water tank installation"],
@@ -124,7 +126,8 @@ const KEYWORD_RULES: KeywordRule[] = [
       "air conditioner", "air conditioning", "ac", "compressor",
       "gas refill", "gas refilling", "refrigerant", "cooler", "cooling",
       "chiller", "hawa",
-      "اے سی", "کولر",
+      "اے سی", "کولر", "ایئر کنڈیشنر", "کمپریسر", "فرج", "ریفریجریٹر",
+      "ٹھنڈا", "ٹھنڈی", "گیس ریفل",
     ],
     subcategory: "ac_fault",
     skills: ["ac repair", "gas refilling", "compressor service", "ac installation", "deep cleaning"],
@@ -136,7 +139,8 @@ const KEYWORD_RULES: KeywordRule[] = [
       "furniture", "almari", "cabinet", "wardrobe", "sofa", "kitchen",
       "table", "chair", "shelf", "bed", "takht", "tala", "taala", "lock",
       "hinge", "drawer", "channel", "plywood", "partition",
-      "دروازہ", "کھڑکی", "الماری", "لکڑی", "میز", "کرسی",
+      "دروازہ", "دروازے", "کھڑکی", "کھڑکیاں", "الماری", "لکڑی", "فرنیچر",
+      "صوفہ", "میز", "کرسی", "تالا", "قبضہ", "دراز", "کیبنٹ",
     ],
     subcategory: "carpentry_work",
     skills: ["door repair", "furniture making", "cabinet repair", "wardrobe installation", "kitchen cabinets"],
@@ -217,7 +221,7 @@ const SKILL_KEYWORDS: Record<string, string> = {
   kitchen: "kitchen cabinets",
 };
 
-const EMERGENCY_KEYWORDS = ["short circuit", "bijli ja rahi", "power outage", "fire", "aag", "gas leak", "gas ki dhani", "khatra", "emergency", "current lag raha", "shock"];
+const EMERGENCY_KEYWORDS = ["short circuit", "bijli ja rahi", "power outage", "fire", "aag", "gas leak", "gas ki dhani", "khatra", "emergency", "current lag raha", "shock", "آگ", "شارٹ سرکٹ", "چنگاری"];
 
 const URGENT_KEYWORDS = ["fuse", "wiring", "spark", "chamak", "dhani", "smell", "bijli"];
 
@@ -231,6 +235,9 @@ const FLAG_BY_KEYWORD: Array<[string, string]> = [
   ["aag", "fire risk"],
   ["shock", "electric shock risk"],
   ["current", "electric shock risk"],
+  ["آگ", "fire risk"],
+  ["شارٹ سرکٹ", "short circuit"],
+  ["چنگاری", "sparks"],
 ];
 
 function escapeRegex(value: string): string {
@@ -243,6 +250,12 @@ function escapeRegex(value: string): string {
  * optional plural) keep "lights"/"pipes" matching without false hits.
  */
 function hasKeyword(text: string, keyword: string): boolean {
+  // Urdu (non-Latin) keywords rely on listed inflected variants and are
+  // matched as plain substrings — the Latin word-boundary rules below do
+  // not fit the script's morphology ("پنکھا" vs "پنکھے").
+  if (/[^\x00-\x7F]/.test(keyword)) {
+    return text.includes(keyword);
+  }
   const pattern = new RegExp(
     `(^|[^a-z0-9])${escapeRegex(keyword)}(s|es)?([^a-z0-9]|$)`,
     "i"

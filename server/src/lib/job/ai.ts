@@ -34,7 +34,7 @@ const OPENCODE_MAX_RETRIES = 2;
 /** Base delay (ms) for exponential backoff. */
 const RETRY_BASE_DELAY_MS = 500;
 /** Max total time (ms) for the AssemblyAI polling loop. */
-const ASSEMBLYAI_POLL_DEADLINE_MS = 20_000;
+const ASSEMBLYAI_POLL_DEADLINE_MS = 35_000;
 /** Interval (ms) between AssemblyAI poll attempts. */
 const ASSEMBLYAI_POLL_INTERVAL_MS = 1_500;
 const ASSEMBLYAI_LANGUAGE_CODE =
