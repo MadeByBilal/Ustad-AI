@@ -33,6 +33,72 @@ export const NO_GEO_WEIGHTS = {
   rating: 0.1,
 } as const;
 
+/**
+ * Voice-match flow with the customer's location: the sweet spot between
+ * quality and proximity. Distance and rating together carry 45% — a good
+ * worker around the corner beats a 5-star worker across the city, but a
+ * 5-star worker at the door still wins over a good one 2 km away.
+ */
+export const GEO_WEIGHTS = {
+  skill_match: 0.35,
+  distance: 0.25,
+  rating: 0.2,
+  reliability: 0.1,
+  response: 0.1,
+} as const;
+
+/** Distance at which the proximity score reaches zero (~one city). */
+export const SWEET_SPOT_RADIUS_KM = 15;
+
+/**
+ * Proximity score for the sweet-spot blend: 100 at the door, sliding to 0
+ * at the horizon. Linear on purpose — predictable for the pilot.
+ */
+export function distanceScoreKm(
+  distanceKm: number,
+  radiusKm: number = SWEET_SPOT_RADIUS_KM
+): number {
+  if (!Number.isFinite(distanceKm) || radiusKm <= 0) return 0;
+  return Number(clamp(100 * (1 - distanceKm / radiusKm), 0, 100).toFixed(2));
+}
+
+export interface ScoreComponents {
+  skill_match_score: number;
+  distance_score: number;
+  reliability_score: number;
+  response_score: number;
+  rating_score: number;
+  ustad_score?: number;
+}
+
+/**
+ * Weighted sum of the score components, shared by every ranking path so
+ * the blends stay consistent. Weights with no component (e.g. rating in
+ * RANKING_WEIGHTS) simply contribute nothing.
+ */
+export function combineScores(
+  s: ScoreComponents,
+  weights: {
+    skill_match: number;
+    distance: number;
+    reliability: number;
+    response: number;
+    rating?: number;
+    ustad?: number;
+  },
+  bonus = 0
+): number {
+  const total =
+    weights.skill_match * s.skill_match_score +
+    weights.distance * s.distance_score +
+    weights.reliability * s.reliability_score +
+    weights.response * s.response_score +
+    (weights.rating ?? 0) * s.rating_score +
+    (weights.ustad ?? 0) * (s.ustad_score ?? 0) +
+    bonus;
+  return Number(total.toFixed(2));
+}
+
 export const LOCATION_FRESHNESS_NORMAL_MS = 5 * 60_000;
 export const LOCATION_FRESHNESS_EMERGENCY_MS = 2 * 60_000;
 
@@ -238,13 +304,18 @@ export function scoreWorker(
       ? EMERGENCY_CAPABILITY_BONUS
       : 0;
 
-  const final_score =
-    RANKING_WEIGHTS.skill_match * skill_match_score +
-    RANKING_WEIGHTS.distance * distance_score +
-    RANKING_WEIGHTS.reliability * reliability_score +
-    RANKING_WEIGHTS.ustad * ustad_score +
-    RANKING_WEIGHTS.response * response_score +
-    emergencyBonus;
+  const final_score = combineScores(
+    {
+      skill_match_score,
+      distance_score,
+      reliability_score,
+      response_score,
+      rating_score,
+      ustad_score,
+    },
+    RANKING_WEIGHTS,
+    emergencyBonus
+  );
 
   return {
     ...worker,
@@ -506,6 +577,8 @@ export interface WorkerOption {
   final_score: number;
   distance_km?: number | null;
   predicted_price?: number;
+  /** Work portion of the estimate (AI range × complexity). */
+  predicted_work_pkr?: number;
   travel_cost_pkr?: number;
 }
 
@@ -573,36 +646,52 @@ export async function getWorkerOptions(
       )
     .lean();
 
+  const hasLocation = Boolean(filters.location);
   const ctx: MatchContext = {
     required_skills: filters.required_skills,
-    radius_km: 0,
+    radius_km: hasLocation ? SWEET_SPOT_RADIUS_KM : 0,
     urgency: filters.urgency,
   };
-  const weights = NO_GEO_WEIGHTS;
+  const weights = hasLocation ? GEO_WEIGHTS : NO_GEO_WEIGHTS;
+
+  const distanceToCustomer = (w: (typeof candidates)[number]): number | null => {
+    const coordinates = w.location?.coordinates;
+    if (!filters.location || !coordinates || coordinates.length !== 2) {
+      return null;
+    }
+    return Number(
+      haversineDistanceKm(
+        filters.location.lat,
+        filters.location.lng,
+        coordinates[1],
+        coordinates[0]
+      ).toFixed(2)
+    );
+  };
 
   const ranked = candidates
     .map((w) => {
+      const distanceKm = distanceToCustomer(w);
       const s = scoreWorker(
         workerToScoreInput(w),
-        { ...ctx, distance_km: 0 },
+        { ...ctx, distance_km: distanceKm ?? 0 },
         w._id,
         w.name,
         w.category
       );
-      // Recompute final_score with no-geo weights + verified bonus
+      // Blend with the path's weights — with geo, distance and rating
+      // decide together (the sweet spot), then verified adds a bonus.
       const verified = w.verified === true;
-      const noGeoScore =
-        weights.skill_match * s.skill_match_score +
-        weights.distance * s.distance_score +
-        weights.reliability * s.reliability_score +
-        weights.ustad * s.ustad_score +
-        weights.response * s.response_score +
-        weights.rating * s.rating_score +
-        (verified ? VERIFIED_BONUS : 0);
+      const finalScore = combineScores(
+        s,
+        weights,
+        verified ? VERIFIED_BONUS : 0
+      );
       return {
         doc: w,
-        score: { ...s, final_score: Number(noGeoScore.toFixed(2)) },
+        score: { ...s, final_score: finalScore },
         verified,
+        distanceKm,
       };
     })
     .sort(
@@ -611,19 +700,7 @@ export async function getWorkerOptions(
         b.score.ustad_score - a.score.ustad_score
     );
 
-  const options: WorkerOption[] = ranked.map(({ doc, score }) => {
-    const coordinates = doc.location?.coordinates;
-    const distanceKm =
-      filters.location && coordinates && coordinates.length === 2
-        ? Number(
-            haversineDistanceKm(
-              filters.location.lat,
-              filters.location.lng,
-              coordinates[1],
-              coordinates[0]
-            ).toFixed(2)
-          )
-        : null;
+  const options: WorkerOption[] = ranked.map(({ doc, score, distanceKm }) => {
     const predicted = calculatePredictedPrice({
       estimateMin: filters.estimate_min ?? 0,
       estimateMax: filters.estimate_max ?? 0,
@@ -646,9 +723,8 @@ export async function getWorkerOptions(
       skills_match: score.skill_match_score,
       final_score: score.final_score,
       distance_km: distanceKm,
-      ...(predicted.predicted_price_pkr > 0
-        ? { predicted_price: predicted.predicted_price_pkr }
-        : {}),
+      predicted_price: predicted.predicted_price_pkr,
+      predicted_work_pkr: predicted.work_price_pkr,
       travel_cost_pkr: predicted.travel_cost_pkr,
     };
   });

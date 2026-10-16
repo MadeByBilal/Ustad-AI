@@ -10,6 +10,8 @@ import {
   IconMicrophone,
   IconBriefcase,
   IconTrophy,
+  IconCheck,
+  IconCoin,
 } from "@tabler/icons-react";
 import type { WorkerCategory, WorkerOption } from "@contracts/worker";
 import type { AiUnderstandResult } from "@contracts/ai";
@@ -226,7 +228,9 @@ export default function MatchResults({ data, location, onRequestSent }: MatchRes
                 "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/40 focus-visible:ring-offset-2 focus-visible:ring-offset-bg",
               )}
             >
-              Offer
+              {selectedWorker.predicted_price != null
+                ? `Offer to ${selectedWorker.name.split(" ")[0]} · PKR ${selectedWorker.predicted_price.toLocaleString("en-PK")}`
+                : `Offer to ${selectedWorker.name.split(" ")[0]}`}
             </button>
           </motion.div>
         )}
@@ -275,12 +279,14 @@ function WorkerMatchCard({
     <article
       data-testid={`match-card-${worker.id}`}
       data-best-match={isBest ? "true" : "false"}
+      data-selected={selected ? "true" : "false"}
+      aria-pressed={selected}
       onClick={onSelect}
       className={cn(
-        "glass-card",
+        "glass-card cursor-pointer",
         isBest ? "p-5 sm:p-5" : "p-4 sm:p-5",
         selected
-          ? "border-2 border-accent ring-2 ring-accent/40"
+          ? "border-accent bg-accent/[0.07] ring-2 ring-accent/60"
           : isBest
             ? "border-warning/25"
             : "border-white/[0.06]",
@@ -301,6 +307,12 @@ function WorkerMatchCard({
               <span className="shrink-0 inline-flex items-center gap-1 rounded-full bg-warning/15 px-2.5 py-0.5 font-mono text-[10px] font-bold uppercase tracking-wider text-warning">
                 <IconTrophy size={10} stroke={2} />
                 Best Match
+              </span>
+            )}
+            {selected && (
+              <span className="shrink-0 inline-flex items-center gap-1 rounded-full bg-accent/20 px-2.5 py-0.5 font-mono text-[10px] font-bold uppercase tracking-wider text-accent">
+                <IconCheck size={11} stroke={2.5} />
+                Selected
               </span>
             )}
           </div>
@@ -345,6 +357,20 @@ function WorkerMatchCard({
               </span>
               <span className="text-text">{worker.average_rating.toFixed(1)}</span>
             </span>
+
+            {/* Pre-computed offer estimate (work + petrol) */}
+            {worker.predicted_price != null && (
+              <>
+                <span className="text-white/10 hidden sm:inline">|</span>
+                <span
+                  className="flex items-center gap-1 font-semibold text-accent"
+                  title="Estimated total — AI work estimate plus petrol for the distance"
+                >
+                  <IconCoin size={15} stroke={1.8} />
+                  Est. PKR {worker.predicted_price.toLocaleString("en-PK")}
+                </span>
+              </>
+            )}
           </div>
         </div>
       </div>

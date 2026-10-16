@@ -36,6 +36,7 @@ const mockData: MatchResultsData = {
       final_score: 92,
       distance_km: 1.2,
       predicted_price: 800,
+      predicted_work_pkr: 700,
       travel_cost_pkr: 100,
     },
     others: [
@@ -55,6 +56,7 @@ const mockData: MatchResultsData = {
         final_score: 79,
         distance_km: 2.8,
         predicted_price: 900,
+        predicted_work_pkr: 750,
         travel_cost_pkr: 150,
       },
       {
@@ -73,6 +75,7 @@ const mockData: MatchResultsData = {
         final_score: 66,
         distance_km: 4.1,
         predicted_price: 700,
+        predicted_work_pkr: 500,
         travel_cost_pkr: 200,
       },
     ],

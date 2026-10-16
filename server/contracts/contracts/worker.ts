@@ -41,6 +41,8 @@ export interface WorkerOption {
   final_score: number;
   distance_km?: number | null;
   predicted_price?: number;
+  /** Work portion of the estimate (AI range × complexity). */
+  predicted_work_pkr?: number;
   travel_cost_pkr?: number;
 }
 

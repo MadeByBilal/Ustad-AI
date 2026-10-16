@@ -1,4 +1,17 @@
-export const PETROL_PRICE_PER_LITER_PKR = 346;
+/**
+ * Pre-computed price estimate for a worker offer.
+ *
+ * Formula (as agreed for the pilot):
+ *   petrol  = distance_km / BIKE_FUEL_EFFICIENCY_KM_PER_LITER
+ *             × PETROL_PRICE_PER_LITER_PKR          (370 PKR/L, 50 km/L)
+ *   work    = AI estimate range midpoint × complexity multiplier
+ *   total   = work + petrol
+ *
+ * Everything is computed server-side during matching so the offer modal
+ * never waits on a price call — the number is already on the worker card.
+ */
+
+export const PETROL_PRICE_PER_LITER_PKR = 370;
 export const BIKE_FUEL_EFFICIENCY_KM_PER_LITER = 50;
 export const BASE_WORK_FEE_PKR = 300;
 
@@ -11,7 +24,8 @@ export const COMPLEXITY_MULTIPLIERS: Record<ComplexityLevel, number> = {
 };
 
 export interface TravelCostEstimate {
-  round_trip_distance_km: number;
+  /** One-way distance between customer and worker, km. */
+  distance_km: number;
   fuel_liters: number;
   fuel_cost_pkr: number;
 }
@@ -24,20 +38,24 @@ export interface PredictedPriceInput {
 }
 
 export interface PredictedPriceEstimate extends TravelCostEstimate {
-  base_price_pkr: number;
+  /** Work portion: AI estimate adjusted by the AI-measured complexity. */
+  work_price_pkr: number;
   travel_cost_pkr: number;
   complexity: ComplexityLevel;
+  /** work + petrol, ready to show / prefill in the offer form. */
   predicted_price_pkr: number;
 }
 
 export function estimateTravelCost(
   distanceKm: number | null | undefined
 ): TravelCostEstimate {
-  const oneWayDistance = Number.isFinite(distanceKm) ? Math.max(0, distanceKm as number) : 0;
-  const fuelLiters = oneWayDistance / BIKE_FUEL_EFFICIENCY_KM_PER_LITER;
+  const distance = Number.isFinite(distanceKm)
+    ? Math.max(0, distanceKm as number)
+    : 0;
+  const fuelLiters = distance / BIKE_FUEL_EFFICIENCY_KM_PER_LITER;
 
   return {
-    round_trip_distance_km: Number(oneWayDistance.toFixed(2)),
+    distance_km: Number(distance.toFixed(2)),
     fuel_liters: Number(fuelLiters.toFixed(2)),
     fuel_cost_pkr: Math.round(fuelLiters * PETROL_PRICE_PER_LITER_PKR),
   };
@@ -50,15 +68,27 @@ export function calculatePredictedPrice({
   distanceKm,
 }: PredictedPriceInput): PredictedPriceEstimate {
   const safeMin = Math.max(0, Number.isFinite(estimateMin) ? estimateMin : 0);
-  const safeMax = Math.max(safeMin, Number.isFinite(estimateMax) ? estimateMax : safeMin);
+  const safeMax = Math.max(
+    safeMin,
+    Number.isFinite(estimateMax) ? estimateMax : safeMin
+  );
   const midpoint = (safeMin + safeMax) / 2;
+  const multiplier = COMPLEXITY_MULTIPLIERS[complexity] ?? 1;
+
+  // The AI's range is the work estimate; its complexity level scales it.
+  // No range at all (keyword fallback) → base visit fee × multiplier.
+  const workPrice =
+    midpoint > 0
+      ? Math.round(midpoint * multiplier)
+      : Math.round(BASE_WORK_FEE_PKR * multiplier);
+
   const travel = estimateTravelCost(distanceKm);
 
   return {
     ...travel,
-    base_price_pkr: BASE_WORK_FEE_PKR,
+    work_price_pkr: workPrice,
     travel_cost_pkr: travel.fuel_cost_pkr,
     complexity,
-    predicted_price_pkr: BASE_WORK_FEE_PKR + travel.fuel_cost_pkr,
+    predicted_price_pkr: workPrice + travel.fuel_cost_pkr,
   };
 }

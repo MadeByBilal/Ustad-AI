@@ -40,6 +40,10 @@ export default function TechnicianRequestModal({
     : estMin > 0
       ? String(estMin)
       : "";
+  // Already pre-computed during matching — nothing to fetch when the modal opens.
+  const workPrice = worker.predicted_work_pkr ?? null;
+  const travelCost = worker.travel_cost_pkr ?? null;
+  const totalEstimate = worker.predicted_price ?? null;
 
   const [price, setPrice] = useState(defaultPrice);
   const [message, setMessage] = useState("");
@@ -129,6 +133,11 @@ export default function TechnicianRequestModal({
             <p className="text-xs text-muted">
               {CATEGORY_LABELS[worker.category] ?? worker.category} · <Star className="h-3.5 w-3.5 text-warning inline" />{" "}
               {worker.average_rating.toFixed(1)} · {worker.completed_jobs} jobs
+              {worker.distance_km != null
+                ? ` · ${worker.distance_km < 1
+                    ? `${Math.round(worker.distance_km * 1000)} m`
+                    : `${worker.distance_km.toFixed(1)} km`} away`
+                : ""}
               {worker.verified ? " · Verified" : ""}
             </p>
           </div>
@@ -167,7 +176,36 @@ export default function TechnicianRequestModal({
                 disabled={busy}
               />
             </div>
-            <p className="mt-1 text-xs text-muted">AI predicted price</p>
+            {(workPrice != null || travelCost != null) && (
+              <div className="mt-2 space-y-1 rounded-xl border border-divider bg-bg/40 px-3 py-2 text-xs text-muted">
+                {workPrice != null && (
+                  <div className="flex items-center justify-between gap-3">
+                    <span>
+                      Work estimate (AI
+                      {understanding.complexity ? ` · ${understanding.complexity} complexity` : ""})
+                    </span>
+                    <span className="font-mono text-text">{currency(workPrice)}</span>
+                  </div>
+                )}
+                {travelCost != null && travelCost > 0 && (
+                  <div className="flex items-center justify-between gap-3">
+                    <span>
+                      Petrol
+                      {worker.distance_km != null
+                        ? ` (${worker.distance_km.toFixed(1)} km)`
+                        : ""}
+                    </span>
+                    <span className="font-mono text-text">{currency(travelCost)}</span>
+                  </div>
+                )}
+                {totalEstimate != null && (
+                  <div className="flex items-center justify-between gap-3 border-t border-divider pt-1 font-semibold text-text">
+                    <span>Suggested total</span>
+                    <span className="font-mono">{currency(totalEstimate)}</span>
+                  </div>
+                )}
+              </div>
+            )}
           </div>
 
           <div>
