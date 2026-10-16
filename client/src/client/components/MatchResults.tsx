@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   IconStar,
@@ -13,7 +14,6 @@ import {
 import type { WorkerCategory, WorkerOption } from "@contracts/worker";
 import type { AiUnderstandResult } from "@contracts/ai";
 import { cn } from "@/client/lib/cn";
-import { parseApiResponse } from "@/client/lib/api-client";
 import { BOTTOM_NAV_BOTTOM_OFFSET } from "@/client/lib/layout-constants";
 import SplitText from "./SplitText";
 import TechnicianRequestModal from "./TechnicianRequestModal";
@@ -22,14 +22,6 @@ export interface MatchResultsData extends AiUnderstandResult {
   transcript?: string;
   workers: { best: WorkerOption | null; others: WorkerOption[]; ranked?: WorkerOption[] };
 }
-
-/** Same list the server falls back to when the model asks without options. */
-const DEFAULT_CLARIFICATION_OPTIONS = [
-  "Bijli / electrician",
-  "Pani / plumber",
-  "AC / cooling",
-  "Lakri / carpenter",
-];
 
 const CATEGORY_LABELS: Record<WorkerCategory, string> = {
   plumber: "Plumber",
@@ -79,60 +71,23 @@ const cardItem = {
 };
 
 export default function MatchResults({ data, location, onRequestSent }: MatchResultsProps) {
-  // The clarify round replaces what was analyzed — keep the newest payload.
-  const [live, setLive] = useState<MatchResultsData | null>(null);
-  const [clarifying, setClarifying] = useState(false);
-  const [clarifyError, setClarifyError] = useState(false);
-  const current = live ?? data;
-  const u = current.understanding;
-  const ranked = current.workers.ranked ?? [
-    ...(current.workers.best ? [current.workers.best] : []),
-    ...(current.workers.others ?? []),
+  const router = useRouter();
+  const u = data.understanding;
+  const ranked = data.workers.ranked ?? [
+    ...(data.workers.best ? [data.workers.best] : []),
+    ...(data.workers.others ?? []),
   ];
   const anyWorker = ranked.length > 0;
-  // No committed category (or the model asked) → ask ONE short question and
-  // offer trade options instead of showing workers from the wrong trade.
-  const showClarify = !u.category || u.clarification_required === true;
-  const clarifyOptions =
-    current.clarification_options && current.clarification_options.length > 0
-      ? current.clarification_options
-      : DEFAULT_CLARIFICATION_OPTIONS;
+  // No category at all → the message was unreadable, ask for a re-speak.
+  // There is deliberately NO "which worker do you need?" question step —
+  // the AI always guesses the closest trade.
+  const unclear = !u.category;
 
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [offerFor, setOfferFor] = useState<string | null>(null);
 
   const selectedWorker = ranked.find((w) => w.id === selectedId) ?? null;
   const activeWorker = ranked.find((w) => w.id === offerFor) ?? null;
-
-  async function clarify(option: string) {
-    setClarifying(true);
-    setClarifyError(false);
-    try {
-      const response = await fetch("/api/ai/understand", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          text: current.transcript ?? current.understanding.description ?? "",
-          clarification: option,
-          ...(location ? { lat: location.lat, lng: location.lng } : {}),
-        }),
-      });
-      const next = await parseApiResponse<MatchResultsData>(response);
-      setLive(next);
-      try {
-        sessionStorage.setItem(
-          "voiceResult",
-          JSON.stringify({ data: next, location: location ?? null }),
-        );
-      } catch {
-        // storage unavailable — the view still updates
-      }
-    } catch {
-      setClarifyError(true);
-    } finally {
-      setClarifying(false);
-    }
-  }
 
   return (
     <div className="flex flex-col gap-6 text-text">
@@ -154,7 +109,7 @@ export default function MatchResults({ data, location, onRequestSent }: MatchRes
               ? anyWorker
                 ? `${ranked.length} ustads available`
                 : "No ustads available"
-              : "One quick question"
+              : "Message not clear"
           }
           className="font-mono text-sm text-muted"
           splitType="words"
@@ -167,7 +122,7 @@ export default function MatchResults({ data, location, onRequestSent }: MatchRes
       </header>
 
       {/* Transcription */}
-      {current.transcript && (
+      {data.transcript && (
         <motion.div
           initial={{ opacity: 0, y: 20, scale: 0.97 }}
           animate={{ opacity: 1, y: 0, scale: 1 }}
@@ -182,53 +137,36 @@ export default function MatchResults({ data, location, onRequestSent }: MatchRes
               You said
             </p>
             <p className="mt-0.5 text-sm leading-relaxed text-text">
-              {current.transcript}
+              {data.transcript}
             </p>
           </div>
         </motion.div>
       )}
 
-      {/* Clarification — pick the trade so only the right ustads show up */}
-      {showClarify && (
+      {/* Unreadable message — ask the customer to speak again */}
+      {unclear && (
         <motion.section
           initial={{ opacity: 0, y: 20, scale: 0.97 }}
           animate={{ opacity: 1, y: 0, scale: 1 }}
           transition={{ type: "spring", stiffness: 260, damping: 20, delay: 0.2 }}
-          className="rounded-2xl border border-accent/20 bg-accent/5 px-4 py-4"
+          className="rounded-2xl border border-accent/20 bg-accent/5 px-4 py-5 text-center"
           aria-live="polite"
         >
-          <p className="text-xs font-semibold uppercase tracking-wide text-accent">
-            Quick check
+          <p className="text-sm leading-relaxed text-text">
+            {data.clarification_question ??
+              "Your message is not clear enough. Please speak again."}
           </p>
-          <p className="mt-1 text-sm leading-relaxed text-text">
-            {current.clarification_question ??
-              "Which ustad should come? Tap one so we show the right people."}
-          </p>
-          <div className="mt-3 flex flex-wrap gap-2">
-            {clarifyOptions.map((option) => (
-              <button
-                key={option}
-                type="button"
-                disabled={clarifying}
-                onClick={() => clarify(option)}
-                className={cn(
-                  "rounded-xl border border-accent/30 bg-accent/10 px-3 py-1.5 text-xs font-semibold text-accent transition-colors",
-                  "hover:bg-accent/20 disabled:cursor-wait disabled:opacity-60",
-                  "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/40",
-                )}
-              >
-                {option}
-              </button>
-            ))}
-          </div>
-          {clarifying && (
-            <p className="mt-2 text-xs text-muted">Refining your matches…</p>
-          )}
-          {clarifyError && (
-            <p className="mt-2 text-xs text-accent">
-              Couldn&apos;t refine that — tap an option to try again.
-            </p>
-          )}
+          <button
+            type="button"
+            onClick={() => router.push("/dashboard/customer")}
+            className={cn(
+              "mt-3 inline-flex items-center justify-center gap-2 rounded-2xl px-6 py-3 text-sm font-semibold transition-colors",
+              "bg-accent text-bg hover:bg-accent/90",
+              "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/40 focus-visible:ring-offset-2 focus-visible:ring-offset-bg",
+            )}
+          >
+            <IconMicrophone size={16} /> Speak again
+          </button>
         </motion.section>
       )}
 
@@ -301,9 +239,9 @@ export default function MatchResults({ data, location, onRequestSent }: MatchRes
             worker={activeWorker}
             understanding={u}
             input={{
-              type: current.transcript ? "voice" : "text",
+              type: data.transcript ? "voice" : "text",
               original_text: u.description ?? "",
-              transcript: current.transcript,
+              transcript: data.transcript,
             }}
             location={location}
             onClose={() => setOfferFor(null)}

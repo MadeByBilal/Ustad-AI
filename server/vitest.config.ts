@@ -2,6 +2,9 @@ import { defineConfig } from "vitest/config";
 
 export default defineConfig({
   test: {
+    // Compiled copies of *.test.ts land in dist/ after `npm run build` —
+    // never run those.
+    exclude: ["**/node_modules/**", "**/dist/**"],
     // Modules like matching.ts import the mongo client which reads this env
     // var at load time; tests only exercise pure helpers, no connection is made.
     env: {

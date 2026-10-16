@@ -84,12 +84,13 @@ interface RawAiJob {
   complexity?: string;
 }
 
-export const DEFAULT_CLARIFICATION_OPTIONS = [
-  "Bijli / electrician",
-  "Pani / plumber",
-  "AC / cooling",
-  "Lakri / carpenter",
-];
+/**
+ * Shown when the input cannot be classified at all. There is NO
+ * "which worker do you need?" step — the AI always guesses the closest
+ * trade, and only a genuinely unreadable message gets this reply.
+ */
+export const UNCLEAR_MESSAGE =
+  "Your message is not clear enough. Please speak again.";
 
 export const SYSTEM_PROMPT = `You are Ustad — the job-classification engine for a Pakistani home-services marketplace. A customer described a problem (usually by voice, in Roman Urdu, Urdu script, or English, often mixed). Classify it into EXACTLY ONE bookable trade so only the right technicians are shown. Return strict JSON only. No markdown, no explanation.
 
@@ -115,8 +116,8 @@ export const SYSTEM_PROMPT = `You are Ustad — the job-classification engine fo
 7. "window": wooden window/frame/lock → carpenter. "window AC" → ac_technician.
 8. "light" as a lamp/fixture (light jal gayi, light chali gayi) → electrician, never plumber.
 9. "meter", "main board", "DB", "breaker trip" (electricity) → electrician. "meter" is NEVER plumbing.
-10. Appliances outside the four trades (fridge, freezer, washing machine, TV, microwave, mobile) → category "unknown" + clarification_required = true + options: the four trades plus "Other / not sure".
-11. Never output "unknown" for anything that clearly belongs to one of the four trades. Only "unknown" for out-of-scope appliances or unintelligible input.
+10. Appliances outside the four trades: ALWAYS pick the closest trade yourself, never ask the customer. fridge/freezer/water dispenser → ac_technician (cooling appliance). washing machine, TV, microwave, other electronics → electrician. Anything wooden → carpenter. Anything carrying water or gas → plumber.
+11. Return "unknown" ONLY when the message is unintelligible or too vague to name ANY appliance, symptom, or object ("kuch theek karo", "masla hai", "hello"). If you can name anything at all, you MUST commit to the closest of the four categories.
 
 ## Language coverage
 Understand Roman Urdu, Urdu script (بجلی، پانی، نل، پائپ، پنکھا، لائٹ، گیزر، دروازہ، الماری، موٹر، ٹنکی، فلش، کولر، چنگاری، شارٹ سرکٹ), English and mixtures. Transcription typos are normal — match phonetically: gizer/geaser = geyser, pankha = fan, nalka/nal = tap, tanki = tank, naali = drain.
@@ -132,9 +133,8 @@ Understand Roman Urdu, Urdu script (بجلی، پانی، نل، پائپ، پن
   "estimated_price_min": <integer PKR>,
   "estimated_price_max": <integer PKR>,
   "confidence": <0.0–1.0>,
-  "clarification_required": <boolean>,
-  "clarification_question": "<ONE short question in the customer's language, or null>",
-  "clarification_options": ["<2–5 short options in the customer's language>"],
+  "clarification_required": <true ONLY when category is "unknown", else false>,
+  "clarification_question": "<when clarification_required: exactly \"Your message is not clear enough. Please speak again.\" — else null>",
   "complexity": "low" | "medium" | "high"
 }
 
@@ -153,13 +153,14 @@ Never invent skill strings outside this vocabulary.
 ## Confidence calibration
 - 0.85–0.95: explicit words for a single trade.
 - 0.65–0.84: implied but unambiguous.
-- 0.40–0.64: two trades plausible — commit to the most likely one AND ask a clarification question.
-- below 0.40: unintelligible or out of scope — category "unknown" + clarification.
+- 0.40–0.64: two trades plausible — STILL commit to the closest one, never "unknown".
+- below 0.40: only for unintelligible or too-vague input → category "unknown".
 
-## Clarification rules
-- Round 1: ask ONE short question only when confidence < 0.65, or two trades are plausible, or the appliance is out of scope. Options must be short trade-or-work choices in the customer's language (Roman Urdu preferred).
-- If confidence ≥ 0.65: clarification_required = false, clarification_question = null, clarification_options = [].
-- Round 2: the input contains a line "User clarification: ..." → COMMIT. Choose the best category now, set clarification_required = false, and never ask another question.
+## No questions rule
+- NEVER ask the customer anything — no trade choices, no follow-up questions, no options. The app has no question step.
+- If two trades are plausible, commit to the closest one.
+- Only a genuinely unreadable message ("masla hai", "kuch theek karo", "hello", noise) gets category "unknown", confidence below 0.4, and clarification_required = true.
+- When clarification_required is true, clarification_question must be EXACTLY: "Your message is not clear enough. Please speak again."
 
 ## Prices (PKR, conservative — a placeholder until the ustad inspects)
 - Simple repair (faucet, switch, hinge): 800–2500
@@ -523,28 +524,18 @@ export async function understandJobInput(
       apiKey,
     );
 
-    const isRoundTwo = clarification.length > 0;
-    const asksForClarification = (n: NormalizedAiJob): boolean =>
-      n.clarification_required === true &&
-      typeof n.clarification_question === "string" &&
-      n.clarification_question.trim().length > 0;
-
-    // Round 1 with a weak result gets one retry under a stronger nudge — but
-    // never when the model already has a real question for the customer.
-    if (
-      !isRoundTwo &&
-      !asksForClarification(normalized) &&
-      (!normalized.category || normalized.confidence < 0.5)
-    ) {
+    // A weak result gets one retry under a stronger nudge. There is no
+    // "which trade?" question in this app — the closest guess beats asking.
+    if (!normalized.category || normalized.confidence < 0.5) {
       console.log("[ai] Low confidence or unknown category. Retrying with nudge...");
-      const nudgeInput = `The customer said: "${combined}". Pick the ONE trade that must physically visit to fix this: plumber, electrician, ac_technician, or carpenter. Pick the closest match even if uncertain. Do NOT answer "unknown" unless the text is not about home repair at all.`;
+      const nudgeInput = `The customer said: "${combined}". Pick the ONE trade that must physically visit to fix this: plumber, electrician, ac_technician, or carpenter. Pick the closest match even if uncertain. Answer "unknown" ONLY if the message is too vague to name any appliance, symptom, or object.`;
       try {
         const retry = await opencodeUnderstand(
           nudgeInput,
           opts.image,
           apiKey,
         );
-        if (retry.category || asksForClarification(retry)) {
+        if (retry.category) {
           normalized = retry;
         }
       } catch {
@@ -552,17 +543,8 @@ export async function understandJobInput(
       }
     }
 
-    // Ask the customer only when the model is genuinely unsure: no committed
-    // category and a real question. Showing "which trade?" beats showing
-    // workers from the wrong trade.
-    let willAsk =
-      !isRoundTwo &&
-      asksForClarification(normalized) &&
-      (!normalized.category || normalized.confidence < 0.65);
-
-    // Commit to a category when nobody is going to be asked — the keyword
-    // engine is the last-resort guess (and it never mixes categories later).
-    if (!willAsk && !normalized.category) {
+    // Keyword engine is the last-resort guess for the category.
+    if (!normalized.category) {
       console.log("[ai] Still no category. Using keyword fallback for category only.");
       const keywordResult = analyzeJobInput(combined);
       if (keywordResult.category) {
@@ -577,40 +559,29 @@ export async function understandJobInput(
       }
     }
 
-    // Round 2 always commits — asking a second time is a dead end.
-    if (isRoundTwo) {
-      willAsk = false;
-      normalized = { ...normalized, clarification_required: false };
-    }
+    // Even a guess is a commitment — only a truly unclassifiable message
+    // (nothing recognized anywhere) shows the "speak again" reply.
+    const unclear = !normalized.category;
 
     // Clean up the description — make it a proper summary, not raw transcript
     const cleanedDesc = cleanDescription(normalized.description || combined);
-    const clarificationOptions =
-      normalized.clarification_options && normalized.clarification_options.length > 0
-        ? normalized.clarification_options
-        : DEFAULT_CLARIFICATION_OPTIONS;
 
     console.log(
       "[ai] Final result. Category:",
       normalized.category,
       "Confidence:",
       normalized.confidence,
-      "Asking:",
-      willAsk,
+      "Unclear:",
+      unclear,
     );
     return {
       source: "opencode",
       understanding: {
         ...normalized,
-        clarification_required: willAsk,
+        clarification_required: unclear,
         description: cleanedDesc,
       },
-      ...(willAsk && normalized.clarification_question
-        ? {
-            clarification_question: normalized.clarification_question.trim(),
-            clarification_options: clarificationOptions,
-          }
-        : {}),
+      ...(unclear ? { clarification_question: UNCLEAR_MESSAGE } : {}),
     };
   } catch (error) {
     console.error(
@@ -623,8 +594,13 @@ export async function understandJobInput(
 
 function fallbackResult(text: string): AiUnderstandResult {
   const understanding = analyzeJobInput(text);
+  const unclear = !understanding.category;
   return {
     source: "fallback",
-    understanding,
+    understanding: {
+      ...understanding,
+      clarification_required: unclear,
+    },
+    ...(unclear ? { clarification_question: UNCLEAR_MESSAGE } : {}),
   };
 }
