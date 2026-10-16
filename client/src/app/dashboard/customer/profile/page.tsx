@@ -50,29 +50,8 @@ export default function CustomerProfilePage() {
       .finally(() => setLoading(false));
   }, []);
 
-  if (loading) {
-    return (
-      <div className="flex items-center justify-center py-12">
-        <div className="h-8 w-8 animate-spin rounded-full border-4 border-divider border-t-accent" />
-      </div>
-    );
-  }
-
-  if (!user) {
-    return (
-      <div className="page-content">
-        <p className="text-center text-muted">Failed to load profile</p>
-      </div>
-    );
-  }
-
-  const stats = user.stats ?? {
-    average_rating: 5.0,
-    reviews_count: 0,
-    trust_score: 100,
-    cancellations: 0,
-  };
-
+  // NOTE: hooks must stay above the early returns below — calling them after
+  // the `loading`/`user` guards changes hook order between renders and crashes.
   const handleImageUpload = useCallback(async (url: string) => {
     try {
       const res = await fetch("/api/auth/profile-image", {
@@ -106,6 +85,29 @@ export default function CustomerProfilePage() {
       // ignore
     }
   }, []);
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center py-12">
+        <div className="h-8 w-8 animate-spin rounded-full border-4 border-divider border-t-accent" />
+      </div>
+    );
+  }
+
+  if (!user) {
+    return (
+      <div className="page-content">
+        <p className="text-center text-muted">Failed to load profile</p>
+      </div>
+    );
+  }
+
+  const stats = user.stats ?? {
+    average_rating: 5.0,
+    reviews_count: 0,
+    trust_score: 100,
+    cancellations: 0,
+  };
 
   return (
     <div className="space-y-5 px-4 py-6">
