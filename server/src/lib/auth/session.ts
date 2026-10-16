@@ -7,6 +7,18 @@
 export const SESSION_COOKIE_NAME = "ustad_session";
 export const SESSION_TTL_DAYS = 30;
 
+const DAY_MS = 24 * 60 * 60 * 1000;
+
+/**
+ * Session lifetime in milliseconds. Defaults to SESSION_TTL_DAYS but can be
+ * tuned per deployment with the SESSION_TTL_DAYS env var.
+ */
+export function sessionTtlMs(): number {
+  const raw = Number(process.env.SESSION_TTL_DAYS);
+  const days = Number.isFinite(raw) && raw > 0 ? raw : SESSION_TTL_DAYS;
+  return days * DAY_MS;
+}
+
 function bytesToHex(bytes: Uint8Array): string {
   return Array.from(bytes)
     .map((b) => b.toString(16).padStart(2, "0"))

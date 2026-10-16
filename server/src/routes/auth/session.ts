@@ -5,21 +5,27 @@ import {
   SESSION_COOKIE_NAME,
   isSessionExpired,
   isSessionTokenValid,
+  sessionTtlMs,
 } from "../../lib/auth/session.js";
+import { clearSessionCookie, sessionCookieOptions } from "../../lib/auth/cookie.js";
 import { Session } from "../../models/index.js";
 
 const router = Router();
+
+const DAY_MS = 24 * 60 * 60 * 1000;
 
 router.get("/session", handleSession);
 router.get("/me", handleSession);
 
 async function handleSession(req: any, res: any) {
   try {
+    const cookieToken = req.cookies?.[SESSION_COOKIE_NAME];
     const token =
-      req.cookies?.[SESSION_COOKIE_NAME] ??
+      cookieToken ??
       req.headers.authorization?.replace("Bearer ", "");
 
     if (!isSessionTokenValid(token)) {
+      if (cookieToken) clearSessionCookie(res);
       return ok({ user: null })(res);
     }
 
@@ -29,7 +35,24 @@ async function handleSession(req: any, res: any) {
       .lean();
 
     if (!session || isSessionExpired(session.expires_at)) {
+      // Stale cookie: remove it so the middleware and the UI agree the
+      // session is gone instead of bouncing the user between pages.
+      if (session) await Session.deleteOne({ _id: session._id });
+      if (cookieToken) clearSessionCookie(res);
       return ok({ user: null })(res);
+    }
+
+    // Sliding expiry: stay signed in as long as the app is used. Refresh at
+    // most once a day per session to avoid a write on every request.
+    const ttl = sessionTtlMs();
+    if (session.expires_at.getTime() - Date.now() < ttl - DAY_MS) {
+      await Session.updateOne(
+        { _id: session._id },
+        { $set: { expires_at: new Date(Date.now() + ttl) } },
+      );
+      if (cookieToken) {
+        res.cookie(SESSION_COOKIE_NAME, cookieToken, sessionCookieOptions(req));
+      }
     }
 
     const user = session.user_id as unknown as {

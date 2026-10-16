@@ -1,57 +1,13 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
 import WorkerProfile from "@/client/components/worker/WorkerProfile";
 import TranslatedHeading from "@/client/components/TranslatedHeading";
+import { useWorker } from "@/client/lib/session";
 
 export default function WorkerProfilePage() {
-  const router = useRouter();
-  const [workerId, setWorkerId] = useState<string | null>(null);
+  const worker = useWorker();
 
-  useEffect(() => {
-    let cancelled = false;
-
-    async function load() {
-      try {
-        const meRes = await fetch("/api/auth/me");
-        const meBody = (await meRes.json()) as {
-          success?: boolean;
-          data?: { user?: { id?: string } };
-        };
-
-        if (cancelled) return;
-        if (!meBody?.success || !meBody.data?.user?.id) {
-          router.push("/login");
-          return;
-        }
-
-        const workerRes = await fetch(
-          `/api/workers/by-user/${meBody.data.user.id}`,
-        );
-        const workerBody = (await workerRes.json()) as {
-          success?: boolean;
-          data?: { _id?: string };
-        };
-
-        if (cancelled) return;
-        if (workerBody?.success && workerBody.data?._id) {
-          setWorkerId(workerBody.data._id);
-        } else {
-          router.push("/login");
-        }
-      } catch {
-        if (!cancelled) router.push("/login");
-      }
-    }
-
-    void load();
-    return () => {
-      cancelled = true;
-    };
-  }, [router]);
-
-  if (!workerId) {
+  if (!worker) {
     return (
       <div className="flex items-center justify-center py-12">
         <div className="h-8 w-8 animate-spin rounded-full border-4 border-divider border-t-accent" />
@@ -64,7 +20,7 @@ export default function WorkerProfilePage() {
         <TranslatedHeading translationKey="profile" />
       </div>
       <div className="page-content">
-        <WorkerProfile workerId={workerId} />
+        <WorkerProfile workerId={worker._id} />
       </div>
     </div>
   );

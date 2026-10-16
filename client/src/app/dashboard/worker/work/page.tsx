@@ -1,9 +1,9 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
 import WorkerWorkPageClient from "./WorkerWorkPageClient";
 import TranslatedHeading from "@/client/components/TranslatedHeading";
+import { useWorker } from "@/client/lib/session";
 
 interface ActiveJobData {
   jobId: string;
@@ -17,34 +17,22 @@ interface ActiveJobData {
 }
 
 export default function WorkerWorkPage() {
-  const router = useRouter();
+  const worker = useWorker();
   const [activeJob, setActiveJob] = useState<ActiveJobData | null | undefined>(undefined);
 
   useEffect(() => {
+    if (!worker) return;
+    const jobId = worker.active_job_id;
     let cancelled = false;
 
     async function load() {
+      if (!jobId) {
+        if (!cancelled) setActiveJob(null);
+        return;
+      }
+
       try {
-        const meRes = await fetch("/api/auth/me");
-        const meBody: { success?: boolean; data?: { user?: { id?: string } } } = await meRes.json();
-        if (!meBody?.success || !meBody.data?.user) {
-          router.push("/login");
-          return;
-        }
-
-        const workerRes = await fetch(`/api/workers/by-user/${meBody.data.user.id}`);
-        const workerBody: { success?: boolean; data?: { _id?: string; active_job_id?: string | null } } = await workerRes.json();
-        if (!workerBody?.success || !workerBody.data?._id) {
-          router.push("/login");
-          return;
-        }
-
-        if (!workerBody.data.active_job_id) {
-          if (!cancelled) setActiveJob(null);
-          return;
-        }
-
-        const jobRes = await fetch(`/api/jobs/${workerBody.data.active_job_id}`);
+        const jobRes = await fetch(`/api/jobs/${jobId}`);
         if (jobRes.status === 404) {
           if (!cancelled) setActiveJob(null);
           return;
@@ -63,7 +51,7 @@ export default function WorkerWorkPage() {
           if (jobBody?.success && jobBody.data?.job) {
             const job = jobBody.data.job;
             setActiveJob({
-              jobId: workerBody.data.active_job_id,
+              jobId,
               status: job.status ?? "",
               originalText: job.input?.original_text ?? "",
               completion: job.completion ?? null,
@@ -79,7 +67,7 @@ export default function WorkerWorkPage() {
 
     load();
     return () => { cancelled = true; };
-  }, [router]);
+  }, [worker]);
 
   if (activeJob === undefined) {
     return (

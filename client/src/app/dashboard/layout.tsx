@@ -2,9 +2,11 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
+import Link from "next/link";
 import BottomNav from "@/client/components/BottomNav";
 import DesktopNav from "@/client/components/DesktopNav";
 import LiquidGlassToastContainer from "@/client/components/LiquidGlassToast";
+import { fetchSession } from "@/client/lib/session";
 import "@/app/dark-glass-theme.css";
 
 const TRACKING_STATUSES = new Set(["ACCEPTED", "EN_ROUTE", "ARRIVED", "IN_PROGRESS", "AWAITING_CUSTOMER_CONFIRMATION"]);
@@ -17,24 +19,42 @@ export default function DashboardLayout({
   const router = useRouter();
   const [role, setRole] = useState<"customer" | "worker" | null>(null);
   const [userName, setUserName] = useState("Guest");
-  const [loaded, setLoaded] = useState(false);
+  const [authState, setAuthState] = useState<"checking" | "ready" | "unreachable">("checking");
+  const [retryKey, setRetryKey] = useState(0);
 
   useEffect(() => {
-    fetch("/api/auth/me")
-      .then((r) => r.json())
-      .then((body: { success?: boolean; data?: { user?: { role?: string; name?: string } } }) => {
-        if (!body?.success || !body.data?.user) {
-          router.push("/login");
-          return;
-        }
-        setRole(body.data.user.role as "customer" | "worker");
-        setUserName(body.data.user.name ?? "Guest");
-        setLoaded(true);
-      })
-      .catch(() => {
+    let cancelled = false;
+    let retryTimer: ReturnType<typeof setTimeout> | null = null;
+
+    async function load() {
+      const result = await fetchSession();
+      if (cancelled) return;
+
+      if (result.status === "authed") {
+        setRole(result.user.role as "customer" | "worker");
+        setUserName(result.user.name ?? "Guest");
+        setAuthState("ready");
+        return;
+      }
+      if (result.status === "anonymous") {
+        // Server explicitly says there is no session — the only real logout.
         router.push("/login");
-      });
-  }, [router]);
+        return;
+      }
+
+      // Server unreachable (cold start, flaky network). The user stays signed
+      // in: show a soft notice and keep retrying in the background instead of
+      // dumping them on the login screen.
+      setAuthState("unreachable");
+      retryTimer = setTimeout(() => setRetryKey((k) => k + 1), 6000);
+    }
+
+    void load();
+    return () => {
+      cancelled = true;
+      if (retryTimer) clearTimeout(retryTimer);
+    };
+  }, [router, retryKey]);
 
   // Socket-based instant redirect: when worker accepts, redirect from ANY page
   useEffect(() => {
@@ -96,7 +116,31 @@ export default function DashboardLayout({
     };
   }, [role]);
 
-  if (!loaded || !role) {
+  if (authState === "unreachable") {
+    return (
+      <div className="flex min-h-screen items-center justify-center bg-bg px-4">
+        <div className="card w-full max-w-sm space-y-4 p-6 text-center">
+          <h2 className="text-lg font-bold text-text">Can&apos;t reach the server</h2>
+          <p className="text-sm text-muted">
+            You&apos;re still signed in — we&apos;ll keep trying. This can take up
+            to a minute if the server is waking up.
+          </p>
+          <button
+            type="button"
+            onClick={() => setRetryKey((k) => k + 1)}
+            className="btn-primary w-full"
+          >
+            Try now
+          </button>
+          <Link href="/login" className="block text-xs text-muted underline-offset-2 hover:underline">
+            Sign in with a different account
+          </Link>
+        </div>
+      </div>
+    );
+  }
+
+  if (authState !== "ready" || !role) {
     return (
       <div className="flex min-h-screen items-center justify-center bg-bg">
         <div className="h-10 w-10 animate-spin rounded-full border-4 border-white/10 border-t-[#26A650]" />

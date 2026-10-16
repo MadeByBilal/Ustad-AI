@@ -5,9 +5,10 @@ import { fail, ok } from "../../lib/api.js";
 import { hashPassword, validatePasswordStrength } from "../../lib/auth/password.js";
 import {
   SESSION_COOKIE_NAME,
-  SESSION_TTL_DAYS,
   createSessionToken,
+  sessionTtlMs,
 } from "../../lib/auth/session.js";
+import { sessionCookieOptions } from "../../lib/auth/cookie.js";
 import { fingerprint } from "../../lib/auth/fingerprint.js";
 import { Session, User, Worker } from "../../models/index.js";
 import { WORKER_CATEGORIES } from "../../models/Worker.js";
@@ -103,17 +104,10 @@ router.post("/signup", async (req, res) => {
       user_id: user._id,
       role: user.role,
       fingerprint: fingerprint(userAgent, ip),
-      expires_at: new Date(Date.now() + SESSION_TTL_DAYS * 24 * 60 * 60 * 1000),
+      expires_at: new Date(Date.now() + sessionTtlMs()),
     });
 
-    const isProduction = process.env.NODE_ENV === "production";
-    res.cookie(SESSION_COOKIE_NAME, token, {
-      httpOnly: true,
-      sameSite: isProduction ? "none" : "lax",
-      secure: isProduction,
-      path: "/",
-      maxAge: SESSION_TTL_DAYS * 24 * 60 * 60 * 1000,
-    });
+    res.cookie(SESSION_COOKIE_NAME, token, sessionCookieOptions(req));
 
     return ok({
       user: { id: user._id, role: user.role, name: user.name, email: user.email },

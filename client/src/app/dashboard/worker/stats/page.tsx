@@ -1,9 +1,9 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
 import WorkerStatsPageClient from "@/client/components/worker/WorkerStatsPageClient";
 import TranslatedHeading from "@/client/components/TranslatedHeading";
+import { useWorker } from "@/client/lib/session";
 
 interface WorkerData {
   workerId: string;
@@ -15,30 +15,16 @@ interface WorkerData {
 }
 
 export default function WorkerStatsPage() {
-  const router = useRouter();
+  const worker = useWorker();
   const [workerData, setWorkerData] = useState<WorkerData | null | undefined>(undefined);
 
   useEffect(() => {
+    if (!worker) return;
+    const workerId = worker._id;
     let cancelled = false;
 
     async function load() {
       try {
-        const meRes = await fetch("/api/auth/me");
-        const meBody: { success?: boolean; data?: { user?: { id?: string } } } = await meRes.json();
-        if (!meBody?.success || !meBody.data?.user) {
-          router.push("/login");
-          return;
-        }
-
-        const workerRes = await fetch(`/api/workers/by-user/${meBody.data.user.id}`);
-        const workerBody: { success?: boolean; data?: { _id?: string } } = await workerRes.json();
-        if (!workerBody?.success || !workerBody.data?._id) {
-          router.push("/login");
-          return;
-        }
-
-        const workerId = workerBody.data._id;
-
         const dashRes = await fetch(`/api/workers/${workerId}/dashboard`);
         const dashBody: { success?: boolean; data?: { worker?: WorkerData["worker"] } } = await dashRes.json();
 
@@ -59,7 +45,7 @@ export default function WorkerStatsPage() {
 
     load();
     return () => { cancelled = true; };
-  }, [router]);
+  }, [worker]);
 
   if (workerData === undefined) {
     return (

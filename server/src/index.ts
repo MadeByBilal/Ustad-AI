@@ -20,6 +20,10 @@ const CLIENT_URL = process.env.CLIENT_URL ?? "http://localhost:3001";
 const app = express();
 const server = createServer(app);
 
+// Honor X-Forwarded-* from hosting proxies (Vercel/Render) so req.secure and
+// req.ip reflect the real client instead of the proxy hop.
+app.set("trust proxy", true);
+
 // Middleware
 app.use(cors({
   origin: CLIENT_URL,

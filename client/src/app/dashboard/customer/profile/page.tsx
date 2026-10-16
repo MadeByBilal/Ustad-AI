@@ -18,19 +18,12 @@ import {
 } from "@fortawesome/free-solid-svg-icons";
 import { faStar as faStarRegular } from "@fortawesome/free-regular-svg-icons";
 import { getApiErrorMessage } from "@/client/lib/api-client";
+import { fetchSession, type SessionUser } from "@/client/lib/session";
 
-interface UserProfile {
+interface UserProfile extends SessionUser {
   name: string;
   email: string;
   phone?: string;
-  role: string;
-  profile_image?: string | null;
-  stats?: {
-    average_rating: number;
-    reviews_count: number;
-    trust_score: number;
-    cancellations: number;
-  };
 }
 
 export default function CustomerProfilePage() {
@@ -39,15 +32,17 @@ export default function CustomerProfilePage() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    fetch("/api/auth/me")
-      .then((r) => r.json())
-      .then((body: { success?: boolean; data?: { user?: UserProfile } }) => {
-        if (body?.success && body.data?.user) {
-          setUser(body.data.user);
-        }
-      })
-      .catch(() => {})
-      .finally(() => setLoading(false));
+    let cancelled = false;
+    void fetchSession().then((result) => {
+      if (cancelled) return;
+      if (result.status === "authed") {
+        setUser(result.user as UserProfile);
+      }
+      setLoading(false);
+    });
+    return () => {
+      cancelled = true;
+    };
   }, []);
 
   // NOTE: hooks must stay above the early returns below — calling them after

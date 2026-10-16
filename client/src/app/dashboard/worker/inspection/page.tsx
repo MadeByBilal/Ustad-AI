@@ -1,8 +1,9 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useSearchParams } from "next/navigation";
 import InspectionPageClient from "./InspectionPageClient";
+import { useWorker } from "@/client/lib/session";
 
 interface ActiveJobData {
   jobId: string;
@@ -16,36 +17,23 @@ interface ActiveJobData {
 }
 
 export default function WorkerInspectionPage() {
-  const router = useRouter();
   const searchParams = useSearchParams();
   const jobIdFromUrl = searchParams.get("jobId");
+  const worker = useWorker();
   const [activeJob, setActiveJob] = useState<ActiveJobData | null | undefined>(undefined);
 
   useEffect(() => {
+    if (!worker) return;
+    const targetJobId = jobIdFromUrl || worker.active_job_id;
     let cancelled = false;
 
     async function load() {
+      if (!targetJobId) {
+        if (!cancelled) setActiveJob(null);
+        return;
+      }
+
       try {
-        const meRes = await fetch("/api/auth/me");
-        const meBody: { success?: boolean; data?: { user?: { id?: string } } } = await meRes.json();
-        if (!meBody?.success || !meBody.data?.user) {
-          router.push("/login");
-          return;
-        }
-
-        const workerRes = await fetch(`/api/workers/by-user/${meBody.data.user.id}`);
-        const workerBody: { success?: boolean; data?: { _id?: string; active_job_id?: string | null } } = await workerRes.json();
-        if (!workerBody?.success || !workerBody.data?._id) {
-          router.push("/login");
-          return;
-        }
-
-        const targetJobId = jobIdFromUrl || workerBody.data.active_job_id;
-        if (!targetJobId) {
-          if (!cancelled) setActiveJob(null);
-          return;
-        }
-
         const jobRes = await fetch(`/api/jobs/${targetJobId}`);
         if (jobRes.status === 404) {
           if (!cancelled) setActiveJob(null);
@@ -81,7 +69,7 @@ export default function WorkerInspectionPage() {
 
     load();
     return () => { cancelled = true; };
-  }, [router, jobIdFromUrl]);
+  }, [worker, jobIdFromUrl]);
 
   if (activeJob === undefined) {
     return (
