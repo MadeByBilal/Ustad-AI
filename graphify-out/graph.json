@@ -320,7 +320,7 @@
       "_origin": "ast",
       "id": "server_src_lib_auth_password_passwordstrength",
       "community": 11,
-      "community_name": "connectDB",
+      "community_name": "mongodb.ts",
       "norm_label": "passwordstrength"
     },
     {
@@ -333,7 +333,7 @@
       "_origin": "ast",
       "id": "server_src_lib_mongodb_mongoosecache",
       "community": 11,
-      "community_name": "connectDB",
+      "community_name": "mongodb.ts",
       "norm_label": "mongoosecache"
     },
     {
@@ -346,7 +346,7 @@
       "_origin": "ast",
       "id": "server_src_scripts_reset_workers_seedworker",
       "community": 11,
-      "community_name": "connectDB",
+      "community_name": "mongodb.ts",
       "norm_label": "seedworker"
     },
     {
@@ -359,7 +359,7 @@
       "_origin": "ast",
       "id": "server_src_scripts_seed_city",
       "community": 11,
-      "community_name": "connectDB",
+      "community_name": "mongodb.ts",
       "norm_label": "city"
     },
     {
@@ -372,7 +372,7 @@
       "_origin": "ast",
       "id": "server_src_scripts_seed_ustads_ustadseeddata",
       "community": 11,
-      "community_name": "connectDB",
+      "community_name": "mongodb.ts",
       "norm_label": "ustadseeddata"
     },
     {
@@ -899,7 +899,7 @@
       "label": "MicVisualizerProps",
       "file_type": "code",
       "source_file": "client/src/client/components/MicVisualizer.tsx",
-      "source_location": "L4",
+      "source_location": "L5",
       "_callable": true,
       "_callable_class": true,
       "_origin": "ast",
@@ -925,7 +925,7 @@
       "label": "Coordinates",
       "file_type": "code",
       "source_file": "client/src/client/components/VoiceCapture.tsx",
-      "source_location": "L26",
+      "source_location": "L33",
       "_callable": true,
       "_callable_class": true,
       "_origin": "ast",
@@ -938,7 +938,7 @@
       "label": "LocationFailureReason",
       "file_type": "code",
       "source_file": "client/src/client/components/VoiceCapture.tsx",
-      "source_location": "L28",
+      "source_location": "L35",
       "_callable": true,
       "_callable_class": true,
       "_origin": "ast",
@@ -951,7 +951,7 @@
       "label": "RecordingSession",
       "file_type": "code",
       "source_file": "client/src/client/components/VoiceCapture.tsx",
-      "source_location": "L34",
+      "source_location": "L41",
       "_callable": true,
       "_callable_class": true,
       "_origin": "ast",
@@ -964,7 +964,7 @@
       "label": "RunBody",
       "file_type": "code",
       "source_file": "client/src/client/components/VoiceCapture.tsx",
-      "source_location": "L27",
+      "source_location": "L34",
       "_callable": true,
       "_callable_class": true,
       "_origin": "ast",
@@ -977,7 +977,7 @@
       "label": "Status",
       "file_type": "code",
       "source_file": "client/src/client/components/VoiceCapture.tsx",
-      "source_location": "L24",
+      "source_location": "L31",
       "_callable": true,
       "_callable_class": true,
       "_origin": "ast",
@@ -990,7 +990,7 @@
       "label": "VoiceCaptureProps",
       "file_type": "code",
       "source_file": "client/src/client/components/VoiceCapture.tsx",
-      "source_location": "L90",
+      "source_location": "L97",
       "_callable": true,
       "_callable_class": true,
       "_origin": "ast",
@@ -998,6 +998,19 @@
       "community": 20,
       "community_name": "VoiceCapture.tsx",
       "norm_label": "voicecaptureprops"
+    },
+    {
+      "label": "FlowError",
+      "file_type": "code",
+      "source_file": "server/src/lib/job/flow.ts",
+      "source_location": "L33",
+      "_callable": true,
+      "_callable_class": true,
+      "_origin": "ast",
+      "id": "server_src_lib_job_flow_flowerror",
+      "community": 23,
+      "community_name": "workers/index.ts",
+      "norm_label": "flowerror"
     },
     {
       "label": "PhotoUploadInput",
@@ -1076,32 +1089,6 @@
       "community": 23,
       "community_name": "workers/index.ts",
       "norm_label": "workerview"
-    },
-    {
-      "label": "VerificationLevel",
-      "file_type": "code",
-      "source_file": "server/src/models/Worker.ts",
-      "source_location": "L15",
-      "_callable": true,
-      "_callable_class": true,
-      "_origin": "ast",
-      "id": "server_src_models_worker_verificationlevel",
-      "community": 23,
-      "community_name": "workers/index.ts",
-      "norm_label": "verificationlevel"
-    },
-    {
-      "label": "WorkerDoc",
-      "file_type": "code",
-      "source_file": "server/src/models/Worker.ts",
-      "source_location": "L92",
-      "_callable": true,
-      "_callable_class": true,
-      "_origin": "ast",
-      "id": "server_src_models_worker_workerdoc",
-      "community": 23,
-      "community_name": "workers/index.ts",
-      "norm_label": "workerdoc"
     },
     {
       "label": "OfferValidation",
@@ -2387,7 +2374,7 @@
       "_origin": "ast",
       "id": "server_src_lib_job_requests_counterresponseinput",
       "community": 43,
-      "community_name": "requests.ts",
+      "community_name": "connectDB",
       "norm_label": "counterresponseinput"
     },
     {
@@ -2400,7 +2387,7 @@
       "_origin": "ast",
       "id": "server_src_lib_job_requests_counterresponseresult",
       "community": 43,
-      "community_name": "requests.ts",
+      "community_name": "connectDB",
       "norm_label": "counterresponseresult"
     },
     {
@@ -2413,7 +2400,7 @@
       "_origin": "ast",
       "id": "server_src_lib_job_requests_directrequestinput",
       "community": 43,
-      "community_name": "requests.ts",
+      "community_name": "connectDB",
       "norm_label": "directrequestinput"
     },
     {
@@ -2426,7 +2413,7 @@
       "_origin": "ast",
       "id": "server_src_lib_job_requests_directrequestresult",
       "community": 43,
-      "community_name": "requests.ts",
+      "community_name": "connectDB",
       "norm_label": "directrequestresult"
     },
     {
@@ -2439,7 +2426,7 @@
       "_origin": "ast",
       "id": "server_src_lib_job_requests_requesterror",
       "community": 43,
-      "community_name": "requests.ts",
+      "community_name": "connectDB",
       "norm_label": "requesterror"
     },
     {
@@ -2452,7 +2439,7 @@
       "_origin": "ast",
       "id": "server_src_lib_job_requests_workerrespondinput",
       "community": 43,
-      "community_name": "requests.ts",
+      "community_name": "connectDB",
       "norm_label": "workerrespondinput"
     },
     {
@@ -2465,7 +2452,7 @@
       "_origin": "ast",
       "id": "server_src_lib_job_requests_workerrespondresult",
       "community": 43,
-      "community_name": "requests.ts",
+      "community_name": "connectDB",
       "norm_label": "workerrespondresult"
     },
     {
@@ -2935,6 +2922,32 @@
       "community": 5,
       "community_name": "models/index.ts",
       "norm_label": "userrole"
+    },
+    {
+      "label": "VerificationLevel",
+      "file_type": "code",
+      "source_file": "server/src/models/Worker.ts",
+      "source_location": "L15",
+      "_callable": true,
+      "_callable_class": true,
+      "_origin": "ast",
+      "id": "server_src_models_worker_verificationlevel",
+      "community": 5,
+      "community_name": "models/index.ts",
+      "norm_label": "verificationlevel"
+    },
+    {
+      "label": "WorkerDoc",
+      "file_type": "code",
+      "source_file": "server/src/models/Worker.ts",
+      "source_location": "L92",
+      "_callable": true,
+      "_callable_class": true,
+      "_origin": "ast",
+      "id": "server_src_models_worker_workerdoc",
+      "community": 5,
+      "community_name": "models/index.ts",
+      "norm_label": "workerdoc"
     },
     {
       "label": "ActiveJobView",
@@ -4692,19 +4705,6 @@
       "norm_label": "broadcastresult"
     },
     {
-      "label": "FlowError",
-      "file_type": "code",
-      "source_file": "server/src/lib/job/flow.ts",
-      "source_location": "L33",
-      "_callable": true,
-      "_callable_class": true,
-      "_origin": "ast",
-      "id": "server_src_lib_job_flow_flowerror",
-      "community": 89,
-      "community_name": "jobs/index.ts",
-      "norm_label": "flowerror"
-    },
-    {
       "label": "WorkerOfferResult",
       "file_type": "code",
       "source_file": "server/src/lib/job/flow.ts",
@@ -4747,7 +4747,7 @@
       "label": "UnderstandResponse",
       "file_type": "code",
       "source_file": "client/src/client/components/VoiceCapture.tsx",
-      "source_location": "L15",
+      "source_location": "L22",
       "_callable": true,
       "_callable_class": true,
       "_origin": "ast",
@@ -5637,7 +5637,7 @@
       "_origin": "ast",
       "id": "server_src_lib_auth_password_hashpassword",
       "community": 11,
-      "community_name": "connectDB",
+      "community_name": "mongodb.ts",
       "norm_label": "hashpassword()"
     },
     {
@@ -5649,20 +5649,8 @@
       "_origin": "ast",
       "id": "server_src_lib_auth_password_validatepasswordstrength",
       "community": 11,
-      "community_name": "connectDB",
+      "community_name": "mongodb.ts",
       "norm_label": "validatepasswordstrength()"
-    },
-    {
-      "label": "connectDB()",
-      "file_type": "code",
-      "source_file": "server/src/lib/mongodb.ts",
-      "source_location": "L32",
-      "_callable": true,
-      "_origin": "ast",
-      "id": "server_src_lib_mongodb_connectdb",
-      "community": 11,
-      "community_name": "connectDB",
-      "norm_label": "connectdb()"
     },
     {
       "label": "disconnectDB()",
@@ -5673,7 +5661,7 @@
       "_origin": "ast",
       "id": "server_src_lib_mongodb_disconnectdb",
       "community": 11,
-      "community_name": "connectDB",
+      "community_name": "mongodb.ts",
       "norm_label": "disconnectdb()"
     },
     {
@@ -5685,7 +5673,7 @@
       "_origin": "ast",
       "id": "server_src_lib_mongodb_isdbconnected",
       "community": 11,
-      "community_name": "connectDB",
+      "community_name": "mongodb.ts",
       "norm_label": "isdbconnected()"
     },
     {
@@ -5697,7 +5685,7 @@
       "_origin": "ast",
       "id": "server_src_lib_mongodb_requireenv",
       "community": 11,
-      "community_name": "connectDB",
+      "community_name": "mongodb.ts",
       "norm_label": "requireenv()"
     },
     {
@@ -5709,7 +5697,7 @@
       "_origin": "ast",
       "id": "server_src_scripts_reset_workers_resetworkers",
       "community": 11,
-      "community_name": "connectDB",
+      "community_name": "mongodb.ts",
       "norm_label": "resetworkers()"
     },
     {
@@ -5721,7 +5709,7 @@
       "_origin": "ast",
       "id": "server_src_scripts_seed_jitter",
       "community": 11,
-      "community_name": "connectDB",
+      "community_name": "mongodb.ts",
       "norm_label": "jitter()"
     },
     {
@@ -5733,7 +5721,7 @@
       "_origin": "ast",
       "id": "server_src_scripts_seed_main",
       "community": 11,
-      "community_name": "connectDB",
+      "community_name": "mongodb.ts",
       "norm_label": "main()"
     },
     {
@@ -5745,7 +5733,7 @@
       "_origin": "ast",
       "id": "server_src_scripts_seed_seedworkers",
       "community": 11,
-      "community_name": "connectDB",
+      "community_name": "mongodb.ts",
       "norm_label": "seedworkers()"
     },
     {
@@ -5757,7 +5745,7 @@
       "_origin": "ast",
       "id": "server_src_scripts_seed_serviceareapolygon",
       "community": 11,
-      "community_name": "connectDB",
+      "community_name": "mongodb.ts",
       "norm_label": "serviceareapolygon()"
     },
     {
@@ -5769,7 +5757,7 @@
       "_origin": "ast",
       "id": "server_src_scripts_seed_ustads_seed",
       "community": 11,
-      "community_name": "connectDB",
+      "community_name": "mongodb.ts",
       "norm_label": "seed()"
     },
     {
@@ -5781,7 +5769,7 @@
       "_origin": "ast",
       "id": "server_src_scripts_seed_weighted",
       "community": 11,
-      "community_name": "connectDB",
+      "community_name": "mongodb.ts",
       "norm_label": "weighted()"
     },
     {
@@ -6700,7 +6688,7 @@
       "label": "MicVisualizer()",
       "file_type": "code",
       "source_file": "client/src/client/components/MicVisualizer.tsx",
-      "source_location": "L10",
+      "source_location": "L11",
       "_callable": true,
       "_origin": "ast",
       "id": "client_src_client_components_micvisualizer_micvisualizer",
@@ -6724,7 +6712,7 @@
       "label": "audioFileExtension()",
       "file_type": "code",
       "source_file": "client/src/client/components/VoiceCapture.tsx",
-      "source_location": "L73",
+      "source_location": "L80",
       "_callable": true,
       "_origin": "ast",
       "id": "client_src_client_components_voicecapture_audiofileextension",
@@ -6736,7 +6724,7 @@
       "label": "currency()",
       "file_type": "code",
       "source_file": "client/src/client/components/VoiceCapture.tsx",
-      "source_location": "L110",
+      "source_location": "L117",
       "_callable": true,
       "_origin": "ast",
       "id": "client_src_client_components_voicecapture_currency",
@@ -6748,7 +6736,7 @@
       "label": "getSupportedAudioMimeType()",
       "file_type": "code",
       "source_file": "client/src/client/components/VoiceCapture.tsx",
-      "source_location": "L54",
+      "source_location": "L61",
       "_callable": true,
       "_origin": "ast",
       "id": "client_src_client_components_voicecapture_getsupportedaudiomimetype",
@@ -6760,7 +6748,7 @@
       "label": "locationFailureMessage()",
       "file_type": "code",
       "source_file": "client/src/client/components/VoiceCapture.tsx",
-      "source_location": "L77",
+      "source_location": "L84",
       "_callable": true,
       "_origin": "ast",
       "id": "client_src_client_components_voicecapture_locationfailuremessage",
@@ -6772,7 +6760,7 @@
       "label": "ResultPanel()",
       "file_type": "code",
       "source_file": "client/src/client/components/VoiceCapture.tsx",
-      "source_location": "L226",
+      "source_location": "L233",
       "_callable": true,
       "_origin": "ast",
       "id": "client_src_client_components_voicecapture_resultpanel",
@@ -6784,7 +6772,7 @@
       "label": "VoiceCapture()",
       "file_type": "code",
       "source_file": "client/src/client/components/VoiceCapture.tsx",
-      "source_location": "L438",
+      "source_location": "L445",
       "_callable": true,
       "_origin": "ast",
       "id": "client_src_client_components_voicecapture_voicecapture",
@@ -6796,7 +6784,7 @@
       "label": "WorkerCard()",
       "file_type": "code",
       "source_file": "client/src/client/components/VoiceCapture.tsx",
-      "source_location": "L112",
+      "source_location": "L119",
       "_callable": true,
       "_origin": "ast",
       "id": "client_src_client_components_voicecapture_workercard",
@@ -6815,6 +6803,18 @@
       "community": 21,
       "community_name": "graphify.js",
       "norm_label": "graphifyplugin()"
+    },
+    {
+      "label": ".constructor()",
+      "file_type": "code",
+      "source_file": "server/src/lib/job/flow.ts",
+      "source_location": "L34",
+      "_callable": true,
+      "_origin": "ast",
+      "id": "server_src_lib_job_flow_flowerror_constructor",
+      "community": 23,
+      "community_name": "workers/index.ts",
+      "norm_label": ".constructor()"
     },
     {
       "label": "getWorkerDashboard()",
@@ -8445,7 +8445,7 @@
       "_origin": "ast",
       "id": "server_src_lib_job_requests_createdirectrequest",
       "community": 43,
-      "community_name": "requests.ts",
+      "community_name": "connectDB",
       "norm_label": "createdirectrequest()"
     },
     {
@@ -8457,7 +8457,7 @@
       "_origin": "ast",
       "id": "server_src_lib_job_requests_requesterror_constructor",
       "community": 43,
-      "community_name": "requests.ts",
+      "community_name": "connectDB",
       "norm_label": ".constructor()"
     },
     {
@@ -8469,7 +8469,7 @@
       "_origin": "ast",
       "id": "server_src_lib_job_requests_respondtocounter",
       "community": 43,
-      "community_name": "requests.ts",
+      "community_name": "connectDB",
       "norm_label": "respondtocounter()"
     },
     {
@@ -8481,8 +8481,20 @@
       "_origin": "ast",
       "id": "server_src_lib_job_requests_respondtodirectrequest",
       "community": 43,
-      "community_name": "requests.ts",
+      "community_name": "connectDB",
       "norm_label": "respondtodirectrequest()"
+    },
+    {
+      "label": "connectDB()",
+      "file_type": "code",
+      "source_file": "server/src/lib/mongodb.ts",
+      "source_location": "L32",
+      "_callable": true,
+      "_origin": "ast",
+      "id": "server_src_lib_mongodb_connectdb",
+      "community": 43,
+      "community_name": "connectDB",
+      "norm_label": "connectdb()"
     },
     {
       "label": "validateWorkerCounter()",
@@ -8493,7 +8505,7 @@
       "_origin": "ast",
       "id": "server_src_lib_validation_validateworkercounter",
       "community": 43,
-      "community_name": "requests.ts",
+      "community_name": "connectDB",
       "norm_label": "validateworkercounter()"
     },
     {
@@ -10079,18 +10091,6 @@
       "community": 89,
       "community_name": "jobs/index.ts",
       "norm_label": "getjobdetail()"
-    },
-    {
-      "label": ".constructor()",
-      "file_type": "code",
-      "source_file": "server/src/lib/job/flow.ts",
-      "source_location": "L34",
-      "_callable": true,
-      "_origin": "ast",
-      "id": "server_src_lib_job_flow_flowerror_constructor",
-      "community": 89,
-      "community_name": "jobs/index.ts",
-      "norm_label": ".constructor()"
     },
     {
       "label": "currency()",
@@ -11705,7 +11705,7 @@
       "_origin": "ast",
       "id": "server_src_lib_auth_password",
       "community": 11,
-      "community_name": "connectDB",
+      "community_name": "mongodb.ts",
       "norm_label": "password.ts"
     },
     {
@@ -11716,7 +11716,7 @@
       "_origin": "ast",
       "id": "server_src_lib_auth_password_password_min_length",
       "community": 11,
-      "community_name": "connectDB",
+      "community_name": "mongodb.ts",
       "norm_label": "password_min_length"
     },
     {
@@ -11727,7 +11727,7 @@
       "_origin": "ast",
       "id": "server_src_lib_mongodb",
       "community": 11,
-      "community_name": "connectDB",
+      "community_name": "mongodb.ts",
       "norm_label": "mongodb.ts"
     },
     {
@@ -11738,8 +11738,19 @@
       "_origin": "ast",
       "id": "server_src_lib_mongodb_mongodb_uri",
       "community": 11,
-      "community_name": "connectDB",
+      "community_name": "mongodb.ts",
       "norm_label": "mongodb_uri"
+    },
+    {
+      "label": "Worker",
+      "file_type": "code",
+      "source_file": "server/src/models/Worker.ts",
+      "source_location": "L94",
+      "_origin": "ast",
+      "id": "server_src_models_worker_worker",
+      "community": 11,
+      "community_name": "mongodb.ts",
+      "norm_label": "worker"
     },
     {
       "label": "reset-workers.ts",
@@ -11749,7 +11760,7 @@
       "_origin": "ast",
       "id": "server_src_scripts_reset_workers",
       "community": 11,
-      "community_name": "connectDB",
+      "community_name": "mongodb.ts",
       "norm_label": "reset-workers.ts"
     },
     {
@@ -11760,7 +11771,7 @@
       "_origin": "ast",
       "id": "server_src_scripts_reset_workers_workers",
       "community": 11,
-      "community_name": "connectDB",
+      "community_name": "mongodb.ts",
       "norm_label": "workers"
     },
     {
@@ -11771,7 +11782,7 @@
       "_origin": "ast",
       "id": "server_src_scripts_seed",
       "community": 11,
-      "community_name": "connectDB",
+      "community_name": "mongodb.ts",
       "norm_label": "seed.ts"
     },
     {
@@ -11782,7 +11793,7 @@
       "_origin": "ast",
       "id": "server_src_scripts_seed_cities",
       "community": 11,
-      "community_name": "connectDB",
+      "community_name": "mongodb.ts",
       "norm_label": "cities"
     },
     {
@@ -11793,7 +11804,7 @@
       "_origin": "ast",
       "id": "server_src_scripts_seed_emergency_capabilities",
       "community": 11,
-      "community_name": "connectDB",
+      "community_name": "mongodb.ts",
       "norm_label": "emergency_capabilities"
     },
     {
@@ -11804,7 +11815,7 @@
       "_origin": "ast",
       "id": "server_src_scripts_seed_ustads",
       "community": 11,
-      "community_name": "connectDB",
+      "community_name": "mongodb.ts",
       "norm_label": "seed-ustads.ts"
     },
     {
@@ -11815,7 +11826,7 @@
       "_origin": "ast",
       "id": "server_src_scripts_seed_ustads_seed_workers",
       "community": 11,
-      "community_name": "connectDB",
+      "community_name": "mongodb.ts",
       "norm_label": "seed_workers"
     },
     {
@@ -11826,7 +11837,7 @@
       "_origin": "ast",
       "id": "server_src_scripts_seed_workers",
       "community": 11,
-      "community_name": "connectDB",
+      "community_name": "mongodb.ts",
       "norm_label": "workers"
     },
     {
@@ -13636,7 +13647,7 @@
       "label": "CATEGORY_LABELS",
       "file_type": "code",
       "source_file": "client/src/client/components/VoiceCapture.tsx",
-      "source_location": "L97",
+      "source_location": "L104",
       "_origin": "ast",
       "id": "client_src_client_components_voicecapture_category_labels",
       "community": 20,
@@ -13647,7 +13658,7 @@
       "label": "SUPPORTED_AUDIO_MIME_TYPES",
       "file_type": "code",
       "source_file": "client/src/client/components/VoiceCapture.tsx",
-      "source_location": "L42",
+      "source_location": "L49",
       "_origin": "ast",
       "id": "client_src_client_components_voicecapture_supported_audio_mime_types",
       "community": 20,
@@ -13658,7 +13669,7 @@
       "label": "URGENCY_LABELS",
       "file_type": "code",
       "source_file": "client/src/client/components/VoiceCapture.tsx",
-      "source_location": "L104",
+      "source_location": "L111",
       "_origin": "ast",
       "id": "client_src_client_components_voicecapture_urgency_labels",
       "community": 20,
@@ -13763,61 +13774,6 @@
       "community": 23,
       "community_name": "workers/index.ts",
       "norm_label": "dashboard.ts"
-    },
-    {
-      "label": "Worker.ts",
-      "file_type": "code",
-      "source_file": "server/src/models/Worker.ts",
-      "source_location": "L1",
-      "_origin": "ast",
-      "id": "server_src_models_worker",
-      "community": 23,
-      "community_name": "workers/index.ts",
-      "norm_label": "worker.ts"
-    },
-    {
-      "label": "VERIFICATION_LEVELS",
-      "file_type": "code",
-      "source_file": "server/src/models/Worker.ts",
-      "source_location": "L11",
-      "_origin": "ast",
-      "id": "server_src_models_worker_verification_levels",
-      "community": 23,
-      "community_name": "workers/index.ts",
-      "norm_label": "verification_levels"
-    },
-    {
-      "label": "Worker",
-      "file_type": "code",
-      "source_file": "server/src/models/Worker.ts",
-      "source_location": "L94",
-      "_origin": "ast",
-      "id": "server_src_models_worker_worker",
-      "community": 23,
-      "community_name": "workers/index.ts",
-      "norm_label": "worker"
-    },
-    {
-      "label": "WORKER_CATEGORIES",
-      "file_type": "code",
-      "source_file": "server/src/models/Worker.ts",
-      "source_location": "L3",
-      "_origin": "ast",
-      "id": "server_src_models_worker_worker_categories",
-      "community": 23,
-      "community_name": "workers/index.ts",
-      "norm_label": "worker_categories"
-    },
-    {
-      "label": "workerSchema",
-      "file_type": "code",
-      "source_file": "server/src/models/Worker.ts",
-      "source_location": "L17",
-      "_origin": "ast",
-      "id": "server_src_models_worker_workerschema",
-      "community": 23,
-      "community_name": "workers/index.ts",
-      "norm_label": "workerschema"
     },
     {
       "label": "workers/index.ts",
@@ -15332,7 +15288,7 @@
       "_origin": "ast",
       "id": "server_src_lib_job_requests",
       "community": 43,
-      "community_name": "requests.ts",
+      "community_name": "connectDB",
       "norm_label": "requests.ts"
     },
     {
@@ -15343,7 +15299,7 @@
       "_origin": "ast",
       "id": "server_src_routes_requests_index",
       "community": 43,
-      "community_name": "requests.ts",
+      "community_name": "connectDB",
       "norm_label": "requests/index.ts"
     },
     {
@@ -15354,7 +15310,7 @@
       "_origin": "ast",
       "id": "server_src_routes_requests_index_counterresponseschema",
       "community": 43,
-      "community_name": "requests.ts",
+      "community_name": "connectDB",
       "norm_label": "counterresponseschema"
     },
     {
@@ -15365,7 +15321,7 @@
       "_origin": "ast",
       "id": "server_src_routes_requests_index_createrequestschema",
       "community": 43,
-      "community_name": "requests.ts",
+      "community_name": "connectDB",
       "norm_label": "createrequestschema"
     },
     {
@@ -15376,19 +15332,8 @@
       "_origin": "ast",
       "id": "server_src_routes_requests_index_respondschema",
       "community": 43,
-      "community_name": "requests.ts",
+      "community_name": "connectDB",
       "norm_label": "respondschema"
-    },
-    {
-      "label": "router",
-      "file_type": "code",
-      "source_file": "server/src/routes/requests/index.ts",
-      "source_location": "L9",
-      "_origin": "ast",
-      "id": "server_src_routes_requests_index_router",
-      "community": 43,
-      "community_name": "requests.ts",
-      "norm_label": "router"
     },
     {
       "label": "CustomerRequestsPanel.tsx",
@@ -16292,6 +16237,50 @@
       "community": 5,
       "community_name": "models/index.ts",
       "norm_label": "userschema"
+    },
+    {
+      "label": "Worker.ts",
+      "file_type": "code",
+      "source_file": "server/src/models/Worker.ts",
+      "source_location": "L1",
+      "_origin": "ast",
+      "id": "server_src_models_worker",
+      "community": 5,
+      "community_name": "models/index.ts",
+      "norm_label": "worker.ts"
+    },
+    {
+      "label": "VERIFICATION_LEVELS",
+      "file_type": "code",
+      "source_file": "server/src/models/Worker.ts",
+      "source_location": "L11",
+      "_origin": "ast",
+      "id": "server_src_models_worker_verification_levels",
+      "community": 5,
+      "community_name": "models/index.ts",
+      "norm_label": "verification_levels"
+    },
+    {
+      "label": "WORKER_CATEGORIES",
+      "file_type": "code",
+      "source_file": "server/src/models/Worker.ts",
+      "source_location": "L3",
+      "_origin": "ast",
+      "id": "server_src_models_worker_worker_categories",
+      "community": 5,
+      "community_name": "models/index.ts",
+      "norm_label": "worker_categories"
+    },
+    {
+      "label": "workerSchema",
+      "file_type": "code",
+      "source_file": "server/src/models/Worker.ts",
+      "source_location": "L17",
+      "_origin": "ast",
+      "id": "server_src_models_worker_workerschema",
+      "community": 5,
+      "community_name": "models/index.ts",
+      "norm_label": "workerschema"
     },
     {
       "label": "server/contracts/contracts/worker.ts",
@@ -19192,6 +19181,17 @@
       "source_location": "L7",
       "_origin": "ast",
       "id": "server_src_routes_photos_index_router",
+      "community": 8,
+      "community_name": "src/index.ts",
+      "norm_label": "router"
+    },
+    {
+      "label": "router",
+      "file_type": "code",
+      "source_file": "server/src/routes/requests/index.ts",
+      "source_location": "L9",
+      "_origin": "ast",
+      "id": "server_src_routes_requests_index_router",
       "community": 8,
       "community_name": "src/index.ts",
       "norm_label": "router"
@@ -22237,7 +22237,7 @@
       "context": "call",
       "confidence": "EXTRACTED",
       "source_file": "client/src/client/components/VoiceCapture.tsx",
-      "source_location": "L353",
+      "source_location": "L360",
       "weight": 1.0,
       "_origin": "ast",
       "source": "client_src_client_components_voicecapture_resultpanel",
@@ -22249,7 +22249,7 @@
       "context": "call",
       "confidence": "EXTRACTED",
       "source_file": "client/src/client/components/VoiceCapture.tsx",
-      "source_location": "L1121",
+      "source_location": "L1141",
       "weight": 1.0,
       "_origin": "ast",
       "source": "client_src_client_components_voicecapture_voicecapture",
@@ -22262,7 +22262,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "client/src/client/components/VoiceCapture.tsx",
-      "source_location": "L668",
+      "source_location": "L693",
       "weight": 1.0,
       "_origin": "ast",
       "source": "client_src_client_components_voicecapture_voicecapture",
@@ -22273,7 +22273,7 @@
       "context": "call",
       "confidence": "EXTRACTED",
       "source_file": "client/src/client/components/VoiceCapture.tsx",
-      "source_location": "L792",
+      "source_location": "L817",
       "weight": 1.0,
       "_origin": "ast",
       "source": "client_src_client_components_voicecapture_voicecapture",
@@ -22285,7 +22285,7 @@
       "context": "call",
       "confidence": "EXTRACTED",
       "source_file": "client/src/client/components/VoiceCapture.tsx",
-      "source_location": "L853",
+      "source_location": "L879",
       "weight": 1.0,
       "_origin": "ast",
       "source": "client_src_client_components_voicecapture_voicecapture",
@@ -26365,7 +26365,7 @@
       "context": "field",
       "confidence": "EXTRACTED",
       "source_file": "client/src/client/components/VoiceCapture.tsx",
-      "source_location": "L17",
+      "source_location": "L24",
       "weight": 1.0,
       "_origin": "ast",
       "source": "client_src_client_components_voicecapture_understandresponse",
@@ -29049,43 +29049,7 @@
       "context": "import",
       "confidence": "EXTRACTED",
       "source_file": "client/src/client/components/VoiceCapture.tsx",
-      "source_location": "L10",
-      "weight": 1.0,
-      "_origin": "ast",
-      "source": "client_src_client_components_voicecapture",
-      "target": "client_src_client_components_technicianrequestmodal_technicianrequestmodal",
-      "confidence_score": 1.0
-    },
-    {
-      "relation": "imports",
-      "context": "import",
-      "confidence": "EXTRACTED",
-      "source_file": "client/src/client/components/VoiceCapture.tsx",
-      "source_location": "L11",
-      "weight": 1.0,
-      "_origin": "ast",
-      "source": "client_src_client_components_voicecapture",
-      "target": "client_src_client_components_texttype_texttype",
-      "confidence_score": 1.0
-    },
-    {
-      "relation": "imports",
-      "context": "import",
-      "confidence": "EXTRACTED",
-      "source_file": "client/src/client/components/VoiceCapture.tsx",
       "source_location": "L13",
-      "weight": 1.0,
-      "_origin": "ast",
-      "source": "client_src_client_components_voicecapture",
-      "target": "client_src_client_components_micvisualizer_micvisualizer",
-      "confidence_score": 1.0
-    },
-    {
-      "relation": "imports",
-      "context": "import",
-      "confidence": "EXTRACTED",
-      "source_file": "client/src/client/components/VoiceCapture.tsx",
-      "source_location": "L6",
       "weight": 1.0,
       "_origin": "ast",
       "source": "client_src_client_components_voicecapture",
@@ -29097,7 +29061,7 @@
       "context": "import",
       "confidence": "EXTRACTED",
       "source_file": "client/src/client/components/VoiceCapture.tsx",
-      "source_location": "L7",
+      "source_location": "L14",
       "weight": 1.0,
       "_origin": "ast",
       "source": "client_src_client_components_voicecapture",
@@ -29109,7 +29073,7 @@
       "context": "import",
       "confidence": "EXTRACTED",
       "source_file": "client/src/client/components/VoiceCapture.tsx",
-      "source_location": "L8",
+      "source_location": "L15",
       "weight": 1.0,
       "_origin": "ast",
       "source": "client_src_client_components_voicecapture",
@@ -29121,7 +29085,7 @@
       "context": "import",
       "confidence": "EXTRACTED",
       "source_file": "client/src/client/components/VoiceCapture.tsx",
-      "source_location": "L8",
+      "source_location": "L15",
       "weight": 1.0,
       "_origin": "ast",
       "source": "client_src_client_components_voicecapture",
@@ -29133,11 +29097,47 @@
       "context": "import",
       "confidence": "EXTRACTED",
       "source_file": "client/src/client/components/VoiceCapture.tsx",
-      "source_location": "L9",
+      "source_location": "L16",
       "weight": 1.0,
       "_origin": "ast",
       "source": "client_src_client_components_voicecapture",
       "target": "contracts_job_urgencylevel",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "client/src/client/components/VoiceCapture.tsx",
+      "source_location": "L17",
+      "weight": 1.0,
+      "_origin": "ast",
+      "source": "client_src_client_components_voicecapture",
+      "target": "client_src_client_components_technicianrequestmodal_technicianrequestmodal",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "client/src/client/components/VoiceCapture.tsx",
+      "source_location": "L18",
+      "weight": 1.0,
+      "_origin": "ast",
+      "source": "client_src_client_components_voicecapture",
+      "target": "client_src_client_components_texttype_texttype",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "client/src/client/components/VoiceCapture.tsx",
+      "source_location": "L20",
+      "weight": 1.0,
+      "_origin": "ast",
+      "source": "client_src_client_components_voicecapture",
+      "target": "client_src_client_components_micvisualizer_micvisualizer",
       "confidence_score": 1.0
     },
     {
@@ -34953,31 +34953,7 @@
       "context": "import",
       "confidence": "EXTRACTED",
       "source_file": "client/src/client/components/VoiceCapture.tsx",
-      "source_location": "L11",
-      "weight": 1.0,
-      "_origin": "ast",
-      "source": "client_src_client_components_voicecapture",
-      "target": "client_src_client_components_texttype",
-      "confidence_score": 1.0
-    },
-    {
-      "relation": "imports_from",
-      "context": "import",
-      "confidence": "EXTRACTED",
-      "source_file": "client/src/client/components/VoiceCapture.tsx",
       "source_location": "L13",
-      "weight": 1.0,
-      "_origin": "ast",
-      "source": "client_src_client_components_voicecapture",
-      "target": "client_src_client_components_micvisualizer",
-      "confidence_score": 1.0
-    },
-    {
-      "relation": "imports_from",
-      "context": "import",
-      "confidence": "EXTRACTED",
-      "source_file": "client/src/client/components/VoiceCapture.tsx",
-      "source_location": "L6",
       "weight": 1.0,
       "_origin": "ast",
       "source": "client_src_client_components_voicecapture",
@@ -34989,7 +34965,7 @@
       "context": "import",
       "confidence": "EXTRACTED",
       "source_file": "client/src/client/components/VoiceCapture.tsx",
-      "source_location": "L7",
+      "source_location": "L14",
       "weight": 1.0,
       "_origin": "ast",
       "source": "client_src_client_components_voicecapture",
@@ -35001,7 +34977,7 @@
       "context": "import",
       "confidence": "EXTRACTED",
       "source_file": "client/src/client/components/VoiceCapture.tsx",
-      "source_location": "L8",
+      "source_location": "L15",
       "weight": 1.0,
       "_origin": "ast",
       "source": "client_src_client_components_voicecapture",
@@ -35013,11 +34989,35 @@
       "context": "import",
       "confidence": "EXTRACTED",
       "source_file": "client/src/client/components/VoiceCapture.tsx",
-      "source_location": "L9",
+      "source_location": "L16",
       "weight": 1.0,
       "_origin": "ast",
       "source": "client_src_client_components_voicecapture",
       "target": "contracts_job",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "client/src/client/components/VoiceCapture.tsx",
+      "source_location": "L18",
+      "weight": 1.0,
+      "_origin": "ast",
+      "source": "client_src_client_components_voicecapture",
+      "target": "client_src_client_components_texttype",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "client/src/client/components/VoiceCapture.tsx",
+      "source_location": "L20",
+      "weight": 1.0,
+      "_origin": "ast",
+      "source": "client_src_client_components_voicecapture",
+      "target": "client_src_client_components_micvisualizer",
       "confidence_score": 1.0
     },
     {
@@ -38265,7 +38265,7 @@
       "context": "type",
       "confidence": "EXTRACTED",
       "source_file": "client/src/client/components/VoiceCapture.tsx",
-      "source_location": "L15",
+      "source_location": "L22",
       "weight": 1.0,
       "_origin": "ast",
       "source": "client_src_client_components_voicecapture_understandresponse",
@@ -43171,7 +43171,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "client/src/client/components/MicVisualizer.tsx",
-      "source_location": "L10",
+      "source_location": "L11",
       "weight": 1.0,
       "_origin": "ast",
       "source": "client_src_client_components_micvisualizer",
@@ -43182,7 +43182,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "client/src/client/components/MicVisualizer.tsx",
-      "source_location": "L4",
+      "source_location": "L5",
       "weight": 1.0,
       "_origin": "ast",
       "source": "client_src_client_components_micvisualizer",
@@ -43857,6 +43857,17 @@
       "weight": 1.0,
       "_origin": "ast",
       "source": "client_src_client_components_voicecapture",
+      "target": "client_src_client_components_voicecapture_category_labels",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "client/src/client/components/VoiceCapture.tsx",
+      "source_location": "L111",
+      "weight": 1.0,
+      "_origin": "ast",
+      "source": "client_src_client_components_voicecapture",
       "target": "client_src_client_components_voicecapture_urgency_labels",
       "confidence_score": 1.0
     },
@@ -43864,7 +43875,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "client/src/client/components/VoiceCapture.tsx",
-      "source_location": "L110",
+      "source_location": "L117",
       "weight": 1.0,
       "_origin": "ast",
       "source": "client_src_client_components_voicecapture",
@@ -43875,7 +43886,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "client/src/client/components/VoiceCapture.tsx",
-      "source_location": "L112",
+      "source_location": "L119",
       "weight": 1.0,
       "_origin": "ast",
       "source": "client_src_client_components_voicecapture",
@@ -43886,7 +43897,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "client/src/client/components/VoiceCapture.tsx",
-      "source_location": "L15",
+      "source_location": "L22",
       "weight": 1.0,
       "_origin": "ast",
       "source": "client_src_client_components_voicecapture",
@@ -43897,7 +43908,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "client/src/client/components/VoiceCapture.tsx",
-      "source_location": "L226",
+      "source_location": "L233",
       "weight": 1.0,
       "_origin": "ast",
       "source": "client_src_client_components_voicecapture",
@@ -43908,7 +43919,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "client/src/client/components/VoiceCapture.tsx",
-      "source_location": "L24",
+      "source_location": "L31",
       "weight": 1.0,
       "_origin": "ast",
       "source": "client_src_client_components_voicecapture",
@@ -43919,7 +43930,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "client/src/client/components/VoiceCapture.tsx",
-      "source_location": "L26",
+      "source_location": "L33",
       "weight": 1.0,
       "_origin": "ast",
       "source": "client_src_client_components_voicecapture",
@@ -43930,7 +43941,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "client/src/client/components/VoiceCapture.tsx",
-      "source_location": "L27",
+      "source_location": "L34",
       "weight": 1.0,
       "_origin": "ast",
       "source": "client_src_client_components_voicecapture",
@@ -43941,7 +43952,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "client/src/client/components/VoiceCapture.tsx",
-      "source_location": "L28",
+      "source_location": "L35",
       "weight": 1.0,
       "_origin": "ast",
       "source": "client_src_client_components_voicecapture",
@@ -43952,7 +43963,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "client/src/client/components/VoiceCapture.tsx",
-      "source_location": "L34",
+      "source_location": "L41",
       "weight": 1.0,
       "_origin": "ast",
       "source": "client_src_client_components_voicecapture",
@@ -43963,18 +43974,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "client/src/client/components/VoiceCapture.tsx",
-      "source_location": "L42",
-      "weight": 1.0,
-      "_origin": "ast",
-      "source": "client_src_client_components_voicecapture",
-      "target": "client_src_client_components_voicecapture_supported_audio_mime_types",
-      "confidence_score": 1.0
-    },
-    {
-      "relation": "contains",
-      "confidence": "EXTRACTED",
-      "source_file": "client/src/client/components/VoiceCapture.tsx",
-      "source_location": "L438",
+      "source_location": "L445",
       "weight": 1.0,
       "_origin": "ast",
       "source": "client_src_client_components_voicecapture",
@@ -43985,7 +43985,18 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "client/src/client/components/VoiceCapture.tsx",
-      "source_location": "L54",
+      "source_location": "L49",
+      "weight": 1.0,
+      "_origin": "ast",
+      "source": "client_src_client_components_voicecapture",
+      "target": "client_src_client_components_voicecapture_supported_audio_mime_types",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "client/src/client/components/VoiceCapture.tsx",
+      "source_location": "L61",
       "weight": 1.0,
       "_origin": "ast",
       "source": "client_src_client_components_voicecapture",
@@ -43996,7 +44007,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "client/src/client/components/VoiceCapture.tsx",
-      "source_location": "L73",
+      "source_location": "L80",
       "weight": 1.0,
       "_origin": "ast",
       "source": "client_src_client_components_voicecapture",
@@ -44007,7 +44018,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "client/src/client/components/VoiceCapture.tsx",
-      "source_location": "L77",
+      "source_location": "L84",
       "weight": 1.0,
       "_origin": "ast",
       "source": "client_src_client_components_voicecapture",
@@ -44018,22 +44029,11 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "client/src/client/components/VoiceCapture.tsx",
-      "source_location": "L90",
-      "weight": 1.0,
-      "_origin": "ast",
-      "source": "client_src_client_components_voicecapture",
-      "target": "client_src_client_components_voicecapture_voicecaptureprops",
-      "confidence_score": 1.0
-    },
-    {
-      "relation": "contains",
-      "confidence": "EXTRACTED",
-      "source_file": "client/src/client/components/VoiceCapture.tsx",
       "source_location": "L97",
       "weight": 1.0,
       "_origin": "ast",
       "source": "client_src_client_components_voicecapture",
-      "target": "client_src_client_components_voicecapture_category_labels",
+      "target": "client_src_client_components_voicecapture_voicecaptureprops",
       "confidence_score": 1.0
     },
     {
@@ -54621,5 +54621,5 @@
       "source_file": ".opencode/skills/graphify/SKILL.md"
     }
   ],
-  "built_at_commit": "25f80f565cad676892cd9bf2dd8f01d2b3bd3459"
+  "built_at_commit": "1f915d65b4d8294e0c08d1a7a1e98def1509af3f"
 }

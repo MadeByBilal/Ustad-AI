@@ -1,7 +1,7 @@
 # Graph Report - Ustad Ai  (2026-10-16)
 
 ## Corpus Check
-- 257 files · ~198,457 words
+- 257 files · ~198,632 words
 - Verdict: corpus is large enough that graph structure adds value.
 
 ## Summary
@@ -10,7 +10,7 @@
 - Token cost: 0 input · 0 output
 
 ## Graph Freshness
-- Built from commit: `25f80f56`
+- Built from commit: `1f915d65`
 - Run `git rev-parse HEAD` and compare to check if the graph is stale.
 - Run `graphify update .` after code changes (no API cost).
 
@@ -26,7 +26,7 @@
 - src/index.ts
 - compilerOptions
 - dependencies
-- connectDB
+- mongodb.ts
 - matching.ts
 - IncomingJobCard.tsx
 - MatchResults.tsx
@@ -57,7 +57,7 @@
 - client/contracts/job.ts
 - client/contracts/contracts/job.ts
 - server/contracts/contracts/job.ts
-- requests.ts
+- connectDB
 - CustomerRequestsPanel.tsx
 - job.d.ts
 - Real-Time GPS Tracking Integration Plan
@@ -182,8 +182,8 @@ Cohesion: 0.07
 Nodes (43): Graphify Usage Rules, URL Ingestion, MCP Server, Neo4j Export, Wiki Export, Confidence Rubric, Hyperedges, Node ID Convention (+35 more)
 
 ### Community 5 - "models/index.ts"
-Cohesion: 0.10
-Nodes (24): ACTOR_TYPES, JobEvent, JobEventDoc, jobEventSchema, MessageDoc, messageSchema, MessageSenderType, SENDER_TYPES (+16 more)
+Cohesion: 0.09
+Nodes (29): ACTOR_TYPES, JobEvent, JobEventDoc, jobEventSchema, MessageDoc, messageSchema, MessageSenderType, SENDER_TYPES (+21 more)
 
 ### Community 6 - "signup.ts"
 Cohesion: 0.15
@@ -194,8 +194,8 @@ Cohesion: 0.05
 Nodes (41): devDependencies, eslint, eslint-config-next, jsdom, postcss, tailwindcss, @testing-library/jest-dom, @testing-library/react (+33 more)
 
 ### Community 8 - "src/index.ts"
-Cohesion: 0.10
-Nodes (16): app, io, PORT, server, DEFAULT_EMERGENCY_GUIDANCE, FLAG_GUIDANCE, SafetyGuidance, UrgencyLevel (+8 more)
+Cohesion: 0.09
+Nodes (17): app, io, PORT, server, DEFAULT_EMERGENCY_GUIDANCE, FLAG_GUIDANCE, SafetyGuidance, UrgencyLevel (+9 more)
 
 ### Community 9 - "compilerOptions"
 Cohesion: 0.07
@@ -205,9 +205,9 @@ Nodes (28): compilerOptions, allowJs, downlevelIteration, esModuleInterop, incre
 Cohesion: 0.04
 Nodes (45): @base-ui/react, class-variance-authority, dependencies, @base-ui/react, class-variance-authority, clsx, @fortawesome/free-brands-svg-icons, @fortawesome/free-regular-svg-icons (+37 more)
 
-### Community 11 - "connectDB"
-Cohesion: 0.12
-Nodes (23): hashPassword(), PASSWORD_MIN_LENGTH, PasswordStrength, validatePasswordStrength(), connectDB(), disconnectDB(), MONGODB_URI, MongooseCache (+15 more)
+### Community 11 - "mongodb.ts"
+Cohesion: 0.11
+Nodes (23): hashPassword(), PASSWORD_MIN_LENGTH, PasswordStrength, validatePasswordStrength(), disconnectDB(), MONGODB_URI, MongooseCache, Worker (+15 more)
 
 ### Community 12 - "matching.ts"
 Cohesion: 0.12
@@ -246,8 +246,8 @@ Cohesion: 0.11
 Nodes (19): MicVisualizer(), MicVisualizerProps, TextType(), TextTypeProps, audioFileExtension(), CATEGORY_LABELS, Coordinates, currency() (+11 more)
 
 ### Community 23 - "workers/index.ts"
-Cohesion: 0.09
-Nodes (21): MAX_PHOTO_BYTES, PhotoUploadInput, photoUploadSchema, ActiveJobView, DirectRequestView, getWorkerDashboard(), IncomingJobView, WorkerDashboardData (+13 more)
+Cohesion: 0.12
+Nodes (16): FlowError, MAX_PHOTO_BYTES, PhotoUploadInput, photoUploadSchema, ActiveJobView, DirectRequestView, getWorkerDashboard(), IncomingJobView (+8 more)
 
 ### Community 24 - "Brag Plan: Ustad AI"
 Cohesion: 0.10
@@ -313,8 +313,8 @@ Nodes (16): RoutePoint, INPUT_TYPES, InputType, JOB_STATUSES, JobCompletion, Job
 Cohesion: 0.12
 Nodes (16): RoutePoint, INPUT_TYPES, InputType, JOB_STATUSES, JobCompletion, JobData, JobInput, JobLocation (+8 more)
 
-### Community 43 - "requests.ts"
-Cohesion: 0.14
+### Community 43 - "connectDB"
+Cohesion: 0.17
 Nodes (15): CounterResponseInput, CounterResponseResult, createDirectRequest(), DirectRequestInput, DirectRequestResult, RequestError, respondToCounter(), respondToDirectRequest() (+7 more)
 
 ### Community 44 - "CustomerRequestsPanel.tsx"
@@ -478,8 +478,8 @@ Cohesion: 0.29
 Nodes (6): Coverage and Known Gaps, Merge Evidence, Task Report, TDD Evidence Report: Voice Capture Hardening, Test Specification, User Journeys
 
 ### Community 89 - "jobs/index.ts"
-Cohesion: 0.12
-Nodes (18): getJobDetail(), JobDetail, JobResponder, JobResponderOffer, JobResponderWorker, BroadcastResult, FlowError, WorkerOfferResult (+10 more)
+Cohesion: 0.13
+Nodes (17): getJobDetail(), JobDetail, JobResponder, JobResponderOffer, JobResponderWorker, BroadcastResult, WorkerOfferResult, INPUT_TYPES (+9 more)
 
 ### Community 90 - "Tone reference"
 Cohesion: 0.25
@@ -561,7 +561,7 @@ _Questions this graph is uniquely positioned to answer:_
   _High betweenness centrality (0.023) - this node is a cross-community bridge._
 - **Why does `TrackingMap` connect `socket-client.ts` to `TrackingMap.tsx`?**
   _High betweenness centrality (0.008) - this node is a cross-community bridge._
-- **Why does `connectDB()` connect `connectDB` to `flow.ts`, `socket-handlers.ts`, `chat.ts`, `signup.ts`, `src/index.ts`, `requests.ts`, `matching.ts`, `haversineDistanceKm`, `workers/index.ts`, `jobs/index.ts`, `auth-middleware.ts`?**
+- **Why does `connectDB()` connect `connectDB` to `flow.ts`, `socket-handlers.ts`, `chat.ts`, `signup.ts`, `src/index.ts`, `mongodb.ts`, `matching.ts`, `haversineDistanceKm`, `workers/index.ts`, `jobs/index.ts`, `auth-middleware.ts`?**
   _High betweenness centrality (0.005) - this node is a cross-community bridge._
 - **What connects `brag`, `$schema`, `.opencode/plugins/graphify.js` to the rest of the system?**
   _801 weakly-connected nodes found - possible documentation gaps or missing edges._

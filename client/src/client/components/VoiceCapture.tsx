@@ -2,7 +2,14 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { motion, AnimatePresence, useReducedMotion } from "framer-motion";
+import {
+  motion,
+  AnimatePresence,
+  useMotionValue,
+  useReducedMotion,
+  useSpring,
+  useTransform,
+} from "framer-motion";
 import { parseApiResponse } from "@/client/lib/api-client";
 import type { AiUnderstandResult } from "@contracts/ai";
 import type { WorkerOption, WorkerCategory } from "@contracts/worker";
@@ -443,7 +450,11 @@ export default function VoiceCapture({
   const [status, setStatus] = useState<Status>("idle");
   const [recording, setRecording] = useState(false);
   const [starting, setStarting] = useState(false);
-  const [micLevel, setMicLevel] = useState(0);
+  // Mic level is pushed ~60 times/sec while recording. Keeping it in React
+  // state re-rendered this whole component (and re-targeted motion springs)
+  // every frame, which is what made the mic glow stutter on phones. A motion
+  // value updates the visuals straight on the compositor instead.
+  const micLevelMV = useMotionValue(0);
   const [error, setError] = useState("");
   const [result, setResult] = useState<UnderstandResponse | null>(null);
   const [busy, setBusy] = useState(false);
@@ -468,6 +479,20 @@ export default function VoiceCapture({
   const locationRequestIdRef = useRef(0);
   const locationPromiseRef = useRef<Promise<Coordinates | null> | null>(null);
   const reduceMotion = useReducedMotion();
+
+  // Derived mic visuals — springs smooth the analyser jitter without re-rendering.
+  const micButtonScale = useSpring(
+    useTransform(micLevelMV, (l) => 1 + l * 0.08),
+    { stiffness: 420, damping: 30 },
+  );
+  const micGlowOpacity = useSpring(
+    useTransform(micLevelMV, (l) => 0.15 + l * 0.65),
+    { stiffness: 500, damping: 40 },
+  );
+  const micGlowScale = useSpring(
+    useTransform(micLevelMV, (l) => 0.95 + l * 0.3),
+    { stiffness: 500, damping: 40 },
+  );
 
   const derivedStatus: Status = recording ? "recording" : status;
 
@@ -759,7 +784,7 @@ export default function VoiceCapture({
     const generation = recordingGenerationRef.current + 1;
     recordingGenerationRef.current = generation;
     setStarting(true);
-    setMicLevel(0);
+    micLevelMV.set(0);
     setError("");
 
     // ─── REAL: Audio recording via MediaRecorder ────────────────────────────
@@ -823,7 +848,7 @@ export default function VoiceCapture({
           let sum = 0;
           for (let i = 0; i < dataArray!.length; i++) sum += dataArray![i];
           const avg = sum / dataArray!.length / 255;
-          setMicLevel(avg);
+          micLevelMV.set(avg);
           animFrame = requestAnimationFrame(updateLevel);
         };
         animFrame = requestAnimationFrame(updateLevel);
@@ -833,6 +858,7 @@ export default function VoiceCapture({
 
       const cleanup = () => {
         if (animFrame !== null) cancelAnimationFrame(animFrame);
+        micLevelMV.set(0);
         stream?.getTracks().forEach((t) => t.stop());
       };
 
@@ -873,7 +899,7 @@ export default function VoiceCapture({
         formData.append("audio", file);
 
         if (mountedRef.current && generation === recordingGenerationRef.current) {
-          setMicLevel(0);
+          micLevelMV.set(0);
         }
 
         void run(formData);
@@ -978,7 +1004,7 @@ export default function VoiceCapture({
     setCustomerLocation(null);
     setLocationFailure(null);
     setLocationPending(false);
-    setMicLevel(0);
+    micLevelMV.set(0);
     setRecording(false);
     setStarting(false);
     setBusy(false);
@@ -1004,7 +1030,7 @@ export default function VoiceCapture({
           }}
           transition={{ duration: 0.6, ease: [0.22, 1, 0.36, 1] }}
         >
-          <MicVisualizer micLevel={micLevel} active={recording} />
+          <MicVisualizer level={micLevelMV} active={recording} />
 
           <motion.button
             ref={buttonRef}
@@ -1021,13 +1047,7 @@ export default function VoiceCapture({
             onPointerDown={handleMicPointerDown}
             onLostPointerCapture={handleMicLostPointerCapture}
             onContextMenu={(e) => e.preventDefault()}
-            animate={{
-              scale: recording && !reduceMotion ? 1 + micLevel * 0.08 : 1,
-            }}
             whileHover={{ y: reduceMotion ? 0 : -1 }}
-            transition={{
-              scale: { type: "spring", stiffness: 420, damping: 30 },
-            }}
             className={`mic-btn relative flex h-28 w-28 items-center justify-center overflow-visible rounded-full text-5xl select-none disabled:cursor-not-allowed disabled:opacity-70 ${
               recording
                 ? "text-[#08240F]"
@@ -1037,6 +1057,7 @@ export default function VoiceCapture({
             }`}
             style={{
               touchAction: "none",
+              scale: reduceMotion ? 1 : micButtonScale,
               background: recording
                 ? "#E0A461"
                 : status === "processing"
@@ -1052,11 +1073,10 @@ export default function VoiceCapture({
             <motion.span
               aria-hidden="true"
               className="pointer-events-none absolute -inset-3 rounded-full bg-warning/30 blur-md"
-              animate={{
-                opacity: recording ? 0.15 + micLevel * 0.65 : 0,
-                scale: recording && !reduceMotion ? 0.95 + micLevel * 0.3 : 0.9,
+              style={{
+                opacity: recording ? micGlowOpacity : 0,
+                scale: reduceMotion || !recording ? 0.9 : micGlowScale,
               }}
-              transition={{ duration: 0.12, ease: "easeOut" }}
             />
             <Mic className="relative z-10 h-10 w-10" />
           </motion.button>

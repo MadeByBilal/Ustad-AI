@@ -1,21 +1,19 @@
 "use client";
 import { useEffect, useRef } from "react";
+import type { MotionValue } from "framer-motion";
 
 interface MicVisualizerProps {
-  micLevel: number;
+  level: MotionValue<number>;
   active: boolean;
   ringCount?: number;
 }
 
-export default function MicVisualizer({ micLevel, active, ringCount = 6 }: MicVisualizerProps) {
+export default function MicVisualizer({ level, active, ringCount = 6 }: MicVisualizerProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const animRef = useRef(0);
   const ringsRef = useRef<number[]>(new Array(ringCount).fill(0));
-  const micLevelRef = useRef(micLevel);
   const activeRef = useRef(active);
-  const timeRef = useRef(0);
 
-  micLevelRef.current = micLevel;
   activeRef.current = active;
 
   useEffect(() => {
@@ -24,13 +22,17 @@ export default function MicVisualizer({ micLevel, active, ringCount = 6 }: MicVi
     const ctx = canvas.getContext("2d");
     if (!ctx) return;
 
-    const dpr = window.devicePixelRatio || 1;
+    // Cap DPR at 2 — on 3x phones the 280px canvas would rasterize at 840×840
+    // for no visible gain on soft arcs.
+    const dpr = Math.min(window.devicePixelRatio || 1, 2);
     const size = 280;
     canvas.width = size * dpr;
     canvas.height = size * dpr;
     canvas.style.width = `${size}px`;
     canvas.style.height = `${size}px`;
     ctx.scale(dpr, dpr);
+    ctx.lineCap = "round";
+    ctx.lineJoin = "round";
 
     const cx = size / 2;
     const cy = size / 2;
@@ -54,20 +56,30 @@ export default function MicVisualizer({ micLevel, active, ringCount = 6 }: MicVi
       { h: 48, s: 72, l: 50 },  // deep gold
     ];
 
+    const start = performance.now();
+    let frame = 0;
+
     const tick = () => {
+      animRef.current = requestAnimationFrame(tick);
+      frame += 1;
+
+      const isActive = activeRef.current;
+
+      // Idle breathing doesn't need 60fps — skipping every other frame halves
+      // the drawing work with no visible difference on the slow pulse.
+      if (!isActive && frame % 2 === 1) return;
+
       ctx.clearRect(0, 0, size, size);
-      timeRef.current += 0.016; // ~60fps
 
       const rings = ringsRef.current;
       const count = rings.length;
-      const level = micLevelRef.current;
-      const isActive = activeRef.current;
-      const t = timeRef.current;
+      const levelValue = level.get();
+      const t = (performance.now() - start) / 1000;
 
       for (let i = 0; i < count; i++) {
         // Ring physics
         if (isActive) {
-          const target = level * (1 - i * 0.08) * (0.6 + Math.sin(t * 2 + i * 0.8) * 0.4);
+          const target = levelValue * (1 - i * 0.08) * (0.6 + Math.sin(t * 2 + i * 0.8) * 0.4);
           rings[i] += (target - rings[i]) * 0.2;
         } else {
           // Idle breathing: gentle sine pulse per ring
@@ -90,32 +102,29 @@ export default function MicVisualizer({ micLevel, active, ringCount = 6 }: MicVi
         const activeAlpha = 0.25 + rings[i] * 0.7;
         const alpha = isActive ? activeAlpha : idleAlpha;
 
-        // Glow effect (draw ring twice: blurred then sharp)
-        const glowAlpha = alpha * 0.4;
+        // Glow pass: a wide, faint stroke with additive blending. This replaces
+        // ctx.filter = "blur(4px)", which forced an offscreen re-rasterization
+        // of the layer on every frame — the main cause of the mobile stutter.
+        ctx.globalCompositeOperation = "lighter";
         ctx.beginPath();
         ctx.arc(cx, cy, r, startAngle, startAngle + arcLength);
-        ctx.strokeStyle = `hsla(${color.h}, ${color.s}%, ${color.l}%, ${glowAlpha})`;
-        ctx.lineWidth = 6 - i * 0.4;
-        ctx.lineCap = "round";
-        ctx.filter = "blur(4px)";
+        ctx.strokeStyle = `hsla(${color.h}, ${color.s}%, ${color.l}%, ${alpha * 0.28})`;
+        ctx.lineWidth = 9 - i * 0.5;
         ctx.stroke();
-        ctx.filter = "none";
 
         // Sharp ring on top
+        ctx.globalCompositeOperation = "source-over";
         ctx.beginPath();
         ctx.arc(cx, cy, r, startAngle, startAngle + arcLength);
         ctx.strokeStyle = `hsla(${color.h}, ${color.s}%, ${color.l}%, ${alpha})`;
         ctx.lineWidth = 2 - i * 0.12;
-        ctx.lineCap = "round";
         ctx.stroke();
       }
-
-      animRef.current = requestAnimationFrame(tick);
     };
 
     animRef.current = requestAnimationFrame(tick);
     return () => cancelAnimationFrame(animRef.current);
-  }, [ringCount]);
+  }, [ringCount, level]);
 
   return (
     <canvas
