@@ -22,7 +22,7 @@ export interface AnalysisResult {
     complexity?: ComplexityLevel;
 }
 export interface AiUnderstandResult {
-    source: "gemini" | "fallback";
+    source: "opencode" | "fallback";
     understanding: AnalysisResult;
     clarification_question?: string;
     clarification_options?: string[];

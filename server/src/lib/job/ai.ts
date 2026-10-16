@@ -6,8 +6,16 @@ import {
 } from "./analyze.js";
 
 import type { ComplexityLevel } from "./pricing.js";
-export const GEMINI_MODEL =
-  process.env.GEMINI_MODEL?.trim() || "gemini-3.6-flash";
+
+/**
+ * OpenCode inference (OpenAI-compatible chat completions).
+ * Accepts either the API root or the full chat-completions URL.
+ */
+export const OPENCODE_BASE_URL =
+  process.env.OPENCODE_BASE_URL?.trim() ||
+  "https://opencode.ai/inference/openai/v1/chat/completions";
+export const OPENCODE_MODEL =
+  process.env.OPENCODE_MODEL?.trim() || "deepseek-v4.1-flash";
 
 const WORKER_CATEGORIES = [
   "plumber",
@@ -19,8 +27,10 @@ const URGENCY_LEVELS = ["normal", "potentially_urgent", "emergency"];
 
 /** Max time (ms) for any single external API call. */
 const API_TIMEOUT_MS = 10_000;
-/** Max retries for transient Gemini errors (429, 5xx, network). */
-const GEMINI_MAX_RETRIES = 2;
+/** Max time (ms) for a single OpenCode chat-completion (models can think long). */
+const OPENCODE_TIMEOUT_MS = 15_000;
+/** Max retries for transient OpenCode errors (429, 5xx, network). */
+const OPENCODE_MAX_RETRIES = 2;
 /** Base delay (ms) for exponential backoff. */
 const RETRY_BASE_DELAY_MS = 500;
 /** Max total time (ms) for the AssemblyAI polling loop. */
@@ -44,7 +54,7 @@ export interface AiUnderstandOptions {
 }
 
 export interface AiUnderstandResult {
-  source: "gemini" | "fallback";
+  source: "opencode" | "fallback";
   understanding: AnalysisResult;
   /** Set on round 1 when the model needs more information. */
   clarification_question?: string;
@@ -53,12 +63,12 @@ export interface AiUnderstandResult {
   manual_fallback?: boolean;
 }
 
-export type NormalizedGeminiJob = AnalysisResult & {
+export type NormalizedAiJob = AnalysisResult & {
   clarification_question?: string;
   clarification_options?: string[];
 };
 
-interface GeminiRawJob {
+interface RawAiJob {
   category?: string | null;
   subcategory?: string;
   description?: string;
@@ -157,8 +167,12 @@ Be CONSERVATIVE. These are rough placeholders; the actual price is set by the wo
 4. This is a CLASSIFICATION step, not a diagnosis or binding price quote.
 5. If the input is completely irrelevant (e.g., "hello", poetry, unrelated), set category to "unknown", confidence to 0.1, and ask one clarification question about what repair they need.`;
 
-function geminiEndpoint(apiKey: string): string {
-  return `https://generativelanguage.googleapis.com/v1beta/models/${GEMINI_MODEL}:generateContent?key=${encodeURIComponent(apiKey)}`;
+/** Accepts either the full chat-completions URL or the API root. */
+function opencodeEndpoint(baseUrl: string): string {
+  const trimmed = baseUrl.trim().replace(/\/+$/, "");
+  return trimmed.endsWith("/chat/completions")
+    ? trimmed
+    : `${trimmed}/chat/completions`;
 }
 
 function coerceToArray(value: unknown): string[] {
@@ -182,8 +196,8 @@ function coerceNumber(value: unknown, fallback: number): number {
   return Number.isFinite(n) && n >= 0 ? n : fallback;
 }
 
-export function normalizeGeminiJob(raw: unknown): NormalizedGeminiJob {
-  const job = (raw ?? {}) as GeminiRawJob;
+export function normalizeAiJob(raw: unknown): NormalizedAiJob {
+  const job = (raw ?? {}) as RawAiJob;
   const category = WORKER_CATEGORIES.includes(job.category ?? "")
     ? (job.category as NonNullable<AnalysisResult["category"]>)
     : null;
@@ -235,46 +249,65 @@ async function sleep(ms: number): Promise<void> {
   return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
-export async function geminiUnderstand(
+/** Strips markdown code fences some models wrap JSON responses in. */
+function parseModelJson(text: string): unknown {
+  const cleaned = text
+    .trim()
+    .replace(/^```(?:json)?\s*/i, "")
+    .replace(/\s*```$/, "");
+  return JSON.parse(cleaned);
+}
+
+export async function opencodeUnderstand(
   input: string,
   image: AiImageInput | undefined,
   apiKey: string,
-): Promise<NormalizedGeminiJob> {
-  const parts: Array<Record<string, unknown>> = [];
-  if (image) {
-    parts.push({ inline_data: { mime_type: image.mime, data: image.data } });
-  }
-  parts.push({ text: input || "Analyze the attached photo of the problem." });
+): Promise<NormalizedAiJob> {
+  // OpenAI chat format: a plain string for text, content parts when an image
+  // is attached (data URLs — no upload step needed).
+  const userContent = image
+    ? [
+        {
+          type: "image_url",
+          image_url: { url: `data:${image.mime};base64,${image.data}` },
+        },
+        { type: "text", text: input || "Analyze the attached photo of the problem." },
+      ]
+    : input || "Analyze the attached photo of the problem.";
 
   let lastError: Error | null = null;
 
-  for (let attempt = 0; attempt <= GEMINI_MAX_RETRIES; attempt++) {
+  for (let attempt = 0; attempt <= OPENCODE_MAX_RETRIES; attempt++) {
     try {
-      console.log(`[gemini] Attempt ${attempt + 1}/${GEMINI_MAX_RETRIES + 1}. Calling API...`);
-      const response = await fetch(geminiEndpoint(apiKey), {
+      console.log(`[opencode] Attempt ${attempt + 1}/${OPENCODE_MAX_RETRIES + 1}. Calling API...`);
+      const response = await fetch(opencodeEndpoint(OPENCODE_BASE_URL), {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${apiKey}`,
+        },
         body: JSON.stringify({
-          system_instruction: { parts: [{ text: SYSTEM_PROMPT }] },
-          contents: [{ parts }],
-          generationConfig: {
-            temperature: 0.3,
-            responseMimeType: "application/json",
-          },
+          model: OPENCODE_MODEL,
+          messages: [
+            { role: "system", content: SYSTEM_PROMPT },
+            { role: "user", content: userContent },
+          ],
+          temperature: 0.3,
+          response_format: { type: "json_object" },
         }),
-        signal: AbortSignal.timeout(API_TIMEOUT_MS),
+        signal: AbortSignal.timeout(OPENCODE_TIMEOUT_MS),
       });
 
       if (!response.ok) {
         const errorText = await response.text().catch(() => "");
-        console.error("[gemini] API error:", response.status, errorText.substring(0, 200));
+        console.error("[opencode] API error:", response.status, errorText.substring(0, 200));
         const err = new Error(
-          `Gemini API ${response.status}: ${errorText}`,
+          `OpenCode API ${response.status}: ${errorText}`,
         );
         // 429 and 5xx are retryable; 4xx (except 429) are not
         if (response.status === 429 || response.status >= 500) {
           lastError = err;
-          if (attempt < GEMINI_MAX_RETRIES) {
+          if (attempt < OPENCODE_MAX_RETRIES) {
             await sleep(RETRY_BASE_DELAY_MS * Math.pow(2, attempt));
             continue;
           }
@@ -283,24 +316,24 @@ export async function geminiUnderstand(
       }
 
       const data = (await response.json()) as {
-        candidates?: Array<{ content?: { parts?: Array<{ text?: string }> } }>;
+        choices?: Array<{ message?: { content?: string } }>;
       };
-      const modelText = data.candidates?.[0]?.content?.parts?.[0]?.text;
+      const modelText = data.choices?.[0]?.message?.content;
       if (!modelText) {
-        console.error("[gemini] No candidates returned. Raw:", JSON.stringify(data).substring(0, 300));
-        throw new Error("Gemini returned no candidates");
+        console.error("[opencode] No choices returned. Raw:", JSON.stringify(data).substring(0, 300));
+        throw new Error("OpenCode returned no choices");
       }
 
-      console.log("[gemini] Raw response:", modelText.substring(0, 200));
+      console.log("[opencode] Raw response:", modelText.substring(0, 200));
       let parsed: unknown;
       try {
-        parsed = JSON.parse(modelText);
+        parsed = parseModelJson(modelText);
       } catch {
-        throw new Error("Gemini returned malformed JSON");
+        throw new Error("OpenCode returned malformed JSON");
       }
-      return normalizeGeminiJob(parsed);
+      return normalizeAiJob(parsed);
     } catch (error) {
-      if (error instanceof Error && isRetryable(error) && attempt < GEMINI_MAX_RETRIES) {
+      if (error instanceof Error && isRetryable(error) && attempt < OPENCODE_MAX_RETRIES) {
         lastError = error;
         await sleep(RETRY_BASE_DELAY_MS * Math.pow(2, attempt));
         continue;
@@ -310,7 +343,7 @@ export async function geminiUnderstand(
   }
 
   // Should not reach here, but just in case
-  throw lastError ?? new Error("Gemini failed after retries");
+  throw lastError ?? new Error("OpenCode failed after retries");
 }
 
 /**
@@ -460,7 +493,7 @@ function cleanDescription(raw: string): string {
 export async function understandJobInput(
   opts: AiUnderstandOptions,
 ): Promise<AiUnderstandResult> {
-  const apiKey = process.env.GEMINI_API_KEY;
+  const apiKey = process.env.OPENCODE_API_KEY;
   const text = (opts.text ?? "").trim();
   const combined = [
     text,
@@ -470,13 +503,13 @@ export async function understandJobInput(
     .join("\n");
 
   if (!apiKey || (!combined && !opts.image)) {
-    console.log("[ai] No Gemini API key or empty input, using fallback engine");
+    console.log("[ai] No OpenCode API key or empty input, using fallback engine");
     return fallbackResult(text);
   }
 
   try {
-    console.log("[ai] Calling Gemini understand. Text:", combined.substring(0, 100), "Has image:", !!opts.image);
-    let normalized = await geminiUnderstand(
+    console.log("[ai] Calling OpenCode understand. Text:", combined.substring(0, 100), "Has image:", !!opts.image);
+    let normalized = await opencodeUnderstand(
       combined || "About the attached photo.",
       opts.image,
       apiKey,
@@ -487,7 +520,7 @@ export async function understandJobInput(
       console.log("[ai] Low confidence or unknown category. Retrying with nudge...");
       const nudgeInput = `The user said: "${combined}". Classify this into exactly ONE category: plumber, electrician, ac_technician, or carpenter. Even if uncertain, pick the closest match. Do NOT return "unknown".`;
       try {
-        const retry = await geminiUnderstand(
+        const retry = await opencodeUnderstand(
           nudgeInput,
           opts.image,
           apiKey,
@@ -514,7 +547,7 @@ export async function understandJobInput(
 
     console.log("[ai] Final result. Category:", normalized.category, "Confidence:", normalized.confidence);
     return {
-      source: "gemini",
+      source: "opencode",
       understanding: {
         ...normalized,
         description: cleanedDesc,
@@ -522,7 +555,7 @@ export async function understandJobInput(
     };
   } catch (error) {
     console.error(
-      "[ai] Gemini understand failed, falling back to keyword engine",
+      "[ai] OpenCode understand failed, falling back to keyword engine",
       error,
     );
     return fallbackResult(text);

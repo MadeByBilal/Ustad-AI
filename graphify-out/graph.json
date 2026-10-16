@@ -298,19 +298,6 @@
       "norm_label": "routepoint"
     },
     {
-      "label": "ChatJob",
-      "file_type": "code",
-      "source_file": "client/src/client/components/worker/WorkerChatList.tsx",
-      "source_location": "L9",
-      "_callable": true,
-      "_callable_class": true,
-      "_origin": "ast",
-      "id": "client_src_client_components_worker_workerchatlist_chatjob",
-      "community": 104,
-      "community_name": "chat/page.tsx",
-      "norm_label": "chatjob"
-    },
-    {
       "label": "PhotoUploadInput",
       "file_type": "code",
       "source_file": "client/src/client/lib/photos.ts",
@@ -439,6 +426,123 @@
       "community": 12,
       "community_name": "matching.ts",
       "norm_label": "workerscoreinput"
+    },
+    {
+      "label": "AllowedRole",
+      "file_type": "code",
+      "source_file": "server/src/lib/auth-middleware.ts",
+      "source_location": "L46",
+      "_callable": true,
+      "_callable_class": true,
+      "_origin": "ast",
+      "id": "server_src_lib_auth_middleware_allowedrole",
+      "community": 125,
+      "community_name": "connectDB",
+      "norm_label": "allowedrole"
+    },
+    {
+      "label": "SessionUser",
+      "file_type": "code",
+      "source_file": "server/src/lib/auth-middleware.ts",
+      "source_location": "L10",
+      "_callable": true,
+      "_callable_class": true,
+      "_origin": "ast",
+      "id": "server_src_lib_auth_middleware_sessionuser",
+      "community": 125,
+      "community_name": "connectDB",
+      "norm_label": "sessionuser"
+    },
+    {
+      "label": "UserDoc",
+      "file_type": "code",
+      "source_file": "server/src/models/User.ts",
+      "source_location": "L58",
+      "_callable": true,
+      "_callable_class": true,
+      "_origin": "ast",
+      "id": "server_src_models_user_userdoc",
+      "community": 125,
+      "community_name": "connectDB",
+      "norm_label": "userdoc"
+    },
+    {
+      "label": "AiUnderstandResult",
+      "file_type": "code",
+      "source_file": "contracts/ai.ts",
+      "source_location": "L79",
+      "_callable": true,
+      "_callable_class": true,
+      "_origin": "ast",
+      "id": "contracts_ai_aiunderstandresult",
+      "community": 127,
+      "community_name": "contracts/ai.ts",
+      "norm_label": "aiunderstandresult"
+    },
+    {
+      "label": "AnalysisResult",
+      "file_type": "code",
+      "source_file": "contracts/ai.ts",
+      "source_location": "L62",
+      "_callable": true,
+      "_callable_class": true,
+      "_origin": "ast",
+      "id": "contracts_ai_analysisresult",
+      "community": 127,
+      "community_name": "contracts/ai.ts",
+      "norm_label": "analysisresult"
+    },
+    {
+      "label": "PriceEstimate",
+      "file_type": "code",
+      "source_file": "contracts/ai.ts",
+      "source_location": "L6",
+      "_callable": true,
+      "_callable_class": true,
+      "_origin": "ast",
+      "id": "contracts_ai_priceestimate",
+      "community": 127,
+      "community_name": "contracts/ai.ts",
+      "norm_label": "priceestimate"
+    },
+    {
+      "label": "ComplexityLevel",
+      "file_type": "code",
+      "source_file": "contracts/job.ts",
+      "source_location": "L44",
+      "_callable": true,
+      "_callable_class": true,
+      "_origin": "ast",
+      "id": "contracts_job_complexitylevel",
+      "community": 127,
+      "community_name": "contracts/ai.ts",
+      "norm_label": "complexitylevel"
+    },
+    {
+      "label": "UrgencyLevel",
+      "file_type": "code",
+      "source_file": "contracts/job.ts",
+      "source_location": "L35",
+      "_callable": true,
+      "_callable_class": true,
+      "_origin": "ast",
+      "id": "contracts_job_urgencylevel",
+      "community": 127,
+      "community_name": "contracts/ai.ts",
+      "norm_label": "urgencylevel"
+    },
+    {
+      "label": "WorkerCategory",
+      "file_type": "code",
+      "source_file": "contracts/worker.ts",
+      "source_location": "L9",
+      "_callable": true,
+      "_callable_class": true,
+      "_origin": "ast",
+      "id": "contracts_worker_workercategory",
+      "community": 127,
+      "community_name": "contracts/ai.ts",
+      "norm_label": "workercategory"
     },
     {
       "label": "ActiveJobView",
@@ -584,45 +688,6 @@
       "norm_label": "matchresultsprops"
     },
     {
-      "label": "AiUnderstandResult",
-      "file_type": "code",
-      "source_file": "contracts/ai.ts",
-      "source_location": "L79",
-      "_callable": true,
-      "_callable_class": true,
-      "_origin": "ast",
-      "id": "contracts_ai_aiunderstandresult",
-      "community": 14,
-      "community_name": "MatchResults.tsx",
-      "norm_label": "aiunderstandresult"
-    },
-    {
-      "label": "AnalysisResult",
-      "file_type": "code",
-      "source_file": "contracts/ai.ts",
-      "source_location": "L62",
-      "_callable": true,
-      "_callable_class": true,
-      "_origin": "ast",
-      "id": "contracts_ai_analysisresult",
-      "community": 15,
-      "community_name": "contracts/job.ts",
-      "norm_label": "analysisresult"
-    },
-    {
-      "label": "PriceEstimate",
-      "file_type": "code",
-      "source_file": "contracts/ai.ts",
-      "source_location": "L6",
-      "_callable": true,
-      "_callable_class": true,
-      "_origin": "ast",
-      "id": "contracts_ai_priceestimate",
-      "community": 15,
-      "community_name": "contracts/job.ts",
-      "norm_label": "priceestimate"
-    },
-    {
       "label": "RoutePoint",
       "file_type": "code",
       "source_file": "contracts/api.ts",
@@ -634,19 +699,6 @@
       "community": 15,
       "community_name": "contracts/job.ts",
       "norm_label": "routepoint"
-    },
-    {
-      "label": "ComplexityLevel",
-      "file_type": "code",
-      "source_file": "contracts/job.ts",
-      "source_location": "L44",
-      "_callable": true,
-      "_callable_class": true,
-      "_origin": "ast",
-      "id": "contracts_job_complexitylevel",
-      "community": 15,
-      "community_name": "contracts/job.ts",
-      "norm_label": "complexitylevel"
     },
     {
       "label": "InputType",
@@ -792,36 +844,10 @@
       "norm_label": "pricingstatus"
     },
     {
-      "label": "UrgencyLevel",
-      "file_type": "code",
-      "source_file": "contracts/job.ts",
-      "source_location": "L35",
-      "_callable": true,
-      "_callable_class": true,
-      "_origin": "ast",
-      "id": "contracts_job_urgencylevel",
-      "community": 15,
-      "community_name": "contracts/job.ts",
-      "norm_label": "urgencylevel"
-    },
-    {
-      "label": "WorkerCategory",
-      "file_type": "code",
-      "source_file": "contracts/worker.ts",
-      "source_location": "L9",
-      "_callable": true,
-      "_callable_class": true,
-      "_origin": "ast",
-      "id": "contracts_worker_workercategory",
-      "community": 15,
-      "community_name": "contracts/job.ts",
-      "norm_label": "workercategory"
-    },
-    {
       "label": "AiImageInput",
       "file_type": "code",
       "source_file": "server/src/lib/job/ai.ts",
-      "source_location": "L34",
+      "source_location": "L44",
       "_callable": true,
       "_callable_class": true,
       "_origin": "ast",
@@ -834,7 +860,7 @@
       "label": "AiUnderstandOptions",
       "file_type": "code",
       "source_file": "server/src/lib/job/ai.ts",
-      "source_location": "L39",
+      "source_location": "L49",
       "_callable": true,
       "_callable_class": true,
       "_origin": "ast",
@@ -844,30 +870,30 @@
       "norm_label": "aiunderstandoptions"
     },
     {
-      "label": "GeminiRawJob",
+      "label": "NormalizedAiJob",
       "file_type": "code",
       "source_file": "server/src/lib/job/ai.ts",
-      "source_location": "L61",
+      "source_location": "L66",
       "_callable": true,
       "_callable_class": true,
       "_origin": "ast",
-      "id": "server_src_lib_job_ai_geminirawjob",
+      "id": "server_src_lib_job_ai_normalizedaijob",
       "community": 17,
       "community_name": "job/ai.ts",
-      "norm_label": "geminirawjob"
+      "norm_label": "normalizedaijob"
     },
     {
-      "label": "NormalizedGeminiJob",
+      "label": "RawAiJob",
       "file_type": "code",
       "source_file": "server/src/lib/job/ai.ts",
-      "source_location": "L56",
+      "source_location": "L71",
       "_callable": true,
       "_callable_class": true,
       "_origin": "ast",
-      "id": "server_src_lib_job_ai_normalizedgeminijob",
+      "id": "server_src_lib_job_ai_rawaijob",
       "community": 17,
       "community_name": "job/ai.ts",
-      "norm_label": "normalizedgeminijob"
+      "norm_label": "rawaijob"
     },
     {
       "label": "TrackingMapProps",
@@ -1013,19 +1039,6 @@
       "norm_label": "voicecaptureprops"
     },
     {
-      "label": "FlowError",
-      "file_type": "code",
-      "source_file": "server/src/lib/job/flow.ts",
-      "source_location": "L33",
-      "_callable": true,
-      "_callable_class": true,
-      "_origin": "ast",
-      "id": "server_src_lib_job_flow_flowerror",
-      "community": 23,
-      "community_name": "workers/index.ts",
-      "norm_label": "flowerror"
-    },
-    {
       "label": "PhotoUploadInput",
       "file_type": "code",
       "source_file": "server/src/lib/photos.ts",
@@ -1117,19 +1130,6 @@
       "norm_label": "jobdata"
     },
     {
-      "label": "ActiveJob",
-      "file_type": "code",
-      "source_file": "client/src/client/components/worker/ActiveJobPanel.tsx",
-      "source_location": "L9",
-      "_callable": true,
-      "_callable_class": true,
-      "_origin": "ast",
-      "id": "client_src_client_components_worker_activejobpanel_activejob",
-      "community": 25,
-      "community_name": "api-client.ts",
-      "norm_label": "activejob"
-    },
-    {
       "label": "EmptyStateIcon",
       "file_type": "code",
       "source_file": "client/src/client/components/EmptyState.tsx",
@@ -1180,6 +1180,19 @@
       "community": 29,
       "community_name": "LoadingState.tsx",
       "norm_label": "loadingstatetype"
+    },
+    {
+      "label": "ProfileAvatarProps",
+      "file_type": "code",
+      "source_file": "client/src/client/components/ProfileAvatar.tsx",
+      "source_location": "L5",
+      "_callable": true,
+      "_callable_class": true,
+      "_origin": "ast",
+      "id": "client_src_client_components_profileavatar_profileavatarprops",
+      "community": 29,
+      "community_name": "LoadingState.tsx",
+      "norm_label": "profileavatarprops"
     },
     {
       "label": "OsrmResponse",
@@ -1338,6 +1351,19 @@
       "norm_label": "activejobdata"
     },
     {
+      "label": "JobItem",
+      "file_type": "code",
+      "source_file": "client/src/client/components/CustomerJobsList.tsx",
+      "source_location": "L13",
+      "_callable": true,
+      "_callable_class": true,
+      "_origin": "ast",
+      "id": "client_src_client_components_customerjobslist_jobitem",
+      "community": 30,
+      "community_name": "TranslatedHeading.tsx",
+      "norm_label": "jobitem"
+    },
+    {
       "label": "TrackingJob",
       "file_type": "code",
       "source_file": "client/src/client/components/tracking/TrackingJobsList.tsx",
@@ -1349,6 +1375,19 @@
       "community": 30,
       "community_name": "TranslatedHeading.tsx",
       "norm_label": "trackingjob"
+    },
+    {
+      "label": "ChatJob",
+      "file_type": "code",
+      "source_file": "client/src/client/components/worker/WorkerChatList.tsx",
+      "source_location": "L9",
+      "_callable": true,
+      "_callable_class": true,
+      "_origin": "ast",
+      "id": "client_src_client_components_worker_workerchatlist_chatjob",
+      "community": 30,
+      "community_name": "TranslatedHeading.tsx",
+      "norm_label": "chatjob"
     },
     {
       "label": "ApiResponse",
@@ -1546,6 +1585,32 @@
       "norm_label": "routecomputedpayload"
     },
     {
+      "label": "ApprovalJob",
+      "file_type": "code",
+      "source_file": "client/src/client/components/CustomerApprovalPanel.tsx",
+      "source_location": "L9",
+      "_callable": true,
+      "_callable_class": true,
+      "_origin": "ast",
+      "id": "client_src_client_components_customerapprovalpanel_approvaljob",
+      "community": 34,
+      "community_name": "getApiErrorMessage",
+      "norm_label": "approvaljob"
+    },
+    {
+      "label": "ReviewScreenProps",
+      "file_type": "code",
+      "source_file": "client/src/client/components/ReviewScreen.tsx",
+      "source_location": "L8",
+      "_callable": true,
+      "_callable_class": true,
+      "_origin": "ast",
+      "id": "client_src_client_components_reviewscreen_reviewscreenprops",
+      "community": 34,
+      "community_name": "getApiErrorMessage",
+      "norm_label": "reviewscreenprops"
+    },
+    {
       "label": "PhotoUpload",
       "file_type": "code",
       "source_file": "client/src/client/components/PhotoPicker.tsx",
@@ -1705,7 +1770,7 @@
       "label": "AiUnderstandResult",
       "file_type": "code",
       "source_file": "server/src/lib/job/ai.ts",
-      "source_location": "L46",
+      "source_location": "L56",
       "_callable": true,
       "_callable_class": true,
       "_origin": "ast",
@@ -2374,7 +2439,7 @@
       "_origin": "ast",
       "id": "server_src_lib_job_requests_counterresponseinput",
       "community": 43,
-      "community_name": "connectDB",
+      "community_name": "requests.ts",
       "norm_label": "counterresponseinput"
     },
     {
@@ -2387,7 +2452,7 @@
       "_origin": "ast",
       "id": "server_src_lib_job_requests_counterresponseresult",
       "community": 43,
-      "community_name": "connectDB",
+      "community_name": "requests.ts",
       "norm_label": "counterresponseresult"
     },
     {
@@ -2400,7 +2465,7 @@
       "_origin": "ast",
       "id": "server_src_lib_job_requests_directrequestinput",
       "community": 43,
-      "community_name": "connectDB",
+      "community_name": "requests.ts",
       "norm_label": "directrequestinput"
     },
     {
@@ -2413,7 +2478,7 @@
       "_origin": "ast",
       "id": "server_src_lib_job_requests_directrequestresult",
       "community": 43,
-      "community_name": "connectDB",
+      "community_name": "requests.ts",
       "norm_label": "directrequestresult"
     },
     {
@@ -2426,7 +2491,7 @@
       "_origin": "ast",
       "id": "server_src_lib_job_requests_requesterror",
       "community": 43,
-      "community_name": "connectDB",
+      "community_name": "requests.ts",
       "norm_label": "requesterror"
     },
     {
@@ -2439,7 +2504,7 @@
       "_origin": "ast",
       "id": "server_src_lib_job_requests_workerrespondinput",
       "community": 43,
-      "community_name": "connectDB",
+      "community_name": "requests.ts",
       "norm_label": "workerrespondinput"
     },
     {
@@ -2452,34 +2517,8 @@
       "_origin": "ast",
       "id": "server_src_lib_job_requests_workerrespondresult",
       "community": 43,
-      "community_name": "connectDB",
+      "community_name": "requests.ts",
       "norm_label": "workerrespondresult"
-    },
-    {
-      "label": "ApprovalJob",
-      "file_type": "code",
-      "source_file": "client/src/client/components/CustomerApprovalPanel.tsx",
-      "source_location": "L9",
-      "_callable": true,
-      "_callable_class": true,
-      "_origin": "ast",
-      "id": "client_src_client_components_customerapprovalpanel_approvaljob",
-      "community": 44,
-      "community_name": "CustomerRequestsPanel.tsx",
-      "norm_label": "approvaljob"
-    },
-    {
-      "label": "JobItem",
-      "file_type": "code",
-      "source_file": "client/src/client/components/CustomerJobsList.tsx",
-      "source_location": "L13",
-      "_callable": true,
-      "_callable_class": true,
-      "_origin": "ast",
-      "id": "client_src_client_components_customerjobslist_jobitem",
-      "community": 44,
-      "community_name": "CustomerRequestsPanel.tsx",
-      "norm_label": "jobitem"
     },
     {
       "label": "ListResponse",
@@ -2924,6 +2963,19 @@
       "norm_label": "reviewdoc"
     },
     {
+      "label": "SessionDoc",
+      "file_type": "code",
+      "source_file": "server/src/models/Session.ts",
+      "source_location": "L31",
+      "_callable": true,
+      "_callable_class": true,
+      "_origin": "ast",
+      "id": "server_src_models_session_sessiondoc",
+      "community": 5,
+      "community_name": "models/index.ts",
+      "norm_label": "sessiondoc"
+    },
+    {
       "label": "UploadDoc",
       "file_type": "code",
       "source_file": "server/src/models/Upload.ts",
@@ -2966,7 +3018,7 @@
       "label": "ActiveJobView",
       "file_type": "code",
       "source_file": "server/contracts/contracts/worker.ts",
-      "source_location": "L127",
+      "source_location": "L129",
       "_callable": true,
       "_callable_class": true,
       "_origin": "ast",
@@ -2979,7 +3031,7 @@
       "label": "CompletedJobView",
       "file_type": "code",
       "source_file": "server/contracts/contracts/worker.ts",
-      "source_location": "L173",
+      "source_location": "L175",
       "_callable": true,
       "_callable_class": true,
       "_origin": "ast",
@@ -2992,7 +3044,7 @@
       "label": "DirectRequestView",
       "file_type": "code",
       "source_file": "server/contracts/contracts/worker.ts",
-      "source_location": "L111",
+      "source_location": "L113",
       "_callable": true,
       "_callable_class": true,
       "_origin": "ast",
@@ -3005,7 +3057,7 @@
       "label": "IncomingJobView",
       "file_type": "code",
       "source_file": "server/contracts/contracts/worker.ts",
-      "source_location": "L90",
+      "source_location": "L92",
       "_callable": true,
       "_callable_class": true,
       "_origin": "ast",
@@ -3031,7 +3083,7 @@
       "label": "WorkerDashboardData",
       "file_type": "code",
       "source_file": "server/contracts/contracts/worker.ts",
-      "source_location": "L164",
+      "source_location": "L166",
       "_callable": true,
       "_callable_class": true,
       "_origin": "ast",
@@ -3070,7 +3122,7 @@
       "label": "WorkerResult",
       "file_type": "code",
       "source_file": "server/contracts/contracts/worker.ts",
-      "source_location": "L48",
+      "source_location": "L49",
       "_callable": true,
       "_callable_class": true,
       "_origin": "ast",
@@ -3083,7 +3135,7 @@
       "label": "WorkerReviewsData",
       "file_type": "code",
       "source_file": "server/contracts/contracts/worker.ts",
-      "source_location": "L197",
+      "source_location": "L199",
       "_callable": true,
       "_callable_class": true,
       "_origin": "ast",
@@ -3096,7 +3148,7 @@
       "label": "WorkerReviewView",
       "file_type": "code",
       "source_file": "server/contracts/contracts/worker.ts",
-      "source_location": "L188",
+      "source_location": "L190",
       "_callable": true,
       "_callable_class": true,
       "_origin": "ast",
@@ -3109,7 +3161,7 @@
       "label": "WorkerView",
       "file_type": "code",
       "source_file": "server/contracts/contracts/worker.ts",
-      "source_location": "L67",
+      "source_location": "L68",
       "_callable": true,
       "_callable_class": true,
       "_origin": "ast",
@@ -3262,6 +3314,19 @@
       "norm_label": "userprofile"
     },
     {
+      "label": "CloudinaryUploadProps",
+      "file_type": "code",
+      "source_file": "client/src/client/components/CloudinaryUpload.tsx",
+      "source_location": "L8",
+      "_callable": true,
+      "_callable_class": true,
+      "_origin": "ast",
+      "id": "client_src_client_components_cloudinaryupload_cloudinaryuploadprops",
+      "community": 52,
+      "community_name": "WorkerProfile.tsx",
+      "norm_label": "cloudinaryuploadprops"
+    },
+    {
       "label": "CompletedJobView",
       "file_type": "code",
       "source_file": "contracts/worker.ts",
@@ -3273,6 +3338,19 @@
       "community": 52,
       "community_name": "WorkerProfile.tsx",
       "norm_label": "completedjobview"
+    },
+    {
+      "label": "WorkerReviewView",
+      "file_type": "code",
+      "source_file": "contracts/worker.ts",
+      "source_location": "L190",
+      "_callable": true,
+      "_callable_class": true,
+      "_origin": "ast",
+      "id": "contracts_worker_workerreviewview",
+      "community": 52,
+      "community_name": "WorkerProfile.tsx",
+      "norm_label": "workerreviewview"
     },
     {
       "label": "JobDetailResponse",
@@ -3743,43 +3821,30 @@
       "norm_label": "apierror"
     },
     {
-      "label": "SessionDoc",
+      "label": "NavItem",
       "file_type": "code",
-      "source_file": "server/src/models/Session.ts",
-      "source_location": "L31",
+      "source_file": "client/src/client/components/BottomNav.tsx",
+      "source_location": "L17",
       "_callable": true,
       "_callable_class": true,
       "_origin": "ast",
-      "id": "server_src_models_session_sessiondoc",
-      "community": 6,
-      "community_name": "signup.ts",
-      "norm_label": "sessiondoc"
+      "id": "client_src_client_components_bottomnav_navitem",
+      "community": 60,
+      "community_name": "useLang",
+      "norm_label": "navitem"
     },
     {
-      "label": "Coordinates",
+      "label": "NavItem",
       "file_type": "code",
-      "source_file": "client/src/client/components/worker/LocationUpdater.tsx",
-      "source_location": "L7",
+      "source_file": "client/src/client/components/DesktopNav.tsx",
+      "source_location": "L22",
       "_callable": true,
       "_callable_class": true,
       "_origin": "ast",
-      "id": "client_src_client_components_worker_locationupdater_coordinates",
+      "id": "client_src_client_components_desktopnav_navitem",
       "community": 60,
-      "community_name": "WorkerHome.tsx",
-      "norm_label": "coordinates"
-    },
-    {
-      "label": "AvailabilityState",
-      "file_type": "code",
-      "source_file": "client/src/client/components/WorkerAvailability.tsx",
-      "source_location": "L6",
-      "_callable": true,
-      "_callable_class": true,
-      "_origin": "ast",
-      "id": "client_src_client_components_workeravailability_availabilitystate",
-      "community": 60,
-      "community_name": "WorkerHome.tsx",
-      "norm_label": "availabilitystate"
+      "community_name": "useLang",
+      "norm_label": "navitem"
     },
     {
       "label": "FakeAnalyser",
@@ -4068,43 +4133,17 @@
       "norm_label": "activejobdata"
     },
     {
-      "label": "CloudinaryUploadProps",
+      "label": "ActiveJob",
       "file_type": "code",
-      "source_file": "client/src/client/components/CloudinaryUpload.tsx",
-      "source_location": "L8",
+      "source_file": "client/src/client/components/worker/ActiveJobPanel.tsx",
+      "source_location": "L9",
       "_callable": true,
       "_callable_class": true,
       "_origin": "ast",
-      "id": "client_src_client_components_cloudinaryupload_cloudinaryuploadprops",
-      "community": 74,
-      "community_name": "ProfileAvatar.tsx",
-      "norm_label": "cloudinaryuploadprops"
-    },
-    {
-      "label": "ProfileAvatarProps",
-      "file_type": "code",
-      "source_file": "client/src/client/components/ProfileAvatar.tsx",
-      "source_location": "L5",
-      "_callable": true,
-      "_callable_class": true,
-      "_origin": "ast",
-      "id": "client_src_client_components_profileavatar_profileavatarprops",
-      "community": 74,
-      "community_name": "ProfileAvatar.tsx",
-      "norm_label": "profileavatarprops"
-    },
-    {
-      "label": "ReviewScreenProps",
-      "file_type": "code",
-      "source_file": "client/src/client/components/ReviewScreen.tsx",
-      "source_location": "L8",
-      "_callable": true,
-      "_callable_class": true,
-      "_origin": "ast",
-      "id": "client_src_client_components_reviewscreen_reviewscreenprops",
-      "community": 74,
-      "community_name": "ProfileAvatar.tsx",
-      "norm_label": "reviewscreenprops"
+      "id": "client_src_client_components_worker_activejobpanel_activejob",
+      "community": 75,
+      "community_name": "WorkerDashboard.tsx",
+      "norm_label": "activejob"
     },
     {
       "label": "AiUnderstandResult",
@@ -4393,58 +4432,6 @@
       "norm_label": "workercategory"
     },
     {
-      "label": "AllowedRole",
-      "file_type": "code",
-      "source_file": "server/src/lib/auth-middleware.ts",
-      "source_location": "L46",
-      "_callable": true,
-      "_callable_class": true,
-      "_origin": "ast",
-      "id": "server_src_lib_auth_middleware_allowedrole",
-      "community": 8,
-      "community_name": "src/index.ts",
-      "norm_label": "allowedrole"
-    },
-    {
-      "label": "SessionUser",
-      "file_type": "code",
-      "source_file": "server/src/lib/auth-middleware.ts",
-      "source_location": "L10",
-      "_callable": true,
-      "_callable_class": true,
-      "_origin": "ast",
-      "id": "server_src_lib_auth_middleware_sessionuser",
-      "community": 8,
-      "community_name": "src/index.ts",
-      "norm_label": "sessionuser"
-    },
-    {
-      "label": "MongooseCache",
-      "file_type": "code",
-      "source_file": "server/src/lib/mongodb.ts",
-      "source_location": "L9",
-      "_callable": true,
-      "_callable_class": true,
-      "_origin": "ast",
-      "id": "server_src_lib_mongodb_mongoosecache",
-      "community": 8,
-      "community_name": "src/index.ts",
-      "norm_label": "mongoosecache"
-    },
-    {
-      "label": "UserDoc",
-      "file_type": "code",
-      "source_file": "server/src/models/User.ts",
-      "source_location": "L58",
-      "_callable": true,
-      "_callable_class": true,
-      "_origin": "ast",
-      "id": "server_src_models_user_userdoc",
-      "community": 8,
-      "community_name": "src/index.ts",
-      "norm_label": "userdoc"
-    },
-    {
       "label": "CacheEntry",
       "file_type": "code",
       "source_file": "server/src/routes/routes/index.ts",
@@ -4549,19 +4536,6 @@
       "norm_label": "activejob"
     },
     {
-      "label": "NavItem",
-      "file_type": "code",
-      "source_file": "client/src/client/components/BottomNav.tsx",
-      "source_location": "L17",
-      "_callable": true,
-      "_callable_class": true,
-      "_origin": "ast",
-      "id": "client_src_client_components_bottomnav_navitem",
-      "community": 84,
-      "community_name": "dashboard/layout.tsx",
-      "norm_label": "navitem"
-    },
-    {
       "label": "Toast",
       "file_type": "code",
       "source_file": "client/src/client/components/LiquidGlassToast.tsx",
@@ -4571,8 +4545,34 @@
       "_origin": "ast",
       "id": "client_src_client_components_liquidglasstoast_toast",
       "community": 84,
-      "community_name": "dashboard/layout.tsx",
+      "community_name": "WorkerHome.tsx",
       "norm_label": "toast"
+    },
+    {
+      "label": "Coordinates",
+      "file_type": "code",
+      "source_file": "client/src/client/components/worker/LocationUpdater.tsx",
+      "source_location": "L7",
+      "_callable": true,
+      "_callable_class": true,
+      "_origin": "ast",
+      "id": "client_src_client_components_worker_locationupdater_coordinates",
+      "community": 84,
+      "community_name": "WorkerHome.tsx",
+      "norm_label": "coordinates"
+    },
+    {
+      "label": "AvailabilityState",
+      "file_type": "code",
+      "source_file": "client/src/client/components/WorkerAvailability.tsx",
+      "source_location": "L6",
+      "_callable": true,
+      "_callable_class": true,
+      "_origin": "ast",
+      "id": "client_src_client_components_workeravailability_availabilitystate",
+      "community": 84,
+      "community_name": "WorkerHome.tsx",
+      "norm_label": "availabilitystate"
     },
     {
       "label": "WorkerData",
@@ -4614,32 +4614,6 @@
       "norm_label": "timefilter"
     },
     {
-      "label": "WorkerReviewView",
-      "file_type": "code",
-      "source_file": "contracts/worker.ts",
-      "source_location": "L190",
-      "_callable": true,
-      "_callable_class": true,
-      "_origin": "ast",
-      "id": "contracts_worker_workerreviewview",
-      "community": 85,
-      "community_name": "WorkerStatsPageClient.tsx",
-      "norm_label": "workerreviewview"
-    },
-    {
-      "label": "NavItem",
-      "file_type": "code",
-      "source_file": "client/src/client/components/DesktopNav.tsx",
-      "source_location": "L22",
-      "_callable": true,
-      "_callable_class": true,
-      "_origin": "ast",
-      "id": "client_src_client_components_desktopnav_navitem",
-      "community": 87,
-      "community_name": "useLang",
-      "norm_label": "navitem"
-    },
-    {
       "label": "JobDetail",
       "file_type": "code",
       "source_file": "server/src/lib/job/detail.ts",
@@ -4649,7 +4623,7 @@
       "_origin": "ast",
       "id": "server_src_lib_job_detail_jobdetail",
       "community": 89,
-      "community_name": "detail.ts",
+      "community_name": "mongodb.ts",
       "norm_label": "jobdetail"
     },
     {
@@ -4662,7 +4636,7 @@
       "_origin": "ast",
       "id": "server_src_lib_job_detail_jobresponder",
       "community": 89,
-      "community_name": "detail.ts",
+      "community_name": "mongodb.ts",
       "norm_label": "jobresponder"
     },
     {
@@ -4675,7 +4649,7 @@
       "_origin": "ast",
       "id": "server_src_lib_job_detail_jobresponderoffer",
       "community": 89,
-      "community_name": "detail.ts",
+      "community_name": "mongodb.ts",
       "norm_label": "jobresponderoffer"
     },
     {
@@ -4688,7 +4662,7 @@
       "_origin": "ast",
       "id": "server_src_lib_job_detail_jobresponderworker",
       "community": 89,
-      "community_name": "detail.ts",
+      "community_name": "mongodb.ts",
       "norm_label": "jobresponderworker"
     },
     {
@@ -4701,8 +4675,21 @@
       "_origin": "ast",
       "id": "server_src_lib_job_flow_broadcastresult",
       "community": 89,
-      "community_name": "detail.ts",
+      "community_name": "mongodb.ts",
       "norm_label": "broadcastresult"
+    },
+    {
+      "label": "FlowError",
+      "file_type": "code",
+      "source_file": "server/src/lib/job/flow.ts",
+      "source_location": "L33",
+      "_callable": true,
+      "_callable_class": true,
+      "_origin": "ast",
+      "id": "server_src_lib_job_flow_flowerror",
+      "community": 89,
+      "community_name": "mongodb.ts",
+      "norm_label": "flowerror"
     },
     {
       "label": "WorkerOfferResult",
@@ -4714,8 +4701,21 @@
       "_origin": "ast",
       "id": "server_src_lib_job_flow_workerofferresult",
       "community": 89,
-      "community_name": "detail.ts",
+      "community_name": "mongodb.ts",
       "norm_label": "workerofferresult"
+    },
+    {
+      "label": "MongooseCache",
+      "file_type": "code",
+      "source_file": "server/src/lib/mongodb.ts",
+      "source_location": "L13",
+      "_callable": true,
+      "_callable_class": true,
+      "_origin": "ast",
+      "id": "server_src_lib_mongodb_mongoosecache",
+      "community": 89,
+      "community_name": "mongodb.ts",
+      "norm_label": "mongoosecache"
     },
     {
       "label": "JobDoc",
@@ -4727,7 +4727,7 @@
       "_origin": "ast",
       "id": "server_src_models_job_jobdoc",
       "community": 89,
-      "community_name": "detail.ts",
+      "community_name": "mongodb.ts",
       "norm_label": "jobdoc"
     },
     {
@@ -5641,30 +5641,6 @@
       "norm_label": "parselocation()"
     },
     {
-      "label": "WorkerChatPage()",
-      "file_type": "code",
-      "source_file": "client/src/app/dashboard/worker/chat/page.tsx",
-      "source_location": "L8",
-      "_callable": true,
-      "_origin": "ast",
-      "id": "client_src_app_dashboard_worker_chat_page_workerchatpage",
-      "community": 104,
-      "community_name": "chat/page.tsx",
-      "norm_label": "workerchatpage()"
-    },
-    {
-      "label": "WorkerChatList()",
-      "file_type": "code",
-      "source_file": "client/src/client/components/worker/WorkerChatList.tsx",
-      "source_location": "L20",
-      "_callable": true,
-      "_origin": "ast",
-      "id": "client_src_client_components_worker_workerchatlist_workerchatlist",
-      "community": 104,
-      "community_name": "chat/page.tsx",
-      "norm_label": "workerchatlist()"
-    },
-    {
       "label": "createdJob()",
       "file_type": "code",
       "source_file": "client/src/client/components/NewWorkWizard.test.tsx",
@@ -5764,7 +5740,7 @@
       "label": "disconnectDB()",
       "file_type": "code",
       "source_file": "server/src/lib/mongodb.ts",
-      "source_location": "L46",
+      "source_location": "L50",
       "_callable": true,
       "_origin": "ast",
       "id": "server_src_lib_mongodb_disconnectdb",
@@ -6109,6 +6085,90 @@
       "norm_label": "workertoscoreinput()"
     },
     {
+      "label": "fail()",
+      "file_type": "code",
+      "source_file": "server/src/lib/auth-middleware.ts",
+      "source_location": "L70",
+      "_callable": true,
+      "_origin": "ast",
+      "id": "server_src_lib_auth_middleware_fail",
+      "community": 125,
+      "community_name": "connectDB",
+      "norm_label": "fail()"
+    },
+    {
+      "label": "getSessionUser()",
+      "file_type": "code",
+      "source_file": "server/src/lib/auth-middleware.ts",
+      "source_location": "L19",
+      "_callable": true,
+      "_origin": "ast",
+      "id": "server_src_lib_auth_middleware_getsessionuser",
+      "community": 125,
+      "community_name": "connectDB",
+      "norm_label": "getsessionuser()"
+    },
+    {
+      "label": "requireRole()",
+      "file_type": "code",
+      "source_file": "server/src/lib/auth-middleware.ts",
+      "source_location": "L52",
+      "_callable": true,
+      "_origin": "ast",
+      "id": "server_src_lib_auth_middleware_requirerole",
+      "community": 125,
+      "community_name": "connectDB",
+      "norm_label": "requirerole()"
+    },
+    {
+      "label": "isSessionExpired()",
+      "file_type": "code",
+      "source_file": "server/src/lib/auth/session.ts",
+      "source_location": "L31",
+      "_callable": true,
+      "_origin": "ast",
+      "id": "server_src_lib_auth_session_issessionexpired",
+      "community": 125,
+      "community_name": "connectDB",
+      "norm_label": "issessionexpired()"
+    },
+    {
+      "label": "isSessionTokenValid()",
+      "file_type": "code",
+      "source_file": "server/src/lib/auth/session.ts",
+      "source_location": "L26",
+      "_callable": true,
+      "_origin": "ast",
+      "id": "server_src_lib_auth_session_issessiontokenvalid",
+      "community": 125,
+      "community_name": "connectDB",
+      "norm_label": "issessiontokenvalid()"
+    },
+    {
+      "label": "connectDB()",
+      "file_type": "code",
+      "source_file": "server/src/lib/mongodb.ts",
+      "source_location": "L32",
+      "_callable": true,
+      "_origin": "ast",
+      "id": "server_src_lib_mongodb_connectdb",
+      "community": 125,
+      "community_name": "connectDB",
+      "norm_label": "connectdb()"
+    },
+    {
+      "label": "handleSession()",
+      "file_type": "code",
+      "source_file": "server/src/routes/auth/session.ts",
+      "source_location": "L16",
+      "_callable": true,
+      "_origin": "ast",
+      "id": "server_src_routes_auth_session_handlesession",
+      "community": 125,
+      "community_name": "connectDB",
+      "norm_label": "handlesession()"
+    },
+    {
       "label": "WorkerJobsPage()",
       "file_type": "code",
       "source_file": "client/src/app/dashboard/worker/jobs/page.tsx",
@@ -6313,18 +6373,6 @@
       "norm_label": "builddata()"
     },
     {
-      "label": "WorkerMatchCard()",
-      "file_type": "code",
-      "source_file": "client/src/client/components/MatchResults.tsx",
-      "source_location": "L221",
-      "_callable": true,
-      "_origin": "ast",
-      "id": "client_src_client_components_matchresults_workermatchcard",
-      "community": 14,
-      "community_name": "MatchResults.tsx",
-      "norm_label": "workermatchcard()"
-    },
-    {
       "label": "SplitText()",
       "file_type": "code",
       "source_file": "client/src/client/components/SplitText.jsx",
@@ -6340,7 +6388,7 @@
       "label": "cleanDescription()",
       "file_type": "code",
       "source_file": "server/src/lib/job/ai.ts",
-      "source_location": "L446",
+      "source_location": "L479",
       "_callable": true,
       "_origin": "ast",
       "id": "server_src_lib_job_ai_cleandescription",
@@ -6352,7 +6400,7 @@
       "label": "coerceDisplayArray()",
       "file_type": "code",
       "source_file": "server/src/lib/job/ai.ts",
-      "source_location": "L172",
+      "source_location": "L186",
       "_callable": true,
       "_origin": "ast",
       "id": "server_src_lib_job_ai_coercedisplayarray",
@@ -6364,7 +6412,7 @@
       "label": "coerceNumber()",
       "file_type": "code",
       "source_file": "server/src/lib/job/ai.ts",
-      "source_location": "L180",
+      "source_location": "L194",
       "_callable": true,
       "_origin": "ast",
       "id": "server_src_lib_job_ai_coercenumber",
@@ -6376,7 +6424,7 @@
       "label": "coerceToArray()",
       "file_type": "code",
       "source_file": "server/src/lib/job/ai.ts",
-      "source_location": "L164",
+      "source_location": "L178",
       "_callable": true,
       "_origin": "ast",
       "id": "server_src_lib_job_ai_coercetoarray",
@@ -6388,7 +6436,7 @@
       "label": "fallbackResult()",
       "file_type": "code",
       "source_file": "server/src/lib/job/ai.ts",
-      "source_location": "L532",
+      "source_location": "L565",
       "_callable": true,
       "_origin": "ast",
       "id": "server_src_lib_job_ai_fallbackresult",
@@ -6397,34 +6445,10 @@
       "norm_label": "fallbackresult()"
     },
     {
-      "label": "geminiEndpoint()",
-      "file_type": "code",
-      "source_file": "server/src/lib/job/ai.ts",
-      "source_location": "L160",
-      "_callable": true,
-      "_origin": "ast",
-      "id": "server_src_lib_job_ai_geminiendpoint",
-      "community": 17,
-      "community_name": "job/ai.ts",
-      "norm_label": "geminiendpoint()"
-    },
-    {
-      "label": "geminiUnderstand()",
-      "file_type": "code",
-      "source_file": "server/src/lib/job/ai.ts",
-      "source_location": "L238",
-      "_callable": true,
-      "_origin": "ast",
-      "id": "server_src_lib_job_ai_geminiunderstand",
-      "community": 17,
-      "community_name": "job/ai.ts",
-      "norm_label": "geminiunderstand()"
-    },
-    {
       "label": "isRetryable()",
       "file_type": "code",
       "source_file": "server/src/lib/job/ai.ts",
-      "source_location": "L222",
+      "source_location": "L236",
       "_callable": true,
       "_origin": "ast",
       "id": "server_src_lib_job_ai_isretryable",
@@ -6433,22 +6457,58 @@
       "norm_label": "isretryable()"
     },
     {
-      "label": "normalizeGeminiJob()",
+      "label": "normalizeAiJob()",
       "file_type": "code",
       "source_file": "server/src/lib/job/ai.ts",
-      "source_location": "L185",
+      "source_location": "L199",
       "_callable": true,
       "_origin": "ast",
-      "id": "server_src_lib_job_ai_normalizegeminijob",
+      "id": "server_src_lib_job_ai_normalizeaijob",
       "community": 17,
       "community_name": "job/ai.ts",
-      "norm_label": "normalizegeminijob()"
+      "norm_label": "normalizeaijob()"
+    },
+    {
+      "label": "opencodeEndpoint()",
+      "file_type": "code",
+      "source_file": "server/src/lib/job/ai.ts",
+      "source_location": "L171",
+      "_callable": true,
+      "_origin": "ast",
+      "id": "server_src_lib_job_ai_opencodeendpoint",
+      "community": 17,
+      "community_name": "job/ai.ts",
+      "norm_label": "opencodeendpoint()"
+    },
+    {
+      "label": "opencodeUnderstand()",
+      "file_type": "code",
+      "source_file": "server/src/lib/job/ai.ts",
+      "source_location": "L261",
+      "_callable": true,
+      "_origin": "ast",
+      "id": "server_src_lib_job_ai_opencodeunderstand",
+      "community": 17,
+      "community_name": "job/ai.ts",
+      "norm_label": "opencodeunderstand()"
+    },
+    {
+      "label": "parseModelJson()",
+      "file_type": "code",
+      "source_file": "server/src/lib/job/ai.ts",
+      "source_location": "L253",
+      "_callable": true,
+      "_origin": "ast",
+      "id": "server_src_lib_job_ai_parsemodeljson",
+      "community": 17,
+      "community_name": "job/ai.ts",
+      "norm_label": "parsemodeljson()"
     },
     {
       "label": "sleep()",
       "file_type": "code",
       "source_file": "server/src/lib/job/ai.ts",
-      "source_location": "L234",
+      "source_location": "L248",
       "_callable": true,
       "_origin": "ast",
       "id": "server_src_lib_job_ai_sleep",
@@ -6460,7 +6520,7 @@
       "label": "transcribeAudio()",
       "file_type": "code",
       "source_file": "server/src/lib/job/ai.ts",
-      "source_location": "L423",
+      "source_location": "L456",
       "_callable": true,
       "_origin": "ast",
       "id": "server_src_lib_job_ai_transcribeaudio",
@@ -6472,7 +6532,7 @@
       "label": "transcriptionFromAudio()",
       "file_type": "code",
       "source_file": "server/src/lib/job/ai.ts",
-      "source_location": "L320",
+      "source_location": "L353",
       "_callable": true,
       "_origin": "ast",
       "id": "server_src_lib_job_ai_transcriptionfromaudio",
@@ -6484,7 +6544,7 @@
       "label": "understandJobInput()",
       "file_type": "code",
       "source_file": "server/src/lib/job/ai.ts",
-      "source_location": "L460",
+      "source_location": "L493",
       "_callable": true,
       "_origin": "ast",
       "id": "server_src_lib_job_ai_understandjobinput",
@@ -6829,18 +6889,6 @@
       "norm_label": "graphifyplugin()"
     },
     {
-      "label": ".constructor()",
-      "file_type": "code",
-      "source_file": "server/src/lib/job/flow.ts",
-      "source_location": "L34",
-      "_callable": true,
-      "_origin": "ast",
-      "id": "server_src_lib_job_flow_flowerror_constructor",
-      "community": 23,
-      "community_name": "workers/index.ts",
-      "norm_label": ".constructor()"
-    },
-    {
       "label": "getWorkerDashboard()",
       "file_type": "code",
       "source_file": "server/src/lib/worker/dashboard.ts",
@@ -6911,6 +6959,18 @@
       "community": 25,
       "community_name": "api-client.ts",
       "norm_label": "jobphotoupload()"
+    },
+    {
+      "label": "handleFile()",
+      "file_type": "code",
+      "source_file": "client/src/client/components/worker/JobPhotoUpload.tsx",
+      "source_location": "L35",
+      "_callable": true,
+      "_origin": "ast",
+      "id": "client_src_client_components_worker_jobphotoupload_jobphotoupload_handlefile",
+      "community": 25,
+      "community_name": "api-client.ts",
+      "norm_label": "handlefile()"
     },
     {
       "label": "EmptyState()",
@@ -6995,6 +7055,42 @@
       "community": 29,
       "community_name": "LoadingState.tsx",
       "norm_label": "voiceloader()"
+    },
+    {
+      "label": "WorkerMatchCard()",
+      "file_type": "code",
+      "source_file": "client/src/client/components/MatchResults.tsx",
+      "source_location": "L221",
+      "_callable": true,
+      "_origin": "ast",
+      "id": "client_src_client_components_matchresults_workermatchcard",
+      "community": 29,
+      "community_name": "LoadingState.tsx",
+      "norm_label": "workermatchcard()"
+    },
+    {
+      "label": "initials()",
+      "file_type": "code",
+      "source_file": "client/src/client/components/ProfileAvatar.tsx",
+      "source_location": "L19",
+      "_callable": true,
+      "_origin": "ast",
+      "id": "client_src_client_components_profileavatar_initials",
+      "community": 29,
+      "community_name": "LoadingState.tsx",
+      "norm_label": "initials()"
+    },
+    {
+      "label": "ProfileAvatar()",
+      "file_type": "code",
+      "source_file": "client/src/client/components/ProfileAvatar.tsx",
+      "source_location": "L27",
+      "_callable": true,
+      "_origin": "ast",
+      "id": "client_src_client_components_profileavatar_profileavatar",
+      "community": 29,
+      "community_name": "LoadingState.tsx",
+      "norm_label": "profileavatar()"
     },
     {
       "label": "cn()",
@@ -7297,16 +7393,16 @@
       "norm_label": "customertrackpage()"
     },
     {
-      "label": "WorkerDashboardPage()",
+      "label": "WorkerChatPage()",
       "file_type": "code",
-      "source_file": "client/src/app/dashboard/worker/page.tsx",
+      "source_file": "client/src/app/dashboard/worker/chat/page.tsx",
       "source_location": "L8",
       "_callable": true,
       "_origin": "ast",
-      "id": "client_src_app_dashboard_worker_page_workerdashboardpage",
+      "id": "client_src_app_dashboard_worker_chat_page_workerchatpage",
       "community": 30,
       "community_name": "TranslatedHeading.tsx",
-      "norm_label": "workerdashboardpage()"
+      "norm_label": "workerchatpage()"
     },
     {
       "label": "WorkerProfilePage()",
@@ -7391,6 +7487,18 @@
       "community": 30,
       "community_name": "TranslatedHeading.tsx",
       "norm_label": "translatedheading()"
+    },
+    {
+      "label": "WorkerChatList()",
+      "file_type": "code",
+      "source_file": "client/src/client/components/worker/WorkerChatList.tsx",
+      "source_location": "L20",
+      "_callable": true,
+      "_origin": "ast",
+      "id": "client_src_client_components_worker_workerchatlist_workerchatlist",
+      "community": 30,
+      "community_name": "TranslatedHeading.tsx",
+      "norm_label": "workerchatlist()"
     },
     {
       "label": "buildBoundingBox()",
@@ -7849,16 +7957,52 @@
       "norm_label": "handleaccept()"
     },
     {
-      "label": "handleFile()",
+      "label": "CustomerApprovalPanel()",
       "file_type": "code",
-      "source_file": "client/src/client/components/worker/JobPhotoUpload.tsx",
-      "source_location": "L35",
+      "source_file": "client/src/client/components/CustomerApprovalPanel.tsx",
+      "source_location": "L18",
       "_callable": true,
       "_origin": "ast",
-      "id": "client_src_client_components_worker_jobphotoupload_jobphotoupload_handlefile",
+      "id": "client_src_client_components_customerapprovalpanel_customerapprovalpanel",
       "community": 34,
       "community_name": "getApiErrorMessage",
-      "norm_label": "handlefile()"
+      "norm_label": "customerapprovalpanel()"
+    },
+    {
+      "label": "handleApprove()",
+      "file_type": "code",
+      "source_file": "client/src/client/components/CustomerApprovalPanel.tsx",
+      "source_location": "L47",
+      "_callable": true,
+      "_origin": "ast",
+      "id": "client_src_client_components_customerapprovalpanel_customerapprovalpanel_handleapprove",
+      "community": 34,
+      "community_name": "getApiErrorMessage",
+      "norm_label": "handleapprove()"
+    },
+    {
+      "label": "ReviewScreen()",
+      "file_type": "code",
+      "source_file": "client/src/client/components/ReviewScreen.tsx",
+      "source_location": "L15",
+      "_callable": true,
+      "_origin": "ast",
+      "id": "client_src_client_components_reviewscreen_reviewscreen",
+      "community": 34,
+      "community_name": "getApiErrorMessage",
+      "norm_label": "reviewscreen()"
+    },
+    {
+      "label": "handleSubmit()",
+      "file_type": "code",
+      "source_file": "client/src/client/components/ReviewScreen.tsx",
+      "source_location": "L23",
+      "_callable": true,
+      "_origin": "ast",
+      "id": "client_src_client_components_reviewscreen_reviewscreen_handlesubmit",
+      "community": 34,
+      "community_name": "getApiErrorMessage",
+      "norm_label": "handlesubmit()"
     },
     {
       "label": "getApiErrorMessage()",
@@ -7871,6 +8015,18 @@
       "community": 34,
       "community_name": "getApiErrorMessage",
       "norm_label": "getapierrormessage()"
+    },
+    {
+      "label": "parseApiResponse()",
+      "file_type": "code",
+      "source_file": "client/src/client/lib/api-client.ts",
+      "source_location": "L12",
+      "_callable": true,
+      "_origin": "ast",
+      "id": "client_src_client_lib_api_client_parseapiresponse",
+      "community": 34,
+      "community_name": "getApiErrorMessage",
+      "norm_label": "parseapiresponse()"
     },
     {
       "label": "PhotoPicker()",
@@ -8289,7 +8445,7 @@
       "_origin": "ast",
       "id": "server_src_lib_job_requests_createdirectrequest",
       "community": 43,
-      "community_name": "connectDB",
+      "community_name": "requests.ts",
       "norm_label": "createdirectrequest()"
     },
     {
@@ -8301,7 +8457,7 @@
       "_origin": "ast",
       "id": "server_src_lib_job_requests_requesterror_constructor",
       "community": 43,
-      "community_name": "connectDB",
+      "community_name": "requests.ts",
       "norm_label": ".constructor()"
     },
     {
@@ -8313,7 +8469,7 @@
       "_origin": "ast",
       "id": "server_src_lib_job_requests_respondtocounter",
       "community": 43,
-      "community_name": "connectDB",
+      "community_name": "requests.ts",
       "norm_label": "respondtocounter()"
     },
     {
@@ -8325,44 +8481,8 @@
       "_origin": "ast",
       "id": "server_src_lib_job_requests_respondtodirectrequest",
       "community": 43,
-      "community_name": "connectDB",
+      "community_name": "requests.ts",
       "norm_label": "respondtodirectrequest()"
-    },
-    {
-      "label": "connectDB()",
-      "file_type": "code",
-      "source_file": "server/src/lib/mongodb.ts",
-      "source_location": "L28",
-      "_callable": true,
-      "_origin": "ast",
-      "id": "server_src_lib_mongodb_connectdb",
-      "community": 43,
-      "community_name": "connectDB",
-      "norm_label": "connectdb()"
-    },
-    {
-      "label": "CustomerApprovalPanel()",
-      "file_type": "code",
-      "source_file": "client/src/client/components/CustomerApprovalPanel.tsx",
-      "source_location": "L18",
-      "_callable": true,
-      "_origin": "ast",
-      "id": "client_src_client_components_customerapprovalpanel_customerapprovalpanel",
-      "community": 44,
-      "community_name": "CustomerRequestsPanel.tsx",
-      "norm_label": "customerapprovalpanel()"
-    },
-    {
-      "label": "handleApprove()",
-      "file_type": "code",
-      "source_file": "client/src/client/components/CustomerApprovalPanel.tsx",
-      "source_location": "L47",
-      "_callable": true,
-      "_origin": "ast",
-      "id": "client_src_client_components_customerapprovalpanel_customerapprovalpanel_handleapprove",
-      "community": 44,
-      "community_name": "CustomerRequestsPanel.tsx",
-      "norm_label": "handleapprove()"
     },
     {
       "label": "currency()",
@@ -8411,18 +8531,6 @@
       "community": 44,
       "community_name": "CustomerRequestsPanel.tsx",
       "norm_label": "postjson()"
-    },
-    {
-      "label": "parseApiResponse()",
-      "file_type": "code",
-      "source_file": "client/src/client/lib/api-client.ts",
-      "source_location": "L12",
-      "_callable": true,
-      "_origin": "ast",
-      "id": "client_src_client_lib_api_client_parseapiresponse",
-      "community": 44,
-      "community_name": "CustomerRequestsPanel.tsx",
-      "norm_label": "parseapiresponse()"
     },
     {
       "label": "analyze_track()",
@@ -8605,54 +8713,6 @@
       "norm_label": "logout()"
     },
     {
-      "label": "WorkerProfile()",
-      "file_type": "code",
-      "source_file": "client/src/client/components/worker/WorkerProfile.tsx",
-      "source_location": "L24",
-      "_callable": true,
-      "_origin": "ast",
-      "id": "client_src_client_components_worker_workerprofile_workerprofile",
-      "community": 52,
-      "community_name": "WorkerProfile.tsx",
-      "norm_label": "workerprofile()"
-    },
-    {
-      "label": "cancelEditing()",
-      "file_type": "code",
-      "source_file": "client/src/client/components/worker/WorkerProfile.tsx",
-      "source_location": "L88",
-      "_callable": true,
-      "_origin": "ast",
-      "id": "client_src_client_components_worker_workerprofile_workerprofile_cancelediting",
-      "community": 52,
-      "community_name": "WorkerProfile.tsx",
-      "norm_label": "cancelediting()"
-    },
-    {
-      "label": "saveProfile()",
-      "file_type": "code",
-      "source_file": "client/src/client/components/worker/WorkerProfile.tsx",
-      "source_location": "L127",
-      "_callable": true,
-      "_origin": "ast",
-      "id": "client_src_client_components_worker_workerprofile_workerprofile_saveprofile",
-      "community": 52,
-      "community_name": "WorkerProfile.tsx",
-      "norm_label": "saveprofile()"
-    },
-    {
-      "label": "startEditing()",
-      "file_type": "code",
-      "source_file": "client/src/client/components/worker/WorkerProfile.tsx",
-      "source_location": "L79",
-      "_callable": true,
-      "_origin": "ast",
-      "id": "client_src_client_components_worker_workerprofile_workerprofile_startediting",
-      "community": 52,
-      "community_name": "WorkerProfile.tsx",
-      "norm_label": "startediting()"
-    },
-    {
       "label": "formatRs()",
       "file_type": "code",
       "source_file": "client/src/client/components/WorkerResults.tsx",
@@ -8821,18 +8881,6 @@
       "norm_label": "fingerprint()"
     },
     {
-      "label": "getSessionUser()",
-      "file_type": "code",
-      "source_file": "server/src/lib/auth-middleware.ts",
-      "source_location": "L19",
-      "_callable": true,
-      "_origin": "ast",
-      "id": "server_src_lib_auth_middleware_getsessionuser",
-      "community": 6,
-      "community_name": "signup.ts",
-      "norm_label": "getsessionuser()"
-    },
-    {
       "label": "bytesToHex()",
       "file_type": "code",
       "source_file": "server/src/lib/auth/session.ts",
@@ -8869,136 +8917,88 @@
       "norm_label": "createsessiontoken()"
     },
     {
-      "label": "isSessionExpired()",
+      "label": "HomePage()",
       "file_type": "code",
-      "source_file": "server/src/lib/auth/session.ts",
-      "source_location": "L31",
+      "source_file": "client/src/app/page.tsx",
+      "source_location": "L8",
       "_callable": true,
       "_origin": "ast",
-      "id": "server_src_lib_auth_session_issessionexpired",
-      "community": 6,
-      "community_name": "signup.ts",
-      "norm_label": "issessionexpired()"
-    },
-    {
-      "label": "isSessionTokenValid()",
-      "file_type": "code",
-      "source_file": "server/src/lib/auth/session.ts",
-      "source_location": "L26",
-      "_callable": true,
-      "_origin": "ast",
-      "id": "server_src_lib_auth_session_issessiontokenvalid",
-      "community": 6,
-      "community_name": "signup.ts",
-      "norm_label": "issessiontokenvalid()"
-    },
-    {
-      "label": "handleSession()",
-      "file_type": "code",
-      "source_file": "server/src/routes/auth/session.ts",
-      "source_location": "L16",
-      "_callable": true,
-      "_origin": "ast",
-      "id": "server_src_routes_auth_session_handlesession",
-      "community": 6,
-      "community_name": "signup.ts",
-      "norm_label": "handlesession()"
-    },
-    {
-      "label": "showToast()",
-      "file_type": "code",
-      "source_file": "client/src/client/components/LiquidGlassToast.tsx",
-      "source_location": "L20",
-      "_callable": true,
-      "_origin": "ast",
-      "id": "client_src_client_components_liquidglasstoast_showtoast",
+      "id": "client_src_app_page_homepage",
       "community": 60,
-      "community_name": "WorkerHome.tsx",
-      "norm_label": "showtoast()"
+      "community_name": "useLang",
+      "norm_label": "homepage()"
     },
     {
-      "label": "LocationUpdater()",
+      "label": "BottomNav()",
       "file_type": "code",
-      "source_file": "client/src/client/components/worker/LocationUpdater.tsx",
-      "source_location": "L12",
-      "_callable": true,
-      "_origin": "ast",
-      "id": "client_src_client_components_worker_locationupdater_locationupdater",
-      "community": 60,
-      "community_name": "WorkerHome.tsx",
-      "norm_label": "locationupdater()"
-    },
-    {
-      "label": "send()",
-      "file_type": "code",
-      "source_file": "client/src/client/components/worker/LocationUpdater.tsx",
-      "source_location": "L25",
-      "_callable": true,
-      "_origin": "ast",
-      "id": "client_src_client_components_worker_locationupdater_locationupdater_send",
-      "community": 60,
-      "community_name": "WorkerHome.tsx",
-      "norm_label": "send()"
-    },
-    {
-      "label": "submitManual()",
-      "file_type": "code",
-      "source_file": "client/src/client/components/worker/LocationUpdater.tsx",
-      "source_location": "L68",
-      "_callable": true,
-      "_origin": "ast",
-      "id": "client_src_client_components_worker_locationupdater_locationupdater_submitmanual",
-      "community": 60,
-      "community_name": "WorkerHome.tsx",
-      "norm_label": "submitmanual()"
-    },
-    {
-      "label": "useAutomatic()",
-      "file_type": "code",
-      "source_file": "client/src/client/components/worker/LocationUpdater.tsx",
-      "source_location": "L48",
-      "_callable": true,
-      "_origin": "ast",
-      "id": "client_src_client_components_worker_locationupdater_locationupdater_useautomatic",
-      "community": 60,
-      "community_name": "WorkerHome.tsx",
-      "norm_label": "useautomatic()"
-    },
-    {
-      "label": "WorkerHome()",
-      "file_type": "code",
-      "source_file": "client/src/client/components/worker/WorkerHome.tsx",
-      "source_location": "L15",
-      "_callable": true,
-      "_origin": "ast",
-      "id": "client_src_client_components_worker_workerhome_workerhome",
-      "community": 60,
-      "community_name": "WorkerHome.tsx",
-      "norm_label": "workerhome()"
-    },
-    {
-      "label": "WorkerAvailability()",
-      "file_type": "code",
-      "source_file": "client/src/client/components/WorkerAvailability.tsx",
-      "source_location": "L12",
-      "_callable": true,
-      "_origin": "ast",
-      "id": "client_src_client_components_workeravailability_workeravailability",
-      "community": 60,
-      "community_name": "WorkerHome.tsx",
-      "norm_label": "workeravailability()"
-    },
-    {
-      "label": "toggle()",
-      "file_type": "code",
-      "source_file": "client/src/client/components/WorkerAvailability.tsx",
+      "source_file": "client/src/client/components/BottomNav.tsx",
       "source_location": "L23",
       "_callable": true,
       "_origin": "ast",
-      "id": "client_src_client_components_workeravailability_workeravailability_toggle",
+      "id": "client_src_client_components_bottomnav_bottomnav",
       "community": 60,
-      "community_name": "WorkerHome.tsx",
-      "norm_label": "toggle()"
+      "community_name": "useLang",
+      "norm_label": "bottomnav()"
+    },
+    {
+      "label": "DesktopNav()",
+      "file_type": "code",
+      "source_file": "client/src/client/components/DesktopNav.tsx",
+      "source_location": "L28",
+      "_callable": true,
+      "_origin": "ast",
+      "id": "client_src_client_components_desktopnav_desktopnav",
+      "community": 60,
+      "community_name": "useLang",
+      "norm_label": "desktopnav()"
+    },
+    {
+      "label": "onClick()",
+      "file_type": "code",
+      "source_file": "client/src/client/components/DesktopNav.tsx",
+      "source_location": "L58",
+      "_callable": true,
+      "_origin": "ast",
+      "id": "client_src_client_components_desktopnav_desktopnav_onclick",
+      "community": 60,
+      "community_name": "useLang",
+      "norm_label": "onclick()"
+    },
+    {
+      "label": "LanguageToggle()",
+      "file_type": "code",
+      "source_file": "client/src/client/components/LanguageToggle.tsx",
+      "source_location": "L6",
+      "_callable": true,
+      "_origin": "ast",
+      "id": "client_src_client_components_languagetoggle_languagetoggle",
+      "community": 60,
+      "community_name": "useLang",
+      "norm_label": "languagetoggle()"
+    },
+    {
+      "label": "LiquidGlassToastContainer()",
+      "file_type": "code",
+      "source_file": "client/src/client/components/LiquidGlassToast.tsx",
+      "source_location": "L27",
+      "_callable": true,
+      "_origin": "ast",
+      "id": "client_src_client_components_liquidglasstoast_liquidglasstoastcontainer",
+      "community": 60,
+      "community_name": "useLang",
+      "norm_label": "liquidglasstoastcontainer()"
+    },
+    {
+      "label": "useLang()",
+      "file_type": "code",
+      "source_file": "client/src/client/lib/i18n/context.tsx",
+      "source_location": "L56",
+      "_callable": true,
+      "_origin": "ast",
+      "id": "client_src_client_lib_i18n_context_uselang",
+      "community": 60,
+      "community_name": "useLang",
+      "norm_label": "uselang()"
     },
     {
       "label": ".constructor()",
@@ -9625,52 +9625,52 @@
       "norm_label": "load()"
     },
     {
-      "label": "initials()",
+      "label": "WorkerProfile()",
       "file_type": "code",
-      "source_file": "client/src/client/components/ProfileAvatar.tsx",
-      "source_location": "L19",
+      "source_file": "client/src/client/components/worker/WorkerProfile.tsx",
+      "source_location": "L24",
       "_callable": true,
       "_origin": "ast",
-      "id": "client_src_client_components_profileavatar_initials",
+      "id": "client_src_client_components_worker_workerprofile_workerprofile",
       "community": 74,
-      "community_name": "ProfileAvatar.tsx",
-      "norm_label": "initials()"
+      "community_name": "WorkerProfile",
+      "norm_label": "workerprofile()"
     },
     {
-      "label": "ProfileAvatar()",
+      "label": "cancelEditing()",
       "file_type": "code",
-      "source_file": "client/src/client/components/ProfileAvatar.tsx",
-      "source_location": "L27",
+      "source_file": "client/src/client/components/worker/WorkerProfile.tsx",
+      "source_location": "L88",
       "_callable": true,
       "_origin": "ast",
-      "id": "client_src_client_components_profileavatar_profileavatar",
+      "id": "client_src_client_components_worker_workerprofile_workerprofile_cancelediting",
       "community": 74,
-      "community_name": "ProfileAvatar.tsx",
-      "norm_label": "profileavatar()"
+      "community_name": "WorkerProfile",
+      "norm_label": "cancelediting()"
     },
     {
-      "label": "ReviewScreen()",
+      "label": "saveProfile()",
       "file_type": "code",
-      "source_file": "client/src/client/components/ReviewScreen.tsx",
-      "source_location": "L15",
+      "source_file": "client/src/client/components/worker/WorkerProfile.tsx",
+      "source_location": "L127",
       "_callable": true,
       "_origin": "ast",
-      "id": "client_src_client_components_reviewscreen_reviewscreen",
+      "id": "client_src_client_components_worker_workerprofile_workerprofile_saveprofile",
       "community": 74,
-      "community_name": "ProfileAvatar.tsx",
-      "norm_label": "reviewscreen()"
+      "community_name": "WorkerProfile",
+      "norm_label": "saveprofile()"
     },
     {
-      "label": "handleSubmit()",
+      "label": "startEditing()",
       "file_type": "code",
-      "source_file": "client/src/client/components/ReviewScreen.tsx",
-      "source_location": "L23",
+      "source_file": "client/src/client/components/worker/WorkerProfile.tsx",
+      "source_location": "L79",
       "_callable": true,
       "_origin": "ast",
-      "id": "client_src_client_components_reviewscreen_reviewscreen_handlesubmit",
+      "id": "client_src_client_components_worker_workerprofile_workerprofile_startediting",
       "community": 74,
-      "community_name": "ProfileAvatar.tsx",
-      "norm_label": "handlesubmit()"
+      "community_name": "WorkerProfile",
+      "norm_label": "startediting()"
     },
     {
       "label": "ActiveJobPanel()",
@@ -9743,42 +9743,6 @@
       "community": 75,
       "community_name": "WorkerDashboard.tsx",
       "norm_label": "usejobstream()"
-    },
-    {
-      "label": "fail()",
-      "file_type": "code",
-      "source_file": "server/src/lib/auth-middleware.ts",
-      "source_location": "L70",
-      "_callable": true,
-      "_origin": "ast",
-      "id": "server_src_lib_auth_middleware_fail",
-      "community": 8,
-      "community_name": "src/index.ts",
-      "norm_label": "fail()"
-    },
-    {
-      "label": "requireRole()",
-      "file_type": "code",
-      "source_file": "server/src/lib/auth-middleware.ts",
-      "source_location": "L52",
-      "_callable": true,
-      "_origin": "ast",
-      "id": "server_src_lib_auth_middleware_requirerole",
-      "community": 8,
-      "community_name": "src/index.ts",
-      "norm_label": "requirerole()"
-    },
-    {
-      "label": "isDbConnected()",
-      "file_type": "code",
-      "source_file": "server/src/lib/mongodb.ts",
-      "source_location": "L42",
-      "_callable": true,
-      "_origin": "ast",
-      "id": "server_src_lib_mongodb_isdbconnected",
-      "community": 8,
-      "community_name": "src/index.ts",
-      "norm_label": "isdbconnected()"
     },
     {
       "label": "cacheGet()",
@@ -9961,28 +9925,112 @@
       "norm_label": "customerhomecontent()"
     },
     {
-      "label": "BottomNav()",
+      "label": "WorkerDashboardPage()",
       "file_type": "code",
-      "source_file": "client/src/client/components/BottomNav.tsx",
+      "source_file": "client/src/app/dashboard/worker/page.tsx",
+      "source_location": "L8",
+      "_callable": true,
+      "_origin": "ast",
+      "id": "client_src_app_dashboard_worker_page_workerdashboardpage",
+      "community": 84,
+      "community_name": "WorkerHome.tsx",
+      "norm_label": "workerdashboardpage()"
+    },
+    {
+      "label": "showToast()",
+      "file_type": "code",
+      "source_file": "client/src/client/components/LiquidGlassToast.tsx",
+      "source_location": "L20",
+      "_callable": true,
+      "_origin": "ast",
+      "id": "client_src_client_components_liquidglasstoast_showtoast",
+      "community": 84,
+      "community_name": "WorkerHome.tsx",
+      "norm_label": "showtoast()"
+    },
+    {
+      "label": "LocationUpdater()",
+      "file_type": "code",
+      "source_file": "client/src/client/components/worker/LocationUpdater.tsx",
+      "source_location": "L12",
+      "_callable": true,
+      "_origin": "ast",
+      "id": "client_src_client_components_worker_locationupdater_locationupdater",
+      "community": 84,
+      "community_name": "WorkerHome.tsx",
+      "norm_label": "locationupdater()"
+    },
+    {
+      "label": "send()",
+      "file_type": "code",
+      "source_file": "client/src/client/components/worker/LocationUpdater.tsx",
+      "source_location": "L25",
+      "_callable": true,
+      "_origin": "ast",
+      "id": "client_src_client_components_worker_locationupdater_locationupdater_send",
+      "community": 84,
+      "community_name": "WorkerHome.tsx",
+      "norm_label": "send()"
+    },
+    {
+      "label": "submitManual()",
+      "file_type": "code",
+      "source_file": "client/src/client/components/worker/LocationUpdater.tsx",
+      "source_location": "L68",
+      "_callable": true,
+      "_origin": "ast",
+      "id": "client_src_client_components_worker_locationupdater_locationupdater_submitmanual",
+      "community": 84,
+      "community_name": "WorkerHome.tsx",
+      "norm_label": "submitmanual()"
+    },
+    {
+      "label": "useAutomatic()",
+      "file_type": "code",
+      "source_file": "client/src/client/components/worker/LocationUpdater.tsx",
+      "source_location": "L48",
+      "_callable": true,
+      "_origin": "ast",
+      "id": "client_src_client_components_worker_locationupdater_locationupdater_useautomatic",
+      "community": 84,
+      "community_name": "WorkerHome.tsx",
+      "norm_label": "useautomatic()"
+    },
+    {
+      "label": "WorkerHome()",
+      "file_type": "code",
+      "source_file": "client/src/client/components/worker/WorkerHome.tsx",
+      "source_location": "L15",
+      "_callable": true,
+      "_origin": "ast",
+      "id": "client_src_client_components_worker_workerhome_workerhome",
+      "community": 84,
+      "community_name": "WorkerHome.tsx",
+      "norm_label": "workerhome()"
+    },
+    {
+      "label": "WorkerAvailability()",
+      "file_type": "code",
+      "source_file": "client/src/client/components/WorkerAvailability.tsx",
+      "source_location": "L12",
+      "_callable": true,
+      "_origin": "ast",
+      "id": "client_src_client_components_workeravailability_workeravailability",
+      "community": 84,
+      "community_name": "WorkerHome.tsx",
+      "norm_label": "workeravailability()"
+    },
+    {
+      "label": "toggle()",
+      "file_type": "code",
+      "source_file": "client/src/client/components/WorkerAvailability.tsx",
       "source_location": "L23",
       "_callable": true,
       "_origin": "ast",
-      "id": "client_src_client_components_bottomnav_bottomnav",
+      "id": "client_src_client_components_workeravailability_workeravailability_toggle",
       "community": 84,
-      "community_name": "dashboard/layout.tsx",
-      "norm_label": "bottomnav()"
-    },
-    {
-      "label": "LiquidGlassToastContainer()",
-      "file_type": "code",
-      "source_file": "client/src/client/components/LiquidGlassToast.tsx",
-      "source_location": "L27",
-      "_callable": true,
-      "_origin": "ast",
-      "id": "client_src_client_components_liquidglasstoast_liquidglasstoastcontainer",
-      "community": 84,
-      "community_name": "dashboard/layout.tsx",
-      "norm_label": "liquidglasstoastcontainer()"
+      "community_name": "WorkerHome.tsx",
+      "norm_label": "toggle()"
     },
     {
       "label": "WorkerStatsPage()",
@@ -10021,66 +10069,6 @@
       "norm_label": "workerstatspageclient()"
     },
     {
-      "label": "HomePage()",
-      "file_type": "code",
-      "source_file": "client/src/app/page.tsx",
-      "source_location": "L8",
-      "_callable": true,
-      "_origin": "ast",
-      "id": "client_src_app_page_homepage",
-      "community": 87,
-      "community_name": "useLang",
-      "norm_label": "homepage()"
-    },
-    {
-      "label": "DesktopNav()",
-      "file_type": "code",
-      "source_file": "client/src/client/components/DesktopNav.tsx",
-      "source_location": "L28",
-      "_callable": true,
-      "_origin": "ast",
-      "id": "client_src_client_components_desktopnav_desktopnav",
-      "community": 87,
-      "community_name": "useLang",
-      "norm_label": "desktopnav()"
-    },
-    {
-      "label": "onClick()",
-      "file_type": "code",
-      "source_file": "client/src/client/components/DesktopNav.tsx",
-      "source_location": "L58",
-      "_callable": true,
-      "_origin": "ast",
-      "id": "client_src_client_components_desktopnav_desktopnav_onclick",
-      "community": 87,
-      "community_name": "useLang",
-      "norm_label": "onclick()"
-    },
-    {
-      "label": "LanguageToggle()",
-      "file_type": "code",
-      "source_file": "client/src/client/components/LanguageToggle.tsx",
-      "source_location": "L6",
-      "_callable": true,
-      "_origin": "ast",
-      "id": "client_src_client_components_languagetoggle_languagetoggle",
-      "community": 87,
-      "community_name": "useLang",
-      "norm_label": "languagetoggle()"
-    },
-    {
-      "label": "useLang()",
-      "file_type": "code",
-      "source_file": "client/src/client/lib/i18n/context.tsx",
-      "source_location": "L56",
-      "_callable": true,
-      "_origin": "ast",
-      "id": "client_src_client_lib_i18n_context_uselang",
-      "community": 87,
-      "community_name": "useLang",
-      "norm_label": "uselang()"
-    },
-    {
       "label": "getJobDetail()",
       "file_type": "code",
       "source_file": "server/src/lib/job/detail.ts",
@@ -10089,8 +10077,44 @@
       "_origin": "ast",
       "id": "server_src_lib_job_detail_getjobdetail",
       "community": 89,
-      "community_name": "detail.ts",
+      "community_name": "mongodb.ts",
       "norm_label": "getjobdetail()"
+    },
+    {
+      "label": ".constructor()",
+      "file_type": "code",
+      "source_file": "server/src/lib/job/flow.ts",
+      "source_location": "L34",
+      "_callable": true,
+      "_origin": "ast",
+      "id": "server_src_lib_job_flow_flowerror_constructor",
+      "community": 89,
+      "community_name": "mongodb.ts",
+      "norm_label": ".constructor()"
+    },
+    {
+      "label": "isDbConnected()",
+      "file_type": "code",
+      "source_file": "server/src/lib/mongodb.ts",
+      "source_location": "L46",
+      "_callable": true,
+      "_origin": "ast",
+      "id": "server_src_lib_mongodb_isdbconnected",
+      "community": 89,
+      "community_name": "mongodb.ts",
+      "norm_label": "isdbconnected()"
+    },
+    {
+      "label": "requireEnv()",
+      "file_type": "code",
+      "source_file": "server/src/lib/mongodb.ts",
+      "source_location": "L3",
+      "_callable": true,
+      "_origin": "ast",
+      "id": "server_src_lib_mongodb_requireenv",
+      "community": 89,
+      "community_name": "mongodb.ts",
+      "norm_label": "requireenv()"
     },
     {
       "label": "currency()",
@@ -11444,18 +11468,6 @@
       "norm_label": "audio.md"
     },
     {
-      "label": "step-1-inspect.md",
-      "file_type": "document",
-      "node_kind": "page",
-      "source_file": ".agents/skills/brag/references/step-1-inspect.md",
-      "source_location": "L1",
-      "_origin": "ast",
-      "id": "agents_skills_brag_references_step_1_inspect",
-      "community": 101,
-      "community_name": "SKILL.md",
-      "norm_label": "step-1-inspect.md"
-    },
-    {
       "label": "step-2-plan.md",
       "file_type": "document",
       "node_kind": "page",
@@ -11478,6 +11490,18 @@
       "community": 101,
       "community_name": "SKILL.md",
       "norm_label": "step-3-compose.md"
+    },
+    {
+      "label": "step-4-deliver.md",
+      "file_type": "document",
+      "node_kind": "page",
+      "source_file": ".agents/skills/brag/references/step-4-deliver.md",
+      "source_location": "L1",
+      "_origin": "ast",
+      "id": "agents_skills_brag_references_step_4_deliver",
+      "community": 101,
+      "community_name": "SKILL.md",
+      "norm_label": "step-4-deliver.md"
     },
     {
       "label": "tones.md",
@@ -11617,28 +11641,6 @@
       "community": 103,
       "community_name": "ai/index.ts",
       "norm_label": "note: in production, configure multer middleware on this route:"
-    },
-    {
-      "label": "chat/page.tsx",
-      "file_type": "code",
-      "source_file": "client/src/app/dashboard/worker/chat/page.tsx",
-      "source_location": "L1",
-      "_origin": "ast",
-      "id": "client_src_app_dashboard_worker_chat_page",
-      "community": 104,
-      "community_name": "chat/page.tsx",
-      "norm_label": "chat/page.tsx"
-    },
-    {
-      "label": "WorkerChatList.tsx",
-      "file_type": "code",
-      "source_file": "client/src/client/components/worker/WorkerChatList.tsx",
-      "source_location": "L1",
-      "_origin": "ast",
-      "id": "client_src_client_components_worker_workerchatlist",
-      "community": 104,
-      "community_name": "chat/page.tsx",
-      "norm_label": "workerchatlist.tsx"
     },
     {
       "label": "NewWorkWizard.test.tsx",
@@ -11870,17 +11872,6 @@
       "community": 11,
       "community_name": "seed.ts",
       "norm_label": "userschema"
-    },
-    {
-      "label": "Worker",
-      "file_type": "code",
-      "source_file": "server/src/models/Worker.ts",
-      "source_location": "L94",
-      "_origin": "ast",
-      "id": "server_src_models_worker_worker",
-      "community": 11,
-      "community_name": "seed.ts",
-      "norm_label": "worker"
     },
     {
       "label": "reset-workers.ts",
@@ -12355,6 +12346,94 @@
       "norm_label": "brag"
     },
     {
+      "label": "auth-middleware.ts",
+      "file_type": "code",
+      "source_file": "server/src/lib/auth-middleware.ts",
+      "source_location": "L1",
+      "_origin": "ast",
+      "id": "server_src_lib_auth_middleware",
+      "community": 125,
+      "community_name": "connectDB",
+      "norm_label": "auth-middleware.ts"
+    },
+    {
+      "label": "profile.ts",
+      "file_type": "code",
+      "source_file": "server/src/routes/auth/profile.ts",
+      "source_location": "L1",
+      "_origin": "ast",
+      "id": "server_src_routes_auth_profile",
+      "community": 125,
+      "community_name": "connectDB",
+      "norm_label": "profile.ts"
+    },
+    {
+      "label": "profileImageSchema",
+      "file_type": "code",
+      "source_file": "server/src/routes/auth/profile.ts",
+      "source_location": "L10",
+      "_origin": "ast",
+      "id": "server_src_routes_auth_profile_profileimageschema",
+      "community": 125,
+      "community_name": "connectDB",
+      "norm_label": "profileimageschema"
+    },
+    {
+      "label": "photos/index.ts",
+      "file_type": "code",
+      "source_file": "server/src/routes/photos/index.ts",
+      "source_location": "L1",
+      "_origin": "ast",
+      "id": "server_src_routes_photos_index",
+      "community": 125,
+      "community_name": "connectDB",
+      "norm_label": "photos/index.ts"
+    },
+    {
+      "label": "contracts/ai.ts",
+      "file_type": "code",
+      "source_file": "contracts/ai.ts",
+      "source_location": "L1",
+      "_origin": "ast",
+      "id": "contracts_ai",
+      "community": 127,
+      "community_name": "contracts/ai.ts",
+      "norm_label": "contracts/ai.ts"
+    },
+    {
+      "label": "CATEGORY_ESTIMATES",
+      "file_type": "code",
+      "source_file": "contracts/ai.ts",
+      "source_location": "L11",
+      "_origin": "ast",
+      "id": "contracts_ai_category_estimates",
+      "community": 127,
+      "community_name": "contracts/ai.ts",
+      "norm_label": "category_estimates"
+    },
+    {
+      "label": "INSPECTION_FEES",
+      "file_type": "code",
+      "source_file": "contracts/ai.ts",
+      "source_location": "L20",
+      "_origin": "ast",
+      "id": "contracts_ai_inspection_fees",
+      "community": 127,
+      "community_name": "contracts/ai.ts",
+      "norm_label": "inspection_fees"
+    },
+    {
+      "label": "contracts/index.ts",
+      "file_type": "code",
+      "source_file": "contracts/index.ts",
+      "source_location": "L1",
+      "_origin": "ast",
+      "id": "contracts_index",
+      "community": 127,
+      "community_name": "contracts/ai.ts",
+      "norm_label": "contracts/index.ts"
+    },
+    {
       "label": "worker/jobs/page.tsx",
       "file_type": "code",
       "source_file": "client/src/app/dashboard/worker/jobs/page.tsx",
@@ -12617,50 +12696,6 @@
       "community": 14,
       "community_name": "MatchResults.tsx",
       "norm_label": "bottom_safe_offset"
-    },
-    {
-      "label": "contracts/ai.ts",
-      "file_type": "code",
-      "source_file": "contracts/ai.ts",
-      "source_location": "L1",
-      "_origin": "ast",
-      "id": "contracts_ai",
-      "community": 15,
-      "community_name": "contracts/job.ts",
-      "norm_label": "contracts/ai.ts"
-    },
-    {
-      "label": "CATEGORY_ESTIMATES",
-      "file_type": "code",
-      "source_file": "contracts/ai.ts",
-      "source_location": "L11",
-      "_origin": "ast",
-      "id": "contracts_ai_category_estimates",
-      "community": 15,
-      "community_name": "contracts/job.ts",
-      "norm_label": "category_estimates"
-    },
-    {
-      "label": "INSPECTION_FEES",
-      "file_type": "code",
-      "source_file": "contracts/ai.ts",
-      "source_location": "L20",
-      "_origin": "ast",
-      "id": "contracts_ai_inspection_fees",
-      "community": 15,
-      "community_name": "contracts/job.ts",
-      "norm_label": "inspection_fees"
-    },
-    {
-      "label": "contracts/index.ts",
-      "file_type": "code",
-      "source_file": "contracts/index.ts",
-      "source_location": "L1",
-      "_origin": "ast",
-      "id": "contracts_index",
-      "community": 15,
-      "community_name": "contracts/job.ts",
-      "norm_label": "contracts/index.ts"
     },
     {
       "label": "contracts/job.ts",
@@ -13018,7 +13053,7 @@
       "label": "ASSEMBLYAI_LANGUAGE_CODE",
       "file_type": "code",
       "source_file": "server/src/lib/job/ai.ts",
-      "source_location": "L30",
+      "source_location": "L40",
       "_origin": "ast",
       "id": "server_src_lib_job_ai_assemblyai_language_code",
       "community": 17,
@@ -13029,7 +13064,7 @@
       "label": "DEFAULT_CLARIFICATION_OPTIONS",
       "file_type": "code",
       "source_file": "server/src/lib/job/ai.ts",
-      "source_location": "L77",
+      "source_location": "L87",
       "_origin": "ast",
       "id": "server_src_lib_job_ai_default_clarification_options",
       "community": 17,
@@ -13037,21 +13072,32 @@
       "norm_label": "default_clarification_options"
     },
     {
-      "label": "GEMINI_MODEL",
+      "label": "OPENCODE_BASE_URL",
       "file_type": "code",
       "source_file": "server/src/lib/job/ai.ts",
-      "source_location": "L9",
+      "source_location": "L14",
       "_origin": "ast",
-      "id": "server_src_lib_job_ai_gemini_model",
+      "id": "server_src_lib_job_ai_opencode_base_url",
       "community": 17,
       "community_name": "job/ai.ts",
-      "norm_label": "gemini_model"
+      "norm_label": "opencode_base_url"
+    },
+    {
+      "label": "OPENCODE_MODEL",
+      "file_type": "code",
+      "source_file": "server/src/lib/job/ai.ts",
+      "source_location": "L17",
+      "_origin": "ast",
+      "id": "server_src_lib_job_ai_opencode_model",
+      "community": 17,
+      "community_name": "job/ai.ts",
+      "norm_label": "opencode_model"
     },
     {
       "label": "SYSTEM_PROMPT",
       "file_type": "code",
       "source_file": "server/src/lib/job/ai.ts",
-      "source_location": "L84",
+      "source_location": "L94",
       "_origin": "ast",
       "id": "server_src_lib_job_ai_system_prompt",
       "community": 17,
@@ -13062,7 +13108,7 @@
       "label": "URGENCY_LEVELS",
       "file_type": "code",
       "source_file": "server/src/lib/job/ai.ts",
-      "source_location": "L18",
+      "source_location": "L26",
       "_origin": "ast",
       "id": "server_src_lib_job_ai_urgency_levels",
       "community": 17,
@@ -13073,7 +13119,7 @@
       "label": "VALID_ASSEMBLYAI_LANGUAGE_CODES",
       "file_type": "code",
       "source_file": "server/src/lib/job/ai.ts",
-      "source_location": "L32",
+      "source_location": "L42",
       "_origin": "ast",
       "id": "server_src_lib_job_ai_valid_assemblyai_language_codes",
       "community": 17,
@@ -13084,7 +13130,7 @@
       "label": "WORKER_CATEGORIES",
       "file_type": "code",
       "source_file": "server/src/lib/job/ai.ts",
-      "source_location": "L12",
+      "source_location": "L20",
       "_origin": "ast",
       "id": "server_src_lib_job_ai_worker_categories",
       "community": 17,
@@ -13917,17 +13963,6 @@
       "norm_label": "profileupdateschema"
     },
     {
-      "label": "router",
-      "file_type": "code",
-      "source_file": "server/src/routes/workers/index.ts",
-      "source_location": "L15",
-      "_origin": "ast",
-      "id": "server_src_routes_workers_index_router",
-      "community": 23,
-      "community_name": "workers/index.ts",
-      "norm_label": "router"
-    },
-    {
       "label": "searchQuerySchema",
       "file_type": "code",
       "source_file": "server/src/routes/workers/index.ts",
@@ -14267,39 +14302,6 @@
       "norm_label": "status_labels"
     },
     {
-      "label": "ActiveJobPanel.tsx",
-      "file_type": "code",
-      "source_file": "client/src/client/components/worker/ActiveJobPanel.tsx",
-      "source_location": "L1",
-      "_origin": "ast",
-      "id": "client_src_client_components_worker_activejobpanel",
-      "community": 25,
-      "community_name": "api-client.ts",
-      "norm_label": "activejobpanel.tsx"
-    },
-    {
-      "label": "NEXT_ACTIONS",
-      "file_type": "code",
-      "source_file": "client/src/client/components/worker/ActiveJobPanel.tsx",
-      "source_location": "L53",
-      "_origin": "ast",
-      "id": "client_src_client_components_worker_activejobpanel_next_actions",
-      "community": 25,
-      "community_name": "api-client.ts",
-      "norm_label": "next_actions"
-    },
-    {
-      "label": "STATUS_LABELS",
-      "file_type": "code",
-      "source_file": "client/src/client/components/worker/ActiveJobPanel.tsx",
-      "source_location": "L38",
-      "_origin": "ast",
-      "id": "client_src_client_components_worker_activejobpanel_status_labels",
-      "community": 25,
-      "community_name": "api-client.ts",
-      "norm_label": "status_labels"
-    },
-    {
       "label": "JobPhotoUpload.tsx",
       "file_type": "code",
       "source_file": "client/src/client/components/worker/JobPhotoUpload.tsx",
@@ -14408,6 +14410,28 @@
       "community": 29,
       "community_name": "LoadingState.tsx",
       "norm_label": "voice_statuses"
+    },
+    {
+      "label": "ProfileAvatar.tsx",
+      "file_type": "code",
+      "source_file": "client/src/client/components/ProfileAvatar.tsx",
+      "source_location": "L1",
+      "_origin": "ast",
+      "id": "client_src_client_components_profileavatar",
+      "community": 29,
+      "community_name": "LoadingState.tsx",
+      "norm_label": "profileavatar.tsx"
+    },
+    {
+      "label": "sizeClasses",
+      "file_type": "code",
+      "source_file": "client/src/client/components/ProfileAvatar.tsx",
+      "source_location": "L12",
+      "_origin": "ast",
+      "id": "client_src_client_components_profileavatar_sizeclasses",
+      "community": 29,
+      "community_name": "LoadingState.tsx",
+      "norm_label": "sizeclasses"
     },
     {
       "label": "cn.ts",
@@ -14575,15 +14599,15 @@
       "norm_label": "track/page.tsx"
     },
     {
-      "label": "worker/page.tsx",
+      "label": "chat/page.tsx",
       "file_type": "code",
-      "source_file": "client/src/app/dashboard/worker/page.tsx",
+      "source_file": "client/src/app/dashboard/worker/chat/page.tsx",
       "source_location": "L1",
       "_origin": "ast",
-      "id": "client_src_app_dashboard_worker_page",
+      "id": "client_src_app_dashboard_worker_chat_page",
       "community": 30,
       "community_name": "TranslatedHeading.tsx",
-      "norm_label": "worker/page.tsx"
+      "norm_label": "chat/page.tsx"
     },
     {
       "label": "worker/profile/page.tsx",
@@ -14608,6 +14632,17 @@
       "norm_label": "work/page.tsx"
     },
     {
+      "label": "CustomerJobsList.tsx",
+      "file_type": "code",
+      "source_file": "client/src/client/components/CustomerJobsList.tsx",
+      "source_location": "L1",
+      "_origin": "ast",
+      "id": "client_src_client_components_customerjobslist",
+      "community": 30,
+      "community_name": "TranslatedHeading.tsx",
+      "norm_label": "customerjobslist.tsx"
+    },
+    {
       "label": "TrackingJobsList.tsx",
       "file_type": "code",
       "source_file": "client/src/client/components/tracking/TrackingJobsList.tsx",
@@ -14628,6 +14663,17 @@
       "community": 30,
       "community_name": "TranslatedHeading.tsx",
       "norm_label": "translatedheading.tsx"
+    },
+    {
+      "label": "WorkerChatList.tsx",
+      "file_type": "code",
+      "source_file": "client/src/client/components/worker/WorkerChatList.tsx",
+      "source_location": "L1",
+      "_origin": "ast",
+      "id": "client_src_client_components_worker_workerchatlist",
+      "community": 30,
+      "community_name": "TranslatedHeading.tsx",
+      "norm_label": "workerchatlist.tsx"
     },
     {
       "label": "server/contracts/api.ts",
@@ -14815,6 +14861,28 @@
       "community": 34,
       "community_name": "getApiErrorMessage",
       "norm_label": "acceptjobbutton.tsx"
+    },
+    {
+      "label": "CustomerApprovalPanel.tsx",
+      "file_type": "code",
+      "source_file": "client/src/client/components/CustomerApprovalPanel.tsx",
+      "source_location": "L1",
+      "_origin": "ast",
+      "id": "client_src_client_components_customerapprovalpanel",
+      "community": 34,
+      "community_name": "getApiErrorMessage",
+      "norm_label": "customerapprovalpanel.tsx"
+    },
+    {
+      "label": "ReviewScreen.tsx",
+      "file_type": "code",
+      "source_file": "client/src/client/components/ReviewScreen.tsx",
+      "source_location": "L1",
+      "_origin": "ast",
+      "id": "client_src_client_components_reviewscreen",
+      "community": 34,
+      "community_name": "getApiErrorMessage",
+      "norm_label": "reviewscreen.tsx"
     },
     {
       "label": "api-client.test.ts",
@@ -15319,7 +15387,7 @@
       "_origin": "ast",
       "id": "server_src_lib_job_requests",
       "community": 43,
-      "community_name": "connectDB",
+      "community_name": "requests.ts",
       "norm_label": "requests.ts"
     },
     {
@@ -15330,7 +15398,7 @@
       "_origin": "ast",
       "id": "server_src_routes_requests_index",
       "community": 43,
-      "community_name": "connectDB",
+      "community_name": "requests.ts",
       "norm_label": "requests/index.ts"
     },
     {
@@ -15341,7 +15409,7 @@
       "_origin": "ast",
       "id": "server_src_routes_requests_index_counterresponseschema",
       "community": 43,
-      "community_name": "connectDB",
+      "community_name": "requests.ts",
       "norm_label": "counterresponseschema"
     },
     {
@@ -15352,7 +15420,7 @@
       "_origin": "ast",
       "id": "server_src_routes_requests_index_createrequestschema",
       "community": 43,
-      "community_name": "connectDB",
+      "community_name": "requests.ts",
       "norm_label": "createrequestschema"
     },
     {
@@ -15363,30 +15431,19 @@
       "_origin": "ast",
       "id": "server_src_routes_requests_index_respondschema",
       "community": 43,
-      "community_name": "connectDB",
+      "community_name": "requests.ts",
       "norm_label": "respondschema"
     },
     {
-      "label": "CustomerApprovalPanel.tsx",
+      "label": "router",
       "file_type": "code",
-      "source_file": "client/src/client/components/CustomerApprovalPanel.tsx",
-      "source_location": "L1",
+      "source_file": "server/src/routes/requests/index.ts",
+      "source_location": "L9",
       "_origin": "ast",
-      "id": "client_src_client_components_customerapprovalpanel",
-      "community": 44,
-      "community_name": "CustomerRequestsPanel.tsx",
-      "norm_label": "customerapprovalpanel.tsx"
-    },
-    {
-      "label": "CustomerJobsList.tsx",
-      "file_type": "code",
-      "source_file": "client/src/client/components/CustomerJobsList.tsx",
-      "source_location": "L1",
-      "_origin": "ast",
-      "id": "client_src_client_components_customerjobslist",
-      "community": 44,
-      "community_name": "CustomerRequestsPanel.tsx",
-      "norm_label": "customerjobslist.tsx"
+      "id": "server_src_routes_requests_index_router",
+      "community": 43,
+      "community_name": "requests.ts",
+      "norm_label": "router"
     },
     {
       "label": "CustomerRequestsPanel.tsx",
@@ -16292,6 +16349,28 @@
       "norm_label": "reviewschema"
     },
     {
+      "label": "Session.ts",
+      "file_type": "code",
+      "source_file": "server/src/models/Session.ts",
+      "source_location": "L1",
+      "_origin": "ast",
+      "id": "server_src_models_session",
+      "community": 5,
+      "community_name": "models/index.ts",
+      "norm_label": "session.ts"
+    },
+    {
+      "label": "sessionSchema",
+      "file_type": "code",
+      "source_file": "server/src/models/Session.ts",
+      "source_location": "L3",
+      "_origin": "ast",
+      "id": "server_src_models_session_sessionschema",
+      "community": 5,
+      "community_name": "models/index.ts",
+      "norm_label": "sessionschema"
+    },
+    {
       "label": "Upload.ts",
       "file_type": "code",
       "source_file": "server/src/models/Upload.ts",
@@ -16466,6 +16545,17 @@
       "community": 52,
       "community_name": "WorkerProfile.tsx",
       "norm_label": "customer/profile/page.tsx"
+    },
+    {
+      "label": "CloudinaryUpload.tsx",
+      "file_type": "code",
+      "source_file": "client/src/client/components/CloudinaryUpload.tsx",
+      "source_location": "L1",
+      "_origin": "ast",
+      "id": "client_src_client_components_cloudinaryupload",
+      "community": 52,
+      "community_name": "WorkerProfile.tsx",
+      "norm_label": "cloudinaryupload.tsx"
     },
     {
       "label": "LogoutButton.tsx",
@@ -17121,17 +17211,6 @@
       "norm_label": "session_ttl_days"
     },
     {
-      "label": "Session.ts",
-      "file_type": "code",
-      "source_file": "server/src/models/Session.ts",
-      "source_location": "L1",
-      "_origin": "ast",
-      "id": "server_src_models_session",
-      "community": 6,
-      "community_name": "signup.ts",
-      "norm_label": "session.ts"
-    },
-    {
       "label": "Session",
       "file_type": "code",
       "source_file": "server/src/models/Session.ts",
@@ -17141,17 +17220,6 @@
       "community": 6,
       "community_name": "signup.ts",
       "norm_label": "session"
-    },
-    {
-      "label": "sessionSchema",
-      "file_type": "code",
-      "source_file": "server/src/models/Session.ts",
-      "source_location": "L3",
-      "_origin": "ast",
-      "id": "server_src_models_session_sessionschema",
-      "community": 6,
-      "community_name": "signup.ts",
-      "norm_label": "sessionschema"
     },
     {
       "label": "auth/index.ts",
@@ -17196,28 +17264,6 @@
       "community": 6,
       "community_name": "signup.ts",
       "norm_label": "router"
-    },
-    {
-      "label": "profile.ts",
-      "file_type": "code",
-      "source_file": "server/src/routes/auth/profile.ts",
-      "source_location": "L1",
-      "_origin": "ast",
-      "id": "server_src_routes_auth_profile",
-      "community": 6,
-      "community_name": "signup.ts",
-      "norm_label": "profile.ts"
-    },
-    {
-      "label": "profileImageSchema",
-      "file_type": "code",
-      "source_file": "server/src/routes/auth/profile.ts",
-      "source_location": "L10",
-      "_origin": "ast",
-      "id": "server_src_routes_auth_profile_profileimageschema",
-      "community": 6,
-      "community_name": "signup.ts",
-      "norm_label": "profileimageschema"
     },
     {
       "label": "router",
@@ -17319,37 +17365,70 @@
       "norm_label": "signupschema"
     },
     {
-      "label": "LocationUpdater.tsx",
+      "label": "dashboard/layout.tsx",
       "file_type": "code",
-      "source_file": "client/src/client/components/worker/LocationUpdater.tsx",
+      "source_file": "client/src/app/dashboard/layout.tsx",
       "source_location": "L1",
       "_origin": "ast",
-      "id": "client_src_client_components_worker_locationupdater",
+      "id": "client_src_app_dashboard_layout",
       "community": 60,
-      "community_name": "WorkerHome.tsx",
-      "norm_label": "locationupdater.tsx"
+      "community_name": "useLang",
+      "norm_label": "dashboard/layout.tsx"
     },
     {
-      "label": "WorkerHome.tsx",
+      "label": "TRACKING_STATUSES",
       "file_type": "code",
-      "source_file": "client/src/client/components/worker/WorkerHome.tsx",
-      "source_location": "L1",
+      "source_file": "client/src/app/dashboard/layout.tsx",
+      "source_location": "L10",
       "_origin": "ast",
-      "id": "client_src_client_components_worker_workerhome",
+      "id": "client_src_app_dashboard_layout_tracking_statuses",
       "community": 60,
-      "community_name": "WorkerHome.tsx",
-      "norm_label": "workerhome.tsx"
+      "community_name": "useLang",
+      "norm_label": "tracking_statuses"
     },
     {
-      "label": "WorkerAvailability.tsx",
+      "label": "app/page.tsx",
       "file_type": "code",
-      "source_file": "client/src/client/components/WorkerAvailability.tsx",
+      "source_file": "client/src/app/page.tsx",
       "source_location": "L1",
       "_origin": "ast",
-      "id": "client_src_client_components_workeravailability",
+      "id": "client_src_app_page",
       "community": 60,
-      "community_name": "WorkerHome.tsx",
-      "norm_label": "workeravailability.tsx"
+      "community_name": "useLang",
+      "norm_label": "app/page.tsx"
+    },
+    {
+      "label": "BottomNav.tsx",
+      "file_type": "code",
+      "source_file": "client/src/client/components/BottomNav.tsx",
+      "source_location": "L1",
+      "_origin": "ast",
+      "id": "client_src_client_components_bottomnav",
+      "community": 60,
+      "community_name": "useLang",
+      "norm_label": "bottomnav.tsx"
+    },
+    {
+      "label": "DesktopNav.tsx",
+      "file_type": "code",
+      "source_file": "client/src/client/components/DesktopNav.tsx",
+      "source_location": "L1",
+      "_origin": "ast",
+      "id": "client_src_client_components_desktopnav",
+      "community": 60,
+      "community_name": "useLang",
+      "norm_label": "desktopnav.tsx"
+    },
+    {
+      "label": "LanguageToggle.tsx",
+      "file_type": "code",
+      "source_file": "client/src/client/components/LanguageToggle.tsx",
+      "source_location": "L1",
+      "_origin": "ast",
+      "id": "client_src_client_components_languagetoggle",
+      "community": 60,
+      "community_name": "useLang",
+      "norm_label": "languagetoggle.tsx"
     },
     {
       "label": "VoiceCapture.test.tsx",
@@ -17504,18 +17583,6 @@
       "community": 63,
       "community_name": "api.js",
       "norm_label": "offer_low_factor"
-    },
-    {
-      "label": "step-4-deliver.md",
-      "file_type": "document",
-      "node_kind": "page",
-      "source_file": ".agents/skills/brag/references/step-4-deliver.md",
-      "source_location": "L1",
-      "_origin": "ast",
-      "id": "agents_skills_brag_references_step_4_deliver",
-      "community": 64,
-      "community_name": "Step 4: Validate, render, and deliver",
-      "norm_label": "step-4-deliver.md"
     },
     {
       "label": "Bake the poster as frame 0",
@@ -18680,48 +18747,37 @@
       "norm_label": "inspection/page.tsx"
     },
     {
-      "label": "CloudinaryUpload.tsx",
+      "label": "ActiveJobPanel.tsx",
       "file_type": "code",
-      "source_file": "client/src/client/components/CloudinaryUpload.tsx",
+      "source_file": "client/src/client/components/worker/ActiveJobPanel.tsx",
       "source_location": "L1",
       "_origin": "ast",
-      "id": "client_src_client_components_cloudinaryupload",
-      "community": 74,
-      "community_name": "ProfileAvatar.tsx",
-      "norm_label": "cloudinaryupload.tsx"
+      "id": "client_src_client_components_worker_activejobpanel",
+      "community": 75,
+      "community_name": "WorkerDashboard.tsx",
+      "norm_label": "activejobpanel.tsx"
     },
     {
-      "label": "ProfileAvatar.tsx",
+      "label": "NEXT_ACTIONS",
       "file_type": "code",
-      "source_file": "client/src/client/components/ProfileAvatar.tsx",
-      "source_location": "L1",
+      "source_file": "client/src/client/components/worker/ActiveJobPanel.tsx",
+      "source_location": "L53",
       "_origin": "ast",
-      "id": "client_src_client_components_profileavatar",
-      "community": 74,
-      "community_name": "ProfileAvatar.tsx",
-      "norm_label": "profileavatar.tsx"
+      "id": "client_src_client_components_worker_activejobpanel_next_actions",
+      "community": 75,
+      "community_name": "WorkerDashboard.tsx",
+      "norm_label": "next_actions"
     },
     {
-      "label": "sizeClasses",
+      "label": "STATUS_LABELS",
       "file_type": "code",
-      "source_file": "client/src/client/components/ProfileAvatar.tsx",
-      "source_location": "L12",
+      "source_file": "client/src/client/components/worker/ActiveJobPanel.tsx",
+      "source_location": "L38",
       "_origin": "ast",
-      "id": "client_src_client_components_profileavatar_sizeclasses",
-      "community": 74,
-      "community_name": "ProfileAvatar.tsx",
-      "norm_label": "sizeclasses"
-    },
-    {
-      "label": "ReviewScreen.tsx",
-      "file_type": "code",
-      "source_file": "client/src/client/components/ReviewScreen.tsx",
-      "source_location": "L1",
-      "_origin": "ast",
-      "id": "client_src_client_components_reviewscreen",
-      "community": 74,
-      "community_name": "ProfileAvatar.tsx",
-      "norm_label": "reviewscreen.tsx"
+      "id": "client_src_client_components_worker_activejobpanel_status_labels",
+      "community": 75,
+      "community_name": "WorkerDashboard.tsx",
+      "norm_label": "status_labels"
     },
     {
       "label": "WorkerActiveJob.tsx",
@@ -19064,28 +19120,6 @@
       "norm_label": "server"
     },
     {
-      "label": "auth-middleware.ts",
-      "file_type": "code",
-      "source_file": "server/src/lib/auth-middleware.ts",
-      "source_location": "L1",
-      "_origin": "ast",
-      "id": "server_src_lib_auth_middleware",
-      "community": 8,
-      "community_name": "src/index.ts",
-      "norm_label": "auth-middleware.ts"
-    },
-    {
-      "label": "mongodb.ts",
-      "file_type": "code",
-      "source_file": "server/src/lib/mongodb.ts",
-      "source_location": "L1",
-      "_origin": "ast",
-      "id": "server_src_lib_mongodb",
-      "community": 8,
-      "community_name": "src/index.ts",
-      "norm_label": "mongodb.ts"
-    },
-    {
       "label": "health.ts",
       "file_type": "code",
       "source_file": "server/src/routes/health.ts",
@@ -19108,39 +19142,6 @@
       "norm_label": "router"
     },
     {
-      "label": "jobs/index.ts",
-      "file_type": "code",
-      "source_file": "server/src/routes/jobs/index.ts",
-      "source_location": "L1",
-      "_origin": "ast",
-      "id": "server_src_routes_jobs_index",
-      "community": 8,
-      "community_name": "src/index.ts",
-      "norm_label": "jobs/index.ts"
-    },
-    {
-      "label": "createSchema",
-      "file_type": "code",
-      "source_file": "server/src/routes/jobs/index.ts",
-      "source_location": "L62",
-      "_origin": "ast",
-      "id": "server_src_routes_jobs_index_createschema",
-      "community": 8,
-      "community_name": "src/index.ts",
-      "norm_label": "createschema"
-    },
-    {
-      "label": "querySchema",
-      "file_type": "code",
-      "source_file": "server/src/routes/jobs/index.ts",
-      "source_location": "L13",
-      "_origin": "ast",
-      "id": "server_src_routes_jobs_index_queryschema",
-      "community": 8,
-      "community_name": "src/index.ts",
-      "norm_label": "queryschema"
-    },
-    {
       "label": "router",
       "file_type": "code",
       "source_file": "server/src/routes/jobs/index.ts",
@@ -19152,34 +19153,12 @@
       "norm_label": "router"
     },
     {
-      "label": "photos/index.ts",
-      "file_type": "code",
-      "source_file": "server/src/routes/photos/index.ts",
-      "source_location": "L1",
-      "_origin": "ast",
-      "id": "server_src_routes_photos_index",
-      "community": 8,
-      "community_name": "src/index.ts",
-      "norm_label": "photos/index.ts"
-    },
-    {
       "label": "router",
       "file_type": "code",
       "source_file": "server/src/routes/photos/index.ts",
       "source_location": "L7",
       "_origin": "ast",
       "id": "server_src_routes_photos_index_router",
-      "community": 8,
-      "community_name": "src/index.ts",
-      "norm_label": "router"
-    },
-    {
-      "label": "router",
-      "file_type": "code",
-      "source_file": "server/src/routes/requests/index.ts",
-      "source_location": "L9",
-      "_origin": "ast",
-      "id": "server_src_routes_requests_index_router",
       "community": 8,
       "community_name": "src/index.ts",
       "norm_label": "router"
@@ -19224,6 +19203,17 @@
       "source_location": "L6",
       "_origin": "ast",
       "id": "server_src_routes_routes_index_router",
+      "community": 8,
+      "community_name": "src/index.ts",
+      "norm_label": "router"
+    },
+    {
+      "label": "router",
+      "file_type": "code",
+      "source_file": "server/src/routes/workers/index.ts",
+      "source_location": "L15",
+      "_origin": "ast",
+      "id": "server_src_routes_workers_index_router",
       "community": 8,
       "community_name": "src/index.ts",
       "norm_label": "router"
@@ -19469,37 +19459,15 @@
       "norm_label": "customerhomecontent.tsx"
     },
     {
-      "label": "dashboard/layout.tsx",
+      "label": "worker/page.tsx",
       "file_type": "code",
-      "source_file": "client/src/app/dashboard/layout.tsx",
+      "source_file": "client/src/app/dashboard/worker/page.tsx",
       "source_location": "L1",
       "_origin": "ast",
-      "id": "client_src_app_dashboard_layout",
+      "id": "client_src_app_dashboard_worker_page",
       "community": 84,
-      "community_name": "dashboard/layout.tsx",
-      "norm_label": "dashboard/layout.tsx"
-    },
-    {
-      "label": "TRACKING_STATUSES",
-      "file_type": "code",
-      "source_file": "client/src/app/dashboard/layout.tsx",
-      "source_location": "L10",
-      "_origin": "ast",
-      "id": "client_src_app_dashboard_layout_tracking_statuses",
-      "community": 84,
-      "community_name": "dashboard/layout.tsx",
-      "norm_label": "tracking_statuses"
-    },
-    {
-      "label": "BottomNav.tsx",
-      "file_type": "code",
-      "source_file": "client/src/client/components/BottomNav.tsx",
-      "source_location": "L1",
-      "_origin": "ast",
-      "id": "client_src_client_components_bottomnav",
-      "community": 84,
-      "community_name": "dashboard/layout.tsx",
-      "norm_label": "bottomnav.tsx"
+      "community_name": "WorkerHome.tsx",
+      "norm_label": "worker/page.tsx"
     },
     {
       "label": "LiquidGlassToast.tsx",
@@ -19509,7 +19477,7 @@
       "_origin": "ast",
       "id": "client_src_client_components_liquidglasstoast",
       "community": 84,
-      "community_name": "dashboard/layout.tsx",
+      "community_name": "WorkerHome.tsx",
       "norm_label": "liquidglasstoast.tsx"
     },
     {
@@ -19520,8 +19488,41 @@
       "_origin": "ast",
       "id": "client_src_client_components_liquidglasstoast_listeners",
       "community": 84,
-      "community_name": "dashboard/layout.tsx",
+      "community_name": "WorkerHome.tsx",
       "norm_label": "listeners"
+    },
+    {
+      "label": "LocationUpdater.tsx",
+      "file_type": "code",
+      "source_file": "client/src/client/components/worker/LocationUpdater.tsx",
+      "source_location": "L1",
+      "_origin": "ast",
+      "id": "client_src_client_components_worker_locationupdater",
+      "community": 84,
+      "community_name": "WorkerHome.tsx",
+      "norm_label": "locationupdater.tsx"
+    },
+    {
+      "label": "WorkerHome.tsx",
+      "file_type": "code",
+      "source_file": "client/src/client/components/worker/WorkerHome.tsx",
+      "source_location": "L1",
+      "_origin": "ast",
+      "id": "client_src_client_components_worker_workerhome",
+      "community": 84,
+      "community_name": "WorkerHome.tsx",
+      "norm_label": "workerhome.tsx"
+    },
+    {
+      "label": "WorkerAvailability.tsx",
+      "file_type": "code",
+      "source_file": "client/src/client/components/WorkerAvailability.tsx",
+      "source_location": "L1",
+      "_origin": "ast",
+      "id": "client_src_client_components_workeravailability",
+      "community": 84,
+      "community_name": "WorkerHome.tsx",
+      "norm_label": "workeravailability.tsx"
     },
     {
       "label": "stats/page.tsx",
@@ -19555,39 +19556,6 @@
       "community": 86,
       "community_name": "leaflet",
       "norm_label": "leaflet"
-    },
-    {
-      "label": "app/page.tsx",
-      "file_type": "code",
-      "source_file": "client/src/app/page.tsx",
-      "source_location": "L1",
-      "_origin": "ast",
-      "id": "client_src_app_page",
-      "community": 87,
-      "community_name": "useLang",
-      "norm_label": "app/page.tsx"
-    },
-    {
-      "label": "DesktopNav.tsx",
-      "file_type": "code",
-      "source_file": "client/src/client/components/DesktopNav.tsx",
-      "source_location": "L1",
-      "_origin": "ast",
-      "id": "client_src_client_components_desktopnav",
-      "community": 87,
-      "community_name": "useLang",
-      "norm_label": "desktopnav.tsx"
-    },
-    {
-      "label": "LanguageToggle.tsx",
-      "file_type": "code",
-      "source_file": "client/src/client/components/LanguageToggle.tsx",
-      "source_location": "L1",
-      "_origin": "ast",
-      "id": "client_src_client_components_languagetoggle",
-      "community": 87,
-      "community_name": "useLang",
-      "norm_label": "languagetoggle.tsx"
     },
     {
       "label": "voice-capture-hardening.tdd.md",
@@ -19681,8 +19649,74 @@
       "_origin": "ast",
       "id": "server_src_lib_job_detail",
       "community": 89,
-      "community_name": "detail.ts",
+      "community_name": "mongodb.ts",
       "norm_label": "detail.ts"
+    },
+    {
+      "label": "mongodb.ts",
+      "file_type": "code",
+      "source_file": "server/src/lib/mongodb.ts",
+      "source_location": "L1",
+      "_origin": "ast",
+      "id": "server_src_lib_mongodb",
+      "community": 89,
+      "community_name": "mongodb.ts",
+      "norm_label": "mongodb.ts"
+    },
+    {
+      "label": "MONGODB_URI",
+      "file_type": "code",
+      "source_file": "server/src/lib/mongodb.ts",
+      "source_location": "L11",
+      "_origin": "ast",
+      "id": "server_src_lib_mongodb_mongodb_uri",
+      "community": 89,
+      "community_name": "mongodb.ts",
+      "norm_label": "mongodb_uri"
+    },
+    {
+      "label": "Worker",
+      "file_type": "code",
+      "source_file": "server/src/models/Worker.ts",
+      "source_location": "L94",
+      "_origin": "ast",
+      "id": "server_src_models_worker_worker",
+      "community": 89,
+      "community_name": "mongodb.ts",
+      "norm_label": "worker"
+    },
+    {
+      "label": "jobs/index.ts",
+      "file_type": "code",
+      "source_file": "server/src/routes/jobs/index.ts",
+      "source_location": "L1",
+      "_origin": "ast",
+      "id": "server_src_routes_jobs_index",
+      "community": 89,
+      "community_name": "mongodb.ts",
+      "norm_label": "jobs/index.ts"
+    },
+    {
+      "label": "createSchema",
+      "file_type": "code",
+      "source_file": "server/src/routes/jobs/index.ts",
+      "source_location": "L62",
+      "_origin": "ast",
+      "id": "server_src_routes_jobs_index_createschema",
+      "community": 89,
+      "community_name": "mongodb.ts",
+      "norm_label": "createschema"
+    },
+    {
+      "label": "querySchema",
+      "file_type": "code",
+      "source_file": "server/src/routes/jobs/index.ts",
+      "source_location": "L13",
+      "_origin": "ast",
+      "id": "server_src_routes_jobs_index_queryschema",
+      "community": 89,
+      "community_name": "mongodb.ts",
+      "norm_label": "queryschema"
     },
     {
       "label": "client/tsconfig.json",
@@ -20226,6 +20260,18 @@
       "community": 93,
       "community_name": "SFX Analysis Summary",
       "norm_label": "signal guide"
+    },
+    {
+      "label": "step-1-inspect.md",
+      "file_type": "document",
+      "node_kind": "page",
+      "source_file": ".agents/skills/brag/references/step-1-inspect.md",
+      "source_location": "L1",
+      "_origin": "ast",
+      "id": "agents_skills_brag_references_step_1_inspect",
+      "community": 94,
+      "community_name": "Step 1: Inspect the project",
+      "norm_label": "step-1-inspect.md"
     },
     {
       "label": "Color extraction",
@@ -23128,7 +23174,7 @@
       "context": "call",
       "confidence": "EXTRACTED",
       "source_file": "server/src/lib/job/ai.ts",
-      "source_location": "L533",
+      "source_location": "L566",
       "weight": 1.0,
       "_origin": "ast",
       "source": "server_src_lib_job_ai_fallbackresult",
@@ -23140,58 +23186,10 @@
       "context": "call",
       "confidence": "EXTRACTED",
       "source_file": "server/src/lib/job/ai.ts",
-      "source_location": "L254",
+      "source_location": "L211",
       "weight": 1.0,
       "_origin": "ast",
-      "source": "server_src_lib_job_ai_geminiunderstand",
-      "target": "server_src_lib_job_ai_geminiendpoint",
-      "confidence_score": 1.0
-    },
-    {
-      "relation": "calls",
-      "context": "call",
-      "confidence": "EXTRACTED",
-      "source_file": "server/src/lib/job/ai.ts",
-      "source_location": "L278",
-      "weight": 1.0,
-      "_origin": "ast",
-      "source": "server_src_lib_job_ai_geminiunderstand",
-      "target": "server_src_lib_job_ai_sleep",
-      "confidence_score": 1.0
-    },
-    {
-      "relation": "calls",
-      "context": "call",
-      "confidence": "EXTRACTED",
-      "source_file": "server/src/lib/job/ai.ts",
-      "source_location": "L301",
-      "weight": 1.0,
-      "_origin": "ast",
-      "source": "server_src_lib_job_ai_geminiunderstand",
-      "target": "server_src_lib_job_ai_normalizegeminijob",
-      "confidence_score": 1.0
-    },
-    {
-      "relation": "calls",
-      "context": "call",
-      "confidence": "EXTRACTED",
-      "source_file": "server/src/lib/job/ai.ts",
-      "source_location": "L303",
-      "weight": 1.0,
-      "_origin": "ast",
-      "source": "server_src_lib_job_ai_geminiunderstand",
-      "target": "server_src_lib_job_ai_isretryable",
-      "confidence_score": 1.0
-    },
-    {
-      "relation": "calls",
-      "context": "call",
-      "confidence": "EXTRACTED",
-      "source_file": "server/src/lib/job/ai.ts",
-      "source_location": "L197",
-      "weight": 1.0,
-      "_origin": "ast",
-      "source": "server_src_lib_job_ai_normalizegeminijob",
+      "source": "server_src_lib_job_ai_normalizeaijob",
       "target": "server_src_lib_job_ai_coercedisplayarray",
       "confidence_score": 1.0
     },
@@ -23200,10 +23198,10 @@
       "context": "call",
       "confidence": "EXTRACTED",
       "source_file": "server/src/lib/job/ai.ts",
-      "source_location": "L203",
+      "source_location": "L217",
       "weight": 1.0,
       "_origin": "ast",
-      "source": "server_src_lib_job_ai_normalizegeminijob",
+      "source": "server_src_lib_job_ai_normalizeaijob",
       "target": "server_src_lib_job_ai_coercetoarray",
       "confidence_score": 1.0
     },
@@ -23212,10 +23210,10 @@
       "context": "call",
       "confidence": "EXTRACTED",
       "source_file": "server/src/lib/job/ai.ts",
-      "source_location": "L206",
+      "source_location": "L220",
       "weight": 1.0,
       "_origin": "ast",
-      "source": "server_src_lib_job_ai_normalizegeminijob",
+      "source": "server_src_lib_job_ai_normalizeaijob",
       "target": "server_src_lib_job_ai_coercenumber",
       "confidence_score": 1.0
     },
@@ -23225,10 +23223,10 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "server/src/lib/job/ai.ts",
-      "source_location": "L210",
+      "source_location": "L224",
       "weight": 1.0,
       "_origin": "ast",
-      "source": "server_src_lib_job_ai_normalizegeminijob",
+      "source": "server_src_lib_job_ai_normalizeaijob",
       "target": "server_src_lib_job_analyze_inspectionfeefor"
     },
     {
@@ -23236,7 +23234,67 @@
       "context": "call",
       "confidence": "EXTRACTED",
       "source_file": "server/src/lib/job/ai.ts",
-      "source_location": "L435",
+      "source_location": "L283",
+      "weight": 1.0,
+      "_origin": "ast",
+      "source": "server_src_lib_job_ai_opencodeunderstand",
+      "target": "server_src_lib_job_ai_opencodeendpoint",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "server/src/lib/job/ai.ts",
+      "source_location": "L311",
+      "weight": 1.0,
+      "_origin": "ast",
+      "source": "server_src_lib_job_ai_opencodeunderstand",
+      "target": "server_src_lib_job_ai_sleep",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "server/src/lib/job/ai.ts",
+      "source_location": "L330",
+      "weight": 1.0,
+      "_origin": "ast",
+      "source": "server_src_lib_job_ai_opencodeunderstand",
+      "target": "server_src_lib_job_ai_parsemodeljson",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "server/src/lib/job/ai.ts",
+      "source_location": "L334",
+      "weight": 1.0,
+      "_origin": "ast",
+      "source": "server_src_lib_job_ai_opencodeunderstand",
+      "target": "server_src_lib_job_ai_normalizeaijob",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "server/src/lib/job/ai.ts",
+      "source_location": "L336",
+      "weight": 1.0,
+      "_origin": "ast",
+      "source": "server_src_lib_job_ai_opencodeunderstand",
+      "target": "server_src_lib_job_ai_isretryable",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "server/src/lib/job/ai.ts",
+      "source_location": "L468",
       "weight": 1.0,
       "_origin": "ast",
       "source": "server_src_lib_job_ai_transcribeaudio",
@@ -23248,7 +23306,7 @@
       "context": "call",
       "confidence": "EXTRACTED",
       "source_file": "server/src/lib/job/ai.ts",
-      "source_location": "L390",
+      "source_location": "L423",
       "weight": 1.0,
       "_origin": "ast",
       "source": "server_src_lib_job_ai_transcriptionfromaudio",
@@ -23260,7 +23318,7 @@
       "context": "call",
       "confidence": "EXTRACTED",
       "source_file": "server/src/lib/job/ai.ts",
-      "source_location": "L474",
+      "source_location": "L507",
       "weight": 1.0,
       "_origin": "ast",
       "source": "server_src_lib_job_ai_understandjobinput",
@@ -23272,11 +23330,11 @@
       "context": "call",
       "confidence": "EXTRACTED",
       "source_file": "server/src/lib/job/ai.ts",
-      "source_location": "L479",
+      "source_location": "L512",
       "weight": 1.0,
       "_origin": "ast",
       "source": "server_src_lib_job_ai_understandjobinput",
-      "target": "server_src_lib_job_ai_geminiunderstand",
+      "target": "server_src_lib_job_ai_opencodeunderstand",
       "confidence_score": 1.0
     },
     {
@@ -23285,7 +23343,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "server/src/lib/job/ai.ts",
-      "source_location": "L506",
+      "source_location": "L539",
       "weight": 1.0,
       "_origin": "ast",
       "source": "server_src_lib_job_ai_understandjobinput",
@@ -23296,7 +23354,7 @@
       "context": "call",
       "confidence": "EXTRACTED",
       "source_file": "server/src/lib/job/ai.ts",
-      "source_location": "L513",
+      "source_location": "L546",
       "weight": 1.0,
       "_origin": "ast",
       "source": "server_src_lib_job_ai_understandjobinput",
@@ -26524,7 +26582,7 @@
       "context": "field",
       "confidence": "EXTRACTED",
       "source_file": "server/src/lib/job/ai.ts",
-      "source_location": "L48",
+      "source_location": "L58",
       "weight": 1.0,
       "_origin": "ast",
       "source": "server_src_lib_job_ai_aiunderstandresult",
@@ -47942,7 +48000,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "server/contracts/contracts/worker.ts",
-      "source_location": "L111",
+      "source_location": "L113",
       "weight": 1.0,
       "_origin": "ast",
       "source": "server_contracts_contracts_worker",
@@ -47953,7 +48011,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "server/contracts/contracts/worker.ts",
-      "source_location": "L127",
+      "source_location": "L129",
       "weight": 1.0,
       "_origin": "ast",
       "source": "server_contracts_contracts_worker",
@@ -47975,7 +48033,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "server/contracts/contracts/worker.ts",
-      "source_location": "L164",
+      "source_location": "L166",
       "weight": 1.0,
       "_origin": "ast",
       "source": "server_contracts_contracts_worker",
@@ -47997,7 +48055,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "server/contracts/contracts/worker.ts",
-      "source_location": "L173",
+      "source_location": "L175",
       "weight": 1.0,
       "_origin": "ast",
       "source": "server_contracts_contracts_worker",
@@ -48008,7 +48066,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "server/contracts/contracts/worker.ts",
-      "source_location": "L188",
+      "source_location": "L190",
       "weight": 1.0,
       "_origin": "ast",
       "source": "server_contracts_contracts_worker",
@@ -48019,7 +48077,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "server/contracts/contracts/worker.ts",
-      "source_location": "L197",
+      "source_location": "L199",
       "weight": 1.0,
       "_origin": "ast",
       "source": "server_contracts_contracts_worker",
@@ -48063,7 +48121,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "server/contracts/contracts/worker.ts",
-      "source_location": "L48",
+      "source_location": "L49",
       "weight": 1.0,
       "_origin": "ast",
       "source": "server_contracts_contracts_worker",
@@ -48074,7 +48132,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "server/contracts/contracts/worker.ts",
-      "source_location": "L67",
+      "source_location": "L68",
       "weight": 1.0,
       "_origin": "ast",
       "source": "server_contracts_contracts_worker",
@@ -48096,7 +48154,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "server/contracts/contracts/worker.ts",
-      "source_location": "L90",
+      "source_location": "L92",
       "weight": 1.0,
       "_origin": "ast",
       "source": "server_contracts_contracts_worker",
@@ -49449,29 +49507,40 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "server/src/lib/job/ai.ts",
-      "source_location": "L12",
+      "source_location": "L14",
       "weight": 1.0,
       "_origin": "ast",
       "source": "server_src_lib_job_ai",
-      "target": "server_src_lib_job_ai_worker_categories",
+      "target": "server_src_lib_job_ai_opencode_base_url",
       "confidence_score": 1.0
     },
     {
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "server/src/lib/job/ai.ts",
-      "source_location": "L160",
+      "source_location": "L17",
       "weight": 1.0,
       "_origin": "ast",
       "source": "server_src_lib_job_ai",
-      "target": "server_src_lib_job_ai_geminiendpoint",
+      "target": "server_src_lib_job_ai_opencode_model",
       "confidence_score": 1.0
     },
     {
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "server/src/lib/job/ai.ts",
-      "source_location": "L164",
+      "source_location": "L171",
+      "weight": 1.0,
+      "_origin": "ast",
+      "source": "server_src_lib_job_ai",
+      "target": "server_src_lib_job_ai_opencodeendpoint",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "server/src/lib/job/ai.ts",
+      "source_location": "L178",
       "weight": 1.0,
       "_origin": "ast",
       "source": "server_src_lib_job_ai",
@@ -49482,7 +49551,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "server/src/lib/job/ai.ts",
-      "source_location": "L172",
+      "source_location": "L186",
       "weight": 1.0,
       "_origin": "ast",
       "source": "server_src_lib_job_ai",
@@ -49493,18 +49562,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "server/src/lib/job/ai.ts",
-      "source_location": "L18",
-      "weight": 1.0,
-      "_origin": "ast",
-      "source": "server_src_lib_job_ai",
-      "target": "server_src_lib_job_ai_urgency_levels",
-      "confidence_score": 1.0
-    },
-    {
-      "relation": "contains",
-      "confidence": "EXTRACTED",
-      "source_file": "server/src/lib/job/ai.ts",
-      "source_location": "L180",
+      "source_location": "L194",
       "weight": 1.0,
       "_origin": "ast",
       "source": "server_src_lib_job_ai",
@@ -49515,18 +49573,29 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "server/src/lib/job/ai.ts",
-      "source_location": "L185",
+      "source_location": "L199",
       "weight": 1.0,
       "_origin": "ast",
       "source": "server_src_lib_job_ai",
-      "target": "server_src_lib_job_ai_normalizegeminijob",
+      "target": "server_src_lib_job_ai_normalizeaijob",
       "confidence_score": 1.0
     },
     {
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "server/src/lib/job/ai.ts",
-      "source_location": "L222",
+      "source_location": "L20",
+      "weight": 1.0,
+      "_origin": "ast",
+      "source": "server_src_lib_job_ai",
+      "target": "server_src_lib_job_ai_worker_categories",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "server/src/lib/job/ai.ts",
+      "source_location": "L236",
       "weight": 1.0,
       "_origin": "ast",
       "source": "server_src_lib_job_ai",
@@ -49537,7 +49606,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "server/src/lib/job/ai.ts",
-      "source_location": "L234",
+      "source_location": "L248",
       "weight": 1.0,
       "_origin": "ast",
       "source": "server_src_lib_job_ai",
@@ -49548,40 +49617,40 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "server/src/lib/job/ai.ts",
-      "source_location": "L238",
+      "source_location": "L253",
       "weight": 1.0,
       "_origin": "ast",
       "source": "server_src_lib_job_ai",
-      "target": "server_src_lib_job_ai_geminiunderstand",
+      "target": "server_src_lib_job_ai_parsemodeljson",
       "confidence_score": 1.0
     },
     {
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "server/src/lib/job/ai.ts",
-      "source_location": "L30",
+      "source_location": "L26",
       "weight": 1.0,
       "_origin": "ast",
       "source": "server_src_lib_job_ai",
-      "target": "server_src_lib_job_ai_assemblyai_language_code",
+      "target": "server_src_lib_job_ai_urgency_levels",
       "confidence_score": 1.0
     },
     {
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "server/src/lib/job/ai.ts",
-      "source_location": "L32",
+      "source_location": "L261",
       "weight": 1.0,
       "_origin": "ast",
       "source": "server_src_lib_job_ai",
-      "target": "server_src_lib_job_ai_valid_assemblyai_language_codes",
+      "target": "server_src_lib_job_ai_opencodeunderstand",
       "confidence_score": 1.0
     },
     {
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "server/src/lib/job/ai.ts",
-      "source_location": "L320",
+      "source_location": "L353",
       "weight": 1.0,
       "_origin": "ast",
       "source": "server_src_lib_job_ai",
@@ -49592,7 +49661,29 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "server/src/lib/job/ai.ts",
-      "source_location": "L34",
+      "source_location": "L40",
+      "weight": 1.0,
+      "_origin": "ast",
+      "source": "server_src_lib_job_ai",
+      "target": "server_src_lib_job_ai_assemblyai_language_code",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "server/src/lib/job/ai.ts",
+      "source_location": "L42",
+      "weight": 1.0,
+      "_origin": "ast",
+      "source": "server_src_lib_job_ai",
+      "target": "server_src_lib_job_ai_valid_assemblyai_language_codes",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "server/src/lib/job/ai.ts",
+      "source_location": "L44",
       "weight": 1.0,
       "_origin": "ast",
       "source": "server_src_lib_job_ai",
@@ -49603,18 +49694,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "server/src/lib/job/ai.ts",
-      "source_location": "L39",
-      "weight": 1.0,
-      "_origin": "ast",
-      "source": "server_src_lib_job_ai",
-      "target": "server_src_lib_job_ai_aiunderstandoptions",
-      "confidence_score": 1.0
-    },
-    {
-      "relation": "contains",
-      "confidence": "EXTRACTED",
-      "source_file": "server/src/lib/job/ai.ts",
-      "source_location": "L423",
+      "source_location": "L456",
       "weight": 1.0,
       "_origin": "ast",
       "source": "server_src_lib_job_ai",
@@ -49625,7 +49705,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "server/src/lib/job/ai.ts",
-      "source_location": "L446",
+      "source_location": "L479",
       "weight": 1.0,
       "_origin": "ast",
       "source": "server_src_lib_job_ai",
@@ -49636,18 +49716,18 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "server/src/lib/job/ai.ts",
-      "source_location": "L46",
+      "source_location": "L49",
       "weight": 1.0,
       "_origin": "ast",
       "source": "server_src_lib_job_ai",
-      "target": "server_src_lib_job_ai_aiunderstandresult",
+      "target": "server_src_lib_job_ai_aiunderstandoptions",
       "confidence_score": 1.0
     },
     {
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "server/src/lib/job/ai.ts",
-      "source_location": "L460",
+      "source_location": "L493",
       "weight": 1.0,
       "_origin": "ast",
       "source": "server_src_lib_job_ai",
@@ -49658,7 +49738,18 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "server/src/lib/job/ai.ts",
-      "source_location": "L532",
+      "source_location": "L56",
+      "weight": 1.0,
+      "_origin": "ast",
+      "source": "server_src_lib_job_ai",
+      "target": "server_src_lib_job_ai_aiunderstandresult",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "server/src/lib/job/ai.ts",
+      "source_location": "L565",
       "weight": 1.0,
       "_origin": "ast",
       "source": "server_src_lib_job_ai",
@@ -49669,29 +49760,29 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "server/src/lib/job/ai.ts",
-      "source_location": "L56",
+      "source_location": "L66",
       "weight": 1.0,
       "_origin": "ast",
       "source": "server_src_lib_job_ai",
-      "target": "server_src_lib_job_ai_normalizedgeminijob",
+      "target": "server_src_lib_job_ai_normalizedaijob",
       "confidence_score": 1.0
     },
     {
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "server/src/lib/job/ai.ts",
-      "source_location": "L61",
+      "source_location": "L71",
       "weight": 1.0,
       "_origin": "ast",
       "source": "server_src_lib_job_ai",
-      "target": "server_src_lib_job_ai_geminirawjob",
+      "target": "server_src_lib_job_ai_rawaijob",
       "confidence_score": 1.0
     },
     {
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "server/src/lib/job/ai.ts",
-      "source_location": "L77",
+      "source_location": "L87",
       "weight": 1.0,
       "_origin": "ast",
       "source": "server_src_lib_job_ai",
@@ -49702,22 +49793,11 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "server/src/lib/job/ai.ts",
-      "source_location": "L84",
+      "source_location": "L94",
       "weight": 1.0,
       "_origin": "ast",
       "source": "server_src_lib_job_ai",
       "target": "server_src_lib_job_ai_system_prompt",
-      "confidence_score": 1.0
-    },
-    {
-      "relation": "contains",
-      "confidence": "EXTRACTED",
-      "source_file": "server/src/lib/job/ai.ts",
-      "source_location": "L9",
-      "weight": 1.0,
-      "_origin": "ast",
-      "source": "server_src_lib_job_ai",
-      "target": "server_src_lib_job_ai_gemini_model",
       "confidence_score": 1.0
     },
     {
@@ -51220,7 +51300,40 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "server/src/lib/mongodb.ts",
-      "source_location": "L28",
+      "source_location": "L11",
+      "weight": 1.0,
+      "_origin": "ast",
+      "source": "server_src_lib_mongodb",
+      "target": "server_src_lib_mongodb_mongodb_uri",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "server/src/lib/mongodb.ts",
+      "source_location": "L13",
+      "weight": 1.0,
+      "_origin": "ast",
+      "source": "server_src_lib_mongodb",
+      "target": "server_src_lib_mongodb_mongoosecache",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "server/src/lib/mongodb.ts",
+      "source_location": "L3",
+      "weight": 1.0,
+      "_origin": "ast",
+      "source": "server_src_lib_mongodb",
+      "target": "server_src_lib_mongodb_requireenv",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "server/src/lib/mongodb.ts",
+      "source_location": "L32",
       "weight": 1.0,
       "_origin": "ast",
       "source": "server_src_lib_mongodb",
@@ -51231,7 +51344,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "server/src/lib/mongodb.ts",
-      "source_location": "L42",
+      "source_location": "L46",
       "weight": 1.0,
       "_origin": "ast",
       "source": "server_src_lib_mongodb",
@@ -51242,22 +51355,11 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "server/src/lib/mongodb.ts",
-      "source_location": "L46",
+      "source_location": "L50",
       "weight": 1.0,
       "_origin": "ast",
       "source": "server_src_lib_mongodb",
       "target": "server_src_lib_mongodb_disconnectdb",
-      "confidence_score": 1.0
-    },
-    {
-      "relation": "contains",
-      "confidence": "EXTRACTED",
-      "source_file": "server/src/lib/mongodb.ts",
-      "source_location": "L9",
-      "weight": 1.0,
-      "_origin": "ast",
-      "source": "server_src_lib_mongodb",
-      "target": "server_src_lib_mongodb_mongoosecache",
       "confidence_score": 1.0
     },
     {
@@ -54497,5 +54599,5 @@
       "source_file": ".opencode/skills/graphify/SKILL.md"
     }
   ],
-  "built_at_commit": "6138f34d24ffc5db23b24102c8956ae9909c5b79"
+  "built_at_commit": "21aa8a3fd36883cb1dcb29453f0d1b75e0eebf03"
 }

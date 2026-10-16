@@ -24,7 +24,7 @@ function buildData(overrides: Partial<MatchResultsData> = {}): MatchResultsData 
       inspection_fee: 350,
       ...((overrides.understanding as any) ?? {}),
     },
-    source: "gemini" as const,
+    source: "opencode" as const,
     workers: {
       best: {
         id: "w1",

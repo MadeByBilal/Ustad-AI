@@ -12,7 +12,7 @@ Built for the Alibaba AI Hackathon 2026.
 Customer speaks                    AI understands                     Worker responds
 ─────────────────                  ─────────────────                  ─────────────────
 
-  "Mera pipe leak                   Gemini reads your words,           Nearby workers get
+  "Mera pipe leak                   Our AI reads your words,           Nearby workers get
    kar raha hai"                    classifies the job,                alerted. They accept
        │                            estimates price in PKR              or counter the offer.
        ▼                                  │                                  │
@@ -67,8 +67,8 @@ Customer speaks                    AI understands                     Worker res
 ## The AI Pipeline
 
 ```
-  YOUR VOICE              ASSEMBLYAI                 GEMINI
-  ──────────              ──────────                 ──────
+  YOUR VOICE              ASSEMBLYAI                 OPENCODE
+  ──────────              ──────────                 ────────
 
   "Mera pipe    ───────▶  Transcribes to   ───────▶  Extracts:
    leak kar                text in Urdu                  Category
@@ -91,7 +91,7 @@ Customer speaks                    AI understands                     Worker res
 Hold the mic, speak naturally. No typing needed.
 
 ### AI Understanding
-Gemini classifies the job, estimates urgency and price. If unsure, asks a clarifying question in Roman Urdu.
+OpenCode AI classifies the job, estimates urgency and price. If unsure, asks a clarifying question in Roman Urdu.
 
 ### Smart Matching
 Workers scored by: skill match (30%), distance (25%), reliability (20%), reputation (15%), response rate (10%).
@@ -121,7 +121,7 @@ ustad/
 │       ├── models/         User, Worker, Job, Offer, Review
 │       ├── routes/         auth, jobs, workers, ai, photos
 │       └── lib/
-│           ├── job/        ai.ts (Gemini + AssemblyAI), state-machine.ts
+│           ├── job/        ai.ts (OpenCode AI + AssemblyAI), state-machine.ts
 │           ├── matching.ts Weighted scoring + geo queries
 │           └── socket.ts   Real-time events
 │
@@ -148,7 +148,7 @@ ustad/
 | Real-time | Socket.IO | Live location streaming |
 | Backend | Express 4 + TypeScript | Fast to build |
 | Database | MongoDB + Mongoose | Geo queries, flexible schema |
-| AI | Google Gemini + AssemblyAI | Job understanding + voice |
+| AI | OpenCode AI + AssemblyAI | Job understanding + voice |
 | Uploads | Cloudinary | Profile images |
 | Routes | OSRM public API | Free route computation |
 | Deploy | Vercel + Render | Free tier |
@@ -172,7 +172,8 @@ Server: `http://localhost:5000` | Client: `http://localhost:3001`
 
 ```env
 MONGODB_URI=mongodb+srv://...
-GEMINI_API_KEY=...
+OPENCODE_API_KEY=...
+OPENCODE_BASE_URL=https://opencode.ai/inference/openai/v1/chat/completions
 ASSEMBLYAI_API_KEY=...
 CLOUDINARY_CLOUD_NAME=dbbrfcgpv
 CLOUDINARY_API_KEY=918617413785261

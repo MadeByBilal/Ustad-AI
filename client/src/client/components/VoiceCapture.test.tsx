@@ -172,7 +172,7 @@ describe("VoiceCapture", () => {
     render(<VoiceCapture />);
 
     fetchMock.mockResolvedValueOnce(
-      okResponse({ understanding: UNDERSTANDING, workers: WORKERS, source: "gemini" })
+      okResponse({ understanding: UNDERSTANDING, workers: WORKERS, source: "opencode" })
     );
 
     await tapToRecord(user);
@@ -201,7 +201,7 @@ describe("VoiceCapture", () => {
     const user = userEvent.setup();
     render(<VoiceCapture variant="dashboard" />);
     fetchMock.mockResolvedValueOnce(
-      okResponse({ understanding: UNDERSTANDING, workers: WORKERS, source: "gemini" })
+      okResponse({ understanding: UNDERSTANDING, workers: WORKERS, source: "opencode" })
     );
 
     await tapToRecord(user);
@@ -228,7 +228,7 @@ describe("VoiceCapture", () => {
 
     await user.type(screen.getByPlaceholderText(/bijli/m), "bijli ka masla hai");
     fetchMock.mockResolvedValueOnce(
-      okResponse({ understanding: UNDERSTANDING, workers: WORKERS, source: "gemini" })
+      okResponse({ understanding: UNDERSTANDING, workers: WORKERS, source: "opencode" })
     );
     await user.click(screen.getByRole("button", { name: "Continue" }));
 
@@ -283,7 +283,7 @@ describe("VoiceCapture", () => {
     const user = userEvent.setup();
     render(<VoiceCapture />);
     fetchMock.mockResolvedValueOnce(
-      okResponse({ understanding: UNDERSTANDING, workers: WORKERS, source: "gemini" })
+      okResponse({ understanding: UNDERSTANDING, workers: WORKERS, source: "opencode" })
     );
 
     await tapToRecord(user);
@@ -416,7 +416,7 @@ describe("VoiceCapture", () => {
     const user = userEvent.setup();
     render(<VoiceCapture />);
     fetchMock.mockResolvedValueOnce(
-      okResponse({ understanding: UNDERSTANDING, workers: WORKERS, source: "gemini" })
+      okResponse({ understanding: UNDERSTANDING, workers: WORKERS, source: "opencode" })
     );
 
     await tapToRecord(user);

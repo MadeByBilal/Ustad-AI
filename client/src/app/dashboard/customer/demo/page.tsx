@@ -4,7 +4,7 @@ import MatchResults from "@/client/components/MatchResults";
 import type { MatchResultsData } from "@/client/components/MatchResults";
 
 const mockData: MatchResultsData = {
-  source: "gemini",
+  source: "opencode",
   understanding: {
     category: "electrician",
     subcategory: "wiring",
