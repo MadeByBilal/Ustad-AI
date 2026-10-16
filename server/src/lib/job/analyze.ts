@@ -76,10 +76,10 @@ const LOW_COMPLEXITY_KEYWORDS = [
 
 export function complexityFor(text: string): ComplexityLevel {
   const normalized = text.toLowerCase();
-  if (HIGH_COMPLEXITY_KEYWORDS.some((keyword) => normalized.includes(keyword))) {
+  if (HIGH_COMPLEXITY_KEYWORDS.some((keyword) => hasKeyword(normalized, keyword))) {
     return "high";
   }
-  if (LOW_COMPLEXITY_KEYWORDS.some((keyword) => normalized.includes(keyword))) {
+  if (LOW_COMPLEXITY_KEYWORDS.some((keyword) => hasKeyword(normalized, keyword))) {
     return "low";
   }
   return "medium";
@@ -96,9 +96,12 @@ const KEYWORD_RULES: KeywordRule[] = [
   {
     category: "electrician",
     keywords: [
-      "short circuit", "wiring", "fuse", "switchboard", "switch", "socket",
-      "inverter", "generator", "lighting", "bijli", "luce", "shock", "current",
-      "main switch", "db", "meter", "power outage",
+      "short circuit", "circuit", "wiring", "wire", "fuse", "switchboard",
+      "switch", "socket", "plug", "inverter", "ups", "generator", "lighting",
+      "light", "bulb", "tube light", "pankha", "fan", "regulator", "bijli",
+      "electric", "electricity", "shock", "current", "meter", "board",
+      "breaker", "spark", "chingari", "power outage", "light band",
+      "بجلی", "لائٹ", "پنکھا", "سوئچ", "تار", "میٹر", "چنگاری",
     ],
     subcategory: "electrical_fault",
     skills: ["fault finding", "wiring", "switchboard installation", "inverter installation", "lighting"],
@@ -106,9 +109,11 @@ const KEYWORD_RULES: KeywordRule[] = [
   {
     category: "plumber",
     keywords: [
-      "leak", "tap", "faucet", "pani", "paani", "water tank", "pipe",
-      "bathroom", "toilet", "geyser", "drain", "naali", "motor",
-      "nal", "nala", "towel radiator",
+      "leak", "leakage", "seepage", "tap", "faucet", "nalka", "nal", "nala",
+      "naali", "pani", "paani", "tank", "tanki", "pipe", "bathroom", "toilet",
+      "commode", "flush", "basin", "shower", "sink", "geyser", "gizer",
+      "geaser", "drain", "motor", "pump", "tapak", "boiler",
+      "پانی", "نل", "پائپ", "گیزر", "ٹنکی", "ٹونٹی", "بہہ",
     ],
     subcategory: "plumbing_fault",
     skills: ["pipe fitting", "faucet repair", "drain cleaning", "geyser installation", "water tank installation"],
@@ -116,8 +121,10 @@ const KEYWORD_RULES: KeywordRule[] = [
   {
     category: "ac_technician",
     keywords: [
-      "air conditioner", "window ac", "split ac", "compressor",
-      "gas refill", "refrigerant", "cooler", "ac", "hawa",
+      "air conditioner", "air conditioning", "ac", "compressor",
+      "gas refill", "gas refilling", "refrigerant", "cooler", "cooling",
+      "chiller", "hawa",
+      "اے سی", "کولر",
     ],
     subcategory: "ac_fault",
     skills: ["ac repair", "gas refilling", "compressor service", "ac installation", "deep cleaning"],
@@ -125,9 +132,11 @@ const KEYWORD_RULES: KeywordRule[] = [
   {
     category: "carpenter",
     keywords: [
-      "darwaza", "door", "lakri", "lakdi", "wood", "furniture",
-      "almari", "cabinet", "wardrobe", "sofa", "kitchen",
-      "table", "chair", "shelf",
+      "darwaza", "door", "khidki", "window", "lakri", "lakdi", "wood",
+      "furniture", "almari", "cabinet", "wardrobe", "sofa", "kitchen",
+      "table", "chair", "shelf", "bed", "takht", "tala", "taala", "lock",
+      "hinge", "drawer", "channel", "plywood", "partition",
+      "دروازہ", "کھڑکی", "الماری", "لکڑی", "میز", "کرسی",
     ],
     subcategory: "carpentry_work",
     skills: ["door repair", "furniture making", "cabinet repair", "wardrobe installation", "kitchen cabinets"],
@@ -136,34 +145,74 @@ const KEYWORD_RULES: KeywordRule[] = [
 
 const SKILL_KEYWORDS: Record<string, string> = {
   wiring: "wiring",
+  wire: "wiring",
   fuse: "fault finding",
   "short circuit": "fault finding",
+  breaker: "fault finding",
+  meter: "fault finding",
+  spark: "fault finding",
+  chingari: "fault finding",
   switchboard: "switchboard installation",
   switch: "switchboard installation",
+  socket: "switchboard installation",
+  plug: "switchboard installation",
   inverter: "inverter installation",
+  upsi: "inverter installation",
+  ups: "inverter installation",
   lighting: "lighting",
+  light: "lighting",
+  bulb: "lighting",
   leak: "pipe fitting",
+  leakage: "pipe fitting",
+  seepage: "pipe fitting",
+  tapak: "pipe fitting",
   tap: "faucet repair",
   faucet: "faucet repair",
+  nalka: "faucet repair",
+  basin: "faucet repair",
+  sink: "faucet repair",
+  shower: "faucet repair",
   pani: "pipe fitting",
   paani: "pipe fitting",
   pipe: "pipe fitting",
   drain: "drain cleaning",
   naali: "drain cleaning",
+  commode: "drain cleaning",
+  flush: "drain cleaning",
+  toilet: "drain cleaning",
   geyser: "geyser installation",
+  gizer: "geyser installation",
+  geaser: "geyser installation",
   tank: "water tank installation",
+  tanki: "water tank installation",
   motor: "water tank installation",
+  pump: "water tank installation",
   compressor: "compressor service",
   "gas refill": "gas refilling",
+  "gas refilling": "gas refilling",
+  refrigerant: "gas refilling",
   cooler: "ac repair",
+  cooling: "ac repair",
   darwaza: "door repair",
   door: "door repair",
+  tala: "door repair",
+  taala: "door repair",
+  lock: "door repair",
+  hinge: "door repair",
+  khidki: "door repair",
+  window: "door repair",
   lakri: "furniture making",
   lakdi: "furniture making",
   wood: "furniture making",
   furniture: "furniture making",
+  bed: "furniture making",
+  sofa: "furniture making",
+  table: "furniture making",
+  chair: "furniture making",
+  shelf: "furniture making",
   almari: "cabinet repair",
   cabinet: "cabinet repair",
+  drawer: "cabinet repair",
   wardrobe: "wardrobe installation",
   kitchen: "kitchen cabinets",
 };
@@ -184,14 +233,31 @@ const FLAG_BY_KEYWORD: Array<[string, string]> = [
   ["current", "electric shock risk"],
 ];
 
-function hasKeyword(text: string, keywords: string[]): boolean {
-  return keywords.some((k) => text.includes(k));
+function escapeRegex(value: string): string {
+  return value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+}
+
+/**
+ * Word-aware keyword test. Plain `includes` matched "ac" inside "acha" and
+ * "nal" inside "final", which flipped categories — word boundaries (with an
+ * optional plural) keep "lights"/"pipes" matching without false hits.
+ */
+function hasKeyword(text: string, keyword: string): boolean {
+  const pattern = new RegExp(
+    `(^|[^a-z0-9])${escapeRegex(keyword)}(s|es)?([^a-z0-9]|$)`,
+    "i"
+  );
+  return pattern.test(text);
+}
+
+function anyKeyword(text: string, keywords: string[]): boolean {
+  return keywords.some((k) => hasKeyword(text, k));
 }
 
 function matchedSkillsFor(text: string, ruleSkills: string[]): string[] {
   const hits: string[] = [];
   for (const [kw, skill] of Object.entries(SKILL_KEYWORDS)) {
-    if (text.includes(kw) && ruleSkills.includes(skill)) {
+    if (hasKeyword(text, kw) && ruleSkills.includes(skill)) {
       hits.push(skill);
     }
   }
@@ -232,7 +298,7 @@ export function analyzeJobInput(
   let bestRule: KeywordRule | null = null;
 
   for (const rule of KEYWORD_RULES) {
-    const hits = rule.keywords.filter((k) => normalized.includes(k)).length;
+    const hits = rule.keywords.filter((k) => hasKeyword(normalized, k)).length;
     if (hits > bestHits) {
       bestHits = hits;
       bestCategory = rule.category;
@@ -260,9 +326,9 @@ export function analyzeJobInput(
     };
   }
 
-  const keywordUrgency: UrgencyLevel = hasKeyword(normalized, EMERGENCY_KEYWORDS)
+  const keywordUrgency: UrgencyLevel = anyKeyword(normalized, EMERGENCY_KEYWORDS)
     ? "emergency"
-    : hasKeyword(normalized, URGENT_KEYWORDS)
+    : anyKeyword(normalized, URGENT_KEYWORDS)
       ? "potentially_urgent"
       : "normal";
 
@@ -271,7 +337,7 @@ export function analyzeJobInput(
 
   const safety_flags =
     urgency === "emergency" || urgency === "potentially_urgent"
-      ? FLAG_BY_KEYWORD.filter(([kw]) => normalized.includes(kw))
+      ? FLAG_BY_KEYWORD.filter(([kw]) => hasKeyword(normalized, kw))
           .map(([, flag]) => flag)
           .filter((flag, idx, arr) => arr.indexOf(flag) === idx)
       : [];
@@ -327,6 +393,6 @@ export function deriveAnalysisForCategory(
 }
 
 export function findEmergencyFlags(text: string): string[] {
-  return FLAG_BY_KEYWORD.filter(([kw]) => text.toLowerCase().includes(kw))
+  return FLAG_BY_KEYWORD.filter(([kw]) => hasKeyword(text.toLowerCase(), kw))
     .map(([, flag]) => flag);
 }

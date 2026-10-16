@@ -144,16 +144,20 @@ router.post("/understand", upload.single("audio"), async (req: Request, res: Res
     });
 
     const category = understood.understanding.category as WorkerCategory | null;
-    const workers = await getWorkerOptions({
-      category,
-      required_skills: understood.understanding.required_skills,
-      urgency: (understood.understanding.urgency ?? "normal") as UrgencyLevel,
-      limit: 4,
-      location: payload.location,
-      estimate_min: understood.understanding.estimate_min,
-      estimate_max: understood.understanding.estimate_max,
-      complexity: understood.understanding.complexity,
-    });
+    // Never mix trades in the result list: without a committed category the
+    // app asks the customer to clarify instead of listing random technicians.
+    const workers = category
+      ? await getWorkerOptions({
+          category,
+          required_skills: understood.understanding.required_skills,
+          urgency: (understood.understanding.urgency ?? "normal") as UrgencyLevel,
+          limit: 4,
+          location: payload.location,
+          estimate_min: understood.understanding.estimate_min,
+          estimate_max: understood.understanding.estimate_max,
+          complexity: understood.understanding.complexity,
+        })
+      : { best: null, others: [], ranked: [] };
 
     return ok({
       source: understood.source,

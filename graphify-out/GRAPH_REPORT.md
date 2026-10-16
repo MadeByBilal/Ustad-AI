@@ -1,34 +1,34 @@
 # Graph Report - Ustad Ai  (2026-10-16)
 
 ## Corpus Check
-- 259 files · ~199,189 words
+- 262 files · ~201,042 words
 - Verdict: corpus is large enough that graph structure adds value.
 
 ## Summary
-- 1807 nodes · 2965 edges · 125 communities (110 shown, 15 thin omitted)
-- Extraction: 100% EXTRACTED · 0% INFERRED · 0% AMBIGUOUS · INFERRED: 14 edges (avg confidence: 0.59)
+- 1818 nodes · 2995 edges · 136 communities (120 shown, 16 thin omitted)
+- Extraction: 100% EXTRACTED · 0% INFERRED · 0% AMBIGUOUS · INFERRED: 13 edges (avg confidence: 0.6)
 - Token cost: 0 input · 0 output
 
 ## Graph Freshness
-- Built from commit: `f4086215`
+- Built from commit: `f3df29fb`
 - Run `git rev-parse HEAD` and compare to check if the graph is stale.
 - Run `graphify update .` after code changes (no API cost).
 
 ## Community Hubs (Navigation)
 - flow.ts
-- socket-client.ts
+- ActiveJobTracking.tsx
 - dependencies
 - socket-handlers.ts
 - Graphify Tool
 - models/index.ts
-- connectDB
+- auth-middleware.ts
 - devDependencies
-- ai/index.ts
+- jobs/index.ts
 - compilerOptions
 - dependencies
 - mongodb.ts
 - matching.ts
-- IncomingJobCard.tsx
+- contracts/worker.ts
 - MatchResults.tsx
 - contracts/job.ts
 - compilerOptions
@@ -40,11 +40,11 @@
 - postcss.config.mjs
 - workers/index.ts
 - Brag Plan: Ustad AI
-- offers.ts
+- requests.ts
 - God Nodes Analysis
 - Obsidian Vault Export
 - LoadingState.tsx
-- useWorker
+- lib/session.ts
 - server/contracts/api.ts
 - client/contracts/api.ts
 - client/contracts/contracts/api.ts
@@ -57,7 +57,7 @@
 - client/contracts/job.ts
 - client/contracts/contracts/job.ts
 - server/contracts/contracts/job.ts
-- requests.ts
+- connectDB
 - CustomerRequestsPanel.tsx
 - job.d.ts
 - Real-Time GPS Tracking Integration Plan
@@ -66,7 +66,7 @@
 - client/contracts/contracts/worker.ts
 - server/contracts/contracts/worker.ts
 - server/contracts/job.ts
-- src/lib/geo.ts
+- haversineDistanceKm
 - WorkerResults.tsx
 - server/contracts/ai.ts
 - server/contracts/worker.ts
@@ -97,9 +97,9 @@
 - WorkerProfile.tsx
 - pricing.ts
 - Step 3: Hand off to Hyperframes
-- CustomerHomeContent.tsx
+- signup.ts
 - WorkerDashboard.tsx
-- contracts/worker.ts
+- WorkerStatsPageClient.tsx
 - worker/chat/[jobId]/page.tsx
 - TDD Evidence Report: Voice Capture Hardening
 - track/page.tsx
@@ -115,7 +115,8 @@
 - Music Cues: happy-beats-business-moves-vol-1-by-ende-dot-app
 - Music Cues: happy-beats-business-moves-vol-9-by-ende-dot-app
 - SFX library — approved files
-- safety.ts
+- detail.ts
+- socket-client.ts
 - NewWorkWizard.test.tsx
 - client/lib/photos.ts
 - job.js
@@ -126,12 +127,21 @@
 - README.md
 - next.config.mjs
 - client/prebuild.sh
-- lib/session.ts
+- MatchResultsData
 - tailwind.config.ts
 - server/prebuild.sh
 - brag
+- track/demo/page.tsx
 - src/index.ts
+- state-machine.ts
 - contracts/ai.ts
+- client/lib/geo.ts
+- cancellation.ts
+- LocationUpdater.tsx
+- photos/index.ts
+- track/[jobId]/page.tsx
+- attachReconnectLogic
+- DashboardLayout
 
 ## God Nodes (most connected - your core abstractions)
 1. `getApiErrorMessage()` - 63 edges
@@ -165,15 +175,15 @@
 - **Graph Export Targets** — opencode_skills_graphify_skill_html_viz, opencode_skills_graphify_skill_obsidian_vault, opencode_skills_graphify_references_exports_wiki_export, opencode_skills_graphify_references_exports_neo4j_export, opencode_skills_graphify_references_exports_mcp_server [EXTRACTED 1.00]
 - **Graph Query Flows** — opencode_skills_graphify_skill_query_subcommand, opencode_skills_graphify_skill_path_subcommand, opencode_skills_graphify_skill_explain_subcommand [EXTRACTED 1.00]
 
-## Communities (125 total, 15 thin omitted)
+## Communities (136 total, 16 thin omitted)
 
 ### Community 0 - "flow.ts"
-Cohesion: 0.10
-Nodes (48): canCustomerCancel(), CUSTOMER_CANCELLABLE_STATUSES, resolveWorkerCancellation(), WorkerCancellationDecision, WorkerCancellationInput, analysisTextFor(), AttachPhotoInput, confirmJobDetails() (+40 more)
+Cohesion: 0.14
+Nodes (36): canCustomerCancel(), resolveWorkerCancellation(), analysisTextFor(), AttachPhotoInput, BroadcastResult, confirmJobDetails(), createAndAnalyzeJob(), CUSTOMER_SCORE_CANCEL_PENALTY (+28 more)
 
-### Community 1 - "socket-client.ts"
-Cohesion: 0.06
-Nodes (38): MOCK_DESTINATION, MOCK_ROUTE, MOCK_WORKER, MOCK_WORKER_LOCATION, MockStatus, TrackingDemoPage(), TrackingData, TrackingPage() (+30 more)
+### Community 1 - "ActiveJobTracking.tsx"
+Cohesion: 0.19
+Nodes (9): STATUS_LABELS, TrackingPageClientProps, ActiveJob, STATUS_LABELS, LiveCustomerLocation(), LiveCustomerLocationProps, PrecomputedRoute, RouteComputedPayload (+1 more)
 
 ### Community 2 - "dependencies"
 Cohesion: 0.04
@@ -188,20 +198,20 @@ Cohesion: 0.07
 Nodes (43): Graphify Usage Rules, URL Ingestion, MCP Server, Neo4j Export, Wiki Export, Confidence Rubric, Hyperedges, Node ID Convention (+35 more)
 
 ### Community 5 - "models/index.ts"
-Cohesion: 0.06
-Nodes (46): SessionUser, JOB_STATUS_STYLES, JobDetail, JobResponder, JobResponderOffer, JobResponderWorker, BroadcastResult, WorkerOfferResult (+38 more)
+Cohesion: 0.07
+Nodes (32): DEFAULT_EMERGENCY_GUIDANCE, FLAG_GUIDANCE, SafetyGuidance, INPUT_TYPES, Job, JOB_STATUSES, jobSchema, PRICING_STATUSES (+24 more)
 
-### Community 6 - "connectDB"
-Cohesion: 0.13
-Nodes (31): ApiError, authError(), fail(), ok(), clearSessionCookie(), sessionCookieOptions(), fingerprint(), AllowedRole (+23 more)
+### Community 6 - "auth-middleware.ts"
+Cohesion: 0.23
+Nodes (15): clearSessionCookie(), sessionCookieOptions(), AllowedRole, fail(), getSessionUser(), requireRole(), SessionUser, isSessionExpired() (+7 more)
 
 ### Community 7 - "devDependencies"
 Cohesion: 0.05
 Nodes (41): devDependencies, eslint, eslint-config-next, jsdom, postcss, tailwindcss, @testing-library/jest-dom, @testing-library/react (+33 more)
 
-### Community 8 - "ai/index.ts"
-Cohesion: 0.33
-Nodes (4): NOTE: For multipart form-data uploads (audio/image), configure multer, NOTE: In production, configure multer middleware on this route:, router, upload
+### Community 8 - "jobs/index.ts"
+Cohesion: 0.16
+Nodes (13): ApiError, authError(), fail(), ok(), getJobDetail(), WORKER_CATEGORIES, NOTE: For multipart form-data uploads (audio/image), configure multer, NOTE: In production, configure multer middleware on this route: (+5 more)
 
 ### Community 9 - "compilerOptions"
 Cohesion: 0.07
@@ -212,20 +222,20 @@ Cohesion: 0.04
 Nodes (45): @base-ui/react, class-variance-authority, dependencies, @base-ui/react, class-variance-authority, clsx, @fortawesome/free-brands-svg-icons, @fortawesome/free-regular-svg-icons (+37 more)
 
 ### Community 11 - "mongodb.ts"
-Cohesion: 0.11
-Nodes (23): hashPassword(), PASSWORD_MIN_LENGTH, PasswordStrength, validatePasswordStrength(), verifyPassword(), disconnectDB(), MONGODB_URI, MongooseCache (+15 more)
+Cohesion: 0.13
+Nodes (20): hashPassword(), disconnectDB(), MONGODB_URI, MongooseCache, User, resetWorkers(), SeedWorker, WORKERS (+12 more)
 
 ### Community 12 - "matching.ts"
-Cohesion: 0.12
-Nodes (22): canonicalizeSkill(), clamp(), CompletenessSignals, EMERGENCY_CAPABILITY_BONUS, FRESH_LOCATION_DAYS, getWorkerOptions(), getWorkerResults(), LOCATION_FRESHNESS_EMERGENCY_MS (+14 more)
+Cohesion: 0.14
+Nodes (23): canonicalizeSkill(), categoryFromSkills(), clamp(), CompletenessSignals, EMERGENCY_CAPABILITY_BONUS, FRESH_LOCATION_DAYS, getWorkerOptions(), getWorkerResults() (+15 more)
 
-### Community 13 - "IncomingJobCard.tsx"
-Cohesion: 0.21
-Nodes (11): CounterOfferModal(), submit(), IncomingJobCard(), act(), askClarification(), postJson(), fetchMock, JOB (+3 more)
+### Community 13 - "contracts/worker.ts"
+Cohesion: 0.11
+Nodes (21): WorkerJobsPage(), CounterOfferModal(), submit(), IncomingJobCard(), act(), askClarification(), postJson(), fetchMock (+13 more)
 
 ### Community 14 - "MatchResults.tsx"
-Cohesion: 0.12
-Nodes (15): mockData, ResultPageClient(), StoredResult, Avatar(), cardItem, CATEGORY_LABELS, initials(), listContainer (+7 more)
+Cohesion: 0.18
+Nodes (11): Avatar(), cardItem, CATEGORY_LABELS, DEFAULT_CLARIFICATION_OPTIONS, initials(), listContainer, MatchResultsProps, SplitText() (+3 more)
 
 ### Community 15 - "contracts/job.ts"
 Cohesion: 0.12
@@ -240,8 +250,8 @@ Cohesion: 0.11
 Nodes (27): AiImageInput, AiUnderstandOptions, ASSEMBLYAI_LANGUAGE_CODE, cleanDescription(), coerceDisplayArray(), coerceNumber(), coerceToArray(), DEFAULT_CLARIFICATION_OPTIONS (+19 more)
 
 ### Community 18 - "TrackingMap.tsx"
-Cohesion: 0.16
-Nodes (20): distanceFromPolyline(), hasValidCoordinate(), isRouteCoordinate(), perpendicularDistanceToSegment(), TrackingMap(), loadRoute(), renderRoadRoute(), TrackingMapProps (+12 more)
+Cohesion: 0.22
+Nodes (13): distanceFromPolyline(), hasValidCoordinate(), isRouteCoordinate(), perpendicularDistanceToSegment(), TrackingMap(), loadRoute(), renderRoadRoute(), TrackingMapProps (+5 more)
 
 ### Community 19 - "opencode.json"
 Cohesion: 0.50
@@ -252,24 +262,24 @@ Cohesion: 0.11
 Nodes (19): MicVisualizer(), MicVisualizerProps, TextType(), TextTypeProps, audioFileExtension(), CATEGORY_LABELS, Coordinates, currency() (+11 more)
 
 ### Community 23 - "workers/index.ts"
-Cohesion: 0.11
-Nodes (18): haversineDistanceKm(), getJobDetail(), FlowError, MAX_PHOTO_BYTES, PhotoUploadInput, photoUploadSchema, ActiveJobView, DirectRequestView (+10 more)
+Cohesion: 0.18
+Nodes (10): MAX_PHOTO_BYTES, PhotoUploadInput, photoUploadSchema, availabilitySchema, locationSchema, nearbyQuerySchema, profileImageSchema, profileUpdateSchema (+2 more)
 
 ### Community 24 - "Brag Plan: Ustad AI"
 Cohesion: 0.10
 Nodes (19): Audio direction, Brag Plan: Ustad AI, Duration: 20 seconds, Format: landscape — 1920x1080, Hook (first 2-3 seconds), Key moments (the middle), Outro / punchline, Scene 1 — Hook: The Mic — 4s (+11 more)
 
-### Community 25 - "offers.ts"
-Cohesion: 0.44
-Nodes (7): COUNTER_HIGH_FACTOR, COUNTER_LOW_FACTOR, midpointOffer(), OFFER_LOW_FACTOR, offerIsExpired(), OfferValidation, roundTo50()
+### Community 25 - "requests.ts"
+Cohesion: 0.19
+Nodes (15): CounterResponseInput, CounterResponseResult, DirectRequestInput, DirectRequestResult, WorkerRespondInput, WorkerRespondResult, COUNTER_HIGH_FACTOR, COUNTER_LOW_FACTOR (+7 more)
 
 ### Community 29 - "LoadingState.tsx"
-Cohesion: 0.10
-Nodes (17): EASE_OUT, EmptyState(), EmptyStateIcon, EmptyStateProps, EASE_OUT, LoadingState(), LoadingStateProps, LoadingStateType (+9 more)
+Cohesion: 0.09
+Nodes (19): EASE_OUT, EmptyState(), EmptyStateIcon, EmptyStateProps, EASE_OUT, LoadingState(), LoadingStateProps, LoadingStateType (+11 more)
 
-### Community 30 - "useWorker"
-Cohesion: 0.12
-Nodes (14): WorkerActivePage(), WorkerChatPage(), ActiveJobData, WorkerInspectionPage(), WorkerJobsPage(), WorkerProfilePage(), ActiveJobData, WorkerWorkPage() (+6 more)
+### Community 30 - "lib/session.ts"
+Cohesion: 0.10
+Nodes (23): CustomerProfilePage(), DashboardPage(), WorkerActivePage(), WorkerChatPage(), ActiveJobData, WorkerInspectionPage(), WorkerProfilePage(), ActiveJobData (+15 more)
 
 ### Community 31 - "server/contracts/api.ts"
 Cohesion: 0.12
@@ -285,11 +295,11 @@ Nodes (11): ApiResponse, COUNTER_HIGH_FACTOR, COUNTER_LOW_FACTOR, EARTH_RADIUS_K
 
 ### Community 34 - "getApiErrorMessage"
 Cohesion: 0.11
-Nodes (19): TrackingPageClient(), handleApprove(), handleCancel(), handleDispute(), handleInspectionOfferResponse(), WorkerWorkPageClient(), handleAdvance(), handleCancel() (+11 more)
+Nodes (18): TrackingPageClient(), handleApprove(), handleCancel(), handleDispute(), handleInspectionOfferResponse(), WorkerWorkPageClient(), handleAdvance(), handleCancel() (+10 more)
 
 ### Community 35 - "fileToPhotoBase64"
-Cohesion: 0.17
-Nodes (14): PhotoPicker(), handleFiles(), remove(), update(), PhotoUpload, fetchMock, handleFile(), base64ByteLength() (+6 more)
+Cohesion: 0.18
+Nodes (13): PhotoPicker(), handleFiles(), remove(), update(), PhotoUpload, fetchMock, base64ByteLength(), dataUrlToBase64() (+5 more)
 
 ### Community 36 - "contracts/api.ts"
 Cohesion: 0.12
@@ -300,12 +310,12 @@ Cohesion: 0.12
 Nodes (11): ApiResponse, COUNTER_HIGH_FACTOR, COUNTER_LOW_FACTOR, EARTH_RADIUS_KM, midpointOffer(), OFFER_LOW_FACTOR, OfferValidation, PaginatedResponse (+3 more)
 
 ### Community 38 - "WorkerCategory"
-Cohesion: 0.25
-Nodes (9): AiUnderstandResult, AnalysisResult, KeywordRule, ComplexityLevel, WorkerOption, WorkerOptionsFilters, WorkerResult, WorkerCategory (+1 more)
+Cohesion: 0.17
+Nodes (13): AiUnderstandResult, AnalysisResult, KeywordRule, ComplexityLevel, MatchContext, SearchFilters, WorkerOption, WorkerOptionsFilters (+5 more)
 
 ### Community 39 - "analyze.ts"
-Cohesion: 0.13
-Nodes (15): analyzeJobInput(), CANONICAL_SKILLS, CATEGORY_ESTIMATES, complexityFor(), EMERGENCY_KEYWORDS, FLAG_BY_KEYWORD, hasKeyword(), HIGH_COMPLEXITY_KEYWORDS (+7 more)
+Cohesion: 0.14
+Nodes (18): analyzeJobInput(), anyKeyword(), CANONICAL_SKILLS, CATEGORY_ESTIMATES, complexityFor(), EMERGENCY_KEYWORDS, escapeRegex(), findEmergencyFlags() (+10 more)
 
 ### Community 40 - "client/contracts/job.ts"
 Cohesion: 0.12
@@ -319,9 +329,9 @@ Nodes (16): RoutePoint, INPUT_TYPES, InputType, JOB_STATUSES, JobCompletion, Job
 Cohesion: 0.12
 Nodes (16): RoutePoint, INPUT_TYPES, InputType, JOB_STATUSES, JobCompletion, JobData, JobInput, JobLocation (+8 more)
 
-### Community 43 - "requests.ts"
-Cohesion: 0.14
-Nodes (16): CounterResponseInput, CounterResponseResult, createDirectRequest(), DirectRequestInput, DirectRequestResult, RequestError, respondToCounter(), respondToDirectRequest() (+8 more)
+### Community 43 - "connectDB"
+Cohesion: 0.27
+Nodes (8): createDirectRequest(), RequestError, respondToCounter(), respondToDirectRequest(), connectDB(), counterResponseSchema, createRequestSchema, respondSchema
 
 ### Community 44 - "CustomerRequestsPanel.tsx"
 Cohesion: 0.28
@@ -355,9 +365,9 @@ Nodes (14): ActiveJobView, CompletedJobView, DirectRequestView, IncomingJobView,
 Cohesion: 0.13
 Nodes (14): InputType, JobCompletion, JobData, JobInput, JobLocation, JobMatching, JobPricing, JobStatus (+6 more)
 
-### Community 52 - "src/lib/geo.ts"
-Cohesion: 0.47
-Nodes (5): buildBoundingBox(), EARTH_RADIUS_KM, isWithinRadius(), kmToDegreesRadius(), toRad()
+### Community 52 - "haversineDistanceKm"
+Cohesion: 0.39
+Nodes (7): buildBoundingBox(), EARTH_RADIUS_KM, haversineDistanceKm(), isWithinRadius(), kmToDegreesRadius(), toRad(), getWorkerDashboard()
 
 ### Community 53 - "WorkerResults.tsx"
 Cohesion: 0.16
@@ -384,12 +394,12 @@ Cohesion: 0.15
 Nodes (11): ActiveJobView, DirectRequestView, IncomingJobView, VERIFICATION_LEVELS, VerificationLevel, WORKER_CATEGORIES, WorkerDashboardData, WorkerLocation (+3 more)
 
 ### Community 59 - "useLang"
-Cohesion: 0.14
-Nodes (13): AuthForm(), submit(), destinationFor(), Mode, Role, HomePage(), CustomerJobsList(), JobItem (+5 more)
+Cohesion: 0.11
+Nodes (16): AuthForm(), submit(), destinationFor(), Mode, Role, HomePage(), ActiveJob, ActiveJobStatusBar() (+8 more)
 
 ### Community 60 - "WorkerHome.tsx"
-Cohesion: 0.15
-Nodes (12): DashboardLayout(), load(), setup(), TRACKING_STATUSES, WorkerDashboardPage(), BottomNav(), NavItem, LiquidGlassToastContainer() (+4 more)
+Cohesion: 0.20
+Nodes (9): TRACKING_STATUSES, WorkerDashboardPage(), BottomNav(), NavItem, LiquidGlassToastContainer(), listeners, showToast(), Toast (+1 more)
 
 ### Community 61 - "VoiceCapture.test.tsx"
 Cohesion: 0.15
@@ -404,7 +414,7 @@ Cohesion: 0.17
 Nodes (6): COUNTER_HIGH_FACTOR, COUNTER_LOW_FACTOR, EARTH_RADIUS_KM, midpointOffer(), OFFER_LOW_FACTOR, roundTo50()
 
 ### Community 64 - "Step 4: Validate, render, and deliver"
-Cohesion: 0.18
+Cohesion: 0.17
 Nodes (11): Bake the poster as frame 0, Example: Taxi for Taxis, Final output structure, Pick the poster frame, Preview, Render, Share copy by tone, Step 4: Validate, render, and deliver (+3 more)
 
 ### Community 65 - "NewWorkWizard"
@@ -424,8 +434,8 @@ Cohesion: 0.18
 Nodes (10): Coverage and Known Gaps, Follow-up: Clarification and Travel Pricing, Merge Evidence, P1: Authentication System, P2: Voice AI Matching Optimization, P3: Technician Recommendation & Job Request, Source Plan, Task Report (+2 more)
 
 ### Community 69 - "[id].ts"
-Cohesion: 0.08
-Nodes (31): ChatMessageView, getAccessibleJob(), listJobMessages(), sendJobMessage(), SendMessageInput, WORKER_SCORE_COMPLETION_REWARD, createJobStream(), JobStreamEvent (+23 more)
+Cohesion: 0.09
+Nodes (27): ChatMessageView, getAccessibleJob(), listJobMessages(), sendJobMessage(), SendMessageInput, WORKER_SCORE_COMPLETION_REWARD, createJobStream(), JobStreamEvent (+19 more)
 
 ### Community 70 - "Audio reference"
 Cohesion: 0.18
@@ -444,12 +454,12 @@ Cohesion: 0.38
 Nodes (5): InspectionPageClient(), advanceToStatus(), handleCancel(), handleJustInspection(), handleNeedsWork()
 
 ### Community 74 - "context.tsx"
-Cohesion: 0.23
-Nodes (9): metadata, getInitialLang(), Lang, LangContext, LangContextValue, LanguageProvider(), setLangCookie(), TranslationKey (+1 more)
+Cohesion: 0.16
+Nodes (11): metadata, CustomerJobsList(), JobItem, getInitialLang(), Lang, LangContext, LangContextValue, LanguageProvider() (+3 more)
 
 ### Community 75 - "api-client.ts"
 Cohesion: 0.17
-Nodes (12): NEXT_ACTIONS, STATUS_LABELS, NEXT_ACTIONS, STATUS_LABELS, ActiveJob, ActiveJobPanel(), advance(), NEXT_ACTIONS (+4 more)
+Nodes (10): NEXT_ACTIONS, STATUS_LABELS, NEXT_ACTIONS, STATUS_LABELS, ApprovalJob, CustomerApprovalPanel(), handleApprove(), JobPhotoUpload() (+2 more)
 
 ### Community 76 - "server/contracts/contracts/ai.ts"
 Cohesion: 0.24
@@ -468,8 +478,8 @@ Cohesion: 0.27
 Nodes (9): AiUnderstandResult, AnalysisResult, CANONICAL_SKILLS, CATEGORY_ESTIMATES, INSPECTION_FEES, PriceEstimate, ComplexityLevel, UrgencyLevel (+1 more)
 
 ### Community 80 - "WorkerProfile.tsx"
-Cohesion: 0.20
-Nodes (6): CloudinaryUpload(), CloudinaryUploadProps, LogoutButton(), WorkerProfile(), saveProfile(), WORKER_CATEGORIES
+Cohesion: 0.26
+Nodes (7): NOTE: hooks must stay above the early returns below — calling them after, UserProfile, CloudinaryUpload(), CloudinaryUploadProps, LogoutButton(), SessionUser, WORKER_CATEGORIES
 
 ### Community 81 - "pricing.ts"
 Cohesion: 0.24
@@ -479,17 +489,17 @@ Nodes (9): BASE_WORK_FEE_PKR, BIKE_FUEL_EFFICIENCY_KM_PER_LITER, calculatePredic
 Cohesion: 0.22
 Nodes (9): Audio asset preparation, Audio-reactive extraction (when music is present), Beat sync (when a cue source is available), Call Hyperframes, Create the composition brief, How to implement, Self-review checklist, Step 3: Hand off to Hyperframes (+1 more)
 
-### Community 83 - "CustomerHomeContent.tsx"
-Cohesion: 0.28
-Nodes (5): ActiveJob, ActiveJobStatusBar(), STATUS_CONFIG, TRACKING_STATUSES, CustomerHomeContent()
+### Community 83 - "signup.ts"
+Cohesion: 0.16
+Nodes (14): fingerprint(), PASSWORD_MIN_LENGTH, PasswordStrength, validatePasswordStrength(), verifyPassword(), bytesToHex(), createSessionToken(), router (+6 more)
 
 ### Community 84 - "WorkerDashboard.tsx"
-Cohesion: 0.18
-Nodes (9): Coordinates, LocationUpdater(), send(), submitManual(), useAutomatic(), fetchMock, WorkerDashboard(), AvailabilityState (+1 more)
+Cohesion: 0.16
+Nodes (11): ActiveJob, ActiveJobPanel(), advance(), NEXT_ACTIONS, STATUS_LABELS, WorkerActiveJob(), fetchMock, WorkerDashboard() (+3 more)
 
-### Community 85 - "contracts/worker.ts"
-Cohesion: 0.13
-Nodes (14): WorkerData, WorkerStatsPage(), StatsProps, TimeFilter, WorkerStatsPageClient(), ActiveJobView, CompletedJobView, VERIFICATION_LEVELS (+6 more)
+### Community 85 - "WorkerStatsPageClient.tsx"
+Cohesion: 0.22
+Nodes (7): WorkerData, WorkerStatsPage(), StatsProps, TimeFilter, WorkerStatsPageClient(), CompletedJobView, WorkerReviewView
 
 ### Community 87 - "worker/chat/[jobId]/page.tsx"
 Cohesion: 0.33
@@ -516,7 +526,7 @@ Cohesion: 0.29
 Nodes (6): Family Summary, Lower-Risk Picks By Use Case, Safest General Picks, Selection Rules, SFX Analysis Summary, Signal Guide
 
 ### Community 94 - "Step 1: Inspect the project"
-Cohesion: 0.25
+Cohesion: 0.29
 Nodes (7): Color extraction, Font extraction, Rule: nothing secret leaves this step, Step 1: Inspect the project, The 9-question rubric, What to look for, What to skip
 
 ### Community 95 - "api.d.ts"
@@ -547,9 +557,13 @@ Nodes (5): Music Cues: happy-beats-business-moves-vol-9-by-ende-dot-app, Reveal 
 Cohesion: 0.33
 Nodes (6): `casino/` — Card and chip sounds, `impact/` — Impact sounds, `interface/` — UI sounds, `keyboard/` — Individual keypress sounds, SFX library — approved files, `ui/` — Clicks and switches
 
-### Community 103 - "safety.ts"
-Cohesion: 0.40
-Nodes (3): DEFAULT_EMERGENCY_GUIDANCE, FLAG_GUIDANCE, SafetyGuidance
+### Community 103 - "detail.ts"
+Cohesion: 0.11
+Nodes (15): JobDetail, JobResponder, JobResponderOffer, JobResponderWorker, FlowError, ActiveJobView, DirectRequestView, IncomingJobView (+7 more)
+
+### Community 104 - "socket-client.ts"
+Cohesion: 0.16
+Nodes (13): connect(), LiveTracker(), LiveTrackerProps, ActiveJob, NEXT_ACTIONS, STATUS_LABELS, WorkerActiveTracking(), connect() (+5 more)
 
 ### Community 106 - "client/lib/photos.ts"
 Cohesion: 0.50
@@ -563,37 +577,69 @@ Nodes (4): INPUT_TYPES, JOB_STATUSES, PRICING_STATUSES, URGENCY_LEVELS
 Cohesion: 0.50
 Nodes (3): CANONICAL_SKILLS, CATEGORY_ESTIMATES, INSPECTION_FEES
 
-### Community 117 - "lib/session.ts"
-Cohesion: 0.19
-Nodes (15): CustomerProfilePage(), NOTE: hooks must stay above the early returns below — calling them after, UserProfile, DashboardPage(), fetchJson(), fetchSession(), fetchWorker(), SessionResult (+7 more)
+### Community 117 - "MatchResultsData"
+Cohesion: 0.21
+Nodes (5): mockData, ResultPageClient(), StoredResult, MatchResults(), MatchResultsData
+
+### Community 124 - "track/demo/page.tsx"
+Cohesion: 0.22
+Nodes (8): MOCK_DESTINATION, MOCK_ROUTE, MOCK_WORKER, MOCK_WORKER_LOCATION, MockStatus, TrackingDemoPage(), MapFallback(), TrackingMap
 
 ### Community 125 - "src/index.ts"
 Cohesion: 0.10
-Nodes (14): app, io, PORT, server, initIO(), isAllowedOrigin(), router, router (+6 more)
+Nodes (15): app, io, PORT, server, initIO(), isAllowedOrigin(), router, router (+7 more)
+
+### Community 126 - "state-machine.ts"
+Cohesion: 0.22
+Nodes (9): ACTOR_ALLOWANCES, assertAllowedTransition(), canTransition(), DeadlineFields, EMERGENCY_ACCEPTANCE_MINUTES, JobActor, NORMAL_ACCEPTANCE_MINUTES, SELECTION_MINUTES (+1 more)
 
 ### Community 127 - "contracts/ai.ts"
 Cohesion: 0.27
 Nodes (8): AiUnderstandResult, AnalysisResult, CATEGORY_ESTIMATES, INSPECTION_FEES, PriceEstimate, ComplexityLevel, UrgencyLevel, WorkerCategory
 
+### Community 128 - "client/lib/geo.ts"
+Cohesion: 0.47
+Nodes (7): buildBoundingBox(), EARTH_RADIUS_KM, estimateETAMinutes(), haversineDistanceKm(), isWithinRadius(), kmToDegreesRadius(), toRad()
+
+### Community 129 - "cancellation.ts"
+Cohesion: 0.38
+Nodes (5): JOB_STATUS_STYLES, CUSTOMER_CANCELLABLE_STATUSES, WorkerCancellationDecision, WorkerCancellationInput, JobStatus
+
+### Community 130 - "LocationUpdater.tsx"
+Cohesion: 0.47
+Nodes (5): Coordinates, LocationUpdater(), send(), submitManual(), useAutomatic()
+
+### Community 131 - "photos/index.ts"
+Cohesion: 0.33
+Nodes (4): Upload, UploadDoc, uploadSchema, router
+
+### Community 133 - "attachReconnectLogic"
+Cohesion: 0.67
+Nodes (3): attachReconnectLogic(), onDisconnect(), scheduleReconnect()
+
+### Community 134 - "DashboardLayout"
+Cohesion: 0.67
+Nodes (3): DashboardLayout(), load(), setup()
+
 ## Knowledge Gaps
-- **804 isolated node(s):** `brag`, `$schema`, `.opencode/plugins/graphify.js`, `PriceEstimate`, `CATEGORY_ESTIMATES` (+799 more)
+- **805 isolated node(s):** `brag`, `$schema`, `.opencode/plugins/graphify.js`, `PriceEstimate`, `CATEGORY_ESTIMATES` (+800 more)
   These have ≤1 connection - possible missing edges or undocumented components.
-- **15 thin communities (<3 nodes) omitted from report** — run `graphify query` to explore isolated nodes.
+- **16 thin communities (<3 nodes) omitted from report** — run `graphify query` to explore isolated nodes.
 
 ## Suggested Questions
 _Questions this graph is uniquely positioned to answer:_
 
-- **Why does `getApiErrorMessage()` connect `getApiErrorMessage` to `socket-client.ts`, `NewWorkWizard.tsx`, `NewWorkWizard`, `fileToPhotoBase64`, `WorkerChat.tsx`, `InspectionPageClient`, `api-client.ts`, `CustomerRequestsPanel.tsx`, `IncomingJobCard.tsx`, `WorkerHome.tsx`, `WorkerProfile.tsx`, `WorkerDashboard.tsx`, `lib/session.ts`, `worker/chat/[jobId]/page.tsx`, `TechnicianRequestModal.tsx`, `DirectRequestCard.tsx`, `LoadingState.tsx`, `client/lib/validation.ts`?**
-  _High betweenness centrality (0.024) - this node is a cross-community bridge._
-- **Why does `TrackingMap` connect `socket-client.ts` to `TrackingMap.tsx`?**
-  _High betweenness centrality (0.008) - this node is a cross-community bridge._
-- **Why does `connectDB()` connect `connectDB` to `flow.ts`, `socket-handlers.ts`, `models/index.ts`, `[id].ts`, `requests.ts`, `matching.ts`, `mongodb.ts`, `workers/index.ts`, `src/index.ts`?**
+- **Why does `getApiErrorMessage()` connect `getApiErrorMessage` to `ActiveJobTracking.tsx`, `LocationUpdater.tsx`, `contracts/worker.ts`, `LoadingState.tsx`, `lib/session.ts`, `CustomerRequestsPanel.tsx`, `WorkerHome.tsx`, `client/lib/validation.ts`, `NewWorkWizard`, `NewWorkWizard.tsx`, `WorkerChat.tsx`, `InspectionPageClient`, `api-client.ts`, `WorkerProfile.tsx`, `WorkerDashboard.tsx`, `worker/chat/[jobId]/page.tsx`, `TechnicianRequestModal.tsx`, `DirectRequestCard.tsx`, `socket-client.ts`?**
+  _High betweenness centrality (0.020) - this node is a cross-community bridge._
+- **Why does `TrackingMap` connect `track/demo/page.tsx` to `socket-client.ts`, `ActiveJobTracking.tsx`, `TrackingMap.tsx`?**
   _High betweenness centrality (0.006) - this node is a cross-community bridge._
+- **Why does `connectDB()` connect `connectDB` to `socket-handlers.ts`, `photos/index.ts`, `[id].ts`, `auth-middleware.ts`, `detail.ts`, `jobs/index.ts`, `mongodb.ts`, `matching.ts`, `signup.ts`, `haversineDistanceKm`, `workers/index.ts`, `requests.ts`, `src/index.ts`?**
+  _High betweenness centrality (0.005) - this node is a cross-community bridge._
 - **What connects `brag`, `$schema`, `.opencode/plugins/graphify.js` to the rest of the system?**
-  _804 weakly-connected nodes found - possible documentation gaps or missing edges._
+  _805 weakly-connected nodes found - possible documentation gaps or missing edges._
 - **Should `flow.ts` be split into smaller, more focused modules?**
-  _Cohesion score 0.09577677224736049 - nodes in this community are weakly interconnected._
-- **Should `socket-client.ts` be split into smaller, more focused modules?**
-  _Cohesion score 0.05520614954577219 - nodes in this community are weakly interconnected._
+  _Cohesion score 0.13940256045519203 - nodes in this community are weakly interconnected._
 - **Should `dependencies` be split into smaller, more focused modules?**
   _Cohesion score 0.044444444444444446 - nodes in this community are weakly interconnected._
+- **Should `socket-handlers.ts` be split into smaller, more focused modules?**
+  _Cohesion score 0.08181818181818182 - nodes in this community are weakly interconnected._

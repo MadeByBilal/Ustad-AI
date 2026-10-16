@@ -1,6 +1,7 @@
 import { connectDB } from "./mongodb.js";
 import { buildBoundingBox, haversineDistanceKm } from "./geo.js";
 import { Worker, type UrgencyLevel, type WorkerCategory } from "../models/index.js";
+import { CANONICAL_SKILLS } from "./job/analyze.js";
 import { calculatePredictedPrice } from "./job/pricing.js";
 import type { ComplexityLevel } from "./job/pricing.js";
 
@@ -98,16 +99,95 @@ const SKILL_SYNONYMS: Record<string, string> = {
   cooling: "ac",
   refrigerant: "gas",
   "gas refill": "gas refilling",
+  // Bridges between AI skill tags and the profile skill vocabulary.
+  switchboard: "switch",
+  wiring: "wire",
+  bulb: "light",
+  lighting: "light",
+  "tube light": "light",
+  pump: "motor",
+  leakage: "leak",
+  seepage: "leak",
 };
 
-/** Canonicalize a skill string so synonym and token overlap can be compared. */
+/** Words that carry no trade signal on their own ("door repair" === "door"). */
+const SKILL_STOPWORDS = new Set([
+  "repair",
+  "repairs",
+  "installation",
+  "fitting",
+  "service",
+  "cleaning",
+  "fix",
+  "finding",
+  "making",
+  "work",
+]);
+
+/**
+ * Canonicalize a skill string so synonym and token overlap can be compared.
+ * Snake_case AI tags become spaced ("switch_repair" → "switch repair") and
+ * whole-string synonyms are resolved before per-word ones.
+ */
 export function canonicalizeSkill(skill: string): string {
-  return skill
-    .toLowerCase()
-    .trim()
+  const lower = skill.toLowerCase().trim().replace(/[_-]+/g, " ");
+  const whole = SKILL_SYNONYMS[lower] ?? lower;
+  return whole
     .split(/\s+/)
     .map((w) => SKILL_SYNONYMS[w] ?? w)
     .join(" ");
+}
+
+function skillTokens(skill: string): Set<string> {
+  const tokens = canonicalizeSkill(skill)
+    .split(/\s+/)
+    .filter((t) => t.length > 1 && !SKILL_STOPWORDS.has(t));
+  return new Set(tokens);
+}
+
+/**
+ * Two skills are "related" when they canonicalize to the same string or
+ * share a meaningful token: "switch repair" ≈ "switchboard installation",
+ * "switch_repair" ≈ "switch repair".  This lets AI-generated skill tags be
+ * compared against the profile skill vocabulary without exact-string luck.
+ */
+export function skillsRelated(a: string, b: string): boolean {
+  if (canonicalizeSkill(a) === canonicalizeSkill(b)) return true;
+  const ta = skillTokens(a);
+  const tb = skillTokens(b);
+  if (ta.size === 0 || tb.size === 0) return false;
+  for (const token of ta) {
+    if (tb.has(token)) return true;
+  }
+  return false;
+}
+
+/**
+ * Best-guess trade for a set of skills — a safety net for when the analysis
+ * did not pin a category.  ["switch repair"] still routes the customer to
+ * electricians only, never to a mixed list.
+ */
+export function categoryFromSkills(skills: string[]): WorkerCategory | null {
+  const votes = new Map<WorkerCategory, number>();
+  for (const skill of skills) {
+    for (const [category, canonical] of Object.entries(CANONICAL_SKILLS) as [
+      WorkerCategory,
+      string[],
+    ][]) {
+      if (canonical.some((c) => skillsRelated(skill, c))) {
+        votes.set(category, (votes.get(category) ?? 0) + 1);
+      }
+    }
+  }
+  let best: WorkerCategory | null = null;
+  let bestVotes = 0;
+  for (const [category, count] of votes) {
+    if (count > bestVotes) {
+      best = category;
+      bestVotes = count;
+    }
+  }
+  return best;
 }
 
 function skillMatchScore(
@@ -117,10 +197,10 @@ function skillMatchScore(
   if (requiredSkills.length === 0) {
     return 100;
   }
-  const required = requiredSkills.map(canonicalizeSkill);
-  const owned = new Set(workerSkills.map(canonicalizeSkill));
-  const matched = required.filter((s) => owned.has(s));
-  return Math.round((matched.length / required.length) * 100);
+  const matched = requiredSkills.filter((r) =>
+    workerSkills.some((s) => skillsRelated(r, s))
+  );
+  return Math.round((matched.length / requiredSkills.length) * 100);
 }
 
 export function scoreWorker(
@@ -131,9 +211,7 @@ export function scoreWorker(
   category?: WorkerCategory
 ): WorkerScore {
   const matched = worker.skills.filter((s) =>
-    ctx.required_skills.some(
-      (r) => canonicalizeSkill(r) === canonicalizeSkill(s)
-    )
+    ctx.required_skills.some((r) => skillsRelated(r, s))
   );
 
   const skill_match_score = skillMatchScore(worker.skills, ctx.required_skills);
@@ -300,11 +378,7 @@ export async function searchEligibleWorkers(
     .filter((w) =>
       required_skills.length === 0
         ? true
-        : w.skills.some((s) =>
-            required_skills.some(
-              (r) => r.toLowerCase() === s.toLowerCase()
-            )
-          )
+        : w.skills.some((s) => required_skills.some((r) => skillsRelated(r, s)))
     );
 
   const ctx: MatchContext = { required_skills, radius_km, urgency };
@@ -467,10 +541,10 @@ export function pickBestAndOthers(
 
 /**
  * Whole-catalogue match for the landing and dashboard experiences:
- * finds currently-available workers in the category (or any category
- * when the analysis is unsure) and ranks them by fit.  No geo box or
- * location freshness is applied — this is a "best guess" showcase, not
- * the customer's exact broadcast.
+ * finds currently-available workers of ONE trade and ranks them by fit.
+ * Results never mix categories: when neither the analysis nor the skill
+ * list pins a trade, the caller gets an empty set and the UI asks the
+ * customer which ustad they need instead of showing everyone.
  *
  * Unverified workers are included so self-registered technicians are
  * discoverable immediately.  Verified workers receive a bonus.
@@ -480,14 +554,18 @@ export async function getWorkerOptions(
 ): Promise<{ best: WorkerOption | null; others: WorkerOption[]; ranked: WorkerOption[] }> {
   await connectDB();
 
+  const category =
+    filters.category ?? categoryFromSkills(filters.required_skills);
+  if (!category) {
+    return { best: null, others: [], ranked: [] };
+  }
+
   const query: Record<string, unknown> = {
     is_available: true,
     suspended: false,
     active_job_id: null,
+    category,
   };
-  if (filters.category) {
-    query.category = filters.category;
-  }
 
   const candidates = await Worker.find(query)
       .select(
