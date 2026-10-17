@@ -1,7 +1,7 @@
-# Graph Report - Ustad Ai  (2026-10-16)
+# Graph Report - Ustad Ai  (2026-10-17)
 
 ## Corpus Check
-- 263 files · ~202,699 words
+- 263 files · ~203,006 words
 - Verdict: corpus is large enough that graph structure adds value.
 
 ## Summary
@@ -10,7 +10,7 @@
 - Token cost: 0 input · 0 output
 
 ## Graph Freshness
-- Built from commit: `be69c5a0`
+- Built from commit: `7eccbc4d`
 - Run `git rev-parse HEAD` and compare to check if the graph is stale.
 - Run `graphify update .` after code changes (no API cost).
 

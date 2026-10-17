@@ -102,6 +102,7 @@ const KEYWORD_RULES: KeywordRule[] = [
       "electric", "electricity", "shock", "current", "meter", "board",
       "breaker", "spark", "chingari", "power outage", "light band",
       "بجلی", "لائٹ", "پنکھا", "پنکھے", "پنکھوں", "فین", "بلب", "سوئچ",
+      "پھونکا", "پھونکے", "پھنکا", "پنکا", "پنکے",
       "تار", "میٹر", "چنگاری", "شارٹ سرکٹ", "بریکر",
     ],
     subcategory: "electrical_fault",

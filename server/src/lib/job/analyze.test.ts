@@ -60,6 +60,16 @@ describe("analyzeJobInput category routing", () => {
     expect(analyzeJobInput("دروازے کا تالا خراب ہے").category).toBe("carpenter");
   });
 
+  it("repairs misspelled Urdu script instead of giving up", () => {
+    // "پھونکا" is a corrupt "پنکھا" (fan) and "آئستہ" is a corrupt "آہستہ"
+    // (slowly) — a slow fan is still an electrician job, not an unclear message.
+    expect(
+      analyzeJobInput("میرے کمرے کا جو سیلنگ پھونکا ہے وہ کافی آئستہ چل رہا ہے")
+        .category
+    ).toBe("electrician");
+    expect(analyzeJobInput("پنکا خراب ہو گیا ہے").category).toBe("electrician");
+  });
+
   it("does not match keywords inside unrelated words", () => {
     // "final" must not trigger "nal", "acha" must not trigger "ac".
     expect(analyzeJobInput("final payment ka masla hai").category).toBeNull();
